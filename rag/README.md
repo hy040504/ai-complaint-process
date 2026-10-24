@@ -1,5 +1,7 @@
 # 민원 RAG 검색 저장소
 
+[프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [운영 절차](../docs/harness/runbook.md) · [변경 이력](../CHANGELOG.md)
+
 두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 17 + pgvector 0.8.1, BGE-M3 벡터, Kiwi 형태소 기반 BM25, RRF, BGE 재정렬을 사용합니다. 모델은 로컬에서 실행하므로 외부 추론 API 키나 호출 요금이 없습니다.
 
 이 모듈은 검색 계층입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않으며, Jev/OneJev 범위 판정과 자연어 답변 생성은 다음 단계입니다.
@@ -51,7 +53,7 @@ python3 -m rag search '소파를 버리는 방법이 궁금합니다' --collecti
 
 ## 저장 구조
 
-모든 테이블은 `complaint_rag` 스키마 안에 있습니다.
+PostgreSQL의 `complaints` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리합니다. 아래 7개 테이블이 생성되어 있으며 FAQ·사례에는 임베딩도 실제 적재되어 있습니다.
 
 | 테이블 | 내용 |
 | --- | --- |
@@ -61,6 +63,8 @@ python3 -m rag search '소파를 버리는 방법이 궁금합니다' --collecti
 | `term_postings` | Kiwi 토큰의 문서별 출현 빈도. PostgreSQL에 영속 저장 |
 | `term_statistics` / `corpus_statistics` | FAQ/사례별 문서 빈도·문서 수·평균 길이. BM25 계산에 사용 |
 | `index_metadata` | 모델 리비전, 색인 설정, 최근 적재 결과 |
+
+FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(1024)`를 함께 저장합니다. `routing_cases.department_id`는 부서 디렉터리의 ID를 참조하는 외래 키입니다. 부서 사전과 BM25 통계는 일반 관계형 테이블로 사용합니다.
 
 원본 두 JSON은 변경하지 않고 `payload`에 그대로 보관합니다. 문서 식별자는 데이터 종류와 사이트의 `source_id`입니다. 사이트 표시 번호 `id`를 문서 키로 사용하지 않습니다.
 
@@ -105,7 +109,7 @@ FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문�
 
 부서 후보는 검색된 사례를 부서별로 묶되, 사례 수의 단순 다수결로 순위를 정하지 않습니다. 가장 높은 관련성 사례의 순위를 사용하며 사용한 사례 ID·출처를 함께 반환합니다. 모든 후보의 `automatic_transfer`는 `false`입니다.
 
-공식 업무분장·관할을 확인해 directory의 검증 필드를 보완한 경우, 재적재는 그 값을 보존합니다. 현재 이름·과거 표기·사례 예시는 원본 데이터에 맞춰 갱신합니다.
+공식 업무분장·관할을 확인해 directory의 검증 필드를 보완한 경우, 재적재는 동일 내부 ID로 남아 있는 부서의 해당 값을 보존합니다. 현재 이름·과거 표기·사례 예시는 원본 데이터에 맞춰 갱신합니다. 삭제되거나 이름 변경으로 ID가 달라진 부서는 검증 정보를 별도 보존·이관해야 합니다. [백업과 갱신 절차](../docs/harness/runbook.md)
 
 ## 데이터 갱신
 
@@ -119,17 +123,17 @@ docker compose up -d --wait rag
 
 변경 없는 검색 본문은 기존 DB 벡터를 재사용합니다. 생성 도중 종료되어도 벡터 체크포인트를 재사용할 수 있습니다. 토큰/통계와 원본 메타데이터는 함께 갱신하고, 원본에서 사라진 문서는 이 스키마에서 제외합니다. 빈 원본·중복 ID·부서 상태 불일치는 쓰기 전에 거부합니다. 여러 적재 작업은 동시에 실행되지 않습니다.
 
-임베딩 모델/본문 구성 변경 시 `ingest --reembed`로 재구축합니다. 실행 코드와 색인 모델이 다르면 검색을 거부합니다. 새 문서·벡터·BM25 통계는 한 트랜잭션으로 반영하고 검색은 일관된 스냅샷을 읽습니다.
+원문 내용만 달라지면 일반 `ingest`가 본문 해시를 비교해 필요한 벡터만 생성합니다. 임베딩 모델·리비전·본문 구성 규칙의 버전을 바꿔 임베딩 서명이 달라지면 `ingest --reembed`로 재구축합니다. 토크나이저만 바뀌었다면 버전을 갱신하고 일반 `ingest`로 벡터를 재사용하면서 BM25를 다시 구성할 수 있습니다. 실행 코드와 색인 설정이 다르면 검색을 거부합니다. 새 문서·벡터·BM25 통계는 한 트랜잭션으로 반영하고 검색은 일관된 스냅샷을 읽습니다.
 
 ## 검증
 
 ```bash
 docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider
 docker compose run --rm --no-deps --entrypoint python rag -m rag.verify
-python3 -m rag.evaluate --output rag/reports/retrieval-smoke.json
+python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 ```
 
-13개 검증은 구별 부서 ID, 검토 대상 제외, FAQ 조건 보존, 과거 답변과 검색 본문 분리, 한국어 형태소, RRF 결합, 원본 ID와 실제 SQL 검색을 확인합니다. PostgreSQL 검증은 임시 DB를 생성하고 종료 시 삭제하며, `RUN_PG_TESTS`를 생략하면 그 3개는 건너뜁니다. API 회귀 예제는 FAQ 5개·부서 추천 4개·범위 밖 입력 1개입니다. 소규모 기능 확인용이며 **실제 민원 자동화 정확도나 운영 임계값을 검증한 평가셋은 아닙니다.**
+13개 검증은 구별 부서 ID, 검토 대상 제외, FAQ 조건 보존, 과거 답변과 검색 본문 분리, 한국어 형태소, RRF 결합, 원본 ID와 실제 SQL 검색을 확인합니다. PostgreSQL 검증은 임시 DB를 생성하고 종료 시 삭제하며, `RUN_PG_TESTS`를 생략하면 그 3개는 건너뜁니다. API 회귀 예제는 FAQ 5개·부서 추천 4개·범위 밖 입력 1개입니다. 통과 조건은 기대 문서·부서의 상위 5개 포함과 검색 전용 계약 유지입니다. 소규모 기능 확인용이며 **실제 민원 자동화 정확도나 운영 임계값을 검증한 평가셋은 아닙니다.** 새 실행 결과는 위 로컬 경로에 저장해 기존 기준 보고서를 덮어쓰지 않습니다.
 
 2026-10-24 UTC 실행 결과:
 
