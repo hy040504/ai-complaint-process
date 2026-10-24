@@ -1,0 +1,28 @@
+{
+  "counts": {
+    "faq_knowledge": 94,
+    "routing_cases": 5015,
+    "department_directory": 127,
+    "review_required": 27,
+    "duties_unverified": 127
+  },
+  "configuration": {
+    "tokenizer": "kiwi-0.24.1-content-words-v1",
+    "schema_version": 1,
+    "embedding_model": "BAAI/bge-m3",
+    "embedding_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    "embedding_dimension": 1024,
+    "embedding_signature": "8a1344a3d25a9db8de319e4acef163b1a2f9d9c9272424d7c8cc37106d344a61"
+  },
+  "last_ingestion": {
+    "finished_at": "2026-10-24T13:58:29.039400+00:00",
+    "source_files": {
+      "faq": "db/자주_묻는_민원.json",
+      "routing": "db/공개_민원_사례.json"
+    },
+    "new_embeddings": 0,
+    "source_documents": 5109,
+    "cached_embeddings": 0,
+    "reused_embeddings": 5109
+  }
+}

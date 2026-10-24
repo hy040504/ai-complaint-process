@@ -1,0 +1,10 @@
+{
+  "db/자주_묻는_민원.json": {
+    "sha256": "525a4cacf7cf9ceedf8c96fa64ac68456b0e6fc07e7829f36217542262b17528",
+    "unchanged": true
+  },
+  "db/공개_민원_사례.json": {
+    "sha256": "66526433998d9c55cbb83aa0d2c77f727eb6d5672c6a6922561ab043c3c7a53a",
+    "unchanged": true
+  }
+}

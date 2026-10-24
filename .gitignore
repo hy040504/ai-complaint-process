@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.rag-cache/
+.rag-data/
+/.cache/
+/downloads/
+/PACKET/*.saz
+*.partial
+*.tmp
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

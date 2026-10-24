@@ -1,0 +1,201 @@
+{
+  "query": "낡은 소파와 장롱을 버리려는데 대형폐기물 배출은 어떻게 하나요?",
+  "district_filter": null,
+  "query_terms": [
+    "낡",
+    "대",
+    "배출",
+    "버리",
+    "소파",
+    "어떻",
+    "장롱",
+    "폐기물",
+    "하"
+  ],
+  "pipeline": "vector+kiwi_bm25+rrf+reranker",
+  "reranker": {
+    "model": "BAAI/bge-reranker-v2-m3",
+    "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+  },
+  "retrieval_only": true,
+  "decision": "requires_gate",
+  "score_note": "검색 순위와 rerank_logit은 자동 답변/이관의 정답 확률이 아닙니다.",
+  "results": {
+    "faq_knowledge": {
+      "hits": [
+        {
+          "rank": 1,
+          "source_id": "1314210",
+          "title": "대형폐기물 배출 방법",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1314210",
+          "scores": {
+            "rrf_score": 0.03278688524590164,
+            "vector_rank": 1,
+            "vector_score": 0.5754165306439094,
+            "bm25_rank": 1,
+            "bm25_score": 20.812673027683314,
+            "rerank_logit": 1.5002522468566895
+          },
+          "evidence": {
+            "id": 94,
+            "major": "환경",
+            "minor": "대형폐기물",
+            "title": "대형폐기물 배출 방법",
+            "detail": {
+              "target": "대형폐기물 배출자",
+              "warnings": "※ 수거된 폐기물 접수건은 취소불가\n※ 신고내역과 배출품목이 다르거나, 금액이 부족할 경우 수거진행하지 않고 무단투기로 간주될 수 있음\n※ 중복인쇄 및 환불된 납부필증은 재사용 할 수 없으며, 재사용 배출시 수거되지 않고 무단투기로 간주될 수 있음\n※ 신고없이 무단배출시 과태료 100만원 부과될 수 있습니다.\n※ 시청 및 구청에서는 신고불가함",
+              "received_by": "읍면동 행정복지센터, 홈페이지, 어플",
+              "main_content": "■ 방문신고\n- 가까운 읍면동 행정복지센터 방문하여 배출 신고 후 신고필증 부착하여 배출\n■ 인터넷신고\n- 홈페이지 : 청주시 대형폐기물(https://clean.cheongju.go.kr) → \"배출신청\"버튼 클릭하여 배출신고\n※ 신고필증을 프린트하여 배출하거나 프린트불가시 빈종이에 필증번호,폐기물명, 배출일자, 배출장소 기재하여 떨어지지 않도록 부착하여 배출가능\n■ 모바일어플\n- 플레이스토에서 \"빼기\"검색하여 어플 설치 후 직접버림 또는 내려드림 등 선택하여 배출\n■ 대형폐기물 전용 무인민원발급기\n※ 이용방법 및 설치장소 안내 : 청주톡톡 홈페이지 → 민원신청 → 대형폐기물 배출신고 → 대형폐기물 전용 무인민원발급기 안내 메뉴에서 확인",
+              "processing_period": "평일 1 ~ 2일 내 수거 (공휴일 미수거) / 수거상황에 따라 지연될 수 있음",
+              "received_by_original": "읍면동 행정복지센터, 홈페이지, 어플"
+            },
+            "medium": "폐기물지도",
+            "source_id": "1314210",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1314210",
+            "retrieved_at": "2026-10-24T04:41:46+00:00",
+            "registered_date": "2023-04-22"
+          }
+        },
+        {
+          "rank": 2,
+          "source_id": "1314111",
+          "title": "대형폐기물 환불 신청",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1314111",
+          "scores": {
+            "rrf_score": 0.03225806451612903,
+            "vector_rank": 2,
+            "vector_score": 0.5493957668903022,
+            "bm25_rank": 2,
+            "bm25_score": 17.55986786789077,
+            "rerank_logit": -3.1118624210357666
+          },
+          "evidence": {
+            "id": 93,
+            "major": "환경",
+            "minor": "대형폐기물",
+            "title": "대형폐기물 환불 신청",
+            "detail": {
+              "target": "대형폐기물 배출자",
+              "warnings": "",
+              "received_by": "폐기물 배출신고 접수한 읍면동 행정복지센터",
+              "main_content": "■ 대형폐기물 접수를(방문) 하였으나 재사용 또는 분리수거 배출하여 환불 신청하는 경우\n■ 접수시간 : 09:00 ~ 18:00 (토 · 일요일 및 공휴일 휴무)\n※ 인터넷으로 배출신고 한 경우 인터넷으로 환불신청 가능 ☞ 방문 취소 / 환불 불가능",
+              "processing_period": "",
+              "received_by_original": "폐기물 배출신고 접수한 읍면동 행정복지센터"
+            },
+            "medium": "폐기물지도",
+            "source_id": "1314111",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1314111",
+            "retrieved_at": "2026-10-24T04:41:46+00:00",
+            "registered_date": "2023-04-22"
+          }
+        },
+        {
+          "rank": 3,
+          "source_id": "1302427",
+          "title": "생활쓰레기 분리배출 방법",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302427",
+          "scores": {
+            "rrf_score": 0.03149801587301587,
+            "vector_rank": 3,
+            "vector_score": 0.4805451631546055,
+            "bm25_rank": 4,
+            "bm25_score": 5.315563498213634,
+            "rerank_logit": -5.974507808685303
+          },
+          "evidence": {
+            "id": 23,
+            "major": "환경",
+            "minor": "일반쓰레기",
+            "title": "생활쓰레기 분리배출 방법",
+            "detail": {
+              "target": "시민",
+              "warnings": "",
+              "received_by": "해당없음",
+              "main_content": "생활쓰레기 배출방법, 배출시간, 장소, 대행업체 등 상세정보는\n청주시청 홈페이지 분야별정보 - 환경/청소/상수도 - 청소/재활용 - 생활쓰레기 메뉴에서 확인\n(링크 : https://www.cheongju.go.kr/www/contents.do?key=428)",
+              "processing_period": "",
+              "received_by_original": "해당없음"
+            },
+            "medium": "청소/자원/재활용",
+            "source_id": "1302427",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302427",
+            "retrieved_at": "2026-10-24T04:42:31+00:00",
+            "registered_date": "2023-04-03"
+          }
+        },
+        {
+          "rank": 4,
+          "source_id": "1302389",
+          "title": "음식물쓰레기 분리배출 방법",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302389",
+          "scores": {
+            "rrf_score": 0.03149801587301587,
+            "vector_rank": 4,
+            "vector_score": 0.4719984846116023,
+            "bm25_rank": 3,
+            "bm25_score": 5.315563498213634,
+            "rerank_logit": -6.14475154876709
+          },
+          "evidence": {
+            "id": 22,
+            "major": "환경",
+            "minor": "음식물쓰레기",
+            "title": "음식물쓰레기 분리배출 방법",
+            "detail": {
+              "target": "시민",
+              "warnings": "",
+              "received_by": "해당없음",
+              "main_content": "음식물쓰레기 배출방법, 배출시간, 장소, 대행업체 등 상세정보는\n청주시청 홈페이지 분야별정보 - 환경/청소/상수도 - 청소/재활용 - 음식물쓰레기 메뉴에서 확인\n(링크 : https://www.cheongju.go.kr/www/contents.do?key=23189)",
+              "processing_period": "",
+              "received_by_original": "해당없음"
+            },
+            "medium": "청소/자원/재활용",
+            "source_id": "1302389",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302389",
+            "retrieved_at": "2026-10-24T04:42:31+00:00",
+            "registered_date": "2023-04-03"
+          }
+        },
+        {
+          "rank": 5,
+          "source_id": "1302249",
+          "title": "종량제봉투 무료제공",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302249",
+          "scores": {
+            "rrf_score": 0.029083245521601686,
+            "vector_rank": 5,
+            "vector_score": 0.4388314223986024,
+            "bm25_rank": 13,
+            "bm25_score": 2.0084998789116284,
+            "rerank_logit": -8.348076820373535
+          },
+          "evidence": {
+            "id": 21,
+            "major": "환경",
+            "minor": "종량제봉투",
+            "title": "종량제봉투 무료제공",
+            "detail": {
+              "target": "기초생활수급자, 소년소녀가장, 한부모가정, 차상위계층, 이통반장, 새마을지도자, 의용소방대원, 국가보훈대상자",
+              "warnings": "※ 조사 시점을 기준으로 지급 대상자를 선정하여 분기 중간 전입자는 다음 분기에 소급하여 지급\n※ 매 분기 초에 조사(조사기간 30일)하여, 봉투 제작에 40일 소요",
+              "received_by": "신청 받지 않음(담당자가 직접 취합)",
+              "main_content": "1) 지급 대상 :\n① 기초생활수급자, 소년소녀가장, 한부모 가정, 차상위계층, 이통반장, 새마을지도자 : 읍.면.동 조사\n② 의용소방대원 : 소방서에서 명단 제출 받음\n③ 국가보훈대상자 : 국가보훈처에서 명단 제출 받음\n2) 지급 시기 : 분기별 (3, 6, 9, 12월 말)\n3) 지급 방법 : 통.반.이장이 배부\n4) 지급 수량 : 20L 종량제 쓰레기 봉투\n- 1인 가구는 분기에 9장(총 180리터), 2인 이상 가구는 분기에 18장(총 360리터)",
+              "processing_period": "",
+              "received_by_original": "신청 받지 않음(담당자가 직접 취합)"
+            },
+            "medium": "청소/자원/재활용",
+            "source_id": "1302249",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302249",
+            "retrieved_at": "2026-10-24T04:42:32+00:00",
+            "registered_date": "2023-04-03"
+          }
+        }
+      ],
+      "candidate_counts": {
+        "vector": 30,
+        "bm25": 19,
+        "fused": 37,
+        "reranked": 20
+      }
+    }
+  },
+  "elapsed_ms": 15412.5
+}

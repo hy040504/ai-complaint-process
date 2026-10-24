@@ -1,0 +1,125 @@
+{
+  "query": "청주시 시내버스 분실물 신고",
+  "district_filter": null,
+  "query_terms": [
+    "버스",
+    "분실물",
+    "시내",
+    "신고",
+    "청주시"
+  ],
+  "pipeline": "vector+kiwi_bm25+rrf",
+  "reranker": null,
+  "retrieval_only": true,
+  "decision": "requires_gate",
+  "score_note": "검색 순위와 rerank_logit은 자동 답변/이관의 정답 확률이 아닙니다.",
+  "results": {
+    "faq_knowledge": {
+      "hits": [
+        {
+          "rank": 1,
+          "source_id": "1301356",
+          "title": "대중교통 분실물 신고(교통분실물신고센터)",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1301356",
+          "scores": {
+            "rrf_score": 0.03278688524590164,
+            "vector_rank": 1,
+            "vector_score": 0.7922079090948173,
+            "bm25_rank": 1,
+            "bm25_score": 16.498043016529365
+          },
+          "evidence": {
+            "id": 12,
+            "major": "교통",
+            "minor": "분실물",
+            "title": "대중교통 분실물 신고(교통분실물신고센터)",
+            "detail": {
+              "target": "청주시민 누구나",
+              "warnings": "",
+              "received_by": "청주시 교통 분실물신고센터(http://parking.cheongju.go.kr/lost)",
+              "main_content": "■ 청주시 교통 분실물신고센터 : http://parking.cheongju.go.kr/lost\n■ 홈페이지 이용방법\n[습득물 조회 및 분실물 등록 방법]\n1. 습득물 조회\n- 홈페이지 메인 화면에서 종류 및 분실(습득) 장소, 기간 선택하여 검색\n2. 분실물 신고\n- 휴대폰 본인확인 → 분실물 상세내역 입력 및 개인정보 수집 이용 동의\n(필수입력 : 분실물 종류, 분실물명 / 추가입력 : 분실물 특징 , 분실장소, 이용한 교통에 따른 이용정보) → 분실물 신고 완료\n[이용 교통수단 조회]\n1. 버스 조회\n- 경로 : 이용버스조회 [자세히보기]클릭 → 청주시버스정보시스템으로 연결됨 → 부가정보 → 분실물찾기 → 아래 승하차 정보검색\n- 필수입력 : 하차시간, 노선번호 입력 (추가입력 : 승강장명, 차량번호)조회 후 운수회사 확인 → 운수회사로 문의\n2. 택시 조회 : 별도로 서비스를 제공하고 있지 않음.\n- 택시의 차량번호를 알고 있다면, 홈페이지 운송사업자 현황에서 운수회사 연락처 확인가능\n- 이용 택시를 모를 경우\n1) 카드결제한 경우 : 본인이 결제한 카드회사에 연락하여 차량에 대한 자세한 정보를 확인\n2) 현금결제한 경우 : 별도로 확인하기 어려우므로, 습득 분실물 조회 또는 분실물 등록(이용차량 몰라도 분실물 등록 가능)",
+              "processing_period": "",
+              "received_by_original": "청주시 교통 분실물신고센터(http://parking.cheongju.go.kr/lost)"
+            },
+            "medium": "대중교통",
+            "source_id": "1301356",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1301356",
+            "retrieved_at": "2026-10-24T04:42:37+00:00",
+            "registered_date": "2023-04-03"
+          }
+        },
+        {
+          "rank": 2,
+          "source_id": "1301689",
+          "title": "시내버스 요금 안내",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1301689",
+          "scores": {
+            "rrf_score": 0.03200204813108039,
+            "vector_rank": 2,
+            "vector_score": 0.6617055342548449,
+            "bm25_rank": 3,
+            "bm25_score": 11.87696630028294
+          },
+          "evidence": {
+            "id": 15,
+            "major": "교통",
+            "minor": "기타",
+            "title": "시내버스 요금 안내",
+            "detail": {
+              "target": "누구나",
+              "warnings": "",
+              "received_by": "해당없음",
+              "main_content": "■ 청주시 시내버스 요금\n- 버스정보시스템(https://www.dcbis.go.kr/) 홈페이지 - 부가정보- 요금표 메뉴에서 확인",
+              "processing_period": "",
+              "received_by_original": "해당없음"
+            },
+            "medium": "대중교통",
+            "source_id": "1301689",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1301689",
+            "retrieved_at": "2026-10-24T04:42:35+00:00",
+            "registered_date": "2023-04-03"
+          }
+        },
+        {
+          "rank": 3,
+          "source_id": "1303540",
+          "title": "청주시 시내버스 정기권",
+          "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1303540",
+          "scores": {
+            "rrf_score": 0.031754032258064516,
+            "vector_rank": 4,
+            "vector_score": 0.6207205509280501,
+            "bm25_rank": 2,
+            "bm25_score": 13.655121099269284
+          },
+          "evidence": {
+            "id": 33,
+            "major": "교통",
+            "minor": "기타",
+            "title": "청주시 시내버스 정기권",
+            "detail": {
+              "target": "누구나",
+              "warnings": "",
+              "received_by": "해당없음",
+              "main_content": "■ 정기권은 청주시 시내버스 전용 교통카드로 정해진 기간동안 무제한으로 청주버스[시내·공영·급행·DRT(수요응답형)]를 이용할 수 있는 카드\n(711번 이용 가능, 711번 공동운행하는 진천여객 버스는 타지역 버스이기에 이용 불가)\n(b7번 이용 가능, b7번 공동운행하는 세종버스는 타지역 버스이기에 이용 불가)\n■ 정기권 카드 구입방법 및 종류 등 상세내용은 청주시청 홈페이지 - 분야별정보 - 교육/생활/교통 - 시내버스 정기권 메뉴에서 확인하시기 바랍니다.\n※ 바로가기 : https://www.cheongju.go.kr/www/contents.do?key=23320",
+              "processing_period": "",
+              "received_by_original": "해당없음"
+            },
+            "medium": "대중교통",
+            "source_id": "1303540",
+            "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1303540",
+            "retrieved_at": "2026-10-24T04:42:24+00:00",
+            "registered_date": "2023-04-04"
+          }
+        }
+      ],
+      "candidate_counts": {
+        "vector": 30,
+        "bm25": 30,
+        "fused": 42,
+        "reranked": 0
+      }
+    }
+  },
+  "elapsed_ms": 280.0
+}

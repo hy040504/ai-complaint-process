@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title description">
+  <title id="title">AI Complaint Process</title>
+  <desc id="description">청주 민원 데이터를 근거로 안내와 부서 연결을 지원하는 AI 완충지대 프로젝트</desc>
+  <defs>
+    <linearGradient id="background" x1="0" x2="1" y2="1">
+      <stop stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#132e40"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#2dd4bf" stop-opacity=".17"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#94a3b8" opacity=".13"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="320" rx="20" fill="url(#background)"/>
+  <rect width="1200" height="320" rx="20" fill="url(#grid)"/>
+  <circle cx="1030" cy="155" r="290" fill="url(#glow)"/>
+  <rect x="48" y="48" width="4" height="28" rx="2" fill="#2dd4bf"/>
+  <g font-family="Arial, 'Noto Sans KR', sans-serif">
+    <text x="68" y="68" fill="#5eead4" font-size="15" font-weight="700" letter-spacing="3">CHEONGJU · CIVIC AI</text>
+    <text x="48" y="137" fill="#f8fafc" font-size="49" font-weight="700" letter-spacing="-1.5">AI Complaint Process</text>
+    <text x="50" y="180" fill="#cbd5e1" font-size="21">근거를 찾고, 처리 경로를 연결하는 AI 완충지대</text>
+    <rect x="50" y="225" width="123" height="36" rx="18" fill="#163f43" stroke="#2dd4bf" stroke-opacity=".35"/>
+    <text x="111" y="248" fill="#99f6e4" font-size="14" font-weight="700" text-anchor="middle">FAQ 94</text>
+    <rect x="185" y="225" width="146" height="36" rx="18" fill="#1b334f" stroke="#60a5fa" stroke-opacity=".35"/>
+    <text x="258" y="248" fill="#bfdbfe" font-size="14" font-weight="700" text-anchor="middle">CASES 5,015</text>
+    <rect x="343" y="225" width="178" height="36" rx="18" fill="#30304b" stroke="#a78bfa" stroke-opacity=".35"/>
+    <text x="432" y="248" fill="#ddd6fe" font-size="14" font-weight="700" text-anchor="middle">DEPARTMENTS 127</text>
+    <path d="M918 105V215" stroke="#3a6070" stroke-width="2" stroke-dasharray="4 5"/>
+    <rect x="840" y="44" width="286" height="62" rx="12" fill="#152c3c" stroke="#2e5260"/>
+    <circle cx="870" cy="75" r="7" fill="#2dd4bf"/>
+    <text x="890" y="71" fill="#f1f5f9" font-size="17" font-weight="700">FIND EVIDENCE</text>
+    <text x="890" y="91" fill="#94a3b8" font-size="12">FAQ · Hybrid retrieval</text>
+    <rect x="815" y="130" width="286" height="62" rx="12" fill="#172e41" stroke="#365a71"/>
+    <circle cx="845" cy="161" r="7" fill="#60a5fa"/>
+    <text x="865" y="157" fill="#f1f5f9" font-size="17" font-weight="700">SUGGEST A TEAM</text>
+    <text x="865" y="177" fill="#94a3b8" font-size="12">Cases · Department directory</text>
+    <rect x="840" y="216" width="286" height="62" rx="12" fill="#242d44" stroke="#4d4c70"/>
+    <circle cx="870" cy="247" r="7" fill="#a78bfa"/>
+    <text x="890" y="243" fill="#f1f5f9" font-size="17" font-weight="700">CONNECT TO PEOPLE</text>
+    <text x="890" y="263" fill="#94a3b8" font-size="12">Human handoff · Planned</text>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "checks": [
+    "faq: 94건 원본/출처/1024차원 정규화 벡터/한국어 BM25 대조",
+    "routing: 5015건 원본/출처/1024차원 정규화 벡터/한국어 BM25 대조",
+    "department_directory: 127개 현행 명칭/별칭/내부 ID 대조",
+    "FAQ/사례 HNSW 색인 2개 및 BM25 문서 빈도 확인"
+  ],
+  "counts": {
+    "faq_knowledge": 94,
+    "routing_cases": 5015,
+    "department_directory": 127,
+    "review_required": 27,
+    "duties_unverified": 127
+  },
+  "configuration": {
+    "tokenizer": "kiwi-0.24.1-content-words-v1",
+    "schema_version": 1,
+    "embedding_model": "BAAI/bge-m3",
+    "embedding_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    "embedding_dimension": 1024,
+    "embedding_signature": "8a1344a3d25a9db8de319e4acef163b1a2f9d9c9272424d7c8cc37106d344a61"
+  },
+  "last_ingestion": {
+    "finished_at": "2026-10-24T13:55:14.043764+00:00",
+    "source_files": {
+      "faq": "db/자주_묻는_민원.json",
+      "routing": "db/공개_민원_사례.json"
+    },
+    "new_embeddings": 3061,
+    "source_documents": 5109,
+    "cached_embeddings": 2048,
+    "reused_embeddings": 0
+  }
+}
