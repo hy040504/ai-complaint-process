@@ -14,7 +14,7 @@
 ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square)
 ![Private](https://img.shields.io/badge/Repository-Private-334155?style=flat-square&logo=github&logoColor=white)
 
-[빠른 시작](#빠른-시작) · [처리 흐름](#2-ai-완충지대의-처리-흐름) · [검색 구조](#3-두-rag의-역할과-검색-구현) · [개발 현황](#5-구현-현황과-mvp-순서) · [상세 실행 문서](rag/README.md)
+[빠른 시작](#빠른-시작) · [처리 흐름](#2-ai-완충지대의-처리-흐름) · [검색 구조](#3-두-rag의-역할과-검색-구현) · [개발 현황](#5-구현-현황과-mvp-순서) · [개발 하네스](docs/harness/README.md) · [상세 실행 문서](rag/README.md)
 
 </div>
 
@@ -85,6 +85,9 @@ docker compose up -d --wait rag
 
 | 문서 | 확인할 내용 |
 | --- | --- |
+| [저장소 작업 지침](AGENTS.md) | 사람·AI 개발 도구가 유지할 경계, 작업 위치, 완료 조건 |
+| [개발 하네스](docs/harness/README.md) | 시스템 구조·데이터 계약·판정 정책·평가·운영 절차 |
+| [하네스 보완과 MVP 실행 계획](plan/harness-roadmap.md) | 다음 작업 순서, 완료 조건, 결정·미정 사항 |
 | [RAG 실행 문서](rag/README.md) | 설치·적재·검색·모델·검증 결과 |
 | [데이터 사전](db/README.md) | 원본 JSON 필드, 수집·정규화 기준 |
 | [AI 민원 계획서 분석](plan/민원AI_계획서_상세분석.md) | 프로젝트 배경과 전체 서비스 구상 |
@@ -230,6 +233,7 @@ FAQ는 변경 전 접수처를 `detail.received_by_original`에 보존하고, `d
 | 데이터 수집 | 두 JSON 갱신, 원문 URL·고정 식별자·수집 시각 보강 | 완료 |
 | 부서 정규화 | 원래 표기 보존, 현재 부서 구분, 수집기 공통 규칙 적용 | 완료 · 27건 검토 필요 |
 | 검색 구성 | 두 목적의 벡터/BM25 검색, RRF, 재정렬, 부서 디렉터리, 검색 CLI/API | 구축·전체 적재·검색 예제 검증 완료 |
+| 개발 하네스 문서 | 작업 규칙·구조·데이터 계약·판정 초안·평가·운영·실행 계획 | 기본 문서 구성 완료 · 판정 러너·CI는 미구현 |
 | AI 판정·응답 | Jev 계열 한국어 판별, FAQ 근거 기반 자연어 답변 | 예정 |
 | **1차 MVP** | **CLI 챗봇**에서 민원을 입력하고 답변·부서 추천·담당자 인계 결과 시연 | 예정 |
 | **2차 MVP** | **청주톡톡과 비슷한 웹 목업**에서 같은 처리 흐름 시연 | 예정 |
@@ -243,14 +247,17 @@ FAQ는 변경 전 접수처를 `detail.received_by_original`에 보존하고, `d
 ```text
 ai-complaint-process/
 ├── README.md                        # 프로젝트 목적·결정 사항·진행 상태
+├── AGENTS.md                        # 저장소 작업 규칙·검증·완료 조건
 ├── compose.yaml                     # PostgreSQL/pgvector + 검색 API
-├── docs/assets/                     # README 소개 배너
+├── docs/
+│   ├── assets/                      # README 소개 배너
+│   └── harness/                     # 구조·계약·판정 초안·평가·운영 문서
 ├── rag/                             # 적재·벡터/BM25·RRF·재정렬·CLI/API·검증
 ├── db/
 │   ├── README.md                    # 데이터 스키마·정규화 규칙·갱신 방법
 │   ├── 자주_묻는_민원.json            # 답변 근거 데이터
 │   └── 공개_민원_사례.json            # 부서 추천 근거 데이터
-├── plan/                            # 원본 PDF와 계획서 상세 분석 Markdown
+├── plan/                            # 원본 계획서·분석·하네스/MVP 실행 계획
 └── PACKET/
     ├── scrape_faq.py                # FAQ 수집
     ├── scrape_public_cases.py       # 공개 사례 수집
