@@ -1,0 +1,275 @@
+{
+  "checked_at": "2026-10-25T13:23:08+00:00",
+  "baseline_commit": "c0a10c1f5d96c98b5ca79cc32fcb5222c0571c22",
+  "result": "passed",
+  "new_errors_found": false,
+  "scope": "현재 구현된 검색 CLI/API·원본/DB·문서·저장소의 종합 점검",
+  "tests": {
+    "command": "docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider",
+    "passed": 25,
+    "failed": 0,
+    "seconds": 7.92
+  },
+  "database_verification": {
+    "command": "docker compose exec -T rag python -m rag.verify",
+    "passed": true,
+    "checks": [
+      "원본 키·payload·검색 본문",
+      "1024차원 정규화 벡터",
+      "BM25 문서 길이·단어 빈도·컬렉션 통계",
+      "부서 ID·명칭·별칭과 HNSW 색인 2개"
+    ],
+    "counts": {
+      "faq_knowledge": 94,
+      "routing_cases": 5015,
+      "department_directory": 127,
+      "review_required": 27,
+      "duties_unverified": 127
+    }
+  },
+  "api_checks": [
+    {
+      "name": "빈 입력",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "name": "공백 입력",
+      "status": 400,
+      "passed": true
+    },
+    {
+      "name": "반환 수 오류",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "name": "컬렉션 오류",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "name": "관할 오류",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "name": "부서 명칭·별칭 조회와 자동 이관 미허용",
+      "passed": true,
+      "matches": 1
+    }
+  ],
+  "static_checks_at_baseline": {
+    "python_files": 18,
+    "documented_definitions": 93,
+    "markdown_files": 28,
+    "relative_links_and_images": 343,
+    "mermaid_diagrams": 6,
+    "json_files_valid": true,
+    "errors": []
+  },
+  "diagram_checks": {
+    "diagrams": [
+      {
+        "path": "README.md",
+        "valid": true
+      },
+      {
+        "path": "README.md",
+        "valid": true
+      },
+      {
+        "path": "docs/harness/architecture.md",
+        "valid": true
+      },
+      {
+        "path": "plan/시연_웹_게시판과_민원_서버_구현계획.md",
+        "valid": true
+      },
+      {
+        "path": "plan/언어모델과_검색증강생성_우선_구현계획.md",
+        "valid": true
+      },
+      {
+        "path": "rag/README.md",
+        "valid": true
+      }
+    ],
+    "passed": true
+  },
+  "source_sha256": {
+    "db/자주_묻는_민원.json": "525a4cacf7cf9ceedf8c96fa64ac68456b0e6fc07e7829f36217542262b17528",
+    "db/공개_민원_사례.json": "66526433998d9c55cbb83aa0d2c77f727eb6d5672c6a6922561ab043c3c7a53a"
+  },
+  "sensitive_runtime_paths_excluded": true,
+  "retrieval": {
+    "command": "python3 -m rag.evaluate --output /tmp/ai-complaint-final-review-20261025/retrieval.json",
+    "passed": 10,
+    "total": 10,
+    "results": [
+      {
+        "name": "FAQ_대형폐기물",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 10760.5,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 19,
+            "fused": 37,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "FAQ_버스분실물",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 10227.6,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 39,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "FAQ_자동차세",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 16190.9,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 50,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "FAQ_성인여권",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 12766.8,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 41,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "FAQ_면접정장",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 9360.7,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 36,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "부서_버스무정차",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 7326.0,
+        "candidate_counts": {
+          "routing_cases": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 55,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "부서_흥덕구포트홀",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 5394.3,
+        "candidate_counts": {
+          "routing_cases": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 41,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "부서_폐기물판매처",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 9169.1,
+        "candidate_counts": {
+          "routing_cases": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 53,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "부서_청주페이",
+        "passed": true,
+        "expected_rank": 1,
+        "elapsed_ms": 10096.0,
+        "candidate_counts": {
+          "routing_cases": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 38,
+            "reranked": 20
+          }
+        }
+      },
+      {
+        "name": "범위밖_검색과판정분리",
+        "passed": true,
+        "expected_rank": null,
+        "elapsed_ms": 20687.7,
+        "candidate_counts": {
+          "faq_knowledge": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 45,
+            "reranked": 20
+          },
+          "routing_cases": {
+            "vector": 30,
+            "bm25": 30,
+            "fused": 56,
+            "reranked": 20
+          }
+        }
+      }
+    ]
+  },
+  "known_open_items": [
+    "부서 127개의 공식 업무분장·관할 검증",
+    "현행 부서 재검토 사례 27건",
+    "FAQ 정책·연락처 현행성 확인",
+    "LLM·CLI 챗봇·웹 게시판·민원 업무 서버 구현"
+  ],
+  "limits": [
+    "검색 예제는 자동 응답 정확도나 범위 밖 탐지 성능 평가가 아닙니다.",
+    "의도적인 서버 장애 주입·동시 요청 부하·복원 연습은 수행하지 않았습니다.",
+    "이 보고서는 점검 기록이며 원본 수집·재적재·모델 변경은 수행하지 않았습니다."
+  ],
+  "final_documentation_checks": {
+    "markdown_files": 29,
+    "relative_links_and_images": 352,
+    "case_ids_unique": true,
+    "errors": []
+  }
+}
