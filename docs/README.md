@@ -19,7 +19,7 @@
 
 | 문서 | 역할 | 문서 상태 |
 | --- | --- | --- |
-| [시스템 구조](harness/architecture.md) | 코드 경로, DB·검색 흐름, API 계약 | 현재 구현 설명 |
+| [시스템 구조](harness/architecture.md) | 코드 경로, DB·검색 흐름, API 계약, LLM 응대 계층 | 현재 검색 구현과 후속 설계 구분 |
 | [데이터 계약](harness/data-contracts.md) | 문서 키, 조건·원문 보존, 부서 검증 의미 | 현재 계약과 후속 보완 구분 |
 | [판정 정책](harness/decision-policy.md) | FAQ 답변·부서 추천·담당자 검토 분기 | 후속 구현 초안 |
 | [평가 기준](harness/evaluation.md) | 실행 가능한 검증과 추가할 한국어 판정 평가 | 기존 검증과 제안 구분 |
