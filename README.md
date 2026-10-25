@@ -208,6 +208,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | 문서 | 확인할 내용 |
 | --- | --- |
 | [전체 문서 목차](docs/README.md) | 목적별 읽기 순서와 원본 계획서 |
+| [프로젝트 사례 색인](docs/cases/README.md) | 버그·개선·결정·검증 이력, 미해결 과제와 작성 양식 |
 | [변경 이력](CHANGELOG.md) | 데이터·검색·하네스·문서 패치 내용 |
 | [작업 지침](AGENTS.md) · [하네스 안내](docs/harness/README.md) | 개발 규칙, 구조, 계약, 평가, 운영 |
 | [RAG 실행 문서](rag/README.md) · [데이터 사전](db/README.md) | 설치·검색·원본 필드·수집·정규화 |
@@ -223,6 +224,7 @@ ai-complaint-process/
 ├── docs/
 │   ├── README.md                 # 전체 문서 목차
 │   ├── assets/                   # README 배너
+│   ├── cases/                    # 번호별 버그·개선·설계·검증 기록
 │   └── harness/                  # 구조·계약·판정 초안·평가·운영
 ├── rag/                          # 검색 코드·테스트·검증 보고서
 ├── db/                           # 두 원본 JSON·데이터 사전
