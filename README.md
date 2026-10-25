@@ -67,6 +67,8 @@ FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. 
 
 ## 처리 흐름
 
+### 초기 구현: Jev 없는 LLM + RAG
+
 아래는 **Jev 없는 초기 LLM + RAG의 목표 흐름**입니다. 실선의 검색까지 구현했으며, 점선 이후 판정·답변·검토 안내는 예정입니다.
 
 ```mermaid
@@ -88,6 +90,32 @@ flowchart TD
 범위 내라는 판단은 후속 검토가 가능하다는 뜻입니다. FAQ에 비슷한 주제가 있어도 실제 단속·보수·처분 요청을 안내만으로 처리 완료로 판단하지 않습니다. 데이터에 근거가 없다는 이유로 청주시 소관이 아니라고 단정하지 않고 담당자 검토로 연결합니다.
 
 범용 LLM에 민원과 검색 원문·출처·부서 검증 상태를 전달합니다. 같은 모델을 판정과 답변에 각각 호출하고 그 사이에 코드 검사를 두는 구성을 제안합니다. 답변 검사 실패도 담당자 검토로 전환합니다. Jev는 기본 성능을 측정한 뒤 판정 대체·보완을 비교하며 초기 CLI·웹 목업의 선행 조건이 아닙니다. [판정 정책 초안](docs/harness/decision-policy.md)
+
+### Jev를 추가한 후속 목표
+
+아래 흐름은 초기 LLM + RAG의 기준 성능을 확인한 뒤 Jev를 범위·근거 1차 판정에 더하는 구상입니다. Jev에는 민원과 FAQ·공개 사례 검색 후보를 함께 전달합니다. 범위 밖이거나 근거가 부족하고 판정이 불확실하면 담당자 검토로 연결하며, 적합한 요청은 같은 LLM과 코드 정책 검사를 거칩니다. 이 흐름과 판정 기준은 아직 구현·확정되지 않았습니다.
+
+```mermaid
+flowchart TD
+    A[한국어 민원 입력] --> R[FAQ·공개 사례 각각 검색]
+    R -. 검색 후보 전달 .-> J[Jev: 범위·근거 1차 판정]
+    J -->|적합·검토 가능| L[LLM: 의도·답변 근거 판단]
+    J -->|범위 밖·근거 부족·불확실| H[담당자 검토 안내]
+    L --> P{코드 정책 검사}
+    P -->|FAQ로 충분히 안내 가능| F[LLM: FAQ 답변·근거 검사]
+    P -->|실제 조치 필요·부서 근거 있음| D[담당 부서 후보 추천]
+    P -->|근거 부족·불확실| H
+    classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
+    classDef planned fill:#eff6ff,stroke:#60a5fa,color:#1e3a8a,stroke-dasharray:5 5
+    classDef jev fill:#f5f3ff,stroke:#8b5cf6,color:#4c1d95,stroke-dasharray:5 5
+    classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12,stroke-dasharray:5 5
+    class A,R ready
+    class J jev
+    class L,P,F,D planned
+    class H human
+```
+
+Jev는 범위와 검색 근거를 먼저 살피는 보조 판정 단계입니다. 부서 배정이나 민원 접수를 자동 확정하지 않으며, 실제 이관 기능은 별도 개발이 필요합니다.
 
 ## 확정한 방향과 남은 데이터 검증
 
