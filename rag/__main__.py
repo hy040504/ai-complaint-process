@@ -12,6 +12,18 @@ from pathlib import Path
 
 
 def api_request(url: str, payload=None):
+    """JSON 요청을 보내고 응답을 읽습니다.
+
+    Args:
+        url: 호출할 API의 전체 주소입니다.
+        payload: POST 요청 본문입니다. None이면 GET으로 요청합니다.
+
+    Returns:
+        JSON으로 해석한 API 응답입니다.
+
+    Raises:
+        ValueError: HTTP 오류나 API 연결 실패가 발생한 경우 발생합니다.
+    """
     data = json.dumps(payload, ensure_ascii=False).encode() if payload is not None else None
     request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
     try:
@@ -25,6 +37,7 @@ def api_request(url: str, payload=None):
 
 
 def main():
+    """명령줄 옵션에 따라 적재·검색·상태 조회·API 실행을 수행합니다."""
     parser = argparse.ArgumentParser(description="청주 민원 RAG 근거 검색/색인")
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("ingest", help="두 원본 JSON으로 벡터/BM25 색인 동기화")

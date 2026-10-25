@@ -1,3 +1,4 @@
+"""임베딩·재정렬 모델을 지연 로드하고 원문 전체를 평가합니다."""
 from __future__ import annotations
 
 import logging
@@ -11,7 +12,18 @@ log = logging.getLogger(__name__)
 
 
 class Models:
+    """필요할 때 모델을 로드하고 같은 인스턴스에서 재사용합니다.
+
+    Attributes:
+        settings: 실행 장치·스레드·배치 크기를 포함한 모델 설정입니다.
+    """
+
     def __init__(self, settings: Settings | None = None):
+        """실행 설정을 보관하고 지연 로드할 모델 상태를 초기화합니다.
+
+        Args:
+            settings: 모델 실행 설정입니다. None이면 기본 설정을 사용합니다.
+        """
         self.settings = settings or Settings()
         self._embedding = None
         self._reranker = None
@@ -19,6 +31,11 @@ class Models:
 
     @property
     def embedding(self):
+        """최초 접근 시 BGE-M3를 로드하고 이후에는 같은 모델을 반환합니다.
+
+        Returns:
+            최대 입력 길이를 8192 토큰으로 설정한 임베딩 모델입니다.
+        """
         if self._embedding is None:
             import torch
             from sentence_transformers import SentenceTransformer
@@ -31,6 +48,18 @@ class Models:
         return self._embedding
 
     def encode(self, texts: list[str], progress: bool = False) -> np.ndarray:
+        """입력 길이를 검사하고 정규화된 임베딩을 생성합니다.
+
+        Args:
+            texts: 순서대로 임베딩할 원문 목록입니다.
+            progress: 모델의 진행률 표시 여부입니다.
+
+        Returns:
+            원문 수 × 1024 형태의 float32 벡터 배열입니다.
+
+        Raises:
+            ValueError: 입력이 모델의 토큰 한도를 넘거나 벡터 차원·유한값 검증이 실패하면 발생합니다.
+        """
         model = self.embedding
         for text in texts:
             if len(model.tokenizer.encode(text, add_special_tokens=True)) > model.max_seq_length:
@@ -44,6 +73,7 @@ class Models:
         return vectors
 
     def load_reranker(self):
+        """최초 호출 시 재정렬 토크나이저와 평가 모드의 분류 모델을 로드합니다."""
         if self._reranker is None:
             import torch
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -56,7 +86,18 @@ class Models:
                 use_safetensors=True).to(self.settings.device).eval()
 
     def rerank(self, query: str, texts: list[str]) -> list[float]:
-        """원문 전체를 겹치는 창으로 평가. 점수는 확률이 아닌 원시 logit입니다."""
+        """원문 전체를 겹치는 창으로 평가하고 문서별 최대 logit을 반환합니다.
+
+        Args:
+            query: 재정렬 기준 질문이며 최대 1024 토큰입니다.
+            texts: 질문과의 관련성을 평가할 후보 원문 목록입니다.
+
+        Returns:
+            입력 문서 순서의 원시 logit 목록입니다. 답변·이관 정답 확률이 아닙니다.
+
+        Raises:
+            ValueError: 질문의 토큰 한도를 넘거나 점수가 유한하지 않으면 발생합니다.
+        """
         import torch
         self.load_reranker()
         tok = self._reranker_tokenizer

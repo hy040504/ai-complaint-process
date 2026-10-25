@@ -129,12 +129,16 @@ def fetch_detail(
     """한 민원사례의 상세 페이지를 요청하고 항목을 추출합니다.
 
     Args:
-        record: 상세 페이지 주소를 포함한 목록 항목입니다.
+        record: 상세 페이지 번호를 포함한 목록 항목입니다.
         listing_url: 상세 요청의 Referer로 사용할 목록 주소입니다.
         timeout: HTTP 요청 제한 시간(초)입니다.
 
     Returns:
-        민원 신청일, 요지, 담당부서, 답변을 담은 딕셔너리입니다.
+        신청일·요지·담당부서·답변·원래 부서명·출처·수집 시각입니다.
+
+    Raises:
+        RuntimeError: 재시도 후에도 상세 페이지 요청이 실패한 경우 발생합니다.
+        ValueError: 상세 페이지에서 신청일을 찾지 못한 경우 발생합니다.
     """
     detail_url = make_url(mode="view", no=str(record["_detail_no"]))
     detail = parse_detail(

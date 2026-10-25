@@ -64,7 +64,11 @@ class TableParser(HTMLParser):
     """외부 라이브러리 없이 HTML 표의 셀과 링크를 추출합니다."""
 
     def __init__(self, *, preserve_lines: bool = False) -> None:
-        """HTML 파서와 행·셀 임시 저장 공간을 초기화합니다."""
+        """HTML 파서와 행·셀 임시 저장 공간을 초기화합니다.
+
+        Args:
+            preserve_lines: 셀 내부 문단과 목록의 줄바꿈을 보존할지 나타냅니다.
+        """
         super().__init__(convert_charrefs=True)
         self.rows: list[TableRow] = []
         self._row: TableRow | None = None
@@ -127,13 +131,14 @@ class TableParser(HTMLParser):
 
 
 def clean_text(value: str, *, preserve_lines: bool = False) -> str:
-    """HTML 텍스트의 공백 및 보이지 않는 문자를 정리합니다.
+    """HTML 텍스트의 공백과 보이지 않는 문자를 정리합니다.
 
     Args:
         value: 정리할 원본 문자열입니다.
+        preserve_lines: 줄바꿈을 유지하면서 각 줄의 공백만 정리할지 나타냅니다.
 
     Returns:
-        불필요한 공백을 정리한 문자열입니다.
+        지정한 줄바꿈 보존 방식으로 정리한 문자열입니다.
     """
     value = value.replace("\xa0", " ").replace("\u200b", "").replace("\ufeff", "")
     if preserve_lines:
@@ -147,6 +152,7 @@ def parse_rows(document: str, *, preserve_lines: bool = False) -> list[TableRow]
 
     Args:
         document: 표가 포함된 HTML 문서입니다.
+        preserve_lines: 셀 내부 문단과 목록의 줄바꿈을 보존할지 나타냅니다.
 
     Returns:
         셀 텍스트와 링크를 담은 표 행 목록입니다.
@@ -195,13 +201,14 @@ def list_records(document: str) -> list[dict[str, object]]:
 
 
 def parse_detail(document: str) -> tuple[dict[str, str], str | None]:
-    """상세 페이지에서 주요 내용과 민원 안내 항목을 추출합니다.
+    """상세 페이지에서 민원 안내 항목과 등록일을 추출합니다.
 
     Args:
         document: 민원 상세 HTML 문서입니다.
 
     Returns:
-        주요 내용, 접수처, 대상자, 처리기간, 주의사항을 담은 딕셔너리입니다.
+        상세 안내 딕셔너리와 등록일 문자열의 튜플입니다.
+        등록일을 찾지 못하면 튜플의 두 번째 값은 None입니다.
     """
     values = {key: "" for key in DETAIL_FIELDS.values()}
     rows = parse_rows(document, preserve_lines=True)

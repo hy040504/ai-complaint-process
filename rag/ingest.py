@@ -1,9 +1,9 @@
+"""임베딩을 재사용하고 검색 데이터를 한 트랜잭션으로 적재합니다."""
 from __future__ import annotations
 
 import logging
 import os
 import sqlite3
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,6 +22,19 @@ log = logging.getLogger(__name__)
 
 
 def ingest(faq_path: Path | None = None, cases_path: Path | None = None, reembed: bool = False) -> dict:
+    """벡터를 재사용하고 검증된 검색 데이터를 한 트랜잭션으로 교체합니다.
+
+    Args:
+        faq_path: FAQ 원본 경로입니다. None이면 기본 경로를 사용합니다.
+        cases_path: 공개 사례 원본 경로입니다. None이면 기본 경로를 사용합니다.
+        reembed: 기존 DB·체크포인트 벡터를 재사용하지 않고 다시 생성할지 나타냅니다.
+
+    Returns:
+        반영 후 건수·색인 설정·최근 적재 정보입니다.
+
+    Raises:
+        ValueError: 동시 적재·색인 비호환·잘못된 원본·토큰 또는 벡터 오류가 있으면 발생합니다.
+    """
     docs, departments, _ = load_sources(faq_path or ROOT / "db/자주_묻는_민원.json",
                                        cases_path or ROOT / "db/공개_민원_사례.json")
     with connect(initialize=True) as conn:
@@ -113,6 +126,12 @@ def ingest(faq_path: Path | None = None, cases_path: Path | None = None, reembed
 
 
 def write_departments(conn, departments: list[dict]):
+    """부서를 갱신하고 동일 ID에 보완된 업무·관할 검증 값은 보존합니다.
+
+    Args:
+        conn: 호출자가 트랜잭션을 관리하는 PostgreSQL 연결입니다.
+        departments: 최소 한 항목을 포함하는 부서 디렉터리입니다.
+    """
     keys = list(departments[0])
     # 보완한 공식 업무분장/관할 검증 값은 재수집에서 덮어쓰지 않습니다.
     refreshed = ("canonical_name", "aliases", "name_checked_on", "name_source_urls", "observed_case_titles")
@@ -126,6 +145,13 @@ def write_departments(conn, departments: list[dict]):
 
 
 def write_documents(conn, corpus: str, docs: list[dict]):
+    """문서·벡터를 저장하고 해시·벡터·토큰 수가 같은 기존 행은 건너뜁니다.
+
+    Args:
+        conn: 호출자가 트랜잭션을 관리하는 PostgreSQL 연결입니다.
+        corpus: 저장할 컬렉션인 faq 또는 routing입니다.
+        docs: 원본·벡터·토큰 수를 포함한 검색 문서 목록입니다.
+    """
     keys = ["source_id", "title", "search_text", "payload", "source_url", "source_retrieved_at",
             "content_hash", "embedding_hash", "embedding", "token_count"]
     keys += ["category"] if corpus == "faq" else ["complaint_date", "department_id", "department_status",
@@ -149,6 +175,12 @@ def write_documents(conn, corpus: str, docs: list[dict]):
 
 
 def write_bm25(conn, docs: list[dict]):
+    """전체 문서의 토큰 빈도와 컬렉션별 BM25 통계를 교체합니다.
+
+    Args:
+        conn: 호출자가 트랜잭션을 관리하는 PostgreSQL 연결입니다.
+        docs: 모든 컬렉션의 토큰 빈도와 길이가 준비된 문서 목록입니다.
+    """
     conn.execute("DELETE FROM complaint_rag.term_postings")
     conn.execute("DELETE FROM complaint_rag.term_statistics")
     conn.execute("DELETE FROM complaint_rag.corpus_statistics")

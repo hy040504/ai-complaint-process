@@ -112,7 +112,14 @@ FAQ_RECEIVED_BY_ALIASES = {
 
 
 def normalize_public_record(record: dict[str, object]) -> None:
-    """원래 표기를 보존하고 확인된 현재 부서와 판정 상태를 갱신합니다."""
+    """원래 표기를 보존하고 확인된 현재 부서와 판정 상태를 갱신합니다.
+
+    Args:
+        record: 부서 표기를 갱신할 민원사례입니다. 전달한 객체를 직접 수정합니다.
+
+    Raises:
+        ValueError: 보존할 원래 부서명이 문자열이 아닌 경우 발생합니다.
+    """
     original = record.setdefault("department_original", record["department"])
     if not isinstance(original, str):
         raise ValueError("department_original은 문자열이어야 합니다.")
@@ -132,7 +139,14 @@ def normalize_public_record(record: dict[str, object]) -> None:
 
 
 def normalize_faq_detail(detail: dict[str, str]) -> None:
-    """접수 조건을 유지하며 확인된 부서명만 정리합니다."""
+    """접수 조건을 유지하며 확인된 부서명만 정리합니다.
+
+    Args:
+        detail: 접수처를 포함한 FAQ 상세 항목입니다. 전달한 객체를 직접 수정합니다.
+
+    Raises:
+        ValueError: 보존할 원래 접수처가 문자열이 아닌 경우 발생합니다.
+    """
     original = detail.setdefault("received_by_original", detail["received_by"])
     if not isinstance(original, str):
         raise ValueError("received_by_original은 문자열이어야 합니다.")
@@ -140,7 +154,15 @@ def normalize_faq_detail(detail: dict[str, str]) -> None:
 
 
 def write_json(path: Path, data: object) -> None:
-    """완성된 JSON을 임시 파일을 거쳐 교체합니다."""
+    """완성된 JSON을 임시 파일을 거쳐 교체합니다.
+
+    Args:
+        path: 완성된 결과를 저장할 경로입니다.
+        data: JSON으로 직렬화할 데이터입니다.
+
+    Raises:
+        OSError: 파일 기록·권한 보존·교체에 실패한 경우 발생합니다.
+    """
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if path.exists():
@@ -149,6 +171,7 @@ def write_json(path: Path, data: object) -> None:
 
 
 def main() -> None:
+    """명령줄에서 지정한 두 JSON에 확인된 부서 정규화 규칙을 적용합니다."""
     root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description="기존 두 JSON에 확인된 부서 정규화 규칙을 적용합니다.")
     parser.add_argument("--public", type=Path, default=root / "db/공개_민원_사례.json")

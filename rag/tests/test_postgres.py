@@ -18,6 +18,18 @@ pytestmark = pytest.mark.skipif(os.getenv("RUN_PG_TESTS") != "1", reason="RUN_PG
 
 
 def doc(corpus, sid, text, vector_axis, department=None):
+    """실제 모델 없이 단위 벡터를 가진 DB 검증용 문서를 구성합니다.
+
+    Args:
+        corpus: faq 또는 routing 컬렉션입니다.
+        sid: 테스트 문서의 출처 ID입니다.
+        text: 제목·본문·토큰 구성에 사용할 합성 문자열입니다.
+        vector_axis: 1로 설정할 벡터 축의 인덱스입니다.
+        department: 사례의 현행 부서명 또는 None입니다.
+
+    Returns:
+        적재 함수에 전달할 원본·벡터·부서·토큰 빈도 정보입니다.
+    """
     payload = {"source_id": sid, "title": text, "summary": text,
                "source_url": "https://example.test/" + sid, "retrieved_at": "2026-10-24T00:00:00+00:00"}
     vector = np.zeros(1024, dtype=np.float32)
@@ -39,6 +51,14 @@ def doc(corpus, sid, text, vector_axis, department=None):
 
 @pytest.fixture
 def database(monkeypatch):
+    """테스트마다 독립된 임시 DB와 합성 검색 문서를 준비하고 종료 후 삭제합니다.
+
+    Args:
+        monkeypatch: 임시 DB 이름을 환경변수에 적용할 pytest 픽스처입니다.
+
+    Yields:
+        초기 적재를 마친 DB 연결과 합성 문서 목록의 튜플입니다.
+    """
     name = "complaint_rag_test_" + uuid.uuid4().hex[:12]
     with psycopg.connect(autocommit=True) as admin:
         admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
@@ -61,6 +81,11 @@ def database(monkeypatch):
 
 
 def test_real_vector_and_bm25_return_separate_candidate_lists(database):
+    """벡터·BM25가 다른 근거를 찾고 저장 벡터가 보존되는지 검증합니다.
+
+    Args:
+        database: 임시 PostgreSQL 연결과 합성 문서 목록을 제공하는 픽스처입니다.
+    """
     conn, docs = database
     conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
     dense = dense_search(conn, "faq", docs[1]["embedding"], 5, None)
@@ -74,6 +99,11 @@ def test_real_vector_and_bm25_return_separate_candidate_lists(database):
 
 
 def test_district_filter_is_applied_to_both_retrievers(database):
+    """양쪽 검색기가 다른 구를 제외하고 관할 미확인 사례를 유지하는지 검증합니다.
+
+    Args:
+        database: 임시 PostgreSQL 연결과 합성 문서 목록을 제공하는 픽스처입니다.
+    """
     conn, docs = database
     lexical = bm25_search(conn, "routing", ["포트홀"], 10, "흥덕구", Settings())
     dense = dense_search(conn, "routing", docs[3]["embedding"], 10, "흥덕구")
@@ -84,6 +114,11 @@ def test_district_filter_is_applied_to_both_retrievers(database):
 
 
 def test_failed_write_keeps_previous_snapshot_and_repeat_upsert_does_not_duplicate(database):
+    """반복 적재의 중복 방지와 실패한 트랜잭션의 원래 스냅샷 보존을 검증합니다.
+
+    Args:
+        database: 임시 PostgreSQL 연결과 합성 문서 목록을 제공하는 픽스처입니다.
+    """
     conn, docs = database
     write_documents(conn, "faq", docs[:2])
     conn.commit()

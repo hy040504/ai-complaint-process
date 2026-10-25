@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
 
 import numpy as np
 from psycopg import sql
@@ -13,6 +12,14 @@ from .store import check_index, connect, read_status, table
 
 
 def verify() -> dict:
+    """원본과 실제 DB의 키·본문·벡터·검색 통계·부서 사전을 대조합니다.
+
+    Returns:
+        확인한 항목과 현재 적재 상태를 담은 무결성 보고서입니다.
+
+    Raises:
+        AssertionError: 원본·색인·부서·통계 불일치나 벡터 검증 실패가 있으면 발생합니다.
+    """
     docs, departments, _ = load_sources()
     checks = []
     with connect() as conn:

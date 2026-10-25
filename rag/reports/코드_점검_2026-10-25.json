@@ -1,0 +1,85 @@
+{
+  "checked_on": "2026-10-25",
+  "baseline_commit": "10ae23a26edf8e6a110b224e901a42b928373d03",
+  "before": {
+    "python_files": 17,
+    "definitions": 90,
+    "missing_docstrings": 64
+  },
+  "after": {
+    "python_files": 18,
+    "definitions": 93,
+    "missing_docstrings": 0,
+    "google_section_docstrings": 79,
+    "numpy_section_docstrings": 0,
+    "comments_checked": 20,
+    "missing_parameter_descriptions": 0,
+    "unused_imports": []
+  },
+  "changed_existing_function_bodies": [
+    "rag/search.py:SearchEngine.search"
+  ],
+  "removed_unused_imports": [
+    "rag/search.py:defaultdict",
+    "rag/ingest.py:Counter",
+    "rag/verify.py:Counter"
+  ],
+  "source_json_unchanged": true,
+  "source_sha256": {
+    "db/자주_묻는_민원.json": "525a4cacf7cf9ceedf8c96fa64ac68456b0e6fc07e7829f36217542262b17528",
+    "db/공개_민원_사례.json": "66526433998d9c55cbb83aa0d2c77f727eb6d5672c6a6922561ab043c3c7a53a"
+  },
+  "tests": {
+    "command": "docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider",
+    "runtime": "Docker Python 3.12",
+    "passed": 25,
+    "failed": 0,
+    "seconds": 7.08,
+    "added_cases": 12,
+    "added_cases_use_model_and_database_doubles": true
+  },
+  "errors": [],
+  "limits": [
+    "정적 주석 검사는 문서 내용의 의미적 정확성을 완전히 보장하지 않습니다.",
+    "조회 문서 수 감소는 전체 검색 시간 개선율을 뜻하지 않습니다."
+  ],
+  "api_checks": {
+    "api_status": "ready",
+    "counts": {
+      "faq_knowledge": 94,
+      "routing_cases": 5015,
+      "department_directory": 127,
+      "review_required": 27,
+      "duties_unverified": 127
+    },
+    "no_rerank": {
+      "collection": "both",
+      "response_identical_except_elapsed_ms": true,
+      "hits_per_collection": {
+        "faq_knowledge": 5,
+        "routing_cases": 5
+      }
+    },
+    "rerank": {
+      "example": "FAQ_대형폐기물",
+      "expected_source_id": "1314210",
+      "expected_rank": 1,
+      "reranked_candidates": 20,
+      "retrieval_contract_preserved": true
+    }
+  },
+  "check_methods": [
+    "Python ast 기반 문법·docstring·인자·함수 본문 대조",
+    "tokenize 기반 설명 주석 한국어 검사",
+    "AST 이름 사용 기반 미사용 import 확인과 수동 코드 대조",
+    "Docker pytest의 코드·격리 PostgreSQL·모델/DB 대역 회귀",
+    "검색 API 재시작 후 실제 응답 비교"
+  ],
+  "scope_note": "재정렬 제외 검색 한 질문의 전후 대조와 재정렬 사용 FAQ 한 예제를 수행했습니다. 기존 전체 10문항 모델 평가는 재실행하지 않았습니다.",
+  "documentation": {
+    "markdown_files": 26,
+    "local_links_and_images": 311,
+    "case_ids_unique": true,
+    "errors": []
+  }
+}

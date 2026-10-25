@@ -1,6 +1,6 @@
+"""컬렉션별 의미·키워드 검색과 재정렬로 원문 근거를 반환합니다."""
 from __future__ import annotations
 
-from collections import defaultdict
 from time import perf_counter
 
 from psycopg import sql
@@ -13,6 +13,16 @@ from .store import check_index, connect, table
 
 
 def reciprocal_rank_fusion(dense: list[dict], lexical: list[dict], k: int = 60) -> list[dict]:
+    """서로 다른 점수 척도를 순위로 바꿔 출처별로 합칩니다.
+
+    Args:
+        dense: 의미 검색의 순위순 후보 목록입니다.
+        lexical: BM25 검색의 순위순 후보 목록입니다.
+        k: 순위 기여도를 완화하는 RRF 상수입니다.
+
+    Returns:
+        결합 점수 내림차순의 후보 목록입니다. 동점이면 출처 ID로 정렬합니다.
+    """
     fused = {}
     for name, rows in (("vector", dense), ("bm25", lexical)):
         seen = set()
@@ -29,6 +39,15 @@ def reciprocal_rank_fusion(dense: list[dict], lexical: list[dict], k: int = 60) 
 
 
 def scope_filter(corpus: str, district: str | None):
+    """명시된 관할 구에 맞는 SQL 조건과 바인딩 값을 구성합니다.
+
+    Args:
+        corpus: 검색할 faq 또는 routing 컬렉션입니다.
+        district: 명시적으로 전달한 구 이름 또는 None입니다.
+
+    Returns:
+        SQL 조건과 매개변수 목록의 튜플입니다. 본청·관할 미확인 사례는 남깁니다.
+    """
     if corpus == "routing" and district:
         # 시 본청/관할 미확인 사례는 남기고, 다른 구로 확인된 사례만 제외합니다.
         return sql.SQL("(d.district = %s OR d.district IS NULL)"), [district]
@@ -36,6 +55,18 @@ def scope_filter(corpus: str, district: str | None):
 
 
 def dense_search(conn, corpus, vector, limit, district):
+    """관할 조건을 적용해 코사인 유사도가 높은 벡터 후보를 조회합니다.
+
+    Args:
+        conn: 읽기 스냅샷을 제공하는 PostgreSQL 연결입니다.
+        corpus: 검색할 faq 또는 routing 컬렉션입니다.
+        vector: 정규화된 질문 임베딩입니다.
+        limit: 가져올 후보 수의 상한입니다.
+        district: 명시한 관할 구 또는 None입니다.
+
+    Returns:
+        출처 ID와 유사도 점수를 포함한 순위순 후보 목록입니다.
+    """
     condition, params = scope_filter(corpus, district)
     query = sql.SQL("SELECT d.source_id, 1 - (d.embedding <=> %s) AS score FROM {} d "
                     "WHERE {} ORDER BY d.embedding <=> %s LIMIT %s").format(table(corpus), condition)
@@ -43,6 +74,19 @@ def dense_search(conn, corpus, vector, limit, district):
 
 
 def bm25_search(conn, corpus, terms, limit, district, settings):
+    """형태소 빈도와 문서 길이로 BM25 후보를 조회합니다.
+
+    Args:
+        conn: 읽기 스냅샷을 제공하는 PostgreSQL 연결입니다.
+        corpus: 검색할 faq 또는 routing 컬렉션입니다.
+        terms: 질문에서 추출한 형태소 목록입니다.
+        limit: 가져올 후보 수의 상한입니다.
+        district: 명시한 관할 구 또는 None입니다.
+        settings: BM25 단어 빈도·문서 길이 보정 설정입니다.
+
+    Returns:
+        출처 ID와 점수를 포함한 순위순 후보 목록입니다. 토큰이 없으면 빈 목록입니다.
+    """
     if not terms:
         return []
     condition, params = scope_filter(corpus, district)
@@ -65,6 +109,16 @@ def bm25_search(conn, corpus, terms, limit, district, settings):
 
 
 def fetch_candidates(conn, corpus: str, source_ids: list[str]):
+    """선택한 후보의 원문·출처와 필요한 부서 메타데이터를 조회합니다.
+
+    Args:
+        conn: 읽기 스냅샷을 제공하는 PostgreSQL 연결입니다.
+        corpus: 검색할 faq 또는 routing 컬렉션입니다.
+        source_ids: 원문을 가져올 출처 ID 목록입니다.
+
+    Returns:
+        출처 ID를 키로 하고 후보 행을 값으로 하는 딕셔너리입니다.
+    """
     fields = sql.SQL("d.source_id, d.title, d.search_text, d.payload, d.source_url")
     extra = sql.SQL("")
     join = sql.SQL("")
@@ -78,6 +132,14 @@ def fetch_candidates(conn, corpus: str, source_ids: list[str]):
 
 
 def department_candidates(hits: list[dict]) -> list[dict]:
+    """유효 사례를 부서별로 모아 가장 높은 사례 순위로 정렬합니다.
+
+    Args:
+        hits: 검색 순위순 사례 목록입니다. 현행 부서 미확인 사례는 제외합니다.
+
+    Returns:
+        근거 사례와 검증 상태를 가진 부서 후보 목록입니다. 자동 이관은 항상 꺼 둡니다.
+    """
     groups = {}
     for hit in hits:
         if not hit.get("routing_eligible") or not hit.get("department"):
@@ -92,13 +154,41 @@ def department_candidates(hits: list[dict]) -> list[dict]:
 
 
 class SearchEngine:
+    """동일한 검색 설정·모델·토크나이저로 컬렉션별 근거를 찾습니다.
+
+    Attributes:
+        settings: 검색 후보 수와 모델 실행 설정입니다.
+        models: 지연 로드하는 임베딩·재정렬 모델입니다.
+        tokenizer: 한국어 BM25용 토크나이저입니다.
+    """
+
     def __init__(self, settings: Settings | None = None):
+        """검색에 재사용할 모델 래퍼와 토크나이저를 준비합니다.
+
+        Args:
+            settings: 검색 실행 설정입니다. None이면 기본 설정을 사용합니다.
+        """
         self.settings = settings or Settings()
         self.models = Models(self.settings)
         self.tokenizer = KoreanTokenizer()
 
     def search(self, query: str, collection: str = "both", limit: int = 5,
                district: str | None = None, rerank: bool = True) -> dict:
+        """컬렉션별 검색·선택적 재정렬을 수행하고 원문 근거를 반환합니다.
+
+        Args:
+            query: 정규화 후 1~2000자인 민원 입력입니다.
+            collection: faq·routing·both 중 검색할 컬렉션입니다.
+            limit: 컬렉션별 반환 수이며 1~20입니다.
+            district: 명시한 관할 구 또는 None입니다. FAQ에는 적용하지 않습니다.
+            rerank: 후보의 재정렬 여부입니다. 끄면 RRF 순위로 필요한 원문만 조회합니다.
+
+        Returns:
+            원문·출처·순위·부서 후보와 requires_gate 계약을 포함한 검색 응답입니다.
+
+        Raises:
+            ValueError: 질문·컬렉션·반환 수·관할·토큰 또는 색인 설정이 잘못되면 발생합니다.
+        """
         started = perf_counter()
         query = normalize_text(query)
         if not query or len(query) > 2000:
@@ -114,6 +204,8 @@ class SearchEngine:
         vector = self.models.encode([query])[0]
         results = {}
         corpora = list(COLLECTIONS) if collection == "both" else [collection]
+        # 재정렬을 끄면 반환할 후보만 조회해 불필요한 원문·JSON 전송을 줄입니다.
+        shortlist_size = max(limit, self.settings.rerank_k) if rerank else limit
         with connect() as conn:
             conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
             check_index(conn)
@@ -123,7 +215,7 @@ class SearchEngine:
                 dense = dense_search(conn, corpus, vector, self.settings.candidate_k, district)
                 lexical = bm25_search(conn, corpus, tokens, self.settings.candidate_k, district, self.settings)
                 fused = reciprocal_rank_fusion(dense, lexical, self.settings.rrf_k)
-                shortlist = fused[:max(limit, self.settings.rerank_k)]
+                shortlist = fused[:shortlist_size]
                 candidates = fetch_candidates(conn, corpus, [r["source_id"] for r in shortlist])
                 if rerank and shortlist:
                     scores = self.models.rerank(query, [candidates[r["source_id"]]["search_text"] for r in shortlist])

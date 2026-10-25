@@ -12,6 +12,7 @@
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md) |
 | 두 JSON의 필드·수집·부서 정규화 이해 | [데이터 사전](../db/README.md) |
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
+| 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |
 | 버그·개선·결정의 경위와 미해결 과제 확인·기록 | [프로젝트 사례 색인](cases/README.md), [사례 작성 양식](cases/사례_작성_양식.md) |
 | Jev 없는 LLM + RAG 연결 준비 | [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md), [판정 정책 초안](harness/decision-policy.md) |
 | LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) |
@@ -24,6 +25,7 @@
 | [데이터 계약](harness/data-contracts.md) | 문서 키, 조건·원문 보존, 부서 검증 의미 | 현재 계약과 후속 보완 구분 |
 | [판정 정책](harness/decision-policy.md) | FAQ 답변·부서 추천·담당자 검토 분기 | 후속 구현 초안 |
 | [평가 기준](harness/evaluation.md) | 실행 가능한 검증과 추가할 한국어 판정 평가 | 기존 검증과 제안 구분 |
+| [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) | 한국어 주석·커밋, 기존 docstring 형식, 최적화 점검 | 현재 개발 지침 |
 | [운영 절차](harness/runbook.md) | 상태 확인, 백업, 갱신, 복구 | 현행 명령과 미구현 자동화 구분 |
 | [프로젝트 사례](cases/README.md) | 번호별 버그·조치·설계·검증 기록과 미해결 데이터 과제 | 사례별 작업·구현·검증 상태 구분 |
 | [MVP 실행 계획](../plan/harness-roadmap.md) | 우선순위, 완료 조건, 결정 기록 | 다음 작업 계획 |

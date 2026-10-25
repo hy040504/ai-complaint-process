@@ -9,6 +9,7 @@ from .__main__ import api_request
 
 
 def main():
+    """검색 API의 소규모 회귀 예제를 실행하고 결과를 출력·저장합니다."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", default="http://127.0.0.1:8007")
     parser.add_argument("--output", type=Path)
