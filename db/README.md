@@ -2,7 +2,7 @@
 
 [프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [데이터 계약](../docs/harness/data-contracts.md) · [변경 이력](../CHANGELOG.md)
 
-프로젝트 목적, Jev·RAG 역할, MVP 순서는 [프로젝트 README](../README.md)에 정리했습니다. 이 문서는 실제 데이터 필드와 정규화·갱신 규칙을 설명합니다.
+프로젝트 목적, LLM + RAG 역할과 Jev 후속 확장, MVP 순서는 [프로젝트 README](../README.md)에 정리했습니다. 이 문서는 실제 데이터 필드와 정규화·갱신 규칙을 설명합니다.
 
 | 데이터 | 프로젝트에서의 역할 |
 | --- | --- |

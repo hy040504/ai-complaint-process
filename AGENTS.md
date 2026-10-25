@@ -8,14 +8,14 @@
 2. [하네스 안내](docs/harness/README.md): 작업 종류별로 읽을 문서.
 3. 수정하는 코드와 해당 테스트. 문서와 코드가 다르면 차이를 확인하고 함께 수정한다.
 
-현재 구현은 **검색 CLI/API**까지다. Jev 계열 판정, 자연어 답변, CLI 챗봇, 웹 목업, 실제 행정 이관은 구현되어 있지 않다. 한국어 원문으로 판별 모델을 먼저 평가하고 Papago는 이후 비교한다. 무료 모델 우선이며 판별·응답 모델은 아직 선정하지 않았다.
+현재 구현은 **검색 CLI/API**까지다. 2026-10-25 사용자 결정에 따라 **초기 MVP는 Jev 없는 LLM + RAG**, Jev는 기준 성능 확보 후 추가하는 확장으로 둔다. LLM 판정·자연어 답변·CLI 챗봇·웹 목업·실제 행정 이관은 아직 미구현이다. 한국어 직접 입력과 무료 모델 우선은 유지하며 Papago는 추후 비교한다. 최종 모델은 미선정이고, 같은 범용 LLM을 판정·생성에 재사용하는 구조와 LoRA 보류는 [구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md)·[모델 제안](plan/모델_선정과_미세조정_제안.md)을 기준으로 검토한다.
 
 ## 유지할 경계
 
 - FAQ와 공개 사례를 별도 컬렉션으로 검색한다. 공개 사례의 과거 답변을 현재 정책 안내로 사용하지 않는다.
 - FAQ의 대상·접수 조건·처리기간·주의사항을 보존한다. 임의 요약이나 잘라내기로 조건을 없애지 않는다.
 - 문서 키는 `(corpus, source_id)`다. 사이트 표시 번호 `id`를 고정 키로 쓰지 않는다.
-- 검색 점수는 자동 답변·이관 가능 확률이 아니다. 검색 API의 `retrieval_only=true`, `decision="requires_gate"` 계약을 유지한다.
+- 검색 점수와 LLM의 자기 보고 confidence는 자동 답변·이관 가능 확률이 아니다. 검색 API의 `retrieval_only=true`, `decision="requires_gate"` 계약을 유지한다. gate는 후속 판단 필요라는 의미이며 Jev 의존성을 뜻하지 않는다.
 - `department_current`가 없거나 `review_required`인 사례는 부서 확정 근거에서 제외한다. 서로 다른 구의 같은 이름 과를 합치지 않는다.
 - 부서 이름 확인과 업무분장·관할 검증을 구별한다. `routing_eligible`을 자동 이관 허가로 해석하지 않는다.
 - 데이터에 없는 업무분장, 출처, 현행성 확인 결과를 만들어 넣지 않는다. 판정 모델 출력도 코드에서 검증한다.
@@ -27,7 +27,7 @@
 | --- | --- | --- |
 | 수집·부서 정규화 | `PACKET/` | [데이터 사전](db/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·SQL·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
-| Jev·답변·인계 연결 | 아직 미구현 | [판정 정책 초안](docs/harness/decision-policy.md), [구현 계획](plan/harness-roadmap.md) |
+| LLM 판정·답변·검토 안내 연결 | 아직 미구현 | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
 | 실행·적재·복구 | `compose.yaml`, `rag/` | [운영 절차](docs/harness/runbook.md) |
 
 ## 실행과 검증
