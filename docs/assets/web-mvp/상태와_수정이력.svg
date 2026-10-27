@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="550" viewBox="0 0 1100 550" role="img" aria-label="민원 업무, AI 작업, 답변 게시의 세 상태 축과 수정 이력">
+<title>민원 업무, AI 작업, 답변 게시의 세 상태 축과 수정 이력</title><desc>2026년 10월 27일 작성한 구현 전 설계입니다. 표시된 민원·수치·답변은 합성 예시입니다.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="#6995a5"/></marker></defs>
+<style>text{font-family:"Nanum Gothic","Noto Sans KR",Arial,sans-serif;fill:#112c43;font-size:21px} .small{font-size:18px} .muted{fill:#526578} .bold{font-weight:700}</style>
+<rect x="0" y="0" width="1100" height="550" rx="18" fill="#f6f9fc"/>
+<text x="35" y="53" style="font-size:29px;fill:#112c43;font-weight:700">같은 민원에 연결되지만, 상태의 의미는 다릅니다.</text>
+<text x="38" y="135" style="font-size:24px;fill:#112c43;font-weight:700">민원 업무</text>
+<rect x="231" y="92" width="185" height="79" rx="12" fill="#e5f3f3"/>
+<text x="246" y="139" style="font-size:23px;fill:#112c43;font-weight:700">접수</text>
+<path d="M419,132 L436,132" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="443" y="92" width="185" height="79" rx="12" fill="#e5f3f3"/>
+<text x="458" y="139" style="font-size:23px;fill:#112c43;font-weight:700">검토 중</text>
+<path d="M631,132 L648,132" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="655" y="92" width="185" height="79" rx="12" fill="#e5f3f3"/>
+<text x="670" y="139" style="font-size:23px;fill:#112c43;font-weight:700">답변 완료</text>
+<path d="M843,132 L860,132" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="867" y="92" width="185" height="79" rx="12" fill="#e5f3f3"/>
+<text x="882" y="139" style="font-size:23px;fill:#112c43;font-weight:700">종료</text>
+<text x="38" y="260" style="font-size:24px;fill:#112c43;font-weight:700">AI 작업</text>
+<rect x="231" y="217" width="185" height="79" rx="12" fill="#e9eefb"/>
+<text x="246" y="264" style="font-size:23px;fill:#112c43;font-weight:700">대기</text>
+<path d="M419,257 L436,257" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="443" y="217" width="185" height="79" rx="12" fill="#e9eefb"/>
+<text x="458" y="264" style="font-size:23px;fill:#112c43;font-weight:700">실행 중</text>
+<path d="M631,257 L648,257" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="655" y="217" width="185" height="79" rx="12" fill="#e9eefb"/>
+<text x="670" y="264" style="font-size:23px;fill:#112c43;font-weight:700">결과 저장</text>
+<path d="M843,257 L860,257" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="867" y="217" width="185" height="79" rx="12" fill="#e9eefb"/>
+<text x="882" y="264" style="font-size:23px;fill:#112c43;font-weight:700">완료 / 실패</text>
+<text x="38" y="385" style="font-size:24px;fill:#112c43;font-weight:700">답변 게시</text>
+<rect x="231" y="342" width="185" height="79" rx="12" fill="#fff2df"/>
+<text x="246" y="389" style="font-size:23px;fill:#112c43;font-weight:700">초안</text>
+<path d="M419,382 L436,382" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="443" y="342" width="185" height="79" rx="12" fill="#fff2df"/>
+<text x="458" y="389" style="font-size:23px;fill:#112c43;font-weight:700">검토 · 편집</text>
+<path d="M631,382 L648,382" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="655" y="342" width="185" height="79" rx="12" fill="#fff2df"/>
+<text x="670" y="389" style="font-size:23px;fill:#112c43;font-weight:700">게시</text>
+<path d="M843,382 L860,382" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="867" y="342" width="185" height="79" rx="12" fill="#fff2df"/>
+<text x="882" y="389" style="font-size:23px;fill:#112c43;font-weight:700">정정 / 철회</text>
+<rect x="34" y="463" width="1031" height="57" rx="10" fill="#112c43"/>
+<text x="54" y="499" style="font-size:22px;fill:white;font-weight:700">본문·추가 문의가 바뀌면 입력 버전 갱신  →  늦게 도착한 AI 결과의 게시 차단</text>
+</svg>

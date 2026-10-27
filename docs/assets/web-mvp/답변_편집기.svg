@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="630" viewBox="0 0 1100 630" role="img" aria-label="AI 초안의 기원과 수정 이력을 보존하는 담당자 답변 편집기">
+<title>AI 초안의 기원과 수정 이력을 보존하는 담당자 답변 편집기</title><desc>2026년 10월 27일 작성한 구현 전 설계입니다. 표시된 민원·수치·답변은 합성 예시입니다.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="#6995a5"/></marker></defs>
+<style>text{font-family:"Nanum Gothic","Noto Sans KR",Arial,sans-serif;fill:#112c43;font-size:21px} .small{font-size:18px} .muted{fill:#526578} .bold{font-weight:700}</style>
+<rect x="0" y="0" width="1100" height="630" rx="18" fill="#f6f9fc"/>
+<rect x="20" y="20" width="1060" height="590" rx="14" fill="white" stroke="#d7e2e9"/>
+<rect x="20" y="20" width="1060" height="62" rx="14" fill="#112c43"/>
+<text x="44" y="60" style="font-size:26px;fill:white;font-weight:700">민원 DEMO-001 · 답변 검토</text>
+<rect x="870" y="36" width="185" height="32" rx="16" fill="#fff2df"/>
+<text x="882" y="59" style="font-size:18px;fill:#9d5c12;font-weight:700">검토 전 · 비공개</text>
+<rect x="42" y="103" width="361" height="450" rx="10" fill="#f2f6fa"/>
+<text x="60" y="141" style="font-size:25px;fill:#112c43;font-weight:700">민원과 근거</text>
+<text x="60" y="181" style="font-size:21px;fill:#526578;font-weight:400">대형폐기물 배출 절차 문의</text>
+<text x="60" y="214" style="font-size:21px;fill:#526578;font-weight:400">접수 내용과 추가 문의를</text>
+<text x="60" y="247" style="font-size:21px;fill:#526578;font-weight:400">원문 그대로 확인합니다.</text>
+<path d="M60,268 L385,268" fill="none" stroke="#6995a5" stroke-width="2.5"/>
+<text x="60" y="304" style="font-size:23px;fill:#087f8c;font-weight:700">FAQ 근거</text>
+<text x="60" y="343" style="font-size:21px;fill:#526578;font-weight:400">출처 링크 · 원문 해시</text>
+<text x="60" y="376" style="font-size:21px;fill:#526578;font-weight:400">대상 · 조건 · 주의사항</text>
+<text x="60" y="409" style="font-size:21px;fill:#526578;font-weight:400">현행성 검수 상태</text>
+<rect x="60" y="478" width="135" height="32" rx="16" fill="#e1eaf4"/>
+<text x="72" y="501" style="font-size:18px;fill:#087f8c;font-weight:700">합성 예시</text>
+<text x="432" y="135" style="font-size:25px;fill:#112c43;font-weight:700">담당자 편집본</text>
+<rect x="724" y="111" width="306" height="32" rx="16" fill="#dff3ef"/>
+<text x="736" y="134" style="font-size:18px;fill:#087f8c;font-weight:700">AI 초안 · 담당자 수정</text>
+<rect x="431" y="157" width="625" height="237" rx="9" fill="white" stroke="#c9d8e2"/>
+<text x="450" y="193" style="font-size:21px;fill:#526578;font-weight:400">AI 초안 내용을 확인하고 수정합니다.</text>
+<text x="450" y="226" style="font-size:21px;fill:#526578;font-weight:400">게시 전에 출처와 적용 조건을 확인합니다.</text>
+<text x="450" y="259" style="font-size:21px;fill:#526578;font-weight:400"></text>
+<text x="450" y="292" style="font-size:21px;fill:#526578;font-weight:400">이 영역은 편집 화면을 설명하는 예시이며</text>
+<text x="450" y="325" style="font-size:21px;fill:#526578;font-weight:400">실제 민원 안내문이 아닙니다.</text>
+<text x="432" y="428" style="font-size:20px;fill:#526578;font-weight:400">버전 3  ·  수정자 담당자 A  ·  임시 저장됨</text>
+<rect x="432" y="448" width="623" height="51" rx="7" fill="#eef5f8"/>
+<text x="448" y="481" style="font-size:20px;fill:#112c43;font-weight:400">수정 사유: 적용 조건을 명확하게 정리</text>
+<rect x="432" y="520" width="151" height="45" rx="8" fill="#eef5f8"/>
+<text x="445" y="549" style="font-size:19px;fill:#112c43;font-weight:700">AI 원문 비교</text>
+<rect x="596" y="520" width="128" height="45" rx="8" fill="#eef5f8"/>
+<text x="609" y="549" style="font-size:19px;fill:#112c43;font-weight:700">임시 저장</text>
+<rect x="737" y="520" width="128" height="45" rx="8" fill="#eef5f8"/>
+<text x="750" y="549" style="font-size:19px;fill:#112c43;font-weight:700">미리보기</text>
+<rect x="879" y="520" width="176" height="45" rx="8" fill="#087f8c"/>
+<text x="892" y="549" style="font-size:19px;fill:white;font-weight:700">검토 후 게시</text>
+<text x="44" y="592" style="font-size:19px;fill:#526578;font-weight:400">AI 원본은 보존하고 새 버전으로 저장합니다. 게시 후 수정은 정정 이력으로 남깁니다.</text>
+</svg>

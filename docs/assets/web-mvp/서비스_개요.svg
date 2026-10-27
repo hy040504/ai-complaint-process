@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="520" viewBox="0 0 1100 520" role="img" aria-label="민원 접수부터 AI 검토와 담당자 답변까지">
+<title>민원 접수부터 AI 검토와 담당자 답변까지</title><desc>2026년 10월 27일 작성한 구현 전 설계입니다. 표시된 민원·수치·답변은 합성 예시입니다.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="#6995a5"/></marker></defs>
+<style>text{font-family:"Nanum Gothic","Noto Sans KR",Arial,sans-serif;fill:#112c43;font-size:21px} .small{font-size:18px} .muted{fill:#526578} .bold{font-weight:700}</style>
+<rect x="0" y="0" width="1100" height="520" rx="18" fill="#f6f9fc"/>
+<text x="42" y="65" style="font-size:38px;fill:#112c43;font-weight:700">한 민원, 하나의 기록</text>
+<text x="43" y="103" style="font-size:24px;fill:#526578;font-weight:400">등록부터 AI 검토·수정·답변까지 서버에 남깁니다.</text>
+<rect x="42" y="146" width="300" height="247" rx="18" fill="white"/>
+<rect x="62" y="165" width="54" height="32" rx="16" fill="#e5f3f3"/>
+<text x="74" y="188" style="font-size:18px;fill:#087f8c;font-weight:700">01</text>
+<text x="62" y="232" style="font-size:28px;fill:#112c43;font-weight:700">시민 게시판</text>
+<text x="62" y="278" style="font-size:22px;fill:#526578;font-weight:400">등록 · 수정 · 철회</text>
+<text x="62" y="311" style="font-size:22px;fill:#526578;font-weight:400">답변과 출처 확인</text>
+<text x="62" y="344" style="font-size:22px;fill:#526578;font-weight:400">추가 문의 · 해결 확인</text>
+<rect x="400" y="146" width="300" height="247" rx="18" fill="white"/>
+<rect x="420" y="165" width="54" height="32" rx="16" fill="#e9eefb"/>
+<text x="432" y="188" style="font-size:18px;fill:#087f8c;font-weight:700">02</text>
+<text x="420" y="232" style="font-size:28px;fill:#112c43;font-weight:700">AI 응대</text>
+<text x="420" y="278" style="font-size:22px;fill:#526578;font-weight:400">FAQ · 사례 각각 검색</text>
+<text x="420" y="311" style="font-size:22px;fill:#526578;font-weight:400">의도 · 근거 판단</text>
+<text x="420" y="344" style="font-size:22px;fill:#526578;font-weight:400">초안 작성 · 결과 검사</text>
+<rect x="758" y="146" width="300" height="247" rx="18" fill="white"/>
+<rect x="778" y="165" width="54" height="32" rx="16" fill="#fff2df"/>
+<text x="790" y="188" style="font-size:18px;fill:#087f8c;font-weight:700">03</text>
+<text x="778" y="232" style="font-size:28px;fill:#112c43;font-weight:700">담당자 업무</text>
+<text x="778" y="278" style="font-size:22px;fill:#526578;font-weight:400">진행 상태 모니터</text>
+<text x="778" y="311" style="font-size:22px;fill:#526578;font-weight:400">AI 초안 검토 · 수정</text>
+<text x="778" y="344" style="font-size:22px;fill:#526578;font-weight:400">게시 · 정정 · 상태 관리</text>
+<path d="M345,268 L386,268" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M703,268 L744,268" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="42" y="422" width="1016" height="62" rx="12" fill="#112c43"/>
+<text x="65" y="461" style="font-size:23px;fill:white;font-weight:700">공통 원칙  ·  저장 우선  ·  AI 기원과 수정 이력 보존  ·  공식 행정 이관과 구분</text>
+</svg>

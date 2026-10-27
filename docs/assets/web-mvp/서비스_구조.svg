@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="640" viewBox="0 0 1100 640" role="img" aria-label="업무 서버와 AI 작업자, 기존 검색과 LLM의 연결 구조">
+<title>업무 서버와 AI 작업자, 기존 검색과 LLM의 연결 구조</title><desc>2026년 10월 27일 작성한 구현 전 설계입니다. 표시된 민원·수치·답변은 합성 예시입니다.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="#6995a5"/></marker></defs>
+<style>text{font-family:"Nanum Gothic","Noto Sans KR",Arial,sans-serif;fill:#112c43;font-size:21px} .small{font-size:18px} .muted{fill:#526578} .bold{font-weight:700}</style>
+<rect x="0" y="0" width="1100" height="640" rx="18" fill="#f6f9fc"/>
+<text x="34" y="51" style="font-size:27px;fill:#112c43;font-weight:700">저장과 AI 처리를 분리하고, CLI와 웹은 응대 코드를 공유합니다.</text>
+<rect x="35" y="93" width="285" height="122" rx="12" fill="#e5f3f3"/>
+<text x="52" y="129" style="font-size:23px;fill:#112c43;font-weight:700">시민 · 담당자 화면</text>
+<text x="52" y="164" style="font-size:19px;fill:#526578;font-weight:400">목록 / CRUD / 수정</text>
+<text x="52" y="193" style="font-size:19px;fill:#526578;font-weight:400">진행 상태 / 게시된 답변</text>
+<rect x="397" y="93" width="310" height="122" rx="12" fill="#e5f3f3"/>
+<text x="414" y="129" style="font-size:23px;fill:#112c43;font-weight:700">Flask 업무 서버</text>
+<text x="414" y="164" style="font-size:19px;fill:#526578;font-weight:400">인증 · 권한 · 버전 검사</text>
+<text x="414" y="193" style="font-size:19px;fill:#526578;font-weight:400">저장 / 조회 / 이벤트 전송</text>
+<rect x="783" y="93" width="282" height="122" rx="12" fill="#fff2df"/>
+<text x="800" y="129" style="font-size:23px;fill:#112c43;font-weight:700">PostgreSQL 업무 DB</text>
+<text x="800" y="164" style="font-size:19px;fill:#526578;font-weight:400">민원 · 답변 · 작업 · 이벤트</text>
+<text x="800" y="193" style="font-size:19px;fill:#526578;font-weight:400">complaint_app · 제안</text>
+<rect x="397" y="307" width="310" height="122" rx="12" fill="#e9eefb"/>
+<text x="414" y="343" style="font-size:23px;fill:#112c43;font-weight:700">AI 작업자 · 공통 응대</text>
+<text x="414" y="378" style="font-size:19px;fill:#526578;font-weight:400">판정 → 정책 → 조건부 생성</text>
+<text x="414" y="407" style="font-size:19px;fill:#526578;font-weight:400">입력 버전 확인 후 결과 저장</text>
+<rect x="35" y="307" width="285" height="122" rx="12" fill="#e9eefb"/>
+<text x="52" y="343" style="font-size:23px;fill:#112c43;font-weight:700">CLI 챗봇</text>
+<text x="52" y="378" style="font-size:19px;fill:#526578;font-weight:400">같은 응대 코드 호출</text>
+<text x="52" y="407" style="font-size:19px;fill:#526578;font-weight:400">게시글 자동 생성 없음</text>
+<rect x="783" y="307" width="282" height="122" rx="12" fill="#e9eefb"/>
+<text x="800" y="343" style="font-size:23px;fill:#112c43;font-weight:700">LLM 실행 서비스</text>
+<text x="800" y="378" style="font-size:19px;fill:#526578;font-weight:400">판정 · FAQ 생성</text>
+<text x="800" y="407" style="font-size:19px;fill:#526578;font-weight:400">모델 가중치 재사용</text>
+<rect x="397" y="499" width="310" height="106" rx="12" fill="#d9ede7"/>
+<text x="414" y="535" style="font-size:23px;fill:#112c43;font-weight:700">기존 RAG 검색 API</text>
+<text x="414" y="570" style="font-size:19px;fill:#526578;font-weight:400">FAQ · 사례 별도 검색</text>
+<rect x="783" y="499" width="282" height="106" rx="12" fill="#d9ede7"/>
+<text x="800" y="535" style="font-size:23px;fill:#112c43;font-weight:700">기존 지식 DB</text>
+<text x="800" y="570" style="font-size:19px;fill:#526578;font-weight:400">complaint_rag · 구현됨</text>
+<path d="M322,153 L382,153" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M710,153 L768,153" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M551,217 L551,289" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="568" y="264" style="font-size:18px;fill:#526578;font-weight:400">저장된 작업</text>
+<path d="M322,367 L382,367" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M710,367 L768,367" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M551,432 L551,484" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M710,549 L768,549" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1068,220 L1080,220 L1080,455 L714,455 L714,418" fill="none" stroke="#6995a5" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="804" y="480" style="font-size:18px;fill:#526578;font-weight:400">작업 조회 · 결과 저장</text>
+</svg>
