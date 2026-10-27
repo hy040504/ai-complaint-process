@@ -45,4 +45,4 @@ blockquote { border-left: 3px solid #087f8c; padding-left: 4mm; margin-left: 0; 
 .cover svg { margin: 7mm 0; }
 .cover p { font-size: 10.5pt; }
 /* 편집 화면과 게시 규칙을 한 페이지에서 함께 읽도록 그림 높이를 맞춥니다. */
-.page:nth-child(7) svg { max-height: 85mm; }
+.page svg[aria-label="AI 초안의 기원과 수정 이력을 보존하는 담당자 답변 편집기"] { max-height: 85mm; }

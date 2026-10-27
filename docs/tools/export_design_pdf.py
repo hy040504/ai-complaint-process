@@ -40,7 +40,14 @@ def render_document(source: Path, font_dir: Path) -> tuple[str, int]:
         encoded = base64.b64encode((font_dir / f"NanumGothic-{name}.ttf").read_bytes()).decode()
         css += f'\n@font-face{{font-family:"Nanum Gothic";font-weight:{weight};src:url(data:font/ttf;base64,{encoded}) format("truetype");}}'
     renderer = MarkdownIt("commonmark", {"html": True}).enable("table")
-    sections = source.read_text(encoding="utf-8").split("<!-- page -->")
+    source_text = source.read_text(encoding="utf-8")
+    sections = source_text.split("<!-- page -->")
+    version = re.search(r"문서 버전 \*\*([^*]+)\*\*", source_text)
+    date = re.search(r"설계 기준 \*\*(\d{4}-\d{2}-\d{2}) UTC\*\*", source_text)
+    footer = " · ".join(filter(None, [
+        date.group(1).replace("-", ".") if date else None,
+        "통합 설계 " + version.group(1) if version else "통합 설계",
+    ]))
     pages = []
     for index, section in enumerate(sections, start=1):
         body = renderer.render(section)
@@ -58,11 +65,13 @@ def render_document(source: Path, font_dir: Path) -> tuple[str, int]:
             relative = local.relative_to(ROOT).as_posix()
             address = GITHUB + quote(relative) + ("#" + quote(parsed.fragment) if parsed.fragment else "")
             body = body.replace(match.group(0), 'href="' + html.escape(address, quote=True) + '"')
-        label = "표지" if index == 1 else f"설계 {index - 1:02d}"
+        # 절이 여러 페이지로 늘어나도 머리말의 번호는 원본 제목을 따릅니다.
+        heading = re.search(r"^## ([\d-]+)\.", section, re.MULTILINE)
+        label = "표지" if index == 1 else ("설계 " + heading.group(1) if heading else "설계")
         pages.append(
             f'<section class="page {"cover" if index == 1 else ""}">'
             f'<header>청주 민원 AI 완충지대 <span>{label} · 구현 전 설계</span></header>'
-            f'<main>{body}</main><footer>2026.10.27 · 통합 설계 1.0'
+            f'<main>{body}</main><footer>{html.escape(footer)}'
             f'<span>{index:02d} / {len(sections):02d}</span></footer></section>'
         )
     check = """

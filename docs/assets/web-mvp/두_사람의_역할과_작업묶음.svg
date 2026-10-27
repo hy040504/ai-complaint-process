@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="500" viewBox="0 0 1100 500" role="img" aria-label="A는 업무 기능과 품질, B는 AI 연결과 실행 기반을 맡는 역할 구성도">
+  <title>두 사람의 역할과 전체 작업 묶음</title>
+  <desc>A의 14개 작업을 업무 서버·저장, 사용 화면·CLI, 자료·정책·검증으로 나누고 B의 14개 작업을 공통 구조·화면, AI 응대·작업 처리, 실시간 모니터, 실행·운영·개선으로 나눕니다. 구현 전 역할 분담 제안입니다.</desc>
+  <style>text{font-family:"Nanum Gothic","Noto Sans KR",Arial,sans-serif;fill:#173248;font-size:23px}.sub{fill:#526578;font-size:19px}.title{font-size:29px;font-weight:700}.group{font-weight:700}</style>
+  <rect width="1100" height="500" rx="18" fill="#f4f8fb"/>
+  <rect x="24" y="24" width="514" height="386" rx="15" fill="white" stroke="#c9e3e0"/>
+  <rect x="562" y="24" width="514" height="386" rx="15" fill="white" stroke="#d4dff0"/>
+  <rect x="24" y="24" width="514" height="79" rx="15" fill="#dff3ef"/>
+  <rect x="562" y="24" width="514" height="79" rx="15" fill="#e7eefb"/>
+  <text x="48" y="73" class="title">A · 업무 기능과 품질</text>
+  <text x="586" y="73" class="title">B · AI 연결과 실행 기반</text>
+  <text x="48" y="137" class="sub">민원을 접수하고 답변·수정 이력을 남깁니다.</text>
+  <text x="586" y="137" class="sub">AI를 실행하고 진행 상황·운영을 연결합니다.</text>
+  <text x="48" y="185" class="group">업무 서버·저장 · 7개</text>
+  <text x="48" y="214" class="sub">A01~A07 · DB, CRUD, 권한, 답변과 상태</text>
+  <text x="48" y="265" class="group">사용 화면·CLI · 3개</text>
+  <text x="48" y="294" class="sub">A08·A09·A13 · 시민·담당자 화면, CLI</text>
+  <text x="48" y="345" class="group">자료·정책·검증 · 4개</text>
+  <text x="48" y="374" class="sub">A10·A11·A12·A14 · 검수, 정책 검사, 평가</text>
+  <text x="586" y="179" class="group">공통 구조·화면 · 3개</text>
+  <text x="586" y="205" class="sub">B01·B02·B09 · 계약, 화면 틀, AI 표시</text>
+  <text x="586" y="239" class="group">AI 응대·작업 처리 · 4개</text>
+  <text x="586" y="265" class="sub">B03~B06 · 모델, 응대 연결, 작업자</text>
+  <text x="586" y="299" class="group">실시간 모니터 · 3개</text>
+  <text x="586" y="325" class="sub">B07·B08·B13 · 이벤트, 현황, 미리보기</text>
+  <text x="586" y="359" class="group">실행·운영·개선 · 4개</text>
+  <text x="586" y="385" class="sub">B10·B11·B12·B14 · CI, 배포, 성능, 개선</text>
+  <rect x="24" y="431" width="1052" height="45" rx="10" fill="#123e53"/>
+  <text x="48" y="460" style="fill:white;font-size:21px;font-weight:700">함께 합의: API · 상태 · 권한 · 완료 조건  /  주담당이 구현하고 상대가 검토</text>
+</svg>
