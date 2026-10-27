@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="500" viewBox="0 0 1100 500" role="img" aria-label="UI·백엔드·AI·DB 네 분야의 세부 작업 구성">
+  <title>UI·백엔드·AI·DB 네 분야의 세부 작업 구성</title>
+  <desc>UI 10개, 백엔드 10개, AI 9개, DB 9개 작업을 기능별로 소개한다. P0 35개와 P1 3개이며 개인별 담당 배정은 포함하지 않는다.</desc>
+  <rect width="1100" height="500" rx="20" fill="#f2f7fa"/>
+  <g font-family="Nanum Gothic, Noto Sans KR, sans-serif">
+    <text x="26" y="34" font-size="22" font-weight="700" fill="#123e53" style="font-size:22px;fill:#123e53">만들 결과를 기준으로 나눈 네 분야</text>
+    <text x="1074" y="33" text-anchor="end" font-size="16" fill="#536776" style="font-size:16px;fill:#536776">38개 작업 · 필수 35 / 후속 3</text>
+    <rect x="24" y="56" width="514" height="176" rx="14" fill="#fff" stroke="#b9ddd9" stroke-width="2"/>
+    <rect x="24" y="56" width="9" height="176" rx="4" fill="#087f8c"/>
+    <text x="48" y="91" font-size="25" font-weight="700" fill="#087f8c" style="font-size:25px;fill:#087f8c">UI · 화면과 사용자 조작</text>
+    <text x="514" y="89" text-anchor="end" font-size="17" font-weight="700" fill="#087f8c" style="font-size:17px;fill:#087f8c">10개</text>
+    <text x="48" y="123" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">게시판 · 작성 · 상세 · 담당자 답변 편집</text>
+    <text x="48" y="153" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">AI 작성 표시 · 실시간 작업 모니터</text>
+    <text x="48" y="183" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">모바일 · 접근성 · 오류와 연결 상태</text>
+    <text x="48" y="214" font-size="16" fill="#536776" style="font-size:16px;fill:#536776">UI01~UI10 · UI10은 후속 편의 기능</text>
+    <rect x="562" y="56" width="514" height="176" rx="14" fill="#fff" stroke="#bed4eb" stroke-width="2"/>
+    <rect x="562" y="56" width="9" height="176" rx="4" fill="#285d91"/>
+    <text x="586" y="91" font-size="25" font-weight="700" fill="#285d91" style="font-size:25px;fill:#285d91">백엔드 · API와 작업 실행</text>
+    <text x="1052" y="89" text-anchor="end" font-size="17" font-weight="700" fill="#285d91" style="font-size:17px;fill:#285d91">10개</text>
+    <text x="586" y="123" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">로그인 · 권한 · CRUD · 답변 게시</text>
+    <text x="586" y="153" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">AI 작업자 · 재시도 · 상태 이벤트</text>
+    <text x="586" y="183" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">CI · 배포 · 추적 · 장애와 성능 검증</text>
+    <text x="586" y="214" font-size="16" fill="#536776" style="font-size:16px;fill:#536776">BE01~BE10 · BE10은 후속 알림·관측</text>
+    <rect x="24" y="248" width="514" height="176" rx="14" fill="#fff" stroke="#d5c7e8" stroke-width="2"/>
+    <rect x="24" y="248" width="9" height="176" rx="4" fill="#765399"/>
+    <text x="48" y="283" font-size="25" font-weight="700" fill="#765399" style="font-size:25px;fill:#765399">AI · 근거 판단과 응답</text>
+    <text x="514" y="281" text-anchor="end" font-size="17" font-weight="700" fill="#765399" style="font-size:17px;fill:#765399">9개</text>
+    <text x="48" y="315" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">FAQ·부서 검수 · 검색 실패 분석</text>
+    <text x="48" y="345" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">모델 실행 · 판정 · 정책 검사 · 답변</text>
+    <text x="48" y="375" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">CLI 챗봇 · 평가셋 · 품질과 지연 측정</text>
+    <text x="48" y="406" font-size="16" fill="#536776" style="font-size:16px;fill:#536776">AI01~AI09 · AI09는 생성 중 초안 전달</text>
+    <rect x="562" y="248" width="514" height="176" rx="14" fill="#fff" stroke="#e5d4aa" stroke-width="2"/>
+    <rect x="562" y="248" width="9" height="176" rx="4" fill="#936724"/>
+    <text x="586" y="283" font-size="25" font-weight="700" fill="#936724" style="font-size:25px;fill:#936724">DB · 저장과 데이터 보존</text>
+    <text x="1052" y="281" text-anchor="end" font-size="17" font-weight="700" fill="#936724" style="font-size:17px;fill:#936724">9개</text>
+    <text x="586" y="315" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">업무 ERD · 마이그레이션 · 원본과 버전</text>
+    <text x="586" y="345" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">트랜잭션 · 작업·이벤트 저장 · RAG 참조</text>
+    <text x="586" y="375" font-size="18" fill="#203e4e" style="font-size:18px;fill:#203e4e">합성 데이터 · 색인 · 백업과 복원</text>
+    <text x="586" y="406" font-size="16" fill="#536776" style="font-size:16px;fill:#536776">DB01~DB09 · 기존 RAG와 업무 데이터 분리</text>
+    <rect x="24" y="442" width="1052" height="40" rx="10" fill="#123e53"/>
+    <text x="550" y="468" text-anchor="middle" font-size="18" fill="#fff" style="font-size:18px;fill:#fff">함께 맞출 것: API · 권한 · 입력 버전 · 근거 · 게시 상태 · 실패와 복원</text>
+  </g>
+</svg>

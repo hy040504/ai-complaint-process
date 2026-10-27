@@ -85,7 +85,8 @@ def render_document(source: Path, font_dir: Path) -> tuple[str, int]:
     });
     """
     document = '<!doctype html><html lang="ko"><meta charset="utf-8">'
-    document += '<title>민원 웹 MVP 상세설계와 2인 개발계획</title>'
+    title = re.search(r"^# (.+)$", sections[0], re.MULTILINE)
+    document += f'<title>{html.escape(title.group(1) if title else source.stem)}</title>'
     document += f'<style>{css}</style><body>{"".join(pages)}<script>{check}</script></body></html>'
     return document, len(sections)
 
