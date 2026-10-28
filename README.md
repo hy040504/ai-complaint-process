@@ -8,7 +8,7 @@
 
 청주톡톡의 FAQ와 공개 민원 사례를 활용해 시민과 담당자 사이에 AI 완충지대를 만듭니다.
 
-![Stage](https://img.shields.io/badge/Stage-Retrieval_MVP-0f766e?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?style=flat-square&logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square) ![Private](https://img.shields.io/badge/Repository-Private-334155?style=flat-square&logo=github&logoColor=white)
+![Stage](https://img.shields.io/badge/Stage-Retrieval_MVP-0f766e?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?style=flat-square&logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square) ![Private](https://img.shields.io/badge/Repository-Private-334155?style=flat-square&logo=github&logoColor=white)
 
 [구현 현황](#현재-구현-상태) · [DB와 검색](#저장과-검색) · [처리 흐름](#처리-흐름) · [빠른 시작](#빠른-시작) · [문서 목차](docs/README.md) · [변경 이력](CHANGELOG.md)
 
@@ -21,7 +21,7 @@
 ---
 
 > [!NOTE]
-> **현재 단계 · 2026-10-27 UTC · 문서 갱신**<br>
+> **현재 단계 · 2026-10-28 UTC · 네이티브 환경 전환**<br>
 > **완료:** 데이터·관계형/벡터 DB·검색 CLI/API.<br>
 > **다음:** Jev 없는 LLM + RAG 기반 CLI 챗봇 → 민원 게시판·작성·답변 서버를 갖춘 시연 웹.<br>
 > **추후:** 기본 성능 평가 후 Jev 추가, 반복 오류에 따라 LoRA 검토. 최종 LLM은 미선정입니다.
@@ -53,7 +53,7 @@
 
 ## 저장과 검색
 
-**PostgreSQL 하나에서 관계형 데이터와 벡터 데이터를 함께 관리합니다.** DB는 `complaints`, 스키마는 `complaint_rag`이며 목적에 따라 테이블과 검색 순위를 분리합니다.
+**PostgreSQL 하나에서 관계형 데이터와 벡터 데이터를 함께 관리합니다.** 이 컴퓨터의 DB는 `complaints_native`, 스키마는 `complaint_rag`이며 목적에 따라 테이블과 검색 순위를 분리합니다.
 
 | 테이블 | 관계형으로 저장하는 내용 | 벡터 검색 본문 | 규모 |
 | --- | --- | --- | ---: |
@@ -145,7 +145,15 @@ Qwen3.5-4B부터 비교하고 추가 학습 없이 시작하는 안은 [모델 �
 
 ## 빠른 시작
 
-실행 중인 검색 서버가 있으면 저장소 루트에서 사용할 수 있습니다. 검색 CLI는 호스트의 Python 표준 라이브러리로 API에 연결하며, 모델 실행 환경은 Docker의 Python 3.12입니다.
+**메뉴로 직접 검색해 보기:** [검색 테스트 TUI](rag/test_search.sh)를 실행하면 상태 확인, FAQ·사례 검색, 예제 질의, 재정렬·관할 설정을 사용할 수 있습니다.
+
+```bash
+bash rag/test_search.sh
+```
+
+기본은 빠른 검색(재정렬 끔)과 컬렉션별 3건 표시입니다. 원본 JSON 보기·선택 저장과 DB 무결성 검사도 지원합니다. 안내 근거를 검색하는 도구이며 LLM 챗봇은 아닙니다. [메뉴·명령 사용법](rag/README.md#검색-테스트-메뉴)
+
+실행 중인 검색 서버가 있으면 저장소 루트에서 사용할 수 있습니다. 검색 CLI는 호스트의 Python 표준 라이브러리로 API에 연결하며, 모델 실행 환경은 호스트의 Python 3.12 가상환경입니다.
 
 ```bash
 # 적재 상태와 모델 설정
@@ -159,24 +167,14 @@ python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습�
 ```
 
 <details>
-<summary><strong>처음 설치 — Docker Compose</strong></summary>
+<summary><strong>네이티브 실행 환경</strong></summary>
 
-Docker와 Docker Compose, 비공개 저장소 접근 권한이 필요합니다. 아래 명령은 신규 환경의 최초 설치용입니다.
+이 컴퓨터에서는 PostgreSQL 18과 pgvector를 호스트에 설치하고 Python 3.12 가상환경에서 실행합니다. Docker 실행 구성은 제거했습니다. 기존 DB는 `complaints_native`로 복원했습니다. 서비스 실행과 새 환경 준비는 [네이티브 운영 안내](docs/harness/네이티브_운영.md)를 따릅니다.
 
 ```bash
-git clone https://github.com/hy040504/ai-complaint-process.git
-cd ai-complaint-process
-
-# 파일 생성 후 POSTGRES_PASSWORD를 로컬 DB 비밀번호로 설정
-test -f .env || cp .env.example .env
-
-docker compose up -d postgres
-docker compose build rag
-docker compose run --rm rag ingest
-docker compose up -d --wait rag
+systemctl --user status cheongju-rag.service
+python3 -m rag status
 ```
-
-첫 적재는 모델 다운로드와 벡터 생성으로 시간이 걸립니다. 로컬 공개 모델을 사용하며 검색을 위한 외부 유료 추론 API 키는 필요하지 않습니다. [설정·실행 상세](rag/README.md)
 
 </details>
 
@@ -197,6 +195,8 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 데이터 갱신 시에는 [수집·정규화 방법](db/README.md)과 [백업·재적재 절차](docs/harness/runbook.md)를 따릅니다. 변경 없는 벡터는 재사용하며 모델·본문 구성 규칙 변경에 따른 재생성은 별도로 구분합니다.
 
 ## 검증 근거
+
+2026-10-28 네이티브 환경에서 화면 회귀를 포함한 **전체 테스트 27개가 통과**했습니다. Bash 검색 메뉴의 실제 FAQ·사례 검색과 입력·저장·API 실패 처리를 확인했습니다. [CASE-011](docs/cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 
 2026-10-25 코드·주석 점검에서 **코드·격리 PostgreSQL 테스트 25개가 통과**했습니다. [CASE-006](docs/cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)
 
@@ -231,7 +231,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 ai-complaint-process/
 ├── README.md / CHANGELOG.md       # 소개·진행 상태 / 변경 이력
 ├── AGENTS.md                     # 저장소 작업 규칙
-├── compose.yaml                  # PostgreSQL + 검색 API
+├── scripts/                      # 네이티브 검색 API 실행 환경
 ├── docs/
 │   ├── README.md                 # 전체 문서 목차
 │   ├── assets/                   # README 배너·설계 그림·인쇄 스타일

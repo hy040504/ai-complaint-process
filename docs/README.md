@@ -9,7 +9,8 @@
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
 | 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [변경 이력](../CHANGELOG.md) |
-| 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md) |
+| 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
+| 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test_search.sh) |
 | 두 JSON의 필드·수집·부서 정규화 이해 | [데이터 사전](../db/README.md) |
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
 | 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |

@@ -33,7 +33,7 @@ def api_request(url: str, payload=None):
         message = exc.read().decode("utf-8", errors="replace")
         raise ValueError(f"API {exc.code}: {message}") from None
     except urllib.error.URLError as exc:
-        raise ValueError(f"검색 API에 연결할 수 없습니다 ({url}). docker compose up -d rag 실행 상태를 확인해 주세요: {exc.reason}") from None
+        raise ValueError(f"검색 API에 연결할 수 없습니다 ({url}). systemctl --user status cheongju-rag.service 또는 네이티브 실행 상태를 확인해 주세요: {exc.reason}") from None
 
 
 def main():

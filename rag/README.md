@@ -2,7 +2,7 @@
 
 [프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [운영 절차](../docs/harness/runbook.md) · [변경 이력](../CHANGELOG.md)
 
-두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 17 + pgvector 0.8.1, BGE-M3 벡터, Kiwi 형태소 기반 BM25, RRF, BGE 재정렬을 사용합니다. 모델은 로컬에서 실행하므로 외부 추론 API 키나 호출 요금이 없습니다.
+두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, BGE-M3 벡터, Kiwi 형태소 기반 BM25, RRF, BGE 재정렬을 사용합니다. 모델은 로컬에서 실행하므로 외부 추론 API 키나 호출 요금이 없습니다.
 
 이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
 
@@ -10,52 +10,59 @@
 
 ## 실행
 
-프로젝트 루트에서 실행합니다. Docker와 Docker Compose가 필요합니다. 기본 설정은 CPU 한도 4, 검색 컨테이너 메모리 상한 9GB입니다. 현재 서버는 `.env`의 `RAG_THREADS=12`, `RAG_CPUS=12`로 실행합니다. GPU는 사용하지 않습니다.
+> 현재 서버는 네이티브 환경입니다. 실행·적재·검증 명령은 [네이티브 운영 안내](../docs/harness/네이티브_운영.md)를 따릅니다.
 
-처음 설치할 때 `.env.example`을 `.env`로 복사하고 로컬 DB 비밀번호를 정합니다. 현재 작업 환경에는 `.env`가 생성되어 있습니다.
+### 현재 서버에서 실행
 
-```bash
-test -f .env || cp .env.example .env
-docker compose up -d postgres
-docker compose build rag
-docker compose run --rm rag ingest
-docker compose up -d --wait rag
-```
-
-첫 실행은 모델 다운로드와 벡터 생성으로 시간이 걸립니다. 모델 가중치와 벡터 체크포인트는 `.rag-cache/`, PostgreSQL 데이터는 `.rag-data/postgres/`에 저장합니다. `docker compose down` 후에도 이 디렉터리는 유지됩니다. CPU 여유가 있는 서버에서는 `RAG_THREADS=12 RAG_CPUS=12 docker compose run --rm rag ingest`처럼 적재 작업의 자원을 늘릴 수 있습니다.
-
-API가 준비되면 호스트의 Python 표준 라이브러리만으로 검색할 수 있습니다.
+PostgreSQL과 사용자 서비스를 실행한 상태에서 검색합니다. 설치·운영은 [네이티브 운영 안내](../docs/harness/네이티브_운영.md)를 따릅니다.
 
 ```bash
+systemctl --user status cheongju-rag.service
 python3 -m rag status
 python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필요한가요?' --collection faq
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
-python3 -m rag search '옥산면 도로에 포트홀이 생겼습니다' --collection routing --district 흥덕구
-python3 -m rag search '소파를 버리는 방법이 궁금합니다' --collection both
 ```
 
-- API: `http://127.0.0.1:8007`
-- API 문서: `http://127.0.0.1:8007/docs`
-- 상태: `GET /health`
-- 검색: `POST /search`
-- 부서/과거 명칭 조회: `GET /departments?query=대중교통과`
-- PostgreSQL: `127.0.0.1:55432`, DB `complaints`, 사용자 `complaint`, 비밀번호는 `.env`
+API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.
 
-```json
-{
-  "query": "흥덕구 도로 포트홀을 보수해 주세요",
-  "collection": "routing",
-  "limit": 5,
-  "district": "흥덕구",
-  "rerank": true
-}
+## 검색 테스트 메뉴
+
+저장소 루트 또는 다른 작업 디렉터리에서 [test_search.sh](test_search.sh)를 실행하면 한국어 메뉴가 열립니다. Bash와 Python이 필요하며 상태·검색은 실행 중인 API를 사용합니다. 가상환경이 없으면 `python3`를 API 클라이언트로 사용하지만 DB 무결성 검사에는 네이티브 의존성이 설치된 환경이 필요합니다.
+
+```bash
+bash rag/test_search.sh
+# 다른 디렉터리에서는 스크립트의 절대 경로를 사용합니다.
 ```
 
-민원은 1~2000자, 결과 수는 1~20건입니다. 재정렬 질문의 추가 제한은 모델 토큰 기준 1024개입니다. `district`는 명시적으로 전달할 때만 필터링하며, 본청/관할 미확인 후보는 유지하고 다른 구의 부서로 확인된 사례를 제외합니다. 질문에서 지역명을 자동 추측하지 않습니다.
+| 메뉴 | 동작 |
+| --- | --- |
+| `1` | API 준비 상태·FAQ·사례·부서 건수 확인 |
+| `2` / `3` / `4` | 직접 입력한 민원으로 FAQ / 공개 사례 / 양쪽 각각 검색 |
+| `5` / `6` | 대형폐기물 FAQ / 버스 무정차 사례 예제 실행 |
+| `7` / `8` / `9` | 재정렬 전환 / 관할 구 / 컬렉션별 결과 수 설정 |
+| `j` / `s` | 마지막 성공 응답의 원본 JSON 보기 / 파일로 저장 |
+| `v` | 원본·벡터·BM25·HNSW 무결성 대조 (`rag.verify`) |
+| `0` | 종료 |
+
+메뉴 기본값은 **재정렬 끔·3건·관할 전체**이며 일반 검색 CLI의 기본값과 다릅니다. 재정렬을 켜면 처리 시간이 늘어날 수 있습니다. FAQ와 사례는 각각 순위를 표시하고 출처·점수·원본 근거를 함께 보여줍니다. FAQ의 대상·조건·주의사항은 생략하지 않습니다. 화면에 표시되는 부서는 후보이며 실제 이관을 실행하지 않습니다.
+
+자동 점검이나 JSON 출력을 원하면 옵션으로 실행합니다.
+
+```bash
+bash rag/test_search.sh --status
+bash rag/test_search.sh --search '대형폐기물 배출 방법' --collection faq --limit 3
+bash rag/test_search.sh --search '흥덕구 도로 포트홀 보수 요청' --collection routing --district 흥덕구 --rerank
+bash rag/test_search.sh --search '여권 발급 방법' --collection faq --json
+bash rag/test_search.sh --help
+```
+
+`RAG_API_URL` 또는 `--api-url`로 API 주소를 지정할 수 있습니다. API 오류 시 비정상 종료 코드를 반환합니다. 메뉴에서는 오류를 표시한 뒤 다음 입력을 받습니다. 검색할 때마다 새 모델을 로드하지 않고 API의 공유 모델을 사용합니다. 색상은 일반 터미널에서만 적용하며 `NO_COLOR=1`로 끌 수 있습니다. 긴 결과는 터미널의 스크롤로 확인합니다.
+
+응답은 임시 파일에 두고 종료 시 삭제합니다. `s`를 선택한 경우에만 `.rag-cache/reports/tui-*.json`에 권한 600으로 저장하며 Git에서 제외됩니다. 입력 민원과 원본 근거가 포함되므로 공유 전에 내용을 확인합니다. 서비스 시작·중지, 원본 수집·변경, DB 재적재 기능은 메뉴에 없습니다.
 
 ## 저장 구조
 
-PostgreSQL의 `complaints` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리합니다. 아래 7개 테이블이 생성되어 있으며 FAQ·사례에는 임베딩도 실제 적재되어 있습니다.
+PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리합니다. 아래 7개 테이블이 생성되어 있으며 FAQ·사례에는 임베딩도 실제 적재되어 있습니다.
 
 | 테이블 | 내용 |
 | --- | --- |
@@ -114,29 +121,17 @@ FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문�
 
 공식 업무분장·관할을 확인해 directory의 검증 필드를 보완한 경우, 재적재는 동일 내부 ID로 남아 있는 부서의 해당 값을 보존합니다. 현재 이름·과거 표기·사례 예시는 원본 데이터에 맞춰 갱신합니다. 삭제되거나 이름 변경으로 ID가 달라진 부서는 검증 정보를 별도 보존·이관해야 합니다. [백업과 갱신 절차](../docs/harness/runbook.md)
 
-## 데이터 갱신
+## 데이터 갱신과 검증
 
-원본을 수집기로 갱신한 뒤 실행합니다. 모델이 메모리에 올라간 API와 적재 프로세스가 동시에 실행되면 메모리 사용량이 늘어나므로 현재 서버에서는 API를 잠시 정지한 뒤 적재하는 방식을 권장합니다.
-
-```bash
-docker compose stop rag
-docker compose run --rm rag ingest
-docker compose up -d --wait rag
-```
-
-변경 없는 검색 본문은 기존 DB 벡터를 재사용합니다. 생성 도중 종료되어도 벡터 체크포인트를 재사용할 수 있습니다. 토큰/통계와 원본 메타데이터는 함께 갱신하고, 원본에서 사라진 문서는 이 스키마에서 제외합니다. 빈 원본·중복 ID·부서 상태 불일치는 쓰기 전에 거부합니다. 여러 적재 작업은 동시에 실행되지 않습니다.
-
-원문 내용만 달라지면 일반 `ingest`가 본문 해시를 비교해 필요한 벡터만 생성합니다. 임베딩 모델·리비전·본문 구성 규칙의 버전을 바꿔 임베딩 서명이 달라지면 `ingest --reembed`로 재구축합니다. 토크나이저만 바뀌었다면 버전을 갱신하고 일반 `ingest`로 벡터를 재사용하면서 BM25를 다시 구성할 수 있습니다. 실행 코드와 색인 설정이 다르면 검색을 거부합니다. 새 문서·벡터·BM25 통계는 한 트랜잭션으로 반영하고 검색은 일관된 스냅샷을 읽습니다.
-
-## 검증
+백업과 데이터 변경 검토 후 [네이티브 운영 안내](../docs/harness/네이티브_운영.md)에 따라 실행합니다.
 
 ```bash
-docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider
-docker compose run --rm --no-deps --entrypoint python rag -m rag.verify
-python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
+source scripts/native-env.sh
+.venv/bin/python -m rag.verify
+RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 ```
 
-현재 코드·격리 DB 검증은 25개입니다. 기존 13개는 구별 부서 ID, 검토 대상 제외, FAQ 조건 보존, 과거 답변과 검색 본문 분리, 한국어 형태소, RRF 결합, 원본 ID와 실제 SQL 검색을 확인합니다. 추가 12개는 모델·DB 대역으로 컬렉션·재정렬 사용 여부·반환 수에 따른 후보 조회량과 결과·검색 전용 계약을 확인합니다. PostgreSQL 검증은 임시 DB를 생성하고 종료 시 삭제하며, `RUN_PG_TESTS`를 생략하면 그 3개는 건너뜁니다. API 회귀 예제는 FAQ 5개·부서 추천 4개·범위 밖 입력 1개입니다. 통과 조건은 기대 문서·부서의 상위 5개 포함과 검색 전용 계약 유지입니다. 소규모 기능 확인용이며 **실제 민원 자동화 정확도나 운영 임계값을 검증한 평가셋은 아닙니다.** 새 실행 결과는 위 로컬 경로에 저장해 기존 기준 보고서를 덮어쓰지 않습니다.
+`RUN_PG_TESTS=1`로 전체 테스트를 실행합니다. `scripts/setup-native-db.sh`가 확장을 설치한 `complaint_rag_test_template`을 준비하므로 테스트 계정에는 DB 생성 권한만 필요하며 superuser는 필요하지 않습니다.
 
 2026-10-25 코드·주석 점검에서 코드·격리 DB 검증 **25개가 통과**했습니다. 변경 범위와 검색 결과 대조는 [CASE-006](../docs/cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)에 기록합니다.
 

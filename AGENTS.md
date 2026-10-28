@@ -35,18 +35,22 @@
 | 본문 구성·임베딩·SQL·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
 | LLM 판정·답변·검토 안내 연결 | 아직 미구현 | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | 아직 미구현 | [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
-| 실행·적재·복구 | `compose.yaml`, `rag/` | [운영 절차](docs/harness/runbook.md) |
+| 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
+
+운영·설치·평가를 Docker 없이 수행한다. 새 실행 구성에 Docker 의존성을 추가하지 않는다.
 
 ## 실행과 검증
 
-모든 명령은 저장소 루트에서 실행한다. 모델 실행 환경은 Docker의 Python 3.12다. 호스트의 `python3 -m rag search`는 표준 라이브러리를 쓰는 API 클라이언트다.
+모든 명령은 저장소 루트에서 실행한다. 모델 실행 환경은 네이티브 Python 3.12 가상환경이다. [네이티브 운영 안내](docs/harness/네이티브_운영.md)를 따른다. 호스트의 `python3 -m rag search`는 표준 라이브러리를 쓰는 API 클라이언트다.
 
 ```bash
 git status --short
 python3 -m rag status
 
-# 모델 추론 없이 코드와 격리 PostgreSQL을 검증한다. postgres 서비스가 필요하다.
-docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider
+# 모델 추론 없이 코드와 격리 PostgreSQL을 검증한다. 네이티브 DB·테스트 템플릿이 필요하다.
+source scripts/native-env.sh
+RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
+.venv/bin/python -m rag.verify
 ```
 
 변경별 검증은 [평가 문서](docs/harness/evaluation.md)를 따른다. 문서만 바꿨다면 링크·명령·구현 상태를 대조하고 비싼 모델 평가를 반복하지 않는다. 검색 변경은 관련 회귀 평가를, 원본·적재 변경은 DB 무결성 대조를 추가한다. 실패한 검증을 삭제하거나 기대값만 바꿔 통과시키지 않는다.

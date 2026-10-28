@@ -4,7 +4,7 @@
 
 ## 현재 실행 가능한 검증
 
-모든 명령은 저장소 루트 기준이며 Docker 이미지가 준비되어 있어야 한다.
+모든 명령은 저장소 루트 기준이다. 현재 네이티브 환경의 실행 방법은 [네이티브 운영 안내](네이티브_운영.md)를 따른다.
 
 | 검증 | 확인하는 것 | 확인하지 않는 것 |
 | --- | --- | --- |
@@ -13,17 +13,15 @@
 | `rag.evaluate` | API 예제에서 기대 문서/부서가 상위 5개 안에 있는지, 검색 전용 계약 | 자동 답변 정확도, 범위 밖 탐지율, 운영 임계값 |
 
 ```bash
-# postgres 서비스 필요. 3개 PostgreSQL 테스트는 임시 DB를 만들고 삭제한다.
-docker compose run --rm --no-deps -e RUN_PG_TESTS=1 --entrypoint python rag -m pytest rag/tests -q -p no:cacheprovider
-
-# 현재 원본과 적재된 DB를 대조한다. 모델 추론은 하지 않는다.
-docker compose run --rm --no-deps --entrypoint python rag -m rag.verify
-
-# API와 모델 추론 필요. 기존 기준 보고서를 덮어쓰지 않고 로컬 결과를 저장한다.
+source scripts/native-env.sh
+RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
+.venv/bin/python -m rag.verify
 python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 ```
 
-`RUN_PG_TESTS=1`을 생략하면 DB 테스트 3개는 건너뛴다. DB 생성 권한이 필요하며 기본 개발 Compose에서는 제공된다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
+`scripts/setup-native-db.sh`로 준비한 테스트 템플릿과 DB 생성 권한을 사용한다. `RUN_PG_TESTS=1`을 빼면 격리 DB 테스트 3개를 건너뛴다. 템플릿에는 확장만 포함하며 운영 데이터는 복사하지 않는다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
+
+수동 검색 확인은 [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴)를 사용할 수 있다. 2026-10-28에는 네이티브 환경에서 화면 회귀 2개를 포함한 전체 테스트 27개가 통과했다. [CASE-011](../cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 
 ## 변경별 필요한 확인
 

@@ -51,7 +51,7 @@ def doc(corpus, sid, text, vector_axis, department=None):
 
 @pytest.fixture
 def database(monkeypatch):
-    """테스트마다 독립된 임시 DB와 합성 검색 문서를 준비하고 종료 후 삭제합니다.
+    """확장을 준비한 템플릿에서 임시 DB와 합성 검색 문서를 만들고 종료 후 삭제합니다.
 
     Args:
         monkeypatch: 임시 DB 이름을 환경변수에 적용할 pytest 픽스처입니다.
@@ -61,7 +61,9 @@ def database(monkeypatch):
     """
     name = "complaint_rag_test_" + uuid.uuid4().hex[:12]
     with psycopg.connect(autocommit=True) as admin:
-        admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
+        template = os.getenv("RAG_TEST_TEMPLATE", "complaint_rag_test_template")
+        admin.execute(sql.SQL("CREATE DATABASE {} TEMPLATE {}").format(
+            sql.Identifier(name), sql.Identifier(template)))
         monkeypatch.setenv("PGDATABASE", name)
         try:
             with connect(initialize=True) as conn:
