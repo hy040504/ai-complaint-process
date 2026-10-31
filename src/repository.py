@@ -41,7 +41,9 @@ class ComplaintRepository(Protocol):
         """
         ...
 
-    def change(self, complaint_id: str, expected: int, action: Callable[[Complaint], None]) -> Complaint:
+    def change(
+        self, complaint_id: str, expected: int, action: Callable[[Complaint], None]
+    ) -> Complaint:
         """최신 버전을 검사한 뒤 업무 변경을 원자적으로 저장합니다.
 
         Args:
@@ -72,7 +74,8 @@ class SQLiteRepository:
         path.parent.mkdir(parents=True, exist_ok=True)
         with self.connection() as db:
             db.execute("PRAGMA journal_mode=WAL")
-            db.executescript("""
+            db.executescript(
+                """
                 CREATE TABLE IF NOT EXISTS complaints (
                     id TEXT PRIMARY KEY, version INTEGER NOT NULL CHECK(version > 0),
                     created_at TEXT NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload))
@@ -82,7 +85,8 @@ class SQLiteRepository:
                     complaint_id TEXT NOT NULL REFERENCES complaints(id),
                     PRIMARY KEY(owner, key)
                 );
-            """)
+            """
+            )
 
     @contextmanager
     def connection(self) -> Iterator[sqlite3.Connection]:
@@ -102,7 +106,12 @@ class SQLiteRepository:
     def all(self) -> list[Complaint]:
         """저장된 전체 업무 민원을 최신 등록순으로 반환합니다."""
         with self.connection() as db:
-            return [Complaint.model_validate_json(row[0]) for row in db.execute("SELECT payload FROM complaints ORDER BY created_at DESC, id DESC")]
+            return [
+                Complaint.model_validate_json(row[0])
+                for row in db.execute(
+                    "SELECT payload FROM complaints ORDER BY created_at DESC, id DESC"
+                )
+            ]
 
     def get(self, complaint_id: str) -> Complaint:
         """민원 식별자로 조회하며 누락은 404 업무 오류로 처리합니다.
@@ -117,7 +126,9 @@ class SQLiteRepository:
             AppError: 민원이 없으면 발생합니다.
         """
         with self.connection() as db:
-            result = db.execute("SELECT payload FROM complaints WHERE id=?", (complaint_id,)).fetchone()
+            result = db.execute(
+                "SELECT payload FROM complaints WHERE id=?", (complaint_id,)
+            ).fetchone()
         if result is None:
             raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
         return Complaint.model_validate_json(result[0])
@@ -139,19 +150,36 @@ class SQLiteRepository:
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
             if key:
-                old = db.execute("SELECT fingerprint, complaint_id FROM idempotency WHERE owner=? AND key=?", (row.owner, key)).fetchone()
+                old = db.execute(
+                    "SELECT fingerprint, complaint_id FROM idempotency WHERE owner=? AND key=?",
+                    (row.owner, key),
+                ).fetchone()
                 if old:
                     if old[0] != fingerprint:
-                        raise AppError(409, "idempotency_conflict", "동일 등록 키에 다른 내용이 전송되었습니다.")
-                    stored = db.execute("SELECT payload FROM complaints WHERE id=?", (old[1],)).fetchone()
+                        raise AppError(
+                            409,
+                            "idempotency_conflict",
+                            "동일 등록 키에 다른 내용이 전송되었습니다.",
+                        )
+                    stored = db.execute(
+                        "SELECT payload FROM complaints WHERE id=?", (old[1],)
+                    ).fetchone()
                     assert stored is not None
                     return Complaint.model_validate_json(stored[0])
-            db.execute("INSERT INTO complaints VALUES(?,?,?,?)", (row.id, row.version, row.date.isoformat(), row.model_dump_json()))
+            db.execute(
+                "INSERT INTO complaints VALUES(?,?,?,?)",
+                (row.id, row.version, row.date.isoformat(), row.model_dump_json()),
+            )
             if key:
-                db.execute("INSERT INTO idempotency VALUES(?,?,?,?)", (row.owner, key, fingerprint, row.id))
+                db.execute(
+                    "INSERT INTO idempotency VALUES(?,?,?,?)",
+                    (row.owner, key, fingerprint, row.id),
+                )
         return row
 
-    def change(self, complaint_id: str, expected: int, action: Callable[[Complaint], None]) -> Complaint:
+    def change(
+        self, complaint_id: str, expected: int, action: Callable[[Complaint], None]
+    ) -> Complaint:
         """트랜잭션 안에서 버전 검사·업무 검증·갱신을 함께 수행합니다.
 
         Args:
@@ -167,13 +195,22 @@ class SQLiteRepository:
         """
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
-            result = db.execute("SELECT payload FROM complaints WHERE id=?", (complaint_id,)).fetchone()
+            result = db.execute(
+                "SELECT payload FROM complaints WHERE id=?", (complaint_id,)
+            ).fetchone()
             if result is None:
                 raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
             row = Complaint.model_validate_json(result[0])
             if row.version != expected:
-                raise AppError(409, "version_conflict", "다른 화면에서 내용이 변경되었습니다. 입력을 보관한 뒤 최신 내용을 불러와 주세요.")
+                raise AppError(
+                    409,
+                    "version_conflict",
+                    "다른 화면에서 내용이 변경되었습니다. 입력을 보관한 뒤 최신 내용을 불러와 주세요.",
+                )
             action(row)
             row.version += 1
-            db.execute("UPDATE complaints SET version=?, payload=? WHERE id=? AND version=?", (row.version, row.model_dump_json(), complaint_id, expected))
+            db.execute(
+                "UPDATE complaints SET version=?, payload=? WHERE id=? AND version=?",
+                (row.version, row.model_dump_json(), complaint_id, expected),
+            )
         return row

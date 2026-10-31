@@ -30,18 +30,24 @@ Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"st
 
 ## 정적 타입과 구성
 
+읽을 때는 `app.py → api.py → service.py → repository.py` 순서로 따라가면 된다. `app.py`는 설정을 읽고 저장소·서비스·API·화면을 연결한다. 요청은 API에서 입력을 검증한 뒤 서비스에서 권한·상태를 확인하고 저장소에서 변경한다. 공통 인증·JSON·오류는 `http.py`, 시민·담당자 정적 화면은 `web.py`에 모았다.
+
 | 파일 | 책임·타입 경계 |
 | --- | --- |
 | `models.py` | Pydantic 요청·응답·업무 모델, `Literal` 상태·역할·지역, `Annotated` 길이·정수 제한, 공개·내부 DTO 분리 |
 | `api.py` | Flask APIBlueprint, 모델 기반 요청·응답 검증과 Swagger 자동 생성 |
-| `service.py` | 세션 작성자·역할·상태 전이·답변 기원·맥락 버전·늦은 작업 검사 |
+| `service.py` | 권한·버전 검사와 업무 동작. 답변 저장·철회, 작업 시작·취소를 짧은 전용 메서드로 구분 |
 | `repository.py` | `ComplaintRepository(Protocol)`과 SQLite 구현. 트랜잭션 안의 기대 버전·멱등성 검사 |
 | `config.py` | `@dataclass(frozen=True)` 설정, 업무 DB 경로·시연 계정 선택 설정 |
-| `app.py` | 앱 팩토리, 의존성 주입, 공통 오류·인증·동일 출처 검사, UI·Swagger 제공 |
+| `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 순서의 앱 팩토리 |
+| `http.py` | 세션 사용자 확인, JSON 응답, 동일 출처 검사, 오류 응답, 캐시·보안 헤더 |
+| `web.py` | 시민·담당자 정적 파일과 Swagger·OpenAPI 진입 주소 |
 | `seed.py` | 사용자가 명시적으로 실행하는 합성 자료 생성 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 
 모든 서버 함수에는 타입 힌트를 적용했다. `Any`나 `type: ignore`로 업무 코드 검사를 우회하지 않고 `mypy --strict`를 통과시켰다. 동적 입력은 Pydantic에서 검증한 뒤 구체 타입으로 서비스에 전달하며, DB 재조회 결과도 모델로 재검증한다. Python 타입 힌트의 정적 검사와 실행 시 검증은 별개다.
+
+코드 형식은 개발 의존성에 포함한 Black으로 정리한다. 저장소 루트에서 `python -m black --check src`로 형식을 확인하고, 수정 시에는 같은 가상환경에서 `python -m black src`를 실행한다. 한국어 Google 형식 docstring과 타입 힌트는 유지한다. [구조 정리 기록](../docs/cases/사례-021-Flask-서버-코드-구조-간소화-2026-10-31.md)
 
 앱 팩토리는 [Flask 공식 안내](https://flask.palletsprojects.com/en/stable/patterns/appfactories/)를 따랐다. 요청·응답 모델과 자동 문서는 [flask-openapi3 요청 선언](https://luolingchun.github.io/flask-openapi/v4.x/Usage/Request/) 및 [응답 검증](https://luolingchun.github.io/flask-openapi/v4.x/Usage/Response/) 기능을 사용한다. Swagger JS·CSS는 설치 패키지의 로컬 자산으로 제공한다.
 

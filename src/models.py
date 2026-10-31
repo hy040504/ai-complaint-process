@@ -8,14 +8,26 @@ from pydantic.alias_generators import to_camel
 
 Role = Literal["citizen", "staff"]
 Status = Literal["submitted", "under_review", "answered", "closed", "withdrawn"]
-JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled", "superseded"]
+JobStatus = Literal[
+    "queued", "running", "succeeded", "failed", "cancelled", "superseded"
+]
 District = Literal["상당구", "서원구", "흥덕구", "청원구", "모름"]
-Category = Literal["도로·교통", "환경·청소", "공원·녹지", "생활·복지", "주택·건축", "기타"]
+Category = Literal[
+    "도로·교통", "환경·청소", "공원·녹지", "생활·복지", "주택·건축", "기타"
+]
 Visibility = Literal["private", "public"]
-Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
-Content = Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=2000)]
-Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
-AnswerText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+Title = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
+]
+Content = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=10, max_length=2000)
+]
+Reason = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+]
+AnswerText = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)
+]
 Version = Annotated[int, Field(strict=True, ge=1)]
 
 
@@ -28,8 +40,11 @@ class Model(BaseModel):
     """미정의 필드를 거부하고 웹 계약은 camelCase로 직렬화합니다."""
 
     model_config = ConfigDict(
-        extra="forbid", alias_generator=to_camel, populate_by_name=True,
-        validate_assignment=True, serialize_by_alias=True,
+        extra="forbid",
+        alias_generator=to_camel,
+        populate_by_name=True,
+        validate_assignment=True,
+        serialize_by_alias=True,
     )
 
 
@@ -162,7 +177,9 @@ class ReasonInput(VersionInput):
 class MessageInput(VersionInput):
     """본문을 임의로 자르지 않는 추가 문의 요청입니다."""
 
-    message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    message: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+    ]
 
 
 class AssignmentInput(VersionInput):
@@ -201,7 +218,9 @@ class ListQuery(Model):
 class CreateHeaders(BaseModel):
     """등록 중복 요청을 구별하는 선택적 멱등성 키입니다."""
 
-    idempotency_key: str | None = Field(default=None, alias="Idempotency-Key", min_length=1, max_length=100)
+    idempotency_key: str | None = Field(
+        default=None, alias="Idempotency-Key", min_length=1, max_length=100
+    )
 
 
 class ErrorResponse(Model):

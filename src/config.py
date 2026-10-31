@@ -44,4 +44,12 @@ class Settings:
             except FileExistsError:
                 pass
             secret = key_file.read_text(encoding="utf-8").strip()
-        return cls(database=Path(os.environ.get("COMPLAINT_DATABASE", str(data_dir / "complaints.sqlite3"))), secret_key=secret, demo_login=os.environ.get("COMPLAINT_DEMO_LOGIN", "1") == "1")
+        return cls(
+            database=Path(
+                os.environ.get(
+                    "COMPLAINT_DATABASE", str(data_dir / "complaints.sqlite3")
+                )
+            ),
+            secret_key=secret,
+            demo_login=os.environ.get("COMPLAINT_DEMO_LOGIN", "1") == "1",
+        )
