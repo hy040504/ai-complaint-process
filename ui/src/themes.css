@@ -1,4 +1,22 @@
 /* 두 사이트가 공유하는 저장형 다크 테마입니다. */
+/* 작은 화면에서도 시민 헤더의 테마 버튼을 같은 줄에 배치합니다. */
+@media (max-width: 600px) {
+  .citizen-header {
+    position: relative;
+    padding-right: 64px;
+  }
+  .citizen-header .citizen-header-actions {
+    position: absolute;
+    right: 18px;
+    top: 21px;
+    display: flex;
+    gap: 6px;
+  }
+  .citizen-header .citizen-header-actions > .theme-toggle {
+    width: 34px;
+    height: 34px;
+  }
+}
 body[data-theme="dark"] {
   background: #101827;
   color: #e2e9f5;

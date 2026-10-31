@@ -4,6 +4,8 @@
 
 # AI 민원 처리 시스템
 
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![SQLite](https://img.shields.io/badge/Demo_SQLite-Saved-3b719e?style=flat-square)
+
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
 청주톡톡의 FAQ와 공개 민원 사례를 활용해 시민과 담당자 사이에 AI 완충지대를 만듭니다.
@@ -48,6 +50,7 @@
 | 검색 | 벡터 + 한국어 BM25 + RRF + 재정렬, CLI/API | 구현 완료 |
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
+| 외부 LLM 예제 | [독립 호출 예제](scripts/public_llm_client.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · RAG 통합 전 |
 | AI 판정·응답 | 범용 LLM의 의도·근거 판단, FAQ 기반 답변 | 미구현 · 모델 미선정 |
 | 시연 | 시민 사이트·담당자 포털 화면 | 로컬 UI 구현 · CLI 챗봇 미구현 |
 | 시연 웹·업무 서버 | 목록·CRUD·추가 문의·답변 편집·게시·작업 시연 | Flask·Swagger·SQLite 업무 저장·UI 연결 구현 · 실제 AI·SSE·운영 인증 미구현 |

@@ -83,3 +83,5 @@ RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 - 사례 본문과 색인의 상태를 맞추고, 현재 기준인 하네스·계획·데이터 문서와 CHANGELOG를 함께 연결한다. 단순 오탈자 수정마다 새 사례를 만들 필요는 없다.
 - 과거 실행 결과에는 실행 시점을 남긴다. 작업 완료와 기능 구현·원격 업로드·운영 반영을 구별하고, 수행하지 않은 검증이나 반영을 완료로 적지 않는다.
 - `docs/cases`는 프로젝트 개발 기록이다. RAG의 민원 검색 데이터와 혼합해 적재하지 않는다.
+
+외부 LLM 독립 예제는 [scripts/public_llm_client.py](scripts/public_llm_client.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.

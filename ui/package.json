@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs",
-    "check": "node --check src/app.js && node --check src/citizen.js && node --check src/staff.js && node --check src/service-icons.js && node --check src/store.js && node --check src/icons.js && node --check scripts/export-service-icons.mjs && node --check server.mjs",
-    "test": "node --test tests/store.test.mjs",
+    "check": "node scripts/check-syntax.mjs",
+    "test": "node --test tests/*.test.mjs",
     "icons:export": "node scripts/export-service-icons.mjs"
   }
 }

@@ -105,3 +105,5 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 - 기능·데이터·계약·운영 방식의 의미 있는 변경은 [CHANGELOG](../CHANGELOG.md)에 정리하고, 이 목차의 패치 표와 사례 상태를 맞춥니다. 문서 간 같은 내용을 길게 복제하기보다 상세 문서로 연결합니다.
 - 개별 버그·개선·설계·운영 기록은 [사례 관리 규칙](cases/README.md)에 따라 번호와 한국어 파일명으로 작성합니다. 경위·증거는 사례에, 현재 적용할 기준은 하네스·데이터·실행 문서에 기록하고 서로 연결합니다.
 - `.env`, PostgreSQL 클러스터, 모델 캐시, `db/dumps/*.dump`, `db/app/*.sqlite3`, 쿠키가 포함된 SAZ는 Git에 넣지 않습니다. 원본 JSON과 스키마 SQL은 `db/`에 둡니다.
+
+외부 LLM 독립 예제는 [../scripts/public_llm_client.py](../scripts/public_llm_client.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.
