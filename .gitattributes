@@ -1,0 +1,2 @@
+# Bash 스크립트는 Windows 작업 트리에서도 LF를 유지한다.
+*.sh text eol=lf

@@ -8,7 +8,7 @@
 
 청주톡톡의 FAQ와 공개 민원 사례를 활용해 시민과 담당자 사이에 AI 완충지대를 만듭니다.
 
-![Stage](https://img.shields.io/badge/Stage-Retrieval_MVP-0f766e?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?style=flat-square&logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square) ![GitHub](https://img.shields.io/badge/Repository-GitHub-334155?style=flat-square&logo=github&logoColor=white)
+![Stage](https://img.shields.io/badge/Stage-Web_&_Retrieval_MVP-0f766e?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?style=flat-square&logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square) ![GitHub](https://img.shields.io/badge/Repository-GitHub-334155?style=flat-square&logo=github&logoColor=white)
 
 [구현 현황](#현재-구현-상태) · [DB와 검색](#저장과-검색) · [처리 흐름](#처리-흐름) · [빠른 시작](#빠른-시작) · [문서 목차](docs/README.md) · [변경 이력](CHANGELOG.md)
 
@@ -21,16 +21,24 @@
 ---
 
 > [!NOTE]
-> **현재 단계 · 2026-10-28 UTC · 네이티브 환경 전환**<br>
-> **완료:** 데이터·관계형/벡터 DB·검색 CLI/API.<br>
-> **다음:** Jev 없는 LLM + RAG 기반 CLI 챗봇 → 민원 게시판·작성·답변 서버를 갖춘 시연 웹.<br>
-> **추후:** 기본 성능 평가 후 Jev 추가, 반복 오류에 따라 LoRA 검토. 최종 LLM은 미선정입니다.
+> **현재 단계 · 2026-10-31 · 검색 + 웹 업무 시연**<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, SQLite 업무 저장, 다크·라이트 테마, 검색 CLI/API.<br>
+> **다음:** 실제 LLM + RAG 판정·답변, 작업자·SSE, 운영 인증·PostgreSQL 업무 저장 연결.
+
+| 바로 시작 | 안내 |
+| --- | --- |
+| 시민·담당자 사이트 | [UI 실행](ui/README.md) · [Flask 설치](src/README.md) |
+| API 문서 | 서버 실행 후 `http://127.0.0.1:5000/docs` |
+| 검색·데이터 | [검색 실행](rag/README.md) · [DB 경로](db/README.md) |
+| 개발 기록 | [분야별 문서](docs/README.md) · [사례 색인](docs/cases/README.md) |
 
 | FAQ 안내 근거 | 공개 민원 사례 | 부서 디렉터리 | 적재된 임베딩 |
 | :---: | :---: | :---: | :---: |
 | **94건** | **5,015건** | **127개** | **5,109개 · 1024차원** |
 
 ## 현재 구현 상태
+
+**2026-10-31 추가:** [시민·담당자 웹 UI](ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](src/README.md)를 구현했습니다. Python 3.12 별도 가상환경에서 실행하며 민원·답변·이력을 업무 SQLite DB에 저장합니다. Pydantic 모델·저장소 `Protocol`·엄격한 타입 검사와 서버 역할·작성자·버전 검사를 적용했습니다. 기본 주소는 `http://127.0.0.1:5000`, Swagger는 `/docs`입니다. 실제 AI·SSE·PostgreSQL 업무 스키마·운영 본인인증·공식 이관은 미구현이며 AI 작업은 명시적인 단계 시연입니다. [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
 | 영역 | 구성·역할 | 상태 |
 | --- | --- | --- |
@@ -41,11 +49,11 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | AI 판정·응답 | 범용 LLM의 의도·근거 판단, FAQ 기반 답변 | 미구현 · 모델 미선정 |
-| 시연 | CLI 챗봇 → 청주톡톡과 비슷한 웹 MVP | 예정 |
-| 시연 웹·업무 서버 | 실제 목록·CRUD, AI 답변 표시·담당자 수정, 실시간 작업 모니터 | 상세설계·분야별 작업 정리 · 미구현 |
+| 시연 | 시민 사이트·담당자 포털 화면 | 로컬 UI 구현 · CLI 챗봇 미구현 |
+| 시연 웹·업무 서버 | 목록·CRUD·추가 문의·답변 편집·게시·작업 시연 | Flask·Swagger·SQLite 업무 저장·UI 연결 구현 · 실제 AI·SSE·운영 인증 미구현 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
-현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. 시연 웹에서는 민원을 등록하고 답변을 주고받는 서버까지 구현할 계획입니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
+현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. 시연 웹의 등록·답변 교환은 Flask와 SQLite로 구현했습니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
 
 웹 단계는 민원 목록·작성·상세에서 서버에 저장된 글과 답변·처리 상태를 확인하도록 구성합니다. 같은 AI 응대 계층을 CLI와 공유하고, 등록한 민원은 기존 RAG 지식과 구분해 저장하는 안을 제안합니다. [시연 웹·민원 서버 구현계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)
 
@@ -61,7 +69,7 @@
 | `routing_cases` | 민원 원문·과거 처리 맥락·현재 부서 연결 | 제목 + 민원 요지 | 5,015건 |
 | `department_directory` | 부서 ID·현행 명칭·별칭·관할 및 검증 상태 | 일반 관계형 테이블로 관리 | 127개 |
 
-FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](rag/schema.sql) · [시스템 구조](docs/harness/architecture.md)
+FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](db/schema/complaint_rag.sql) · [데이터 폴더](db/README.md) · [시스템 구조](docs/harness/architecture.md)
 
 | 검색 단계 | 현재 설정 |
 | --- | --- |

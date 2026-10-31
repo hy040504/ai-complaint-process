@@ -34,6 +34,8 @@ bash rag/test_search.sh
 # 다른 디렉터리에서는 스크립트의 절대 경로를 사용합니다.
 ```
 
+스크립트는 LF 줄 끝만 사용합니다. Windows 작업 트리의 CRLF는 WSL bash에서 `set -o pipefail` 오류를 만듭니다. `*.sh`는 저장소 루트 `.gitattributes`로 LF를 유지합니다. Windows PowerShell의 `bash`는 WSL이므로 `C:\...` 경로를 그대로 넘기지 말고, WSL에서 저장소 루트로 이동한 뒤 위 명령을 실행합니다.
+
 | 메뉴 | 동작 |
 | --- | --- |
 | `1` | API 준비 상태·FAQ·사례·부서 건수 확인 |
@@ -75,7 +77,7 @@ PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 
 
 FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(1024)`를 함께 저장합니다. `routing_cases.department_id`는 부서 디렉터리의 ID를 참조하는 외래 키입니다. 부서 사전과 BM25 통계는 일반 관계형 테이블로 사용합니다.
 
-원본 두 JSON은 변경하지 않고 `payload`에 그대로 보관합니다. 문서 식별자는 데이터 종류와 사이트의 `source_id`입니다. 사이트 표시 번호 `id`를 문서 키로 사용하지 않습니다.
+원본 두 JSON은 `db/`에 두고 변경하지 않은 채 `payload`에 그대로 보관합니다. 스키마 SQL은 `db/schema/complaint_rag.sql`이며 적재 코드가 이 파일을 읽습니다. 문서 식별자는 데이터 종류와 사이트의 `source_id`입니다. 사이트 표시 번호 `id`를 문서 키로 사용하지 않습니다.
 
 **FAQ는 원문 한 건을 하나의 문서로 저장합니다.** 모든 안내 필드를 함께 임베딩합니다. 반환할 때도 원문 전체를 제공하여 조건·주의사항이 떨어져 나가지 않게 합니다.
 

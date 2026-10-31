@@ -1,5 +1,7 @@
 # 시스템 구조
 
+2026-10-31 업무 서버 구현을 추가했다. 시민·담당자 `ui/`는 루트 `src/` Flask API를 호출하고, API의 Pydantic 모델 → 업무 서비스 → 저장소 `Protocol` → 별도 SQLite 경로로 처리한다. Swagger는 같은 모델에서 자동 생성하며 `/docs`에서 제공한다. 시민 응답에는 공개 DTO만 사용한다. 기존 검색 계층과 원본·색인은 분리하며 실제 AI·PostgreSQL 업무 스키마·작업자·SSE는 후속이다. 현재 실행·타입·저장·오류 계약은 [서버 안내](../../src/README.md)를 따른다.
+
 기준: 2026-10-25. 현재는 검색 계층이 구현되어 있다. 초기 응대 계층은 **Jev 없는 LLM + RAG**로 개발하며, 판정·응답 연결은 [별도 설계](decision-policy.md)다. Jev는 기준 성능 확보 후 확장한다.
 
 ## 데이터와 실행 경로
@@ -28,7 +30,7 @@ flowchart TD
 | [config.py](../../rag/config.py) | 모델 리비전·차원·본문/토크나이저 버전·검색 설정 |
 | [models.py](../../rag/models.py) | BGE-M3 임베딩과 긴 문서의 창 단위 재정렬 |
 | [korean.py](../../rag/korean.py) | Kiwi 형태소와 BM25용 토큰 빈도 |
-| [schema.sql](../../rag/schema.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
+| [complaint_rag.sql](../../db/schema/complaint_rag.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
 | [ingest.py](../../rag/ingest.py) | 벡터 재사용·체크포인트·한 트랜잭션으로 데이터 반영 |
 | [search.py](../../rag/search.py) | 두 검색기·RRF·재정렬·부서 후보 집계 |
 | [api.py](../../rag/api.py), [__main__.py](../../rag/__main__.py) | HTTP API와 표준 라이브러리 CLI 클라이언트 |

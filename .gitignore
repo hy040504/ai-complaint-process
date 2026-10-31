@@ -12,3 +12,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+.venv-web/
+.web-data/
+db/app/*.sqlite3
+db/app/*.sqlite3-*
+db/dumps/*.dump
+db/dumps/*.list
+.mypy_cache/

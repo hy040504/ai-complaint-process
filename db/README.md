@@ -11,6 +11,19 @@
 
 두 목적의 검색 구현은 [RAG 실행 문서](../rag/README.md)에 있습니다. 원본 JSON은 유지하고, 임베딩·한국어 BM25 색인·부서 디렉터리를 별도의 PostgreSQL `complaint_rag` 스키마에 저장합니다. 공식 업무분장이 없는 부서는 검증 전 상태로 구분합니다.
 
+프로젝트의 데이터 파일은 이 `db/` 아래에 모읍니다. 검색 코드·업무 서버·설치 스크립트는 아래 경로를 사용합니다.
+
+| 경로 | 내용 | Git |
+| --- | --- | --- |
+| `자주_묻는_민원.json` | FAQ 원문 94건 | 포함 |
+| `공개_민원_사례.json` | 공개 사례 원문 5,015건 | 포함 |
+| `schema/complaint_rag.sql` | 검색용 PostgreSQL 스키마. `rag/store.py`가 읽음 | 포함 |
+| `schema/complaint_app.sql` | 게시판 PostgreSQL 스키마(후속) | 포함 |
+| `dumps/complaint_rag.dump` | 벡터가 들어 있는 검색 DB 복사본 | 제외. 우분투에서 `scripts/export-rag-dump.sh` |
+| `app/complaints.sqlite3` | 시연 웹 민원·답변 SQLite | 제외. 기본 업무 DB 경로 |
+
+SQL 파일만으로는 행이 없습니다. 다른 컴퓨터에서 검색까지 바로 쓰려면 dump를 함께 복사하거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용하려면 `scripts/apply-db-schema.sh`, dump 복원은 `scripts/restore-rag-dump.sh`입니다. 현재 시연 웹은 PostgreSQL `complaint_app`이 아니라 `db/app/complaints.sqlite3`를 씁니다.
+
 이 폴더에는 청주톡톡 사이트에서 수집한 민원 자료를 JSON으로 정리한 파일 두 개가 있습니다. JSON 파일은 UTF-8 인코딩이며, 한글이 그대로 저장됩니다. 두 파일의 상세 페이지는 2026-10-24(UTC)에 전건 재확인했습니다.
 
 각 항목의 `source_url`은 실제 상세 페이지 주소이고, `retrieved_at`은 해당 페이지를 다시 확인한 UTC 시각입니다. **`retrieved_at`은 원문 수정일이 아닙니다.** 사이트가 최종 수정일을 제공하지 않으므로 JSON에도 확인되지 않은 수정일을 채우지 않습니다.

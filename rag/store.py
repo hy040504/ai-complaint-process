@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from pathlib import Path
 
 import psycopg
 from pgvector.psycopg import register_vector
@@ -10,7 +9,7 @@ from psycopg import sql
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
-from .config import COLLECTIONS, TOKENIZER_VERSION, embedding_signature
+from .config import COLLECTIONS, RAG_SCHEMA_SQL, TOKENIZER_VERSION, embedding_signature
 
 
 @contextmanager
@@ -26,7 +25,7 @@ def connect(initialize: bool = False):
     """
     with psycopg.connect(connect_timeout=10, row_factory=dict_row) as conn:
         if initialize:
-            conn.execute(Path(__file__).with_name("schema.sql").read_text())
+            conn.execute(RAG_SCHEMA_SQL.read_text(encoding="utf-8"))
             conn.commit()
         register_vector(conn)
         conn.commit()  # 타입 등록 조회를 마쳐 호출자가 읽기 스냅샷을 새로 시작할 수 있게 합니다.

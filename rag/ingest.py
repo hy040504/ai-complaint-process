@@ -11,8 +11,8 @@ import numpy as np
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from .config import (COLLECTIONS, DIMENSION, EMBEDDING_MODEL, EMBEDDING_REVISION, ROOT,
-                     TOKENIZER_VERSION, embedding_signature)
+from .config import (CASES_JSON, COLLECTIONS, DIMENSION, EMBEDDING_MODEL, EMBEDDING_REVISION,
+                     FAQ_JSON, ROOT, TOKENIZER_VERSION, embedding_signature)
 from .data import load_sources
 from .korean import KoreanTokenizer
 from .models import Models
@@ -35,8 +35,7 @@ def ingest(faq_path: Path | None = None, cases_path: Path | None = None, reembed
     Raises:
         ValueError: 동시 적재·색인 비호환·잘못된 원본·토큰 또는 벡터 오류가 있으면 발생합니다.
     """
-    docs, departments, _ = load_sources(faq_path or ROOT / "db/자주_묻는_민원.json",
-                                       cases_path or ROOT / "db/공개_민원_사례.json")
+    docs, departments, _ = load_sources(faq_path or FAQ_JSON, cases_path or CASES_JSON)
     with connect(initialize=True) as conn:
         if not conn.execute("SELECT pg_try_advisory_lock(730402401) AS acquired").fetchone()["acquired"]:
             raise ValueError("다른 적재 작업이 실행 중입니다.")

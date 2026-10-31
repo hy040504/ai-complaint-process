@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from rag.config import ROOT
+from rag.config import CASES_JSON, FAQ_JSON
 from rag.data import case_text, department_id, faq_text, infer_district, load_sources
 from rag.korean import KoreanTokenizer
 from rag.search import department_candidates, reciprocal_rank_fusion
@@ -27,7 +27,7 @@ def test_every_source_survives_and_unknown_departments_are_not_candidates(source
         sources: 원본에서 구성한 검색 문서·부서 사전·사례를 제공하는 픽스처입니다.
     """
     docs, departments, cases = sources
-    faq = json.loads((ROOT / "db/자주_묻는_민원.json").read_text())
+    faq = json.loads(FAQ_JSON.read_text(encoding="utf-8"))
     assert len(docs) == sum(len(rows) for rows in faq.values()) + len(cases)
     assert len({(d["corpus"], d["source_id"]) for d in docs}) == len(docs)
     current_ids = {d["department_id"] for d in departments}
@@ -120,7 +120,7 @@ def test_duplicate_source_fails_before_any_database_write(tmp_path):
     Args:
         tmp_path: 변형한 FAQ 원본을 저장할 임시 디렉터리입니다.
     """
-    faqs = json.loads((ROOT / "db/자주_묻는_민원.json").read_text())
+    faqs = json.loads(FAQ_JSON.read_text(encoding="utf-8"))
     key = next(k for k, records in faqs.items() if records)
     faqs[key].append(copy.deepcopy(faqs[key][0]))
     path = tmp_path / "faq.json"
@@ -135,7 +135,7 @@ def test_inconsistent_current_department_fails(tmp_path):
     Args:
         tmp_path: 변형한 공개 사례 원본을 저장할 임시 디렉터리입니다.
     """
-    cases = json.loads((ROOT / "db/공개_민원_사례.json").read_text())
+    cases = json.loads(CASES_JSON.read_text(encoding="utf-8"))
     cases[0]["department_status"] = "review_required"
     path = tmp_path / "cases.json"
     path.write_text(json.dumps(cases))

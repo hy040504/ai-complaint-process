@@ -8,6 +8,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+DB_DIR = ROOT / "db"
+FAQ_JSON = DB_DIR / "자주_묻는_민원.json"
+CASES_JSON = DB_DIR / "공개_민원_사례.json"
+RAG_SCHEMA_SQL = DB_DIR / "schema" / "complaint_rag.sql"
+APP_SCHEMA_SQL = DB_DIR / "schema" / "complaint_app.sql"
+RAG_DUMP = DB_DIR / "dumps" / "complaint_rag.dump"
+APP_SQLITE = DB_DIR / "app" / "complaints.sqlite3"
 COLLECTIONS = {"faq": "faq_knowledge", "routing": "routing_cases"}
 DISTRICTS = ("상당구", "서원구", "흥덕구", "청원구")
 EMBEDDING_MODEL = "BAAI/bge-m3"

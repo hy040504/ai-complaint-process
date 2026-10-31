@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 # 검색 API를 시험하는 메뉴입니다. 서비스·원본·색인을 변경하지 않습니다.
+# 줄 끝은 LF만 사용합니다. Windows CRLF는 WSL bash에서 set -o pipefail을 실패시킵니다.
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../scripts/native-env.sh"
 cd "$RAG_ROOT" || exit 1
-RAG_PYTHON="$RAG_ROOT/.venv/bin/python"
-[[ -x "$RAG_PYTHON" ]] || RAG_PYTHON=python3
+# 네이티브 Linux venv, Windows venv, 시스템 python3/python 순으로 클라이언트를 고릅니다.
+if [[ -x "$RAG_ROOT/.venv/bin/python" ]]; then
+  RAG_PYTHON="$RAG_ROOT/.venv/bin/python"
+elif [[ -x "$RAG_ROOT/.venv/Scripts/python.exe" ]]; then
+  RAG_PYTHON="$RAG_ROOT/.venv/Scripts/python.exe"
+elif command -v python3 >/dev/null 2>&1; then
+  RAG_PYTHON=python3
+elif command -v python >/dev/null 2>&1; then
+  RAG_PYTHON=python
+else
+  printf '%s\n' 'python3 또는 python을 찾을 수 없습니다.' >&2
+  exit 1
+fi
 RAG_RESULT="$(mktemp)" || exit 1
 chmod 600 "$RAG_RESULT"
 trap 'rm -f "$RAG_RESULT"' EXIT
