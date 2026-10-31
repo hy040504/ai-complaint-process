@@ -68,7 +68,7 @@ export async function api(path, { method = "GET", body, headers = {} } = {}) {
  * 역할을 바꿀 때 기존 역할의 메모리 데이터를 먼저 제거합니다.
  *
  * @param {string} role 선택할 시연 사용자 역할입니다.
- * @returns {Promise<unknown>} 비동기 작업의 완료 결과입니다.
+ * @returns {Promise<void>} 비동기 작업의 완료 결과입니다.
  */
 export async function setRole(role) {
   if (activeRole === role) return;
@@ -81,7 +81,7 @@ export async function setRole(role) {
 /**
  * 세션과 일치하는 최신 스냅샷만 메모리에 적용합니다.
  *
- * @returns {Promise<unknown>} 비동기 작업의 완료 결과입니다.
+ * @returns {Promise<object>} 비동기 작업의 완료 결과입니다.
  */
 export async function refresh() {
   const role = activeRole;
@@ -110,7 +110,7 @@ export function read() {
  * 서버가 허용한 목록에서 화면의 내 민원 조건을 적용합니다.
  *
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
- * @param {boolean} mine 본인 민원만 표시할지 여부입니다.
+ * @param {boolean} [mine=false] 본인 민원만 표시할지 여부입니다.
  * @returns {Array<object>} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function visible(data, mine = false) {

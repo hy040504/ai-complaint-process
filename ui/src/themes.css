@@ -1,4 +1,10 @@
 /* 두 사이트가 공유하는 저장형 다크 테마입니다. */
+/* 조회 대기·오류 카드도 선택한 테마를 따릅니다. */
+body[data-theme="dark"] .staff-workspace .panel {
+  background: #19263b;
+  border-color: #36445c;
+  color: #c0cde0;
+}
 /* 작은 화면에서도 시민 헤더의 테마 버튼을 같은 줄에 배치합니다. */
 @media (max-width: 600px) {
   .citizen-header {

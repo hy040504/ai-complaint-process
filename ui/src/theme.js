@@ -31,7 +31,7 @@ export function readTheme() {
  * 테마 선택·저장과 버튼의 아이콘·접근성 이름을 갱신합니다.
  *
  * @param {unknown} value 변환하거나 적용할 값입니다.
- * @param {boolean} persist 선택값을 브라우저에 저장할지 여부입니다.
+ * @param {boolean} [persist=true] 선택값을 브라우저에 저장할지 여부입니다.
  * @returns {void} 반환값 없이 화면 상태를 갱신합니다.
  */
 export function setTheme(value, persist = true) {

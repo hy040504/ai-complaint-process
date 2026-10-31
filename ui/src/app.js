@@ -109,9 +109,9 @@ function openModal(title, content) {
 /**
  * 변경 작업 실패 시 기존 입력을 보존하면서 안내합니다.
  *
- * @param {Function|string} action 실행할 동작 또는 동작 영역 HTML입니다.
+ * @param {function(): (unknown|Promise<unknown>)} action 실행할 동작 또는 동작 영역 HTML입니다.
  * @param {string} message 표시할 안내 문구입니다.
- * @param {boolean} rerender 성공 후 화면을 다시 그릴지 여부입니다.
+ * @param {boolean} [rerender=true] 성공 후 화면을 다시 그릴지 여부입니다.
  * @returns {Promise<boolean>} 비동기 작업의 완료 결과입니다.
  */
 async function perform(action, message, rerender = true) {
@@ -145,7 +145,7 @@ async function perform(action, message, rerender = true) {
 /**
  * loadScreen 화면 동작을 구성합니다.
  *
- * @returns {Promise<unknown>} 비동기 작업의 완료 결과입니다.
+ * @returns {Promise<void>} 비동기 작업의 완료 결과입니다.
  */
 async function loadScreen() {
   const sequence = ++loadSequence;
@@ -192,7 +192,7 @@ function shell(content) {
  * @param {string} eyebrow 제목 위의 구분 문구입니다.
  * @param {string} title 화면에 표시할 제목입니다.
  * @param {string} sub 제목의 보조 설명입니다.
- * @param {Function|string} action 실행할 동작 또는 동작 영역 HTML입니다.
+ * @param {string} [action=""] 실행할 동작 또는 동작 영역 HTML입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function pageHeading(eyebrow, title, sub, action = "") {
@@ -210,7 +210,7 @@ function home() {
  * listRows 화면 동작을 구성합니다.
  *
  * @param {Array<object>} rows 현재 권한으로 조회한 민원 목록입니다.
- * @param {boolean} staff 담당자 화면인지 여부입니다.
+ * @param {boolean} [staff=false] 담당자 화면인지 여부입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function listRows(rows, staff = false) {
@@ -224,7 +224,7 @@ function listRows(rows, staff = false) {
 /**
  * board 화면 동작을 구성합니다.
  *
- * @param {boolean} staff 담당자 화면인지 여부입니다.
+ * @param {boolean} [staff=false] 담당자 화면인지 여부입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function board(staff = false) {

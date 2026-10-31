@@ -2,7 +2,7 @@
  * 이름에 해당하는 장식용 아이콘을 반환합니다.
  *
  * @param {string} name 표시할 아이콘의 등록 이름입니다.
- * @param {number} size 아이콘의 가로·세로 크기입니다.
+ * @param {number} [size=20] 아이콘의 가로·세로 크기입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function icon(name, size = 20) {
