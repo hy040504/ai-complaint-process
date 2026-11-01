@@ -74,7 +74,13 @@ def protect_api() -> None:
         origin = request.headers.get("Origin")
         if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
             raise AppError(403, "origin_rejected", "같은 사이트에서 요청해 주세요.")
-    if request.path not in ("/api/v1/health", "/api/v1/session"):
+    if request.path not in (
+        "/api/v1/health",
+        "/api/v1/session",
+        "/api/v1/assist",
+        "/api/v1/assist/examples",
+        "/api/v1/assist/stream",
+    ):
         actor()
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.is_json:
         request.get_json()

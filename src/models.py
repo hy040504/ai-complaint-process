@@ -1,7 +1,7 @@
 """업무 상태와 요청·응답을 정의하는 타입 및 실행 시 검증 모델입니다."""
 
 from datetime import datetime, timezone
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, StringConstraints
 from pydantic.alias_generators import to_camel
@@ -269,6 +269,117 @@ class Health(Model):
     storage: Literal["sqlite"] = "sqlite"
     demo: Literal[True] = True
     ai_connected: Literal[False] = False
+    assist_search: bool = False
+    assist_llm: bool = False
+
+
+class AssistInput(Model):
+    """응대 검사기의 민원 입력입니다. 민원 CRUD와 구별합니다."""
+
+    query: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+    ]
+    district: Literal["상당구", "서원구", "흥덕구", "청원구"] | None = None
+    limit: int = Field(default=5, ge=1, le=10)
+    rerank: bool = True
+
+
+class AssistExample(Model):
+    """검사기에 고정한 예시 질문입니다."""
+
+    id: str
+    title: str
+    query: str
+    district: str | None = None
+
+
+class AssistExampleList(Model):
+    """예시 질문 목록입니다."""
+
+    examples: list[AssistExample]
+
+
+class AssistHit(Model):
+    """검색 근거 한 건의 검사기 표시용 요약입니다."""
+
+    rank: int | None = None
+    source_id: str | None = None
+    title: str | None = None
+    source_url: str | None = None
+    excerpt: str = ""
+    corpus: Literal["faq", "routing"] | None = None
+    routing_eligible: bool | None = None
+    department_name: str | None = None
+    department_status: str | None = None
+
+
+class AssistDepartment(Model):
+    """검색이 만든 부서 후보이며 자동 이관 허가가 아닙니다."""
+
+    department_id: str | None = None
+    canonical_name: str | None = None
+    district: str | None = None
+    duty_status: str | None = None
+    jurisdiction_status: str | None = None
+    supporting_cases: list[dict[str, Any]] = Field(default_factory=list)
+    selected: bool = False
+    automatic_transfer: Literal[False] = False
+
+
+class AssistEvidenceRef(Model):
+    """판정이 가리킨 검색 근거 키입니다."""
+
+    corpus: Literal["faq", "routing"]
+    source_id: str
+
+
+class AssistDecision(Model):
+    """코드 검증을 거친 판정입니다."""
+
+    scope: str
+    intent: str
+    outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
+    reason_code: str
+    evidence_refs: list[AssistEvidenceRef]
+    department_ids: list[str]
+    model_raw: dict[str, Any] | None = None
+
+
+class AssistStage(Model):
+    """응대 파이프라인의 한 단계입니다."""
+
+    name: str
+    elapsed_ms: float
+    ok: bool
+
+
+class AssistRetrieval(Model):
+    """원본 검색 계약을 검사기에 그대로 전달합니다."""
+
+    retrieval_only: bool | None = None
+    decision: str | None = None
+    elapsed_ms: float | None = None
+    pipeline: str | None = None
+
+
+class AssistResponse(Model):
+    """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다."""
+
+    query: str
+    district: str | None = None
+    outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
+    reason_code: str
+    answer: str | None = None
+    handoff_required: bool
+    automatic_transfer: Literal[False] = False
+    faq: list[AssistHit]
+    cases: list[AssistHit]
+    departments: list[AssistDepartment]
+    decision: AssistDecision
+    policy_failures: list[str]
+    stages: list[AssistStage]
+    llm_configured: bool
+    retrieval: AssistRetrieval
 
 
 class ComplaintResponse(RootModel[PublicComplaint | Complaint]):

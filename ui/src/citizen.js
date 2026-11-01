@@ -121,7 +121,7 @@ export function citizenShell(content, path) {
     (target.endsWith("/mine") && path.includes("/detail/")) ||
     (target.endsWith("/assistant") && path.endsWith("/write")) ||
     (target.endsWith("/profile") && path.endsWith("/guide"));
-  return `<div class="demo-bar citizen-demo-bar"><div><span class="demo-label">DEMO</span><span>청주 민원 시연 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 시연 서비스입니다.</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen", "selected")}${a("담당자 사이트", "/staff")}</div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
+  return `<div class="demo-bar citizen-demo-bar"><div><span class="demo-label">DEMO</span><span>청주 민원 시연 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 시연 서비스입니다.</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen", "selected")}${a("담당자 사이트", "/staff")}${a("응대 검사기", "/lab")}</div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
     ["홈", "/citizen"],
     ["나의 민원", "/citizen/mine"],
     ["민원 게시판", "/citizen/board"],

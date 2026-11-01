@@ -22,6 +22,7 @@ py -3.12 -m venv .venv-web
 | --- | --- |
 | http://127.0.0.1:5000/#/citizen | 시민 사이트 |
 | http://127.0.0.1:5000/#/staff | 담당자 사이트 |
+| http://127.0.0.1:5000/#/lab | RAG·LLM 응대 검사기 · 민원 CRUD와 분리 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일 |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
 | http://127.0.0.1:5000/api/v1/health | 상태·저장 방식·실제 AI 연결 여부 |
@@ -42,8 +43,10 @@ Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"st
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 순서의 앱 팩토리 |
 | `http.py` | 세션 사용자 확인, JSON 응답, 동일 출처 검사, 오류 응답, 캐시·보안 헤더 |
 | `web.py` | 시민·담당자 정적 파일과 Swagger·OpenAPI 진입 주소 |
+| `assist.py` | 검색 API·LLM 호출과 응대 파이프라인 연결. 민원 CRUD와 분리 |
 | `seed.py` | 사용자가 명시적으로 실행하는 합성 자료 생성 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
+| `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
 
 모든 서버 함수에는 타입 힌트를 적용했다. `Any`나 `type: ignore`로 업무 코드 검사를 우회하지 않고 `mypy --strict`를 통과시켰다. 동적 입력은 Pydantic에서 검증한 뒤 구체 타입으로 서비스에 전달하며, DB 재조회 결과도 모델로 재검증한다. Python 타입 힌트의 정적 검사와 실행 시 검증은 별개다.
 
@@ -57,7 +60,10 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 | 메서드·경로 (`/api/v1` 기준) | 권한·기능 |
 | --- | --- |
-| `GET /health` | 공개 서버 상태 |
+| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
+| `GET /assist/examples` | 검사기 고정 예시. 세션 불필요 |
+| `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음 |
+| `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷 |
 | `GET /complaints` | 공개 범위 적용 후 검색·페이지 목록 |
@@ -106,6 +112,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | 환경 변수 | 기본 동작 |
 | --- | --- |
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
+| `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
+| `COMPLAINT_LLM_TOKEN` / `PUBLIC_LLM_TOKEN` / `XAI_API_KEY` | 응대 LLM. 없으면 검색 후 담당자 검토 |
+| `COMPLAINT_LLM_URL` · `COMPLAINT_LLM_MODEL` | OpenAI 호환 주소와 모델 이름 |
 | `COMPLAINT_DATABASE` | `db/app/complaints.sqlite3` |
 | `COMPLAINT_SECRET_KEY` | 미지정 시 `.web-data/session.key`에 생성·보존, 로그·Git에서 제외 |
 | `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부 |

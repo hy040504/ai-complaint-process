@@ -1,15 +1,28 @@
 """검증 모델을 Swagger와 공유하는 Flask 업무 API 경로입니다."""
 
-from flask import Response, current_app, session
+import json
+from collections.abc import Iterator
+
+from flask import Response, current_app, session, stream_with_context
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
 from src.http import actor, reply
 
 from src.errors import AppError
+from src.assist import (
+    assist_examples,
+    iter_web_assist,
+    llm_configured,
+    run_web_assist,
+    search_available,
+)
 from src.models import (
     Actor,
     AnswerInput,
     AssignmentInput,
+    AssistExampleList,
+    AssistInput,
+    AssistResponse,
     ComplaintInput,
     ComplaintPath,
     ComplaintResponse,
@@ -65,11 +78,76 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         name="AI 단계 시연",
         description="실제 LLM·검색·공식 이관과 연결하지 않는 서버 시뮬레이션",
     )
+    assist = Tag(
+        name="응대 검사기",
+        description="검색 근거와 LLM 판정을 검증합니다. 민원 등록·공식 이관이 아닙니다.",
+    )
 
     @api.get("/health", tags=[Tag(name="서버 상태")], responses={200: Health})
     def health() -> Response:
-        """서버 상태와 실제 AI 미연결 여부를 반환합니다."""
-        return reply(Health())
+        """서버 상태와 검색·LLM 설정 여부, 민원 CRUD의 AI 미연결을 반환합니다."""
+        return reply(
+            Health(assist_search=search_available(), assist_llm=llm_configured())
+        )
+
+    @api.get(
+        "/assist/examples",
+        tags=[assist],
+        responses={200: AssistExampleList},
+    )
+    def assist_example_list() -> Response:
+        """검사기에 고정한 예시 질문을 반환합니다."""
+        return reply(AssistExampleList.model_validate({"examples": assist_examples()}))
+
+    @api.post("/assist", tags=[assist], responses={200: AssistResponse})
+    def create_assist(body: AssistInput) -> Response:
+        """검색 후 판정·정책 검사를 실행하고 세 갈래 결과를 반환합니다.
+
+        Args:
+            body: 민원 원문과 선택 관할·검색 옵션입니다.
+
+        Returns:
+            검증된 안내·부서 후보·담당자 검토 결과입니다.
+        """
+        return reply(
+            AssistResponse.model_validate(
+                run_web_assist(body.query, body.district, body.limit, body.rerank)
+            )
+        )
+
+    @api.post("/assist/stream", tags=[assist])
+    def create_assist_stream(body: AssistInput) -> Response:
+        """응대 진행 안내를 NDJSON으로 보내고 마지막에 결과를 붙입니다.
+
+        Args:
+            body: 민원 원문과 선택 관할·검색 옵션입니다.
+
+        Returns:
+            줄 단위 JSON 사건 흐름입니다. 민원 저장·공식 이관이 아닙니다.
+        """
+
+        def generate() -> Iterator[str]:
+            for event in iter_web_assist(
+                body.query, body.district, body.limit, body.rerank
+            ):
+                if event.get("type") == "done":
+                    payload = AssistResponse.model_validate(event["result"]).model_dump(
+                        mode="json"
+                    )
+                    yield json.dumps(
+                        {"type": "done", "result": payload}, ensure_ascii=False
+                    ) + "\n"
+                else:
+                    yield json.dumps(event, ensure_ascii=False) + "\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @api.post("/session", tags=[sessions], responses={200: Actor})
     def select_session(body: SessionInput) -> Response:

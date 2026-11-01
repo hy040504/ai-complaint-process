@@ -1,0 +1,165 @@
+/* 시민 직접 작성 양식을 쓰는 검사기 화면입니다. 좌측 업무 메뉴는 두지 않습니다. */
+body[data-site="lab"] {
+  background: #f4f6fa;
+  color: #1b2233;
+}
+body[data-site="lab"] .demo-bar {
+  background: #111b2e;
+  border-color: #283349;
+  color: #b8c4db;
+  padding-inline: max(24px, calc((100% - 1180px) / 2));
+  height: 36px;
+}
+body[data-site="lab"] .demo-label {
+  border-color: #69724d;
+  color: #e4c877;
+}
+body[data-site="lab"] .role-switch a {
+  color: #9caac3;
+}
+body[data-site="lab"] .role-switch a.selected {
+  background: #243047;
+  color: white;
+}
+body[data-site="lab"] .lab-shell {
+  padding-bottom: 36px;
+}
+body[data-site="lab"] .citizen-identity {
+  gap: 10px;
+  color: #16203a;
+}
+body[data-site="lab"] .lab-examples-panel {
+  margin-bottom: 16px;
+}
+body[data-site="lab"] .lab-examples {
+  display: grid;
+  gap: 8px;
+}
+body[data-site="lab"] .lab-example {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border: 1px solid #dfe6f1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  color: inherit;
+}
+body[data-site="lab"] .lab-example:hover,
+body[data-site="lab"] .lab-example:focus-visible {
+  border-color: #83a8f4;
+  background: #f3f7ff;
+}
+body[data-site="lab"] .lab-example b {
+  font-size: 13px;
+  color: #263957;
+}
+body[data-site="lab"] .lab-example span {
+  color: #7a879e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+body[data-site="lab"] .lab-live {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-color: #dce7fb;
+  background: #edf3ff;
+}
+body[data-site="lab"] .lab-live b {
+  display: block;
+  color: #2258c6;
+  font-size: 15px;
+}
+body[data-site="lab"] .lab-live p {
+  margin: 4px 0 0;
+  color: #526e9c;
+  font-size: 12px;
+}
+body[data-site="lab"] .lab-live-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: #2f6fed;
+  box-shadow: 0 0 0 0 #2f6fed66;
+  animation: lab-pulse 1.4s ease-out infinite;
+  flex: none;
+}
+body[data-site="lab"] .lab-process-note b {
+  display: block;
+  font-size: 15px;
+  color: #16203a;
+  margin-bottom: 8px;
+}
+body[data-site="lab"] .lab-process-note p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #4a566d;
+}
+body[data-site="lab"] .lab-dept-list,
+body[data-site="lab"] .lab-evidence {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #4a566d;
+  font-size: 13px;
+  line-height: 1.8;
+}
+body[data-site="lab"] .lab-evidence li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+body[data-site="lab"] #lab-result-panel {
+  scroll-margin-top: 24px;
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+@media (min-width: 720px) {
+  body[data-site="lab"] .lab-examples {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-site="lab"] .lab-live-dot {
+    animation: none;
+  }
+}
+@keyframes lab-pulse {
+  0% {
+    box-shadow: 0 0 0 0 #2f6fed55;
+  }
+  70% {
+    box-shadow: 0 0 0 10px #2f6fed00;
+  }
+  100% {
+    box-shadow: 0 0 0 0 #2f6fed00;
+  }
+}
+body[data-theme="dark"][data-site="lab"] {
+  background: #101827;
+  color: #e6eefb;
+}
+body[data-theme="dark"][data-site="lab"] .lab-example {
+  background: #151e2e;
+  border-color: #2c3a52;
+  color: #d7e2f4;
+}
+body[data-theme="dark"][data-site="lab"] .lab-example b {
+  color: #e6eefb;
+}
+body[data-theme="dark"][data-site="lab"] .lab-live {
+  background: #152238;
+  border-color: #2b4060;
+}
+body[data-theme="dark"][data-site="lab"] .lab-process-note b {
+  color: #e6eefb;
+}
+body[data-theme="dark"][data-site="lab"] .lab-process-note p,
+body[data-theme="dark"][data-site="lab"] .lab-dept-list,
+body[data-theme="dark"][data-site="lab"] .lab-evidence {
+  color: #c5d2e6;
+}

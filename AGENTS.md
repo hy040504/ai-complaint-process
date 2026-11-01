@@ -9,7 +9,7 @@
 3. [프로젝트 사례](docs/cases/README.md): 관련 버그·조치·설계 결정과 미해결 과제.
 4. 수정하는 코드와 해당 테스트. 문서와 코드가 다르면 차이를 확인하고 함께 수정한다.
 
-현재 구현은 **검색 CLI/API와 시민·담당자 UI 및 Flask 업무 서버·Swagger·SQLite 업무 저장**이다. 업무 서버는 루트 [`src/`](src/README.md), 화면은 [`ui/`](ui/README.md)에 둔다. 2026-10-25 사용자 결정에 따라 **초기 AI MVP는 Jev 없는 LLM + RAG**, Jev는 기준 성능 확보 후 추가하는 확장으로 둔다. 실제 LLM 판정·자연어 생성·CLI 챗봇·SSE·운영 인증·행정 이관은 미구현이며 AI 작업은 명시적인 단계 시연이다. 한국어 직접 입력과 무료 모델 우선은 유지하며 Papago는 추후 비교한다. 최종 모델은 미선정이고, 같은 범용 LLM 재사용과 LoRA 보류는 [구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md)·[모델 제안](plan/모델_선정과_미세조정_제안.md)을 기준으로 검토한다.
+현재 구현은 **검색 CLI/API와 시민·담당자 UI 및 Flask 업무 서버·Swagger·SQLite 업무 저장**이다. 업무 서버는 루트 [`src/`](src/README.md), 화면은 [`ui/`](ui/README.md)에 둔다. 2026-10-25 사용자 결정에 따라 **초기 AI MVP는 Jev 없는 LLM + RAG**, Jev는 기준 성능 확보 후 추가하는 확장으로 둔다. 실제 민원 CRUD의 LLM 연결·시민 챗봇·SSE·운영 인증·행정 이관은 미구현이며 담당자 AI 작업은 명시적인 단계 시연이다. 검색 위 판정은 `python -m rag assist`와 `/#/lab`이다. 한국어 직접 입력과 무료 모델 우선은 유지하며 Papago는 추후 비교한다. 최종 모델은 미선정이고, 같은 범용 LLM 재사용과 LoRA 보류는 [구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md)·[모델 제안](plan/모델_선정과_미세조정_제안.md)을 기준으로 검토한다.
 
 시연 웹의 등록·조회·수정·철회·추가 문의·답변 초안·게시·이력을 Flask와 별도 SQLite에 구현했다. 시연 서버의 등록은 청주시 공식 접수·외부 부서 이관과 구별한다. 현재 실행·API·타입·검증 범위는 [서버 안내](src/README.md)를 따른다. PostgreSQL 업무 스키마·실제 AI·SSE 등 후속 범위는 [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)과 구별한다.
 
@@ -34,7 +34,7 @@
 | 수집·부서 정규화 | `PACKET/` | [데이터 사전](db/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 원본 JSON·스키마 SQL·검색 덤프·업무 SQLite | `db/` | [데이터 사전](db/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
-| LLM 판정·답변·검토 안내 연결 | 아직 미구현 | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
+| LLM 판정·답변·검토 안내 연결 | `rag/assist.py`, `src/assist.py`, `/#/lab` | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
 

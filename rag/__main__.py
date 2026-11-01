@@ -51,6 +51,14 @@ def main():
     p.add_argument("--district", choices=["상당구", "서원구", "흥덕구", "청원구"])
     p.add_argument("--no-rerank", action="store_true", help="RRF까지만 실행하여 검색 비교")
     p.add_argument("--api-url", default=os.getenv("RAG_API_URL", "http://127.0.0.1:8007"))
+    p = sub.add_parser("assist", help="검색 근거로 LLM 판정·정책 검사 응대")
+    p.add_argument("query", nargs="?", default="")
+    p.add_argument("--example", choices=["faq", "action", "routing", "handoff", "district"])
+    p.add_argument("--limit", type=int, default=5)
+    p.add_argument("--district", choices=["상당구", "서원구", "흥덕구", "청원구"])
+    p.add_argument("--no-rerank", action="store_true")
+    p.add_argument("--json", action="store_true", help="원본 JSON만 출력")
+    p.add_argument("--api-url", default=os.getenv("RAG_API_URL", "http://127.0.0.1:8007"))
     p = sub.add_parser("status", help="적재 건수/설정 확인")
     p.add_argument("--direct", action="store_true", help="API 대신 PostgreSQL 직접 조회")
     p.add_argument("--api-url", default=os.getenv("RAG_API_URL", "http://127.0.0.1:8007"))
@@ -67,6 +75,28 @@ def main():
             result = api_request(args.api_url.rstrip("/") + "/search", {
                 "query": args.query, "collection": args.collection, "limit": args.limit,
                 "district": args.district, "rerank": not args.no_rerank})
+        elif args.command == "assist":
+            from .assist import EXAMPLES, render_assist, run_assist
+
+            query = args.query
+            district = args.district
+            if args.example:
+                sample = next(item for item in EXAMPLES if item["id"] == args.example)
+                query = query or str(sample["query"])
+                if district is None:
+                    district = sample["district"]
+            if not query:
+                raise ValueError("민원 문장 또는 --example 을 지정해 주세요.")
+            os.environ["RAG_API_URL"] = args.api_url
+            result = run_assist(
+                query,
+                district,
+                limit=args.limit,
+                rerank=not args.no_rerank,
+            )
+            if not args.json:
+                print(render_assist(result))
+                return
         elif args.command == "status":
             if args.direct:
                 from .store import connect, read_status

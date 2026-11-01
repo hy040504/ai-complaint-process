@@ -23,14 +23,18 @@
 ---
 
 > [!NOTE]
-> **현재 단계 · 2026-10-31 · 검색 + 웹 업무 시연**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, SQLite 업무 저장, 다크·라이트 테마, 검색 CLI/API.<br>
-> **다음:** 실제 LLM + RAG 판정·답변, 작업자·SSE, 운영 인증·PostgreSQL 업무 저장 연결.
+> **현재 단계 · 2026-11-01 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, SQLite 업무 저장, `/#/lab` 응대 검사기, 검색 CLI/API.<br>
+> **다음:** 최종 모델 선정·실측 평가, 시민 챗봇 실연결, 담당자 SSE 모니터, 운영 인증·PostgreSQL 업무 저장.
+
+<img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 짧은 진행 안내, 안내 또는 처리 사유" />
 
 | 바로 시작 | 안내 |
 | --- | --- |
-| 시민·담당자 사이트 | [UI 실행](ui/README.md) · [Flask 설치](src/README.md) |
-| API 문서 | 서버 실행 후 `http://127.0.0.1:5000/docs` |
+| 시민 사이트 | `http://127.0.0.1:5000/#/citizen` · [UI 실행](ui/README.md) |
+| 담당자 사이트 | `http://127.0.0.1:5000/#/staff` |
+| 응대 검사기 | `http://127.0.0.1:5000/#/lab` · 민원 저장 없음 |
+| API 문서 | `http://127.0.0.1:5000/docs` · [Flask 설치](src/README.md) |
 | 검색·데이터 | [검색 실행](rag/README.md) · [DB 경로](db/README.md) |
 | 개발 기록 | [분야별 문서](docs/README.md) · [사례 색인](docs/cases/README.md) |
 
@@ -50,17 +54,36 @@
 | 검색 | 벡터 + 한국어 BM25 + RRF + 재정렬, CLI/API | 구현 완료 |
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
-| 외부 LLM 예제 | [독립 호출 예제](scripts/public_llm_client.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · RAG 통합 전 |
-| AI 판정·응답 | 범용 LLM의 의도·근거 판단, FAQ 기반 답변 | 미구현 · 모델 미선정 |
-| 시연 | 시민 사이트·담당자 포털 화면 | 로컬 UI 구현 · CLI 챗봇 미구현 |
-| 시연 웹·업무 서버 | 목록·CRUD·추가 문의·답변 편집·게시·작업 시연 | Flask·Swagger·SQLite 업무 저장·UI 연결 구현 · 실제 AI·SSE·운영 인증 미구현 |
+| 외부 LLM 예제 | [독립 호출 예제](scripts/public_llm_client.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`/assist/stream` 구현 · 최종 모델 미선정 · 토큰 없으면 검색+인계 |
+| 시연 | 시민 사이트·담당자 포털, `/#/lab` 응대 검사기 | 시민 작성 양식·짧은 진행 안내·처리 사유 표시 · 시민 챗봇은 고정 응답 유지 |
+| 시연 웹·업무 서버 | 목록·CRUD·추가 문의·답변 편집·게시·작업 시연 | Flask·Swagger·SQLite 유지 · 검사기는 별도 API |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
-현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. 시연 웹의 등록·답변 교환은 Flask와 SQLite로 구현했습니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
+현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `/#/lab`는 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 SQLite로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
 
 웹 단계는 민원 목록·작성·상세에서 서버에 저장된 글과 답변·처리 상태를 확인하도록 구성합니다. 같은 AI 응대 계층을 CLI와 공유하고, 등록한 민원은 기존 RAG 지식과 구분해 저장하는 안을 제안합니다. [시연 웹·민원 서버 구현계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)
 
 추가 요구에 따라 AI 답변의 작성 기원·담당자 수정 이력을 표시하고, 담당자는 검색·판정·작성·검증의 실제 진행 상태를 확인하도록 설계했습니다. [통합 설계서](plan/민원_웹_MVP_상세설계와_분야별_작업계획.md)는 분야·화면·구성도 7개, CRUD·게시·실시간 이벤트 계약, 분야별 작업 38개와 인수 시나리오 16개를 포함합니다. **UI 10개·백엔드 10개·AI 9개·DB 9개**로 작업을 나누고, 앞부분의 전체 작업표와 14~17절에서 구현 내용·완료 기준을 확인할 수 있습니다. [PDF](plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf)도 같은 내용입니다. 문서 완성과 웹 기능 구현은 구분합니다.
+
+## 응대 검사기
+
+`/#/lab`은 내부 기술 검토용입니다. 시민 직접 작성 양식으로 민원을 남기면 저장된 안내와 사례를 찾고, 지금 하는 일만 짧게 보여 준 뒤 안내 문장 또는 처리 사유를 표시합니다. 민원은 저장하지 않으며 공식 접수·자동 이관이 아닙니다.
+
+```mermaid
+flowchart LR
+    W[시민 작성 양식] --> L[짧은 진행 안내]
+    L --> A{바로 안내 가능?}
+    A -->|FAQ 근거·모델 통과| F[안내 문장]
+    A -->|현장 조치| D[부서 후보 · 이관 아님]
+    A -->|근거 부족·모델 없음·오류| H[담당자 검토 사유]
+    classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
+    classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+    class W,L,A,F,D ready
+    class H human
+```
+
+진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. [CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
 
 ## 저장과 검색
 
@@ -87,21 +110,20 @@ FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. 
 
 ### 초기 구현: Jev 없는 LLM + RAG
 
-아래는 **Jev 없는 초기 LLM + RAG의 목표 흐름**입니다. 실선의 검색까지 구현했으며, 점선 이후 판정·답변·검토 안내는 예정입니다.
+아래는 **Jev 없는 초기 LLM + RAG 흐름**입니다. 검색·판정·정책 검사까지 로컬 구현했으며, FAQ 문장 생성은 LLM 토큰이 있을 때만 호출합니다. 최종 모델은 미선정입니다.
 
 ```mermaid
 flowchart TD
     A[한국어 민원 입력] --> R[FAQ·공개 사례 각각 검색]
-    R -. 예정 .-> G[LLM: 범위·의도·근거 판단]
+    R --> G[LLM: 범위·의도·근거 판단]
     G --> P{코드 정책 검사}
     P -->|FAQ로 충분히 안내 가능| F[같은 LLM: FAQ 답변·근거 검사]
     P -->|실제 조치 필요·부서 근거 있음| D[담당 부서 후보 추천]
     P -->|근거 부족·불확실| H[담당자 검토 안내]
     classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
     classDef planned fill:#eff6ff,stroke:#60a5fa,color:#1e3a8a,stroke-dasharray:5 5
-    classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12,stroke-dasharray:5 5
-    class A,R ready
-    class G,P,F,D planned
+    classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+    class A,R,G,P,F,D ready
     class H human
 ```
 

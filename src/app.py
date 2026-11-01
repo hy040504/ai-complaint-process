@@ -3,6 +3,7 @@
 import click
 from flask_openapi3.models.info import Info
 from flask_openapi3.openapi import OpenAPI
+from werkzeug.middleware.proxy_fix import ProxyFix
 from src.api import create_api
 from src.config import Settings
 from src.http import register_http, validation_error
@@ -52,6 +53,8 @@ def create_app(settings: Settings | None = None) -> OpenAPI:
     repository = SQLiteRepository(config.database)
     service = ComplaintService(repository)
     app.extensions["complaint_service"] = service
+    # Tailscale Serve 등 로컬 프록시의 X-Forwarded-Proto를 반영해 HTTPS Origin 검사를 통과시킵니다.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)  # type: ignore[method-assign]
     register_http(app)
     app.register_api(create_api(service))
     app.register_blueprint(web)

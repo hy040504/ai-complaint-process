@@ -6,7 +6,7 @@
 
 이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
 
-시연 웹에는 민원 게시판·작성 페이지와 민원을 주고받는 서버까지 구현할 계획입니다. 게시글·답변·처리 상태의 저장은 민원 업무 서버의 책임으로 설계하며, 이 검색 API나 RAG 원본에 자동 적재하는 기능과 구별합니다. 웹·업무 서버는 아직 미구현입니다. [시연 웹·민원 서버 계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md)
+`python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 토큰이 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. 검사기 화면은 Flask `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
 
 ## 실행
 
@@ -21,6 +21,7 @@ systemctl --user status cheongju-rag.service
 python3 -m rag status
 python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필요한가요?' --collection faq
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
+python3 -m rag assist --example faq
 ```
 
 API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.

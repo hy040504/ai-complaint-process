@@ -26,6 +26,14 @@ import {
   districts,
   categories,
 } from "./store.js";
+import {
+  labExamples,
+  labPage,
+  labQuery,
+  labShell,
+  loadLabExamples,
+  runLabAssist,
+} from "./lab.js";
 
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
@@ -107,6 +115,30 @@ function openModal(title, content) {
   modal.showModal();
 }
 /**
+ * 검사기 응대를 실행하고 결과 영역으로 이동합니다.
+ *
+ * @param {{query:string,district?:string|null,limit?:number}} body 요청 본문입니다.
+ * @returns {Promise<void>} 비동기 작업의 완료 결과입니다.
+ */
+async function completeLabAssist(body) {
+  if (busy) return;
+  busy = true;
+  app.setAttribute("aria-busy", "true");
+  try {
+    await runLabAssist(body, render);
+    render();
+    document.getElementById("lab-result-panel")?.scrollIntoView({
+      block: "start",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+    });
+  } finally {
+    busy = false;
+    app.removeAttribute("aria-busy");
+  }
+}
+/**
  * 변경 작업 실패 시 기존 입력을 보존하면서 안내합니다.
  *
  * @param {function(): (unknown|Promise<unknown>)} action 실행할 동작 또는 동작 영역 HTML입니다.
@@ -150,6 +182,21 @@ async function perform(action, message, rerender = true) {
 async function loadScreen() {
   const sequence = ++loadSequence;
   route = currentRoute();
+  if (route.path === "/lab") {
+    app.innerHTML = labShell(
+      '<div class="panel empty" role="status">검사기를 준비하고 있습니다…</div>',
+    );
+    try {
+      await loadLabExamples();
+      if (sequence === loadSequence) render();
+    } catch (error) {
+      if (sequence === loadSequence)
+        app.innerHTML = labShell(
+          `<div class="panel empty"><h1>검사기를 열지 못했습니다</h1><p>${esc(error.message)}</p>${button("다시 시도", "primary", 'data-action="reload"')}</div>`,
+        );
+    }
+    return;
+  }
   app.innerHTML = shell(
     '<div class="page-content"><div class="panel empty" role="status">서버에서 민원을 불러오고 있습니다…</div></div>',
   );
@@ -179,6 +226,12 @@ async function loadScreen() {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function shell(content) {
+  if (route.path === "/lab") {
+    document.body.dataset.site = "lab";
+    document.querySelector('meta[name="theme-color"]').content =
+      getTheme() === "dark" ? "#101827" : "#2f6fed";
+    return labShell(content);
+  }
   document.body.dataset.site = route.staff ? "staff" : "citizen";
   document.querySelector('meta[name="theme-color"]').content =
     getTheme() === "dark" ? "#101827" : route.staff ? "#16203a" : "#2f6fed";
@@ -494,7 +547,19 @@ function render() {
   route = currentRoute();
   data = read();
   let content;
-  if (route.path === "/citizen") content = home();
+  if (route.path === "/lab") {
+    const form = $("#assist-form");
+    content = labPage(
+      form
+        ? {
+            title: form.elements.title.value,
+            body: form.elements.body.value,
+            district: form.elements.district.value,
+            category: form.elements.category.value,
+          }
+        : {},
+    );
+  } else if (route.path === "/citizen") content = home();
   else if (
     ["/citizen/board", "/citizen/mine", "/staff/complaints"].includes(
       route.path,
@@ -529,7 +594,7 @@ function render() {
       field.setSelectionRange(editing.start, editing.end);
     }
   }
-  document.title = `${route.staff ? "담당자 업무 포털" : "청주톡톡"} · 시민의 목소리에 더 가까이`;
+  document.title = `${route.path === "/lab" ? "응대 검사기" : route.staff ? "담당자 업무 포털" : "청주톡톡"} · 시민의 목소리에 더 가까이`;
 }
 /**
  * updateFilter 화면 동작을 구성합니다.
@@ -593,7 +658,36 @@ document.addEventListener("click", async (event) => {
   if (!target || busy) return;
   const action = target.dataset.action,
     id = target.dataset.id;
-  const c = id ? data.complaints.find((row) => row.id === id) : null;
+  if (action === "lab-help") {
+    openModal(
+      "응대 검사기 이용 안내",
+      `<div class="modal-content"><p>민원 내용을 시민 작성 양식으로 남기면 저장된 안내와 사례를 찾아 바로 안내할 수 있는지 살펴봅니다.</p><p>진행 중에는 지금 하는 일만 짧게 보여 줍니다. 바로 안내하지 못하면 담당자 검토·부서 후보 등 처리 이유를 알려 줍니다. 자동 이관은 없습니다.</p><p>민원은 저장하지 않으며 공식 접수와 연결되지 않습니다.</p>${button("확인", "primary", 'data-action="close-modal"')}</div>`,
+    );
+    return;
+  }
+  if (action === "lab-example") {
+    const sample = labExamples.find((item) => item.id === id);
+    if (!sample) return;
+    const form = $("#assist-form");
+    if (form) {
+      form.elements.title.value = sample.title;
+      form.elements.body.value = sample.query;
+      form.elements.district.value = sample.district || "";
+      $("#lab-title-count").textContent = sample.title.length + "/120";
+      $("#lab-body-count").textContent = sample.query.length + "/2,000";
+    }
+    await completeLabAssist({
+      query: labQuery({
+        title: sample.title,
+        body: sample.query,
+        category: form?.elements.category.value,
+      }),
+      district: sample.district || null,
+      limit: 5,
+    });
+    return;
+  }
+  const c = id ? data?.complaints?.find((row) => row.id === id) : null;
   const command = (suffix, body = {}, method = "POST") =>
     api("/complaints/" + encodeURIComponent(id) + suffix, {
       method,
@@ -658,7 +752,7 @@ document.addEventListener("click", async (event) => {
       setTimeout(() => {
         if (document.body.classList.contains("staff-menu-open"))
           document
-            .querySelector(".staff-sidebar nav a")
+            .querySelector(".staff-sidebar nav a, .staff-sidebar nav button")
             ?.focus({ preventScroll: true });
       }, 220);
     else document.querySelector(".staff-menu-toggle")?.focus();
@@ -802,6 +896,18 @@ document.addEventListener("submit", async (event) => {
   if (busy) return;
   const form = event.target,
     values = Object.fromEntries(new FormData(form));
+  if (form.id === "assist-form") {
+    if (!String(values.body || "").trim() || String(values.body).trim().length < 10) {
+      toast("제목과 10자 이상의 상세 내용을 입력해 주세요.");
+      return;
+    }
+    await completeLabAssist({
+      query: labQuery(values),
+      district: values.district || null,
+      limit: 5,
+    });
+    return;
+  }
   if (form.id === "filters") {
     updateFilter({ ...values, page: "" });
     return;
@@ -917,6 +1023,10 @@ document.addEventListener("input", (event) => {
     $("#title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "body")
     $("#body-count").textContent = event.target.value.length + "/2,000";
+  if (event.target.id === "lab-title")
+    $("#lab-title-count").textContent = event.target.value.length + "/120";
+  if (event.target.id === "lab-body")
+    $("#lab-body-count").textContent = event.target.value.length + "/2,000";
 });
 document.addEventListener("click", (event) => {
   if (event.target.closest("#modal a[href]")) modal.close();
