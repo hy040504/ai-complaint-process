@@ -1,8 +1,8 @@
 # 데이터 경로 안내
 
-2026-11-05부터 검색 원본 JSON·검색 스키마·벡터 dump는 [`rag/origin/`](../rag/origin/README.md)에 둡니다. 시연 웹 업무 스키마는 [`src/complaints/schema/complaint_app.sql`](../src/complaints/schema/complaint_app.sql)입니다. [CASE-039](../docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
+검색 원본 JSON·검색 스키마·벡터 dump는 [`rag/origin/`](../rag/origin/README.md)에 둡니다. 시연 웹 업무 스키마는 [`src/complaints/schema/complaint_app.sql`](../src/complaints/schema/complaint_app.sql)입니다. [CASE-039](../docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md) · [CASE-041](../docs/cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)
 
-이 폴더의 [`app/`](app/README.md)은 이전 시연 SQLite 잔여 경로입니다. Git에 넣지 않으며 새 서버가 자동으로 옮기지 않습니다.
+이전 시연 SQLite(`db/app/complaints.sqlite3`, `.web-data/*.sqlite3`)는 삭제했습니다. 시연 민원은 PostgreSQL `complaint_app`에 두고, 데모 글은 `python -m flask --app src:create_app seed-demo`로 넣습니다.
 
 | 현재 위치 | 내용 |
 | --- | --- |

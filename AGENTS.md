@@ -67,7 +67,7 @@ RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 
 ## 데이터와 실행 환경 보호
 
-- `.env`, `.rag-data/`, `.rag-cache/`, `rag/origin/dumps/*.dump`, `db/app/*.sqlite3`, `PACKET/*.saz`, `.partial`은 Git에 넣지 않는다. SAZ에는 쿠키가 있다. 자격 증명을 로그·문서·명령 출력에 노출하지 않는다.
+- `.env`, `.rag-data/`, `.rag-cache/`, `.web-data/`, `rag/origin/dumps/*.dump`, `PACKET/*.saz`, `.partial`은 Git에 넣지 않는다. SAZ에는 쿠키가 있다. 자격 증명을 로그·문서·명령 출력에 노출하지 않는다. 이전 시연 SQLite 잔여는 CASE-041에서 삭제했다.
 - 이 호스트의 다른 서비스와 GPU 작업은 이 프로젝트 범위가 아니다. 현재 검색은 CPU로 실행한다.
 - API와 적재 프로세스의 모델 중복 로드를 피한다. 재적재가 필요할 때만 [갱신 절차](docs/harness/runbook.md)를 따른다.
 - 원본 데이터 변경을 요청받지 않은 작업에서 수집기·정규화기·재적재를 임의로 실행하지 않는다. 변경 시 원본 및 검증된 부서 정보의 복구 경로를 확보한다.

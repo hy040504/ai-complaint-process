@@ -51,6 +51,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-041](cases/사례-041-잔여-SQLite-삭제-2026-11-05.md) | 2026-11-05 | 시연 sqlite 잔여와 `db/app` 안내 폴더 삭제 | 완료 · 로컬 |
 | [CASE-040](cases/사례-040-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | CASE-035~039 주석·README 디자인·콘솔 기동 공유 | 완료 · 로컬 |
 | [CASE-039](cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md) | 2026-11-05 | 검색 원본을 `rag/origin`, 업무 스키마를 `src/complaints/schema`로 배치 | 완료 · 로컬 경로 |
 | [CASE-038](cases/사례-038-Windows-Codex-명령줄-길이-2026-11-05.md) | 2026-11-05 | Codex CLI stdin + Windows npm 래퍼 우회 | 완료 · 로컬. 실호출 확인 |
@@ -132,6 +133,6 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 - 설계가 구현되면 상태 표현과 검증 근거를 함께 갱신합니다. 제안을 구현 완료로 표시하지 않습니다.
 - 기능·데이터·계약·운영 방식의 의미 있는 변경은 [CHANGELOG](../CHANGELOG.md)에 정리하고, 이 목차의 패치 표와 사례 상태를 맞춥니다. 문서 간 같은 내용을 길게 복제하기보다 상세 문서로 연결합니다.
 - 개별 버그·개선·설계·운영 기록은 [사례 관리 규칙](cases/README.md)에 따라 번호와 한국어 파일명으로 작성합니다. 경위·증거는 사례에, 현재 적용할 기준은 하네스·데이터·실행 문서에 기록하고 서로 연결합니다.
-- `.env`, PostgreSQL 클러스터, 모델 캐시, `rag/origin/dumps/*.dump`, `db/app/*.sqlite3`, 쿠키가 포함된 SAZ는 Git에 넣지 않습니다. 검색 원본 JSON과 검색 스키마 SQL은 `rag/origin/`에 둡니다.
+- `.env`, PostgreSQL 클러스터, 모델 캐시, `.web-data/`, `rag/origin/dumps/*.dump`, 쿠키가 포함된 SAZ는 Git에 넣지 않습니다. 검색 원본 JSON과 검색 스키마 SQL은 `rag/origin/`에 둡니다. 이전 시연 SQLite 잔여는 [CASE-041](cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)에서 삭제했습니다.
 
 외부 LLM 독립 예제는 [../scripts/public_llm_client.py](../scripts/public_llm_client.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.

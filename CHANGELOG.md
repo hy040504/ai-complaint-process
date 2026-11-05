@@ -2,9 +2,11 @@
 
 ## 2026-11-05
 
+- 시연 웹이 쓰지 않는 `db/app/complaints.sqlite3`와 `.web-data` sqlite·구 Flask 로그를 삭제하고, 추적 `db/app` 안내 폴더를 없앤다. Flask 세션 키와 검색 PostgreSQL은 유지한다. [CASE-041](docs/cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)
+
 - CASE-035~039 패치의 Google 형식 한국어 주석을 맞추고, Windows 포트 확인·새 콘솔 기동·libpq 기본값을 `scripts/console_spawn.py`로 모았다. README에 `rag/origin`·`start-rag.cmd` 배지와 표를 넣었다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
 
-- 검색 원본 JSON·검색 스키마·벡터 dump를 `rag/origin/`으로 옮기고, 시연 웹 업무 DDL은 `src/complaints/schema/`에 둔다. 루트 `db/`는 이전 경로 안내와 SQLite 잔여만 남긴다. [CASE-039](docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
+- 검색 원본 JSON·검색 스키마·벡터 dump를 `rag/origin/`으로 옮기고, 시연 웹 업무 DDL은 `src/complaints/schema/`에 둔다. 루트 `db/`는 이전 경로 안내만 남긴다. [CASE-039](docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
 
 - Windows에서 Codex CLI 프롬프트가 명령줄 길이 제한을 넘지 않도록 `codex exec -`의 표준 입력으로 보내고, npm `codex.cmd`는 `node`와 `codex.js`로 풀어 실행한다. [CASE-038](docs/cases/사례-038-Windows-Codex-명령줄-길이-2026-11-05.md)
 

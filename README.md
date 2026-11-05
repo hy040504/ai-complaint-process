@@ -312,7 +312,7 @@ ai-complaint-process/
 ├── scripts/                      # 네이티브 실행·start_web·windows_rag·console_spawn
 ├── docs/                         # 목차·사례·하네스·배너
 ├── rag/                          # 검색 엔진·색인·CLI. 원본은 origin/
-├── db/                           # 이전 경로 안내·SQLite 잔여. 검색 원본은 rag/origin/
+├── db/                           # 이전 경로 안내. 검색 원본은 rag/origin/
 ├── plan/                         # 원본 계획서·MVP 실행 계획
 └── PACKET/                       # 수집기·부서 정규화
 ```
