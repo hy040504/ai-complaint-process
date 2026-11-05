@@ -57,7 +57,7 @@ flowchart LR
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
-| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음 |
+| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. 입출력·프리픽스 경계는 [하네스](../docs/harness/AI_정보전달과_응답_하네스.md) |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
@@ -149,6 +149,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 키를 바꾼 뒤에는 `ask-assist.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
+시스템 지시와 민원·검색 후보 JSON은 분리합니다. 계층형 프리픽스 캐싱 적용은
+[지침](../docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md)의 후속입니다.
 
 ```powershell
 .\.venv-web\Scripts\python.exe -m mypy --config-file src/mypy.ini

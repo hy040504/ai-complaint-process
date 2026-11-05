@@ -50,6 +50,9 @@ def decision_prompt(
 ) -> str:
     """판정 JSON만 요청하는 사용자 본문을 구성합니다.
 
+    시스템 지시와 섞지 않는 가변 접미입니다. 키 순서는
+    `query` → `district` → FAQ·사례·부서 후보로 고정합니다.
+
     Args:
         query: 한국어 민원 원문입니다.
         district: 명시한 관할 구입니다.

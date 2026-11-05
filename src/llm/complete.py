@@ -123,7 +123,8 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
 
     검색 근거가 들어간 긴 프롬프트는 Windows 명령줄 길이 제한을 피하려고
     인자 대신 표준 입력으로 보냅니다. npm `codex.cmd`는 `cmd.exe`를 거치지
-    않도록 `node`와 `codex.js`로 풀어 실행합니다. 하위 프로세스에는
+    않도록 `node`와 `codex.js`로 풀어 실행합니다. 본문 순서는 고정 실행
+    래퍼 → `[시스템 지시]` → `[사용자 입력]`입니다. 하위 프로세스에는
     `OPENAI_API_KEY`를 전달하지 않습니다.
 
     Args:
@@ -185,6 +186,9 @@ def complete_chat(
     settings: dict[str, str | None] | None = None,
 ) -> str:
     """선택한 LLM 공급자로 한 번의 완성을 요청합니다.
+
+    `system`은 요청마다 바뀌지 않는 고정 지시이고, `user`는 민원·검색 후보
+    같은 가변 본문입니다. 프리픽스 캐싱을 쓸 때도 이 경계를 유지합니다.
 
     Args:
         system: 시스템 지시입니다.

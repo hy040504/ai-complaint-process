@@ -96,6 +96,9 @@ def hit_excerpt(hit: dict[str, Any]) -> str:
 def compact_faq(hit: dict[str, Any]) -> dict[str, Any]:
     """판정 모델에 넘길 FAQ 후보만 남깁니다.
 
+    대상·접수 조건·처리기간·주의는 `detail`에 그대로 둡니다.
+    검색 점수·원문 해시·임베딩은 넣지 않습니다.
+
     Args:
         hit: 검색 FAQ 히트입니다.
 
@@ -115,6 +118,9 @@ def compact_faq(hit: dict[str, Any]) -> dict[str, Any]:
 
 def compact_case(hit: dict[str, Any]) -> dict[str, Any]:
     """판정 모델에 넘길 공개 사례 후보만 남깁니다.
+
+    과거 처리 답변(`evidence.answer`)은 현재 정책 안내가 아니므로 넣지 않습니다.
+    부서 확정은 `department_candidates`에서 따로 걸러집니다.
 
     Args:
         hit: 검색 사례 히트입니다.

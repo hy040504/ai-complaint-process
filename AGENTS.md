@@ -35,7 +35,7 @@
 | 검색 원본 JSON·검색 스키마·덤프 | `rag/origin/` | [데이터 사전](rag/origin/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 시연 웹 업무 스키마 | `src/complaints/schema/` | [서버 안내](src/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
-| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `python -m rag assist`, `/#/lab` | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
+| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `python -m rag assist`, `/#/lab` | [판정 정책](docs/harness/decision-policy.md), [AI 입출력 하네스](docs/harness/AI_정보전달과_응답_하네스.md), [프리픽스 캐싱 지침](docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/complaints/`, `src/app.py`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
 

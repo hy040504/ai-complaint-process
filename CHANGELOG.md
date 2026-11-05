@@ -2,6 +2,8 @@
 
 ## 2026-11-05
 
+- 두 원본 기획서 분석(`VoteLab_AI민원_상세기획안_상세분석.md`, `민원AI_계획서_상세분석.md`)과 현재 프로젝트(`src/assist`, `src/rag`, `src/llm`) 계약을 통합하여 AI 정보 전달·응답 하네스, 추후 Prefix Caching 적용을 위한 계층별 고정 시스템 프롬프트(`PREFIX-00~04`) 지침, 개인정보·긴급·처분성·특이민원 안전 가드레일 문서를 `docs/harness/`에 추가했다. [CASE-042](docs/cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
+
 - 시연 웹이 쓰지 않는 `db/app/complaints.sqlite3`와 `.web-data` sqlite·구 Flask 로그를 삭제하고, 추적 `db/app` 안내 폴더를 없앤다. Flask 세션 키와 검색 PostgreSQL은 유지한다. [CASE-041](docs/cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)
 
 - CASE-035~039 패치의 Google 형식 한국어 주석을 맞추고, Windows 포트 확인·새 콘솔 기동·libpq 기본값을 `scripts/console_spawn.py`로 모았다. README에 `rag/origin`·`start-rag.cmd` 배지와 표를 넣었다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
