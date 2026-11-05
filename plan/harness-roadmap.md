@@ -1,8 +1,8 @@
 # 하네스 보완과 MVP 실행 계획
 
-> 2026-11-01 진행 갱신: `python -m rag assist`와 `POST /api/v1/assist`·`/assist/stream`, `/#/lab` 검사기를 로컬 구현했다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓴다. 최종 모델·실측 평가·시민 챗봇 실연결은 후속이다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
+> 2026-11-05 진행 갱신: Flask `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. 민원 CRUD는 PostgreSQL `complaint_app` jsonb다. `python -m rag assist`와 `POST /api/v1/assist`·`/assist/stream`, `/#/lab`은 `src.assist`가 검색과 LLM을 잇는다. 실측 평가·시민 챗봇 실연결·민원 CRUD AI·7테이블 정규화는 후속이다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-023](../docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
 >
-> 2026-10-31 진행 갱신: 루트 `src/`의 Flask·Swagger·타입 경계·SQLite 업무 저장과 시민·담당자 UI 연결을 로컬 구현했다. [실행·검증](../src/README.md) · [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md). 아래는 원래 전체 목표이며 실제 민원 CRUD의 LLM 연결·운영 인증·PostgreSQL 업무 스키마·작업자·SSE·공식 이관은 계속 후속으로 둔다.
+> 2026-10-31 진행 갱신: 루트 `src/`의 Flask·Swagger·타입 경계와 시민·담당자 UI 연결을 로컬 구현했다. 당시 업무 저장은 SQLite였고 2026-11-05 PostgreSQL로 옮겼다. [실행·검증](../src/README.md) · [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md). 아래는 원래 전체 목표이며 실제 민원 CRUD의 LLM 연결·운영 인증·작업자·SSE·공식 이관은 계속 후속으로 둔다.
 
 [프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [변경 이력](../CHANGELOG.md)
 
@@ -21,7 +21,7 @@
 | 순서 | 작업 | 산출물·완료 조건 | 상태 |
 | --- | --- | --- | --- |
 | 1 | 기준 데이터·평가 라벨 준비 | 시연용 FAQ의 현행성·적용 조건, 부서 후보의 검증 상태, 한국어 개발/보류 평가셋 기록 | 미구현 |
-| 2 | 범용 LLM 어댑터·프롬프트 | Jev 의존성 없이 한국어 판정 JSON과 조건부 FAQ 생성 호출, 스키마 검증·실패 처리 | 로컬 구현 · 최종 모델 미선정 · 실측 호출 후속 |
+| 2 | 범용 LLM 어댑터·프롬프트 | Jev 의존성 없이 한국어 판정 JSON과 조건부 FAQ 생성 호출, 스키마 검증·실패 처리 | 로컬 구현 · GPT-6 Luna API·Codex CLI 선택 가능 · 실측 호출 후속 |
 | 3 | 정책 검사·응대 조합 | 실제 조치와 안내 구분, 후보 ID·현행성 기록 대조, 같은 LLM으로 FAQ 생성·근거 검사 | 로컬 구현 · FAQ 현행성 허용 목록은 후속 |
 | 4 | CLI 챗봇 | LLM + RAG만으로 세 결과와 이유·출처 표시, 종료·오류 처리, 실제 이관과 시연 구분 | `python -m rag assist` · `/#/lab` 시민 작성 양식·진행 안내 구현 · 대화형 챗봇은 후속 |
 | 5 | 기준 평가·관측 | 추가 학습 없는 LLM + RAG 비교, 오류율·안내 비중·전체 지연 기록, 개인정보 제외 | 미구현 |

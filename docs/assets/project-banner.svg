@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title description">
   <title id="title">AI Complaint Process</title>
-  <desc id="description">청주 민원 데이터를 근거로 안내와 부서 연결을 지원하는 AI 완충지대 프로젝트</desc>
+  <desc id="description">청주 민원 데이터를 근거로 안내와 부서 연결을 지원하는 AI 완충지대. 민원 웹, 검색, LLM, 응대 계층과 CPU용 e5-small 임베딩, Windows 응대 CMD, PostgreSQL 업무 스키마로 구성합니다.</desc>
   <defs>
     <linearGradient id="background" x1="0" x2="1" y2="1">
       <stop stop-color="#0b1220"/>
@@ -14,32 +14,47 @@
       <circle cx="1" cy="1" r="1" fill="#94a3b8" opacity=".13"/>
     </pattern>
   </defs>
-  <rect width="1200" height="320" rx="20" fill="url(#background)"/>
-  <rect width="1200" height="320" rx="20" fill="url(#grid)"/>
-  <circle cx="1030" cy="155" r="290" fill="url(#glow)"/>
-  <rect x="48" y="48" width="4" height="28" rx="2" fill="#2dd4bf"/>
+  <rect width="1200" height="360" rx="20" fill="url(#background)"/>
+  <rect width="1200" height="360" rx="20" fill="url(#grid)"/>
+  <circle cx="1030" cy="170" r="290" fill="url(#glow)"/>
+  <rect x="48" y="40" width="4" height="28" rx="2" fill="#2dd4bf"/>
   <g font-family="Arial, 'Noto Sans KR', sans-serif">
-    <text x="68" y="68" fill="#5eead4" font-size="15" font-weight="700" letter-spacing="3">CHEONGJU · CIVIC AI</text>
-    <text x="48" y="137" fill="#f8fafc" font-size="49" font-weight="700" letter-spacing="-1.5">AI Complaint Process</text>
-    <text x="50" y="180" fill="#cbd5e1" font-size="21">근거를 찾고, 처리 경로를 연결하는 AI 완충지대</text>
-    <rect x="50" y="225" width="123" height="36" rx="18" fill="#163f43" stroke="#2dd4bf" stroke-opacity=".35"/>
-    <text x="111" y="248" fill="#99f6e4" font-size="14" font-weight="700" text-anchor="middle">FAQ 94</text>
-    <rect x="185" y="225" width="146" height="36" rx="18" fill="#1b334f" stroke="#60a5fa" stroke-opacity=".35"/>
-    <text x="258" y="248" fill="#bfdbfe" font-size="14" font-weight="700" text-anchor="middle">CASES 5,015</text>
-    <rect x="343" y="225" width="178" height="36" rx="18" fill="#30304b" stroke="#a78bfa" stroke-opacity=".35"/>
-    <text x="432" y="248" fill="#ddd6fe" font-size="14" font-weight="700" text-anchor="middle">DEPARTMENTS 127</text>
-    <path d="M918 105V215" stroke="#3a6070" stroke-width="2" stroke-dasharray="4 5"/>
-    <rect x="840" y="44" width="286" height="62" rx="12" fill="#152c3c" stroke="#2e5260"/>
-    <circle cx="870" cy="75" r="7" fill="#2dd4bf"/>
-    <text x="890" y="71" fill="#f1f5f9" font-size="17" font-weight="700">FIND EVIDENCE</text>
-    <text x="890" y="91" fill="#94a3b8" font-size="12">FAQ · Hybrid retrieval</text>
-    <rect x="815" y="130" width="286" height="62" rx="12" fill="#172e41" stroke="#365a71"/>
-    <circle cx="845" cy="161" r="7" fill="#60a5fa"/>
-    <text x="865" y="157" fill="#f1f5f9" font-size="17" font-weight="700">SUGGEST A TEAM</text>
-    <text x="865" y="177" fill="#94a3b8" font-size="12">Cases · Department directory</text>
-    <rect x="840" y="216" width="286" height="62" rx="12" fill="#242d44" stroke="#4d4c70"/>
-    <circle cx="870" cy="247" r="7" fill="#a78bfa"/>
-    <text x="890" y="243" fill="#f1f5f9" font-size="17" font-weight="700">CONNECT TO PEOPLE</text>
-    <text x="890" y="263" fill="#94a3b8" font-size="12">Human handoff · Planned</text>
+    <text x="68" y="60" fill="#5eead4" font-size="15" font-weight="700" letter-spacing="3">CHEONGJU · CIVIC AI</text>
+    <text x="48" y="122" fill="#f8fafc" font-size="46" font-weight="700" letter-spacing="-1.5">AI Complaint Process</text>
+    <text x="50" y="164" fill="#cbd5e1" font-size="20">근거를 찾고, 처리 경로를 연결하는 AI 완충지대</text>
+    <rect x="50" y="200" width="118" height="34" rx="17" fill="#163f43" stroke="#2dd4bf" stroke-opacity=".35"/>
+    <text x="109" y="222" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">FAQ 94</text>
+    <rect x="180" y="200" width="140" height="34" rx="17" fill="#1b334f" stroke="#60a5fa" stroke-opacity=".35"/>
+    <text x="250" y="222" fill="#bfdbfe" font-size="13" font-weight="700" text-anchor="middle">사례 5,015</text>
+    <rect x="332" y="200" width="122" height="34" rx="17" fill="#30304b" stroke="#a78bfa" stroke-opacity=".35"/>
+    <text x="393" y="222" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">부서 127</text>
+    <rect x="50" y="248" width="108" height="34" rx="17" fill="#142433" stroke="#38bdf8" stroke-opacity=".4"/>
+    <text x="104" y="270" fill="#bae6fd" font-size="13" font-weight="700" text-anchor="middle">민원 웹</text>
+    <rect x="170" y="248" width="88" height="34" rx="17" fill="#142c28" stroke="#2dd4bf" stroke-opacity=".4"/>
+    <text x="214" y="270" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">검색</text>
+    <rect x="270" y="248" width="80" height="34" rx="17" fill="#2a1f3d" stroke="#c4b5fd" stroke-opacity=".4"/>
+    <text x="310" y="270" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">LLM</text>
+    <rect x="362" y="248" width="88" height="34" rx="17" fill="#3f2f1c" stroke="#fbbf24" stroke-opacity=".4"/>
+    <text x="406" y="270" fill="#fde68a" font-size="13" font-weight="700" text-anchor="middle">응대</text>
+    <rect x="462" y="248" width="118" height="34" rx="17" fill="#0f2a3a" stroke="#38bdf8" stroke-opacity=".45"/>
+    <text x="521" y="270" fill="#bae6fd" font-size="13" font-weight="700" text-anchor="middle">e5-small</text>
+    <rect x="592" y="248" width="96" height="34" rx="17" fill="#1a2433" stroke="#94a3b8" stroke-opacity=".45"/>
+    <text x="640" y="270" fill="#e2e8f0" font-size="13" font-weight="700" text-anchor="middle">CMD</text>
+    <rect x="700" y="248" width="108" height="34" rx="17" fill="#152a44" stroke="#60a5fa" stroke-opacity=".45"/>
+    <text x="754" y="270" fill="#bfdbfe" font-size="13" font-weight="700" text-anchor="middle">PG 업무</text>
+    <path d="M918 88V250" stroke="#3a6070" stroke-width="2" stroke-dasharray="4 5"/>
+    <rect x="840" y="36" width="286" height="68" rx="12" fill="#152c3c" stroke="#2e5260"/>
+    <circle cx="870" cy="70" r="7" fill="#2dd4bf"/>
+    <text x="890" y="66" fill="#f1f5f9" font-size="16" font-weight="700">근거 찾기</text>
+    <text x="890" y="86" fill="#94a3b8" font-size="12">FAQ · 하이브리드 검색</text>
+    <rect x="815" y="122" width="286" height="68" rx="12" fill="#172e41" stroke="#365a71"/>
+    <circle cx="845" cy="156" r="7" fill="#60a5fa"/>
+    <text x="865" y="152" fill="#f1f5f9" font-size="16" font-weight="700">부서 후보</text>
+    <text x="865" y="172" fill="#94a3b8" font-size="12">공개 사례 · 부서 사전</text>
+    <rect x="840" y="208" width="286" height="68" rx="12" fill="#242d44" stroke="#4d4c70"/>
+    <circle cx="870" cy="242" r="7" fill="#a78bfa"/>
+    <text x="890" y="238" fill="#f1f5f9" font-size="16" font-weight="700">담당자 연결</text>
+    <text x="890" y="258" fill="#94a3b8" font-size="12">검사기 · 담당자 검토</text>
+    <text x="50" y="328" fill="#64748b" font-size="13">src/complaints · src/rag · src/llm · src/assist · rag/ · ask-assist.cmd</text>
   </g>
 </svg>

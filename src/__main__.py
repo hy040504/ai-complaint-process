@@ -1,4 +1,7 @@
-"""저장소 루트에서 python -m src로 로컬 Flask 서버를 실행합니다."""
+"""저장소 루트에서 `python -m src`로 로컬 Flask 서버를 실행합니다.
+
+민원 웹·검사기 API를 같은 출처에서 제공합니다.
+"""
 
 import os
 
@@ -6,7 +9,10 @@ from src.app import create_app
 
 
 def main() -> None:
-    """디버거를 노출하지 않고 localhost에서 업무 서버를 실행합니다."""
+    """디버거를 노출하지 않고 localhost에서 업무 서버를 실행합니다.
+
+    포트는 `COMPLAINT_PORT`이며 기본값은 5000입니다.
+    """
     app = create_app()
     app.run(
         host="127.0.0.1",

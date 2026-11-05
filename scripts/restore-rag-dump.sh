@@ -10,4 +10,10 @@ if [[ -f "$DUMP_FILE" ]]; then
   exit 0
 fi
 printf '%s\n' "dump가 없어 빈 검색 스키마만 적용합니다. 이후 python -m rag ingest 가 필요합니다."
-psql -d "$PGDATABASE" -v ON_ERROR_STOP=1 -f "$RAG_SQL"
+python3 - <<'PY' | psql -d "$PGDATABASE" -v ON_ERROR_STOP=1
+import os
+import sys
+sys.path.insert(0, os.environ["RAG_ROOT"])
+from rag.config import schema_sql
+print(schema_sql())
+PY

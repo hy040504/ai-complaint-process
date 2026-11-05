@@ -2,11 +2,16 @@
 
 [프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [운영 절차](../docs/harness/runbook.md) · [변경 이력](../CHANGELOG.md)
 
-두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, BGE-M3 벡터, Kiwi 형태소 기반 BM25, RRF, BGE 재정렬을 사용합니다. 모델은 로컬에서 실행하므로 외부 추론 API 키나 호출 요금이 없습니다.
+두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, 기본 `intfloat/multilingual-e5-small` 벡터, Kiwi 형태소 기반 BM25, RRF, 선택적 BGE 재정렬을 사용합니다. 모델은 로컬 CPU에서 실행합니다. 기존 BGE-M3 1024차원 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지합니다.
 
 이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
 
-`python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 토큰이 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. 검사기 화면은 Flask `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
+`python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 구현은 `src/assist`(연결), `src/rag`(검색 클라이언트), `src/llm`(공급자)에 있고 `rag/assist.py`는 CLI 호환 진입점입니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. 검사기 화면은 Flask `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
+
+`COMPLAINT_LLM_PROVIDER=openai_api`로 선택하면 `OPENAI_API_KEY` 환경변수를 이용해
+OpenAI Responses API의 `gpt-6-luna`·`medium` 설정을 사용합니다. `codex_cli`를 선택하면
+로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 실행합니다. 선택과 키 예시는 루트
+`.env.example` 및 [서버 안내](../src/README.md)를 따릅니다. 실제 API 키는 Git에 넣지 않습니다.
 
 ## 실행
 
@@ -22,6 +27,7 @@ python3 -m rag status
 python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필요한가요?' --collection faq
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
 python3 -m rag assist --example faq
+# Windows: ask-assist.cmd --example faq
 ```
 
 API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.
@@ -69,14 +75,14 @@ PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 
 
 | 테이블 | 내용 |
 | --- | --- |
-| `faq_knowledge` | FAQ 94건. 분류·업무명·상세 안내·대상·접수 조건·기간·주의사항과 원본 JSON, 출처, 1024차원 벡터 |
+| `faq_knowledge` | FAQ 94건. 분류·업무명·상세 안내·대상·접수 조건·기간·주의사항과 원본 JSON, 출처, 현재 프로필 차원 벡터 |
 | `routing_cases` | 사례 5,015건. 제목·요지의 검색 텍스트와 벡터, 원본 JSON, 현행 부서 FK, 검토 상태 |
 | `department_directory` | 사례에서 현행 명칭이 확인된 부서 127개. 내부 ID, 명칭, 과거 표기, 구 정보, 검증 상태 |
 | `term_postings` | Kiwi 토큰의 문서별 출현 빈도. PostgreSQL에 영속 저장 |
 | `term_statistics` / `corpus_statistics` | FAQ/사례별 문서 빈도·문서 수·평균 길이. BM25 계산에 사용 |
 | `index_metadata` | 모델 리비전, 색인 설정, 최근 적재 결과 |
 
-FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(1024)`를 함께 저장합니다. `routing_cases.department_id`는 부서 디렉터리의 ID를 참조하는 외래 키입니다. 부서 사전과 BM25 통계는 일반 관계형 테이블로 사용합니다.
+FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(__EMBEDDING_DIM__)`를 함께 저장합니다. 기본은 384차원입니다. `routing_cases.department_id`는 부서 디렉터리의 ID를 참조하는 외래 키입니다. 부서 사전과 BM25 통계는 일반 관계형 테이블로 사용합니다.
 
 원본 두 JSON은 `db/`에 두고 변경하지 않은 채 `payload`에 그대로 보관합니다. 스키마 SQL은 `db/schema/complaint_rag.sql`이며 적재 코드가 이 파일을 읽습니다. 문서 식별자는 데이터 종류와 사이트의 `source_id`입니다. 사이트 표시 번호 `id`를 문서 키로 사용하지 않습니다.
 
@@ -88,7 +94,7 @@ FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(1024)`�
 
 ```mermaid
 flowchart LR
-    Q[한국어 민원] --> V[BGE-M3 + pgvector cosine 검색 30건]
+    Q[한국어 민원] --> V[e5-small + pgvector cosine 검색 30건]
     Q --> K[Kiwi 형태소 분석 + PostgreSQL BM25 30건]
     V --> F[RRF 순위 결합 k=60]
     K --> F
@@ -99,7 +105,7 @@ flowchart LR
 
 FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문서를 하나의 순위로 섞지 않습니다.
 
-- 벡터: 정규화된 `BAAI/bge-m3` 1024차원, cosine 거리, HNSW 색인.
+- 벡터: 기본 `intfloat/multilingual-e5-small` 정규화 384차원, cosine 거리, HNSW 색인. 질문에는 `query: `, 문서에는 `passage: ` 접두를 붙입니다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`입니다.
 - BM25: Kiwi의 명사·동사·형용사·숫자·외국어 형태소를 사용합니다. 조사·어미와 일부 상용 민원 표현을 제외합니다. SQL에서 양수 IDF를 사용하는 BM25(`k1=1.5`, `b=0.75`)를 계산합니다.
 - RRF: 서로 다른 척도의 벡터/BM25 점수를 직접 더하지 않고 순위로 결합합니다.
 - 재정렬: `BAAI/bge-reranker-v2-m3`가 질문과 후보 원문을 함께 평가합니다. 긴 문서는 겹치는 창으로 모두 평가하고 가장 높은 관련성 logit을 사용합니다. 원문을 조용히 잘라 저장하지 않습니다.

@@ -5,8 +5,8 @@ from hashlib import sha256
 from typing import Literal
 from uuid import uuid4
 
-from src.errors import AppError
-from src.models import (
+from src.complaints.errors import AppError
+from src.complaints.models import (
     Actor,
     Answer,
     AnswerInput,
@@ -30,7 +30,7 @@ from src.models import (
     VersionInput,
     utcnow,
 )
-from src.repository import ComplaintRepository
+from src.complaints.repository import ComplaintRepository
 
 Operation = Literal[
     "withdraw",

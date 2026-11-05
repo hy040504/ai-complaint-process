@@ -1,6 +1,6 @@
 # 판정·답변·담당자 연결 정책
 
-**상태: 설계 초안 + 로컬 응대 계층 일부 구현, 2026-11-01 갱신.** 검색 API는 여전히 `retrieval_only` / `requires_gate`만 반환한다. 판정·정책 검사·조건부 FAQ 생성은 `rag/assist.py`와 `POST /api/v1/assist`·`/assist/stream`에 있다. 최종 모델·현행성 허용 목록·평가 임계값은 미정이다. 사용자 결정은 **LLM + RAG 우선, Jev 추후 추가**다.
+**상태: 설계 초안 + 로컬 응대 계층 일부 구현, 2026-11-05 갱신.** 검색 API는 여전히 `retrieval_only` / `requires_gate`만 반환한다. 판정·정책 검사·조건부 FAQ 생성은 `src/assist`와 `POST /api/v1/assist`·`/assist/stream`에 있다. 최종 모델·현행성 허용 목록·평가 임계값은 미정이다. 사용자 결정은 **LLM + RAG 우선, Jev 추후 추가**다.
 
 ## 확정된 방향
 

@@ -1,6 +1,6 @@
-# Flask 민원 업무 서버
+# 민원 웹·RAG·LLM 백엔드
 
-프로젝트 루트의 `src/`에 구현한 Flask 서버다. 시민·담당자 UI와 API, Swagger를 같은 출처에서 제공한다. 민원·추가 문의·초안·게시 답변·시연 작업 이벤트는 별도 업무 SQLite DB에 저장한다.
+프로젝트 루트의 `src/`는 Flask 시연 서버와 응대 계층이다. 민원 웹(`complaints`), 검색 클라이언트(`rag`), LLM 공급자(`llm`), 둘을 잇는 응대(`assist`)로 나눈다. 시민·담당자 UI와 API, Swagger는 같은 출처에서 제공한다. 민원·추가 문의·초안·게시 답변·시연 작업 이벤트는 PostgreSQL `complaint_app`에 저장한다. 검색 색인·임베딩 엔진은 루트 `rag/`와 `complaint_rag`에 있고 `src/rag`는 그 API만 호출한다.
 
 ## 설치와 실행
 
@@ -16,6 +16,10 @@ py -3.12 -m venv .venv-web
 .\.venv-web\Scripts\python.exe -m src
 ```
 
+Windows에서는 저장소 루트의 [`start-web.cmd`](../start-web.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. 이 스크립트는 [`scripts/start_web.py`](../scripts/start_web.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 시민 화면을 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다.
+
+검색 API가 실행 중이면 [`ask-assist.cmd`](../ask-assist.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/ask_assist.py`](../scripts/ask_assist.py)다. 검색 서버는 별도로 `python -m rag serve`가 필요하다. 기본 임베딩은 CPU용 `e5-small`이며 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다.
+
 실행 의존성만 설치하려면 `src/requirements.txt`를 사용한다. Linux에서는 `python3.12 -m venv .venv-web`로 준비하고 `.venv-web/bin/python`을 사용한다. 환경 준비 후 `npm --prefix ui run dev`도 같은 Flask 서버를 실행하는 편의 명령이다.
 
 | 주소 | 제공 내용 |
@@ -23,34 +27,45 @@ py -3.12 -m venv .venv-web
 | http://127.0.0.1:5000/#/citizen | 시민 사이트 |
 | http://127.0.0.1:5000/#/staff | 담당자 사이트 |
 | http://127.0.0.1:5000/#/lab | RAG·LLM 응대 검사기 · 민원 CRUD와 분리 |
-| http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일 |
+| http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
 | http://127.0.0.1:5000/api/v1/health | 상태·저장 방식·실제 AI 연결 여부 |
 
-Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"staff"}`를 실행한 뒤 필요한 API를 호출한다. 같은 출처의 서명 세션 쿠키가 요청에 전달된다. UI 상단 역할 선택도 같은 API를 사용한다. 시민·담당자 탭이 같은 쿠키를 공유하므로 역할을 바꾼 뒤 이전 탭을 사용할 때는 해당 화면을 다시 불러온다.
+Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"staff"}`를 실행한 뒤 필요한 API를 호출한다. 보고용 인쇄본은 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf)이며, OpenAPI가 바뀌면 저장소 루트에서 `python docs/tools/export_swagger_pdf.py`로 다시 만든다. 검색 API `:8007/docs`는 이 파일에 넣지 않는다. 같은 출처의 서명 세션 쿠키가 요청에 전달된다. UI 상단 역할 선택도 같은 API를 사용한다. 시민·담당자 탭이 같은 쿠키를 공유하므로 역할을 바꾼 뒤 이전 탭을 사용할 때는 해당 화면을 다시 불러온다.
 
 ## 정적 타입과 구성
 
-읽을 때는 `app.py → api.py → service.py → repository.py` 순서로 따라가면 된다. `app.py`는 설정을 읽고 저장소·서비스·API·화면을 연결한다. 요청은 API에서 입력을 검증한 뒤 서비스에서 권한·상태를 확인하고 저장소에서 변경한다. 공통 인증·JSON·오류는 `http.py`, 시민·담당자 정적 화면은 `web.py`에 모았다.
+백엔드는 민원 웹, RAG 검색 클라이언트, LLM 공급자, 둘을 잇는 응대 계층으로 나눈다. 루트 `rag/`는 PostgreSQL 색인·임베딩 엔진이고, `src/rag`는 그 검색 API를 호출하는 클라이언트다. 민원 `complaint_app`과 검색 `complaint_rag`는 섞지 않는다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 
-| 파일 | 책임·타입 경계 |
+```mermaid
+flowchart LR
+    UI[시민·담당자·검사기 UI] --> APP[src/app.py]
+    APP --> W[src/complaints 민원 웹]
+    APP --> A[src/assist 연결]
+    A --> R[src/rag 검색 클라이언트]
+    A --> L[src/llm 공급자]
+    W --> APPDB[(PostgreSQL complaint_app)]
+    R --> S[rag/ 검색 API :8007]
+    S --> PG[(PostgreSQL complaint_rag)]
+    L --> M[OpenAI API 또는 Codex CLI]
+```
+
+읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. 검사기 경로는 `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
+
+| 위치 | 책임·타입 경계 |
 | --- | --- |
-| `models.py` | Pydantic 요청·응답·업무 모델, `Literal` 상태·역할·지역, `Annotated` 길이·정수 제한, 공개·내부 DTO 분리 |
-| `api.py` | Flask APIBlueprint, 모델 기반 요청·응답 검증과 Swagger 자동 생성 |
-| `service.py` | 권한·버전 검사와 업무 동작. 답변 저장·철회, 작업 시작·취소를 짧은 전용 메서드로 구분 |
-| `repository.py` | `ComplaintRepository(Protocol)`과 SQLite 구현. 트랜잭션 안의 기대 버전·멱등성 검사 |
-| `config.py` | `@dataclass(frozen=True)` 설정, 업무 DB 경로·시연 계정 선택 설정 |
-| `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 순서의 앱 팩토리 |
-| `http.py` | 세션 사용자 확인, JSON 응답, 동일 출처 검사, 오류 응답, 캐시·보안 헤더 |
-| `web.py` | 시민·담당자 정적 파일과 Swagger·OpenAPI 진입 주소 |
-| `assist.py` | 검색 API·LLM 호출과 응대 파이프라인 연결. 민원 CRUD와 분리 |
-| `seed.py` | 사용자가 명시적으로 실행하는 합성 자료 생성 |
+| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
+| `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
+| `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
+| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음 |
+| `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
+| `tests/test_backend_split.py` | 패키지 분리와 연결 계층 단위 시험 |
 
 모든 서버 함수에는 타입 힌트를 적용했다. `Any`나 `type: ignore`로 업무 코드 검사를 우회하지 않고 `mypy --strict`를 통과시켰다. 동적 입력은 Pydantic에서 검증한 뒤 구체 타입으로 서비스에 전달하며, DB 재조회 결과도 모델로 재검증한다. Python 타입 힌트의 정적 검사와 실행 시 검증은 별개다.
 
-코드 형식은 개발 의존성에 포함한 Black으로 정리한다. 저장소 루트에서 `python -m black --check src`로 형식을 확인하고, 수정 시에는 같은 가상환경에서 `python -m black src`를 실행한다. 한국어 Google 형식 docstring과 타입 힌트는 유지한다. [구조 정리 기록](../docs/cases/사례-021-Flask-서버-코드-구조-간소화-2026-10-31.md)
+코드 형식은 개발 의존성에 포함한 Black으로 정리한다. 저장소 루트에서 `python -m black --check src`로 형식을 확인하고, 수정 시에는 같은 가상환경에서 `python -m black src`를 실행한다. 한국어 Google 형식 docstring과 타입 힌트는 유지한다. [구조 정리 기록](../docs/cases/사례-021-Flask-서버-코드-구조-간소화-2026-10-31.md) · [패키지 분리](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [README·검색 조각](../docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 
 앱 팩토리는 [Flask 공식 안내](https://flask.palletsprojects.com/en/stable/patterns/appfactories/)를 따랐다. 요청·응답 모델과 자동 문서는 [flask-openapi3 요청 선언](https://luolingchun.github.io/flask-openapi/v4.x/Usage/Request/) 및 [응답 검증](https://luolingchun.github.io/flask-openapi/v4.x/Usage/Response/) 기능을 사용한다. Swagger JS·CSS는 설치 패키지의 로컬 자산으로 제공한다.
 
@@ -100,8 +115,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 ## 데이터·게시·작업 경계
 
-- 기본 DB: `db/app/complaints.sqlite3`. 민원 상태·답변 버전·작업을 Pydantic JSON으로 저장하는 `complaints`와 등록 키를 보존하는 `idempotency` 테이블이다. 변경·버전 검사와 등록 중복 방지는 SQLite 트랜잭션 안에서 수행한다. RAG 원본 JSON·검색 스키마와 같은 `db/` 아래에 두되 파일은 분리한다.
-- 기존 `complaint_rag`, 원본 JSON, PostgreSQL 자료를 변경하지 않는다. [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)를 적용한 구현은 아니며, 별도 저장소 구현·마이그레이션은 후속 작업이다.
+- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. 변경·버전 검사와 등록 중복 방지는 트랜잭션 안에서 수행한다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](../db/schema/complaint_app.sql)
+- 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
 - AI 완료·답변 게시·민원 상태는 구분한다. 새 민원은 실제 AI 미연동 대기 상태이며 저장 성공을 AI 성공으로 표시하지 않는다. 서버 단계 시연은 조회 시 경과 시간에 맞춰 이벤트를 저장하고 UI가 1.5초 간격으로 조회한다. 실제 추론·백그라운드 작업자·SSE가 아니다.
@@ -113,12 +128,23 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
 | `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
-| `COMPLAINT_LLM_TOKEN` / `PUBLIC_LLM_TOKEN` / `XAI_API_KEY` | 응대 LLM. 없으면 검색 후 담당자 검토 |
+| `COMPLAINT_LLM_PROVIDER` | `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
+| `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
+| `COMPLAINT_LLM_MODEL` · `COMPLAINT_LLM_REASONING_EFFORT` | 기본 `gpt-6-luna` · `medium` |
+| `COMPLAINT_CODEX_COMMAND` | `codex_cli` 선택 시 Codex CLI 실행 파일, 기본 `codex` |
+| `COMPLAINT_LLM_TOKEN` / `PUBLIC_LLM_TOKEN` / `XAI_API_KEY` | `legacy` 선택 시 기존 호환 LLM. 없으면 검색 후 담당자 검토 |
 | `COMPLAINT_LLM_URL` · `COMPLAINT_LLM_MODEL` | OpenAI 호환 주소와 모델 이름 |
-| `COMPLAINT_DATABASE` | `db/app/complaints.sqlite3` |
+| `COMPLAINT_DATABASE_URL` | 비면 libpq `PG*` 환경변수. 같은 서버의 `complaint_app` |
+| `COMPLAINT_APP_SCHEMA` | `complaint_app` |
 | `COMPLAINT_SECRET_KEY` | 미지정 시 `.web-data/session.key`에 생성·보존, 로그·Git에서 제외 |
 | `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부 |
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
+
+`.env.example`을 `.env`로 복사한 뒤 한 공급자를 선택합니다. `openai_api`는
+`OPENAI_API_KEY`를 사용해 Responses API로 `gpt-6-luna`의 `medium` 추론을 요청합니다.
+`codex_cli`는 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec`으로 실행하며,
+`OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
+`retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 
 ```powershell
 .\.venv-web\Scripts\python.exe -m mypy --config-file src/mypy.ini
@@ -127,6 +153,8 @@ npm --prefix ui run check
 npm --prefix ui test
 ```
 
-2026-10-31 Windows / Python 3.12에서 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
+2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest rag/tests/test_assist.py src/tests` 41개, `mypy --config-file src/mypy.ini`, `black --check src rag/assist.py`를 통과했다. 백엔드 패키지 분리와 검색 조각 재사용 시험을 포함한다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-028](../docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 
-**미구현:** 운영용 본인인증·담당자 인증, PostgreSQL 업무 스키마·마이그레이션, 실제 LLM/RAG 어댑터·작업자·SSE, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.
+2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
+
+**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 민원 CRUD의 실제 LLM 연결·작업자·SSE, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 응대 검사기의 GPT-6 Luna API·Codex CLI 어댑터는 구현됐지만 운영 자격 증명·사용량 관리·실측 평가는 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.

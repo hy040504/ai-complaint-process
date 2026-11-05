@@ -2,24 +2,23 @@
 
 import json
 from collections.abc import Iterator
-from pathlib import Path
 
 from flask_openapi3.openapi import OpenAPI
 from flask.testing import FlaskClient
 import pytest
 
 from src import create_app
-from src.config import Settings
-from src.models import AssistResponse
+from src.complaints.config import Settings
+from src.complaints.models import AssistResponse
 
 
 @pytest.fixture
-def app(tmp_path: Path) -> OpenAPI:
-    """검사기 테스트용 임시 업무 DB 앱입니다."""
+def app() -> OpenAPI:
+    """검사기 테스트용 메모리 저장소 앱입니다."""
     return create_app(
         Settings(
-            database=tmp_path / "test.sqlite3",
             secret_key="isolated-test-key",
+            backend="memory",
             testing=True,
         )
     )
@@ -66,7 +65,9 @@ def test_assist_schema_accepts_pipeline_result() -> None:
 
 def test_assist_does_not_need_session(app: OpenAPI, monkeypatch: object) -> None:
     """검사기는 시연 세션 없이 호출할 수 있습니다."""
-    monkeypatch.setattr("src.api.run_web_assist", lambda *args: _payload(args[0]))
+    monkeypatch.setattr(
+        "src.complaints.api.run_web_assist", lambda *args: _payload(args[0])
+    )
     client = app.test_client()
     response = client.post(
         "/api/v1/assist", json={"query": "대형폐기물 배출 방법을 알고 싶어요."}
@@ -81,10 +82,11 @@ def test_assist_does_not_need_session(app: OpenAPI, monkeypatch: object) -> None
 
 def test_assist_examples_and_health_flags(app: OpenAPI, monkeypatch: object) -> None:
     """예시 목록과 검색·LLM 설정 플래그를 반환합니다."""
-    monkeypatch.setattr("src.api.search_available", lambda: True)
-    monkeypatch.setattr("src.api.llm_configured", lambda: False)
+    monkeypatch.setattr("src.complaints.api.search_available", lambda: True)
+    monkeypatch.setattr("src.complaints.api.llm_configured", lambda: False)
     client: FlaskClient = app.test_client()
     health = client.get("/api/v1/health").json
+    assert health["storage"] == "memory"
     assert health["aiConnected"] is False
     assert health["assistSearch"] is True
     assert health["assistLlm"] is False
@@ -116,7 +118,7 @@ def test_assist_stream_sends_progress_then_result(
         }
         yield {"type": "done", "result": _payload(query)}
 
-    monkeypatch.setattr("src.api.iter_web_assist", fake_iter)
+    monkeypatch.setattr("src.complaints.api.iter_web_assist", fake_iter)
     client: FlaskClient = app.test_client()
     response = client.post(
         "/api/v1/assist/stream",

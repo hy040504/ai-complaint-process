@@ -4,8 +4,9 @@
 --
 -- 한눈에 보기
 --   - FAQ 94건, 과거 민원 사례 5,015건, 부서 127개를 저장한다.
---   - FAQ와 사례에는 비슷한 글을 찾기 위한 벡터(1024차원)가 함께 저장된다.
---   - 테이블 7개
+--   - FAQ와 사례에는 비슷한 글을 찾기 위한 벡터가 함께 저장된다.
+--     기본은 가벼운 multilingual-e5-small 384차원이다. 적용 시 __EMBEDDING_DIM__을 바꾼다.
+--   - 테이블 8개
 --       index_metadata      색인 정보
 --       department_directory 부서 목록
 --       faq_knowledge        FAQ 안내 자료
@@ -13,6 +14,7 @@
 --       term_postings        키워드 검색용 : 문서별 단어 등장 횟수
 --       term_statistics      키워드 검색용 : 단어별 등장 문서 수
 --       corpus_statistics    키워드 검색용 : 자료 묶음별 문서 수와 평균 길이
+--       embedding_cache     재적재 때 재사용할 벡터 체크포인트
 --
 -- 실행 방법
 --   - psql -d <DB이름> -f db/schema/complaint_rag.sql
@@ -26,10 +28,10 @@
 --   - 컬럼 이름과 프로젝트 README.md 를 바탕으로 정리한 설명이다.
 
 -- 이 스키마와 complaint_app 의 연결
---   - complaint_app.ai_results.department_id -> department_directory.department_id (1곳)
+--   - 업무 민원은 complaint_app 에 두고 검색 색인과 행을 섞지 않는다.
 -- =====================================================================
 
--- 벡터(숫자 목록) 저장과 검색 기능. vector(1024) 자료형과 hnsw 색인에 필요하다.
+-- 벡터(숫자 목록) 저장과 검색 기능. vector(__EMBEDDING_DIM__) 자료형과 hnsw 색인에 필요하다.
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE SCHEMA IF NOT EXISTS complaint_rag;
 
@@ -79,7 +81,7 @@ CREATE TABLE IF NOT EXISTS complaint_rag.faq_knowledge (
     source_retrieved_at timestamptz NOT NULL,              -- 원문을 가져온 시각
     content_hash text NOT NULL,                            -- 본문 내용의 해시값 (설명: 내용이 바뀌었는지 확인용)
     embedding_hash text NOT NULL,                          -- 벡터를 만든 입력의 해시값 (벡터를 다시 만들어야 하는지 확인용)
-    embedding vector(1024) NOT NULL,                       -- 검색용 벡터 (1024차원). 비슷한 글 찾기에 사용
+    embedding vector(__EMBEDDING_DIM__) NOT NULL,          -- 검색용 벡터. 기본 384차원(e5-small)
     token_count integer NOT NULL CHECK (token_count > 0),  -- 검색 본문의 토큰(단어 조각) 수. 0보다 커야 함
     updated_at timestamptz NOT NULL DEFAULT now()          -- 갱신 시각
 );
@@ -103,7 +105,7 @@ CREATE TABLE IF NOT EXISTS complaint_rag.routing_cases (
     summary_missing boolean NOT NULL,                      -- 민원 요지가 비어 있는지
     content_hash text NOT NULL,                            -- 본문 내용의 해시값 (설명: 내용이 바뀌었는지 확인용)
     embedding_hash text NOT NULL,                          -- 벡터를 만든 입력의 해시값 (벡터를 다시 만들어야 하는지 확인용)
-    embedding vector(1024) NOT NULL,                       -- 검색용 벡터 (1024차원)
+    embedding vector(__EMBEDDING_DIM__) NOT NULL,          -- 검색용 벡터. 기본 384차원(e5-small)
     token_count integer NOT NULL CHECK (token_count > 0),  -- 검색 본문의 토큰 수. 0보다 커야 함
     updated_at timestamptz NOT NULL DEFAULT now(),         -- 갱신 시각
     -- 부서 추천에 쓸 수 있는 사례 = 부서가 연결되어 있고, 상태가 review_required 가 아닌 사례
@@ -148,4 +150,14 @@ CREATE TABLE IF NOT EXISTS complaint_rag.corpus_statistics (
     corpus text PRIMARY KEY,                               -- 자료 묶음
     document_count integer NOT NULL CHECK (document_count > 0),         -- 문서 수. 0보다 커야 함
     average_length double precision NOT NULL CHECK (average_length > 0) -- 문서 평균 길이. 0보다 커야 함
+);
+
+-- 8. embedding_cache : 적재가 끝난 뒤에도 남기는 벡터 체크포인트
+--   - 문서 테이블을 바꿔도 같은 서명·본문 해시의 벡터를 다시 쓰지 않게 한다.
+--   - 예전 .rag-cache/embeddings.sqlite3 자리를 대신한다.
+CREATE TABLE IF NOT EXISTS complaint_rag.embedding_cache (
+    signature text NOT NULL,   -- 임베딩 모델·차원·접두 서명
+    text_hash text NOT NULL,   -- 검색 본문 해시
+    vector bytea NOT NULL,     -- float32 little-endian 바이트
+    PRIMARY KEY (signature, text_hash)
 );

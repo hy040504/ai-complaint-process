@@ -1,2 +1,3 @@
 # 설계 Markdown을 PDF용 HTML로 변환할 때 사용합니다.
 markdown-it-py==4.2.0
+# Swagger PDF(export_swagger_pdf.py)는 표준 라이브러리와 Chrome만 사용합니다.

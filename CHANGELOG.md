@@ -1,5 +1,33 @@
 # 변경 이력
 
+## 2026-11-05
+
+- CASE-031~033 패치의 Google 형식 한국어 주석을 맞추고, 현재 문서의 SQLite·`complaint_app` 미사용 표기를 고쳤다. 업무 SQL 식별자는 저장소 생성 때 한 번 조합하고, 적재 캐시는 해시 목록을 묶어 읽는다. README에 두 스키마·Swagger PDF·PG 업무 칩을 넣었다. [CASE-034](docs/cases/사례-034-패치-주석-문서-최적화-2026-11-05.md)
+
+- Flask 민원 웹 `/docs` Swagger와 같은 OpenAPI 3.1 계약을 인쇄본 PDF로 `docs/`에 둔다. 검색 API `:8007/docs`는 포함하지 않는다. 재생성은 `python docs/tools/export_swagger_pdf.py`다. [CASE-033](docs/cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md)
+
+- CASE-026이 남긴 루트 `src/*.py` 호환 모듈 9개를 삭제하고, 테스트는 `src.complaints`에서 직접 import한다. Flask 조립은 `app.py`에 둔다. [CASE-032](docs/cases/사례-032-호환모듈-제거-2026-11-05.md)
+
+- 시연 웹 민원 CRUD를 SQLite 파일 대신 PostgreSQL `complaint_app` jsonb로 저장한다. 검색은 기존처럼 `complaint_rag`에 두고 행을 섞지 않는다. 적재 벡터 체크포인트도 `embedding_cache` 테이블로 옮겼다. 단위 테스트는 메모리 저장소를 쓴다. [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+
+- 2026-11-05 작업(CASE-023~034)을 보고용으로 요약한 문서를 추가했다. [진행 보고](docs/진행보고-2026-11-05.md)
+
+- CASE-029 패치의 Google 형식 한국어 주석을 맞추고, 임베딩 시 문서마다 토크나이저를 한 번 더 돌리던 경로를 없앴다. 스키마 SQL은 프로세스에서 한 번만 읽고, 차원 정렬이 일어난 뒤에만 `SET NOT NULL`을 건다. README 배너·상태 표에 e5-small과 `ask-assist.cmd`를 넣고, 데이터 계약의 긴 본문 정책을 프로필 한도 절단으로 고쳤다. [CASE-030](docs/cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md)
+
+- 검색 임베딩 기본값을 CPU용 `intfloat/multilingual-e5-small`(384차원)로 바꿨다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지한다. Windows `ask-assist.cmd`로 민원 문장을 넣으면 실행 중인 검색 API 위에서 RAG+LLM 응대를 보여 준다. [CASE-029](docs/cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md)
+
+- README 배너·검사기 그림을 한국어 카드와 네 패키지 칩으로 맞추고, 지금 됨/검사기/아직 표와 백엔드 패키지 표를 넣었다. JSON HTTP는 `src.rag.http` 한 곳으로 모으고, 응대 한 요청에서 검색 조각과 환경 LLM 설정을 재사용한다. [CASE-028](docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
+
+- Flask `src/`를 민원 웹(`complaints`), 검색 클라이언트(`rag`), LLM 공급자(`llm`), 둘을 잇는 응대 계층(`assist`)으로 나눴다. CLI `python -m rag assist`는 같은 연결 함수를 쓰고, 민원 CRUD와 검색 색인은 섞지 않는다. [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
+
+- 분리 패치의 Google 형식 한국어 docstring을 인자와 맞추고, README·하네스·데이터 계약의 패키지 경로와 검증 기록을 갱신했다. [CASE-027](docs/cases/사례-027-분리-패치-주석-문서-점검-2026-11-05.md)
+
+- 최근 패치의 Google 형식 한국어 docstring을 코드와 맞추고, `.env` LLM 키를 한 번만 읽으며 공백 API 키는 미설정으로 다룬다. README 바로 시작 표·배너·저장소 트리를 현재 구현에 맞게 정리했다. [CASE-025](docs/cases/사례-025-패치-주석-문서-최적화-2026-11-05.md)
+
+- Windows용 `start-web.cmd`와 `scripts/start_web.py`를 추가했다. `.venv-web`의 Flask 업무 서버를 별도 창에서 시작하고 준비 상태를 확인한 뒤 기본 브라우저의 시민 화면을 열며, 이미 실행 중인 서버는 재시작하지 않는다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md)
+
+- 응대 검사기의 LLM 공급자를 `COMPLAINT_LLM_PROVIDER`로 선택하도록 확장했다. `openai_api`는 `.env`의 `OPENAI_API_KEY`로 OpenAI Responses API에 `gpt-6-luna`·`medium`을 요청하고, `codex_cli`는 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 실행한다. 검색 전용 계약과 코드 정책 검증, 민원 CRUD 분리는 유지한다. [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
+
 ## 2026-11-01
 
 - 검색 API 계약을 유지한 채 LLM 판정·코드 정책 검사 응대 계층을 추가했다. CLI `python -m rag assist`, Flask `POST /api/v1/assist`·`/assist/stream`, `/#/lab` 검사기가 같은 함수를 사용한다. 검사기는 시민 직접 작성 양식과 짧은 진행 안내, 안내 실패 시 처리 사유를 보여 준다. 기존 시민·담당자 CRUD는 그대로 둔다. 최종 모델은 미선정이며 토큰이 없으면 검색 근거와 담당자 검토로 떨어진다. 한국어 주석·중복 호출·문서 상태와 README 검사기 안내를 점검했다. [CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
@@ -151,7 +179,7 @@
 | 수집·정규화 | FAQ 94건·공개 사례 5,015건, 고정 출처 ID·URL·수집 시각, 원래/현재 부서 구분 |
 | 부서 구분 | 확인된 별칭 통일, 구가 다른 동명 과 분리, 현행 담당 부서 검토 사례 27건 유지 |
 | 관계형 데이터 | FAQ·공개 사례·부서 디렉터리 127개와 검색 통계 테이블 구성 |
-| 벡터·검색 | BGE-M3 임베딩 5,109개, HNSW 2개, Kiwi BM25·RRF·재정렬 |
+| 벡터·검색 | 당시 BGE-M3 임베딩 5,109개(1024차원), HNSW 2개, Kiwi BM25·RRF·재정렬. 현재 코드 기본값은 e5-small 384차원([CASE-029](docs/cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md)) |
 | 실행 | Docker Compose, 원자적 적재·캐시 재사용, 검색 CLI/API |
 | 검증 | 코드·격리 DB 테스트 13개, 검색 회귀 예제 10개, 원본/DB 대조 및 재적재 결과 |
 | 문서·저장소 | 배너·기술 배지·실행 안내, Git 초기화, private 저장소 생성·업로드 |
@@ -160,4 +188,4 @@
 
 ## 남은 작업
 
-공식 업무분장·관할과 FAQ 현행성 보완, 한국어 판정·답변 평가셋, 범용 LLM 선정 및 RAG 연결, CLI 챗봇, 게시판·민원 등록·답변 교환 서버를 포함한 시연 웹이 남아 있습니다. Jev 추가와 필요 시 LoRA는 기본 LLM + RAG 평가 이후 과제이며 청주시 공식 접수·외부 이관 연계는 별도 범위입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.
+운영 DB의 5,109건을 e5-small로 재임베딩하고 검색 예제 10건을 다시 평가하는 일, Luna 실측, 민원 CRUD의 LLM 연결, 시민 챗봇·담당자 SSE, 운영 인증·공식 이관이 남아 있습니다. 공식 업무분장·관할과 FAQ 현행성 보완, 한국어 판정 평가셋도 후속입니다. Jev와 LoRA는 기본 LLM + RAG 평가 이후 과제입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.

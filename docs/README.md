@@ -4,39 +4,43 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-01 UTC**.
+기준일: **2026-11-05 UTC**.
 
 ## 시작점
 
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test_search.sh) |
-| 원본 JSON·스키마 SQL·덤프·업무 SQLite 위치 | [데이터 사전](../db/README.md), [검색 스키마](../db/schema/complaint_rag.sql) |
-| 시민·담당자 화면 실행 | [UI 안내](../ui/README.md) |
-| Flask 업무 서버·Swagger·시연 민원 저장 | [서버 안내](../src/README.md) |
+| 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../db/README.md), [검색 스키마](../db/schema/complaint_rag.sql), [업무 스키마](../db/schema/complaint_app.sql) |
+| 시민·담당자 화면 실행 | [UI 안내](../ui/README.md), Windows는 [`start-web.cmd`](../start-web.cmd) |
+| 민원 문장으로 RAG+LLM 응대 | Windows [`ask-assist.cmd`](../ask-assist.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md) |
+| Flask 민원 웹·검색 클라이언트·LLM·응대 연결 | [서버 안내](../src/README.md), [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) |
+| 응대 검사기 LLM 공급자 선택 | [서버 안내](../src/README.md), `.env.example`, [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) |
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
 | 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |
 | 버그·개선·결정의 경위와 미해결 과제 확인·기록 | [프로젝트 사례 색인](cases/README.md), [사례 작성 양식](cases/사례_작성_양식.md) |
 | Jev 없는 LLM + RAG 연결 준비 | [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md), [판정 정책 초안](harness/decision-policy.md) |
 | 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) |
 | CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
+| Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](tools/export_swagger_pdf.py) |
 | LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) |
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, SQLite), 응대 CLI/`/#/lab`까지 로컬에서 동작합니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 씁니다. 최종 LLM 모델 선정·실측 평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 미구현입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`ask-assist.cmd`까지 로컬에서 동작합니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 e5-small이며 기존 dump는 bge-m3입니다. Windows는 `start-web.cmd`로 서버와 시민 화면을 엽니다. 5,109건 재임베딩·실측 평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 미구현입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
 | FAQ·사례 원문 | `db/자주_묻는_민원.json`, `db/공개_민원_사례.json` | Git에 포함. 94건·5,015건 |
 | 검색 테이블 정의 | `db/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
-| 게시판 PostgreSQL 스키마 | `db/schema/complaint_app.sql` | Git에 포함. 후속. 현재 웹은 미사용 |
+| 게시판 PostgreSQL 스키마 | `db/schema/complaint_app.sql` | Git에 포함. jsonb `complaints`·`idempotency`. 7테이블 정규화는 후속 |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
 | 검색 DB 복사본 | `db/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/export-rag-dump.sh` |
-| 시연 웹 민원·답변 | `db/app/complaints.sqlite3` | Git 제외. Flask 기본 경로 |
-| 모델 캐시 | `.rag-cache/` | Git 제외 |
+| 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
+| 임베딩 체크포인트 | `complaint_rag.embedding_cache` | 적재 벡터 재사용. 예전 sqlite 캐시 대체 |
+| 모델 캐시 | `.rag-cache/` | Hugging Face 모델·평가 보고. Git 제외 |
 
 SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 쓰려면 dump를 가져가거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용은 `scripts/apply-db-schema.sh`, dump 복원은 `scripts/restore-rag-dump.sh`입니다. [CASE-016](cases/사례-016-프로젝트-내부-DB-파일-배치-2026-10-31.md)
 
@@ -46,7 +50,21 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-034](cases/사례-034-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | CASE-031~033 주석·현재 문서·README 디자인·캐시 조회 | 완료 · 로컬 |
+| [CASE-033](cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md) | 2026-11-05 | Flask `/docs` Swagger를 OpenAPI 스냅샷 PDF로 `docs/`에 저장 | 완료 · 로컬 문서 |
+| [CASE-032](cases/사례-032-호환모듈-제거-2026-11-05.md) | 2026-11-05 | 루트 호환 모듈 삭제, `src.complaints` 직접 import | 완료 · 로컬 |
+| [CASE-031](cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) | 2026-11-05 | 시연 웹·임베딩 캐시를 PostgreSQL로 통일 | 완료 · 로컬. 7테이블 정규화는 후속 |
+| [진행 보고](진행보고-2026-11-05.md) | 2026-11-05 | CASE-023~034을 보고용으로 요약한 문서 | 로컬 문서 |
+| [CASE-030](cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | e5-small·CMD 주석·README 디자인·중복 토큰화 정리 | 완료 · 로컬. 재임베딩은 후속 |
+| [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md) | 2026-11-05 | CPU용 e5-small 임베딩 기본값과 `ask-assist.cmd` | 완료 · 재임베딩은 후속 |
+| [CASE-028](cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md) | 2026-11-05 | README 히어로·배너와 검색 조각·HTTP 재사용 | 완료 · 로컬 |
+| [CASE-027](cases/사례-027-분리-패치-주석-문서-점검-2026-11-05.md) | 2026-11-05 | 분리 코드 Google 주석·README/docs 경로 정리 | 완료 · 로컬 |
+| [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) | 2026-11-05 | `src/`를 민원 웹·RAG·LLM·연결 계층으로 분리 | 완료 · 로컬. CRUD AI는 후속 |
+| [CASE-025](cases/사례-025-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | 패치 코드 주석·README 디자인·공급자 설정 조회 정리 | 완료 · 로컬 |
+| [CASE-024](cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md) | 2026-11-05 | Windows `start-web.cmd`로 Flask 시작과 시민 화면 열기 | 완료 · 로컬 개발용 |
+| [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) | 2026-11-05 | GPT-6 Luna `medium`의 OpenAI API·Codex CLI 선택 | 완료 · 실측 평가는 후속 |
 | [CASE-022](cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) | 2026-11-01 | RAG 검색 위 판정·정책 검사 CLI/API와 `/#/lab` 검사기 | 완료 · 로컬. 최종 모델 미선정 |
+| [CASE-021](cases/사례-021-Flask-서버-코드-구조-간소화-2026-10-31.md) | 2026-10-31 | Flask 앱 조립과 HTTP·업무 처리 간소화 | 완료 · 서버 구조 |
 | [CASE-020](cases/사례-020-패치-종합점검과-서버-저장소-최신화-2026-10-31.md) | 2026-10-31 | 한국어 주석·회귀·README·DB 보존·서버 최신화·원격 병합 종합 점검 | 완료 · GitHub 반영 |
 | [CASE-018](cases/사례-018-시민-담당자-다크라이트-테마-전환-2026-10-31.md) | 2026-10-31 | 시민·담당자 공통 테마 버튼·저장·가독성 | 완료 · 로컬 UI |
 | [CASE-017](cases/사례-017-민원과-담당자-화면-디자인-개편-2026-10-31.md) | 2026-10-31 | 담당자 화면을 민원과 참고 남색 레이아웃·Pretendard로 개편 | 완료 · 로컬 UI |
@@ -73,7 +91,7 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 
 | 문서 | 역할 | 문서 상태 |
 | --- | --- | --- |
-| [시스템 구조](harness/architecture.md) | 코드 경로, DB·검색 흐름, API 계약, LLM 응대 계층 | 검색·로컬 응대 계층 구현. 최종 모델·SSE는 후속 |
+| [시스템 구조](harness/architecture.md) | 코드 경로, DB·검색 흐름, API 계약, LLM 응대 계층 | 검색·로컬 응대 계층·Luna 공급자 선택 구현. 실측·SSE는 후속 |
 | [데이터 계약](harness/data-contracts.md) | 문서 키, 조건·원문 보존, 부서 검증 의미 | 현재 계약. 스키마 정본은 `db/schema/complaint_rag.sql` |
 | [판정 정책](harness/decision-policy.md) | FAQ 답변·부서 추천·담당자 검토 분기 | 로컬 응대 계층 구현 · 최종 모델 미선정 |
 | [평가 기준](harness/evaluation.md) | 실행 가능한 검증과 추가할 한국어 판정 평가 | 기존 검증과 제안 구분 |
@@ -84,10 +102,11 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 | [MVP 실행 계획](../plan/harness-roadmap.md) | 우선순위, 완료 조건, 결정 기록 | 다음 작업 계획. 로컬 웹은 일부 구현됨 |
 | [LLM + RAG 우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md) | 사용자 변경 요구, 이전 계획과 차이, 초기 흐름, Jev 후속 확장 | 2026-10-25 결정과 구현 제안 구분 |
 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·작성·상세·민원 교환 서버, 데이터·API 제안·완료 조건 | 범위 문서. 로컬 Flask·UI는 구현, 공식 이관·실제 AI는 미구현 |
+| [청주톡톡 민원 업무 API Swagger PDF](청주톡톡_민원_업무_API_Swagger.pdf) | Flask `/docs`와 같은 OpenAPI 3.1 경로·모델 인쇄본. 검색 `:8007/docs`는 제외 | 2026-11-05 스냅샷. API 변경 시 스크립트 재실행 |
 | [웹 상세설계·분야별 작업계획](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) | UI·백엔드·AI·DB 그림·전체 38개 작업표, 도판 7개·CRUD·SSE·DB/API·인수 시나리오 16개 | 2026-10-27 요구 반영 설계. SSE·실제 AI 등은 미구현 |
 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) | LLM 후보·실행 조건·평가·LoRA·후속 Jev 후보 | 조사·제안; 모델 미선정·실측 전 |
 
-현재 PostgreSQL `complaints_native`에는 관계형 데이터와 5,109개 임베딩이 함께 적재되어 있습니다. 부서 디렉터리도 존재하지만 공식 업무분장·관할 보완은 남아 있습니다. **초기에는 LLM + RAG를 연결하고 Jev는 추후 추가**합니다. 시연 웹의 청주시 공식 접수·외부 이관 연계는 별도 범위입니다.
+현재 PostgreSQL `complaints_native`에는 관계형 데이터와 5,109개 임베딩이 함께 적재되어 있습니다. 이 벡터는 2026-10-24 BGE-M3 1024차원 적재입니다. 코드 기본값은 e5-small 384차원이므로 새 프로필로 검색하려면 `--reembed`가 필요합니다. 부서 디렉터리도 존재하지만 공식 업무분장·관할 보완은 남아 있습니다. **초기에는 LLM + RAG를 연결하고 Jev는 추후 추가**합니다. 시연 웹의 청주시 공식 접수·외부 이관 연계는 별도 범위입니다.
 
 ## 원래 계획서와 참고 자료
 

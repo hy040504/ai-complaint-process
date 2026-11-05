@@ -2,15 +2,19 @@
 
 from pathlib import Path
 from flask import Blueprint, Response, send_from_directory
-from src.config import ROOT
-from src.errors import AppError
+from src.complaints.config import ROOT
+from src.complaints.errors import AppError
 
 web = Blueprint("web", __name__)
 
 
 @web.route("/")
 def ui_index() -> Response:
-    """동일 출처에서 시민·담당자 UI를 제공합니다."""
+    """동일 출처에서 시민·담당자 UI를 제공합니다.
+
+    Returns:
+        `ui/index.html`입니다.
+    """
     return send_from_directory(ROOT / "ui", "index.html")
 
 
@@ -31,18 +35,30 @@ def ui_source(filename: str) -> Response:
 
 @web.route("/favicon.svg")
 def favicon() -> Response:
-    """UI의 로컬 아이콘을 제공합니다."""
+    """UI의 로컬 아이콘을 제공합니다.
+
+    Returns:
+        `ui/favicon.svg`입니다.
+    """
     return send_from_directory(ROOT / "ui", "favicon.svg")
 
 
 @web.route("/docs")
 @web.route("/swagger")
 def docs() -> Response:
-    """Swagger UI의 고정 진입 주소를 제공합니다."""
+    """Swagger UI의 고정 진입 주소를 제공합니다.
+
+    Returns:
+        `/openapi/swagger`로 보내는 302 응답입니다.
+    """
     return Response(status=302, headers={"Location": "/openapi/swagger"})
 
 
 @web.route("/openapi.json")
 def specification() -> Response:
-    """자동 생성 OpenAPI JSON의 진입 주소를 제공합니다."""
+    """자동 생성 OpenAPI JSON의 진입 주소를 제공합니다.
+
+    Returns:
+        `/openapi/openapi.json`으로 보내는 302 응답입니다.
+    """
     return Response(status=302, headers={"Location": "/openapi/openapi.json"})

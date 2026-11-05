@@ -5,8 +5,8 @@ from flask_openapi3.openapi import OpenAPI
 from pydantic import BaseModel, ValidationError
 from werkzeug.exceptions import HTTPException
 
-from src.errors import AppError
-from src.models import Actor, ErrorResponse
+from src.complaints.errors import AppError
+from src.complaints.models import Actor, ErrorResponse
 
 
 def actor() -> Actor:

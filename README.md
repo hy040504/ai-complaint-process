@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![SQLite](https://img.shields.io/badge/Demo_SQLite-Saved-3b719e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-ask--assist-334155?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -12,39 +12,51 @@
 
 ![Stage](https://img.shields.io/badge/Stage-Web_&_Retrieval_MVP-0f766e?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?style=flat-square&logo=postgresql&logoColor=white) ![pgvector](https://img.shields.io/badge/pgvector-0.8.1-475569?style=flat-square) ![GitHub](https://img.shields.io/badge/Repository-GitHub-334155?style=flat-square&logo=github&logoColor=white)
 
-[구현 현황](#현재-구현-상태) · [DB와 검색](#저장과-검색) · [처리 흐름](#처리-흐름) · [빠른 시작](#빠른-시작) · [문서 목차](docs/README.md) · [변경 이력](CHANGELOG.md)
-
-**[LLM + RAG 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md) · [모델 선정·미세조정 제안](plan/모델_선정과_미세조정_제안.md)**
-
-**[웹 상세설계·분야별 작업계획](plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf)**
+[구현 현황](#현재-구현-상태) · [응대 검사기](#응대-검사기) · [DB와 검색](#저장과-검색) · [처리 흐름](#처리-흐름) · [빠른 시작](#빠른-시작) · [문서 목차](docs/README.md) · [변경 이력](CHANGELOG.md)
 
 </div>
 
 ---
 
 > [!NOTE]
-> **현재 단계 · 2026-11-01 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, SQLite 업무 저장, `/#/lab` 응대 검사기, 검색 CLI/API.<br>
-> **다음:** 최종 모델 선정·실측 평가, 시민 챗봇 실연결, 담당자 SSE 모니터, 운영 인증·PostgreSQL 업무 저장.
+> **현재 단계 · 2026-11-05 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `start-web.cmd`·`ask-assist.cmd`. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
+> **다음:** 운영 DB 5,109건 재임베딩과 검색 예제 재평가, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
 
-<img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 짧은 진행 안내, 안내 또는 처리 사유" />
+| 지금 됨 | 응대 검사기 | 아직 |
+| --- | --- | --- |
+| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `ask-assist.cmd` | 민원 CRUD의 LLM 연결 |
+| FAQ 94 · 사례 5,015 · 부서 127 검색 | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
+| Windows `start-web.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI 선택 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
 
-| 바로 시작 | 안내 |
-| --- | --- |
-| 시민 사이트 | `http://127.0.0.1:5000/#/citizen` · [UI 실행](ui/README.md) |
-| 담당자 사이트 | `http://127.0.0.1:5000/#/staff` |
-| 응대 검사기 | `http://127.0.0.1:5000/#/lab` · 민원 저장 없음 |
-| API 문서 | `http://127.0.0.1:5000/docs` · [Flask 설치](src/README.md) |
-| 검색·데이터 | [검색 실행](rag/README.md) · [DB 경로](db/README.md) |
-| 개발 기록 | [분야별 문서](docs/README.md) · [사례 색인](docs/cases/README.md) |
+<img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
-| FAQ 안내 근거 | 공개 민원 사례 | 부서 디렉터리 | 적재된 임베딩 |
+| 화면 | 주소 | 실행 |
+| --- | --- | --- |
+| 시민 사이트 | `http://127.0.0.1:5000/#/citizen` | Windows: [`start-web.cmd`](start-web.cmd) |
+| 담당자 사이트 | `http://127.0.0.1:5000/#/staff` | 같은 Flask 서버 |
+| 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 민원 CRUD와 분리, 저장 없음 |
+| 민원 응대 CMD | [`ask-assist.cmd`](ask-assist.cmd) | 검색 API 필요, 기본 재정렬 끔 |
+| API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
+| 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [DB 경로](db/README.md) |
+| 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
+
+| 패키지 | 역할 | 위치 |
+| --- | --- | --- |
+| 민원 웹 | CRUD·세션·Swagger·정적 UI | [`src/complaints`](src/README.md) |
+| 검색 클라이언트 | 검색 API 호출, FAQ·사례 근거 | [`src/rag`](src/README.md) · 엔진은 [`rag/`](rag/README.md) |
+| LLM | Luna·Codex·legacy 공급자 | [`src/llm`](src/README.md) |
+| 응대 | 검색 다음 판정·정책 검사·조건부 FAQ | [`src/assist`](src/README.md) |
+
+설계 문서는 [LLM + RAG 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [웹 상세설계](plan/민원_웹_MVP_상세설계와_분야별_작업계획.md), [모델 제안](plan/모델_선정과_미세조정_제안.md)을 이어서 읽습니다.
+
+| FAQ 안내 근거 | 공개 민원 사례 | 부서 디렉터리 | 임베딩 |
 | :---: | :---: | :---: | :---: |
-| **94건** | **5,015건** | **127개** | **5,109개 · 1024차원** |
+| **94건** | **5,015건** | **127개** | **기본 e5-small 384차원 · 기존 dump는 bge-m3** |
 
 ## 현재 구현 상태
 
-**2026-10-31 추가:** [시민·담당자 웹 UI](ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](src/README.md)를 구현했습니다. Python 3.12 별도 가상환경에서 실행하며 민원·답변·이력을 업무 SQLite DB에 저장합니다. Pydantic 모델·저장소 `Protocol`·엄격한 타입 검사와 서버 역할·작성자·버전 검사를 적용했습니다. 기본 주소는 `http://127.0.0.1:5000`, Swagger는 `/docs`입니다. 실제 AI·SSE·PostgreSQL 업무 스키마·운영 본인인증·공식 이관은 미구현이며 AI 작업은 명시적인 단계 시연입니다. [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
+시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
 
 | 영역 | 구성·역할 | 상태 |
 | --- | --- | --- |
@@ -55,16 +67,21 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/public_llm_client.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
-| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`/assist/stream` 구현 · 최종 모델 미선정 · 토큰 없으면 검색+인계 |
-| 시연 | 시민 사이트·담당자 포털, `/#/lab` 응대 검사기 | 시민 작성 양식·짧은 진행 안내·처리 사유 표시 · 시민 챗봇은 고정 응답 유지 |
-| 시연 웹·업무 서버 | 목록·CRUD·추가 문의·답변 편집·게시·작업 시연 | Flask·Swagger·SQLite 유지 · 검사기는 별도 API |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`/#/lab` · `gpt-6-luna` API 또는 Codex CLI 선택 · 실측 평가 후속 |
+| 시연 웹 | 시민·담당자 화면, 목록·CRUD·초안·게시·단계 시연 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `start-web.cmd` |
+| 응대 검사기 | `/#/lab` 시민 작성 양식·짧은 진행 안내 | 민원 저장 없음 · 시민 챗봇은 고정 응답 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
-현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `/#/lab`는 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 SQLite로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
+현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `/#/lab`는 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 PostgreSQL `complaint_app`으로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
 
 웹 단계는 민원 목록·작성·상세에서 서버에 저장된 글과 답변·처리 상태를 확인하도록 구성합니다. 같은 AI 응대 계층을 CLI와 공유하고, 등록한 민원은 기존 RAG 지식과 구분해 저장하는 안을 제안합니다. [시연 웹·민원 서버 구현계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)
 
+<details>
+<summary><strong>통합 설계서의 분야별 작업 범위</strong></summary>
+
 추가 요구에 따라 AI 답변의 작성 기원·담당자 수정 이력을 표시하고, 담당자는 검색·판정·작성·검증의 실제 진행 상태를 확인하도록 설계했습니다. [통합 설계서](plan/민원_웹_MVP_상세설계와_분야별_작업계획.md)는 분야·화면·구성도 7개, CRUD·게시·실시간 이벤트 계약, 분야별 작업 38개와 인수 시나리오 16개를 포함합니다. **UI 10개·백엔드 10개·AI 9개·DB 9개**로 작업을 나누고, 앞부분의 전체 작업표와 14~17절에서 구현 내용·완료 기준을 확인할 수 있습니다. [PDF](plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf)도 같은 내용입니다. 문서 완성과 웹 기능 구현은 구분합니다.
+
+</details>
 
 ## 응대 검사기
 
@@ -83,11 +100,11 @@ flowchart LR
     class H human
 ```
 
-진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. [CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
+진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. LLM은 `.env`의 `COMPLAINT_LLM_PROVIDER`로 고릅니다. [CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
 
 ## 저장과 검색
 
-**PostgreSQL 하나에서 관계형 데이터와 벡터 데이터를 함께 관리합니다.** 이 컴퓨터의 DB는 `complaints_native`, 스키마는 `complaint_rag`이며 목적에 따라 테이블과 검색 순위를 분리합니다.
+**같은 PostgreSQL에서 스키마만 나눕니다.** 검색 지식은 `complaint_rag`, 시연 웹 민원 CRUD는 `complaint_app`입니다. 민원 행을 검색 색인에 넣지 않습니다. 이 컴퓨터의 DB 이름은 `complaints_native`입니다.
 
 | 테이블 | 관계형으로 저장하는 내용 | 벡터 검색 본문 | 규모 |
 | --- | --- | --- | ---: |
@@ -95,11 +112,11 @@ flowchart LR
 | `routing_cases` | 민원 원문·과거 처리 맥락·현재 부서 연결 | 제목 + 민원 요지 | 5,015건 |
 | `department_directory` | 부서 ID·현행 명칭·별칭·관할 및 검증 상태 | 일반 관계형 테이블로 관리 | 127개 |
 
-FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](db/schema/complaint_rag.sql) · [데이터 폴더](db/README.md) · [시스템 구조](docs/harness/architecture.md)
+FAQ·사례 테이블에는 현재 프로필 차원의 `embedding` 벡터가 함께 저장됩니다. 기본은 384차원입니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](db/schema/complaint_rag.sql) · [데이터 폴더](db/README.md) · [시스템 구조](docs/harness/architecture.md)
 
 | 검색 단계 | 현재 설정 |
 | --- | --- |
-| 의미 검색 | `BAAI/bge-m3`, 정규화된 1024차원 벡터, cosine/HNSW 상위 30건 |
+| 의미 검색 | 기본 `intfloat/multilingual-e5-small` 384차원, cosine/HNSW 상위 30건. 기존 색인은 `RAG_EMBEDDING_PROFILE=bge-m3` |
 | 키워드 검색 | Kiwi 형태소 분석 + PostgreSQL BM25 상위 30건 |
 | 순위 결합 | RRF `k=60`, FAQ·사례 각각 계산 |
 | 재정렬 | `BAAI/bge-reranker-v2-m3`, 상위 20건 평가 후 기본 5건 반환 |
@@ -110,7 +127,7 @@ FAQ·사례 테이블에는 `embedding vector(1024)`가 함께 저장됩니다. 
 
 ### 초기 구현: Jev 없는 LLM + RAG
 
-아래는 **Jev 없는 초기 LLM + RAG 흐름**입니다. 검색·판정·정책 검사까지 로컬 구현했으며, FAQ 문장 생성은 LLM 토큰이 있을 때만 호출합니다. 최종 모델은 미선정입니다.
+아래는 **Jev 없는 초기 LLM + RAG 흐름**입니다. 검색·판정·정책 검사까지 로컬 구현했으며, FAQ 문장 생성은 LLM이 설정됐을 때만 호출합니다. `gpt-6-luna`·`medium`은 OpenAI API 또는 Codex CLI 공급자로 선택할 수 있고, 실측 평가와 운영 모델 확정은 후속입니다.
 
 ```mermaid
 flowchart TD
@@ -178,6 +195,19 @@ Qwen3.5-4B부터 비교하고 추가 학습 없이 시작하는 안은 [모델 �
 
 ## 빠른 시작
 
+Windows에서 시민 화면까지 한 번에 열려면 저장소 루트의 [`start-web.cmd`](start-web.cmd)를 실행합니다. `.venv-web`이 준비되어 있으면 Flask를 별도 창에서 시작하고, 이미 실행 중이면 그 주소를 엽니다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md)
+
+```bat
+start-web.cmd
+```
+
+검색 API가 켜져 있으면 민원 문장으로 RAG+LLM 응대를 볼 수 있습니다. Windows는 [`ask-assist.cmd`](ask-assist.cmd)입니다.
+
+```bat
+ask-assist.cmd 대형폐기물 배출 방법이 궁금합니다
+ask-assist.cmd --example faq
+```
+
 **메뉴로 직접 검색해 보기:** [검색 테스트 TUI](rag/test_search.sh)를 실행하면 상태 확인, FAQ·사례 검색, 예제 질의, 재정렬·관할 설정을 사용할 수 있습니다.
 
 ```bash
@@ -229,6 +259,8 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 ## 검증 근거
 
+2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest rag/tests/test_assist.py rag/tests/test_embedding_config.py src/tests` **49개가 통과**했고 PostgreSQL 왕복 1개는 `RUN_PG_TESTS`가 없어 건너뛰었습니다. [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+
 2026-10-28 네이티브 환경에서 화면 회귀를 포함한 **전체 테스트 27개가 통과**했습니다. Bash 검색 메뉴의 실제 FAQ·사례 검색과 입력·저장·API 실패 처리를 확인했습니다. [CASE-011](docs/cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 
 2026-10-25 코드·주석 점검에서 **코드·격리 PostgreSQL 테스트 25개가 통과**했습니다. [CASE-006](docs/cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)
@@ -262,19 +294,23 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 ```text
 ai-complaint-process/
-├── README.md / CHANGELOG.md       # 소개·진행 상태 / 변경 이력
-├── AGENTS.md                     # 저장소 작업 규칙
-├── scripts/                      # 네이티브 검색 API 실행 환경
-├── docs/
-│   ├── README.md                 # 전체 문서 목차
-│   ├── assets/                   # README 배너·설계 그림·인쇄 스타일
-│   ├── cases/                    # 번호별 버그·개선·설계·검증 기록
-│   ├── tools/                    # 통합 설계 PDF 생성 도구
-│   └── harness/                  # 구조·계약·판정 초안·평가·운영
-├── rag/                          # 검색 코드·테스트·검증 보고서
-├── db/                           # 두 원본 JSON·데이터 사전
-├── plan/                         # 원본 계획서·분석·MVP 실행 계획
-└── PACKET/                       # 수집기·부서 정규화 코드
+├── README.md / CHANGELOG.md / AGENTS.md
+├── start-web.cmd                 # Windows Flask 시작·시민 화면
+├── ask-assist.cmd                # Windows 민원 → RAG+LLM 응대
+├── .env.example                  # 응대 LLM 공급자 예시
+├── src/
+│   ├── app.py                    # Flask 팩토리
+│   ├── complaints/               # 민원 웹 CRUD·세션·UI
+│   ├── rag/                      # 검색 API 클라이언트
+│   ├── llm/                      # Luna·Codex·legacy 공급자
+│   └── assist/                   # RAG와 LLM을 잇는 응대
+├── ui/                           # 시민·담당자·검사기 화면
+├── scripts/                      # 네이티브 실행·start_web.py
+├── docs/                         # 목차·사례·하네스·배너
+├── rag/                          # 검색 엔진·색인·CLI 호환 진입점
+├── db/                           # 원본 JSON·검색/업무 스키마·덤프 경로
+├── plan/                         # 원본 계획서·MVP 실행 계획
+└── PACKET/                       # 수집기·부서 정규화
 ```
 
 저장소의 공개 범위는 GitHub 설정을 기준으로 확인합니다. `.env`, 실행 DB, 모델 캐시, 쿠키가 포함된 원본 패킷 캡처(`PACKET/*.saz`)는 Git에서 제외합니다. 원래 계획서의 전체 행정 시스템 구상과 현재 검색 MVP의 범위는 [문서 목차](docs/README.md)에서 구분해 안내합니다.

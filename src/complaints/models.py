@@ -266,7 +266,7 @@ class Health(Model):
     """업무 서버와 AI 연결 범위를 명시한 상태 응답입니다."""
 
     status: Literal["ok"] = "ok"
-    storage: Literal["sqlite"] = "sqlite"
+    storage: Literal["postgresql", "memory"] = "postgresql"
     demo: Literal[True] = True
     ai_connected: Literal[False] = False
     assist_search: bool = False

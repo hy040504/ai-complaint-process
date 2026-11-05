@@ -1,8 +1,7 @@
-"""격리 SQLite와 Flask 클라이언트로 업무·공개 경계와 문서 계약을 검증합니다."""
+"""격리 메모리 저장소와 Flask 클라이언트로 업무·공개 경계와 문서 계약을 검증합니다."""
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from pathlib import Path
 
 from flask.testing import FlaskClient
 from flask_openapi3.openapi import OpenAPI
@@ -10,11 +9,12 @@ from openapi_spec_validator import validate
 import pytest
 
 from src import create_app
-from src.config import Settings
-from src.errors import AppError
-from src.models import Complaint, utcnow
-from src.seed import seed_demo
-from src.service import ComplaintService
+from src.complaints.config import Settings
+from src.complaints.errors import AppError
+from src.complaints.models import Complaint, utcnow
+from src.complaints.repository import MemoryRepository
+from src.complaints.seed import seed_demo
+from src.complaints.service import ComplaintService
 
 BODY = {
     "title": "합성 보행로 점검 요청",
@@ -25,12 +25,12 @@ BODY = {
 
 
 @pytest.fixture
-def app(tmp_path: Path) -> OpenAPI:
-    """테스트별 임시 DB로 구성한 Flask 앱입니다."""
+def app() -> OpenAPI:
+    """테스트별 메모리 저장소로 구성한 Flask 앱입니다."""
     return create_app(
         Settings(
-            database=tmp_path / "test.sqlite3",
             secret_key="isolated-test-key",
+            backend="memory",
             testing=True,
         )
     )
@@ -300,17 +300,18 @@ def test_atomic_conflict_and_rollback(app: OpenAPI, citizen: FlaskClient) -> Non
     assert service.repository.get(row["id"]).title == latest.title
 
 
-def test_persistence_across_app_instances(tmp_path: Path) -> None:
-    """다른 앱 인스턴스에서도 같은 업무 DB의 민원을 조회합니다."""
+def test_persistence_across_app_instances() -> None:
+    """같은 저장소를 쓰는 다른 앱 인스턴스에서도 민원을 조회합니다."""
+    store = MemoryRepository()
     settings = Settings(
-        database=tmp_path / "persistent.sqlite3",
         secret_key="persistent-key",
+        backend="memory",
         testing=True,
     )
-    one = create_app(settings).test_client()
+    one = create_app(settings, repository=store).test_client()
     one.post("/api/v1/session", json={"role": "citizen"})
     row = one.post("/api/v1/complaints", json=BODY).json
-    two = create_app(settings).test_client()
+    two = create_app(settings, repository=store).test_client()
     two.post("/api/v1/session", json={"role": "citizen"})
     assert two.get("/api/v1/complaints/" + row["id"]).json["title"] == BODY["title"]
 
@@ -332,7 +333,7 @@ def test_openapi_swagger_and_static_boundary(app: OpenAPI) -> None:
 
 
 def test_cross_origin_malformed_json_and_disabled_demo(
-    app: OpenAPI, citizen: FlaskClient, tmp_path: Path
+    app: OpenAPI, citizen: FlaskClient
 ) -> None:
     """다른 출처의 쓰기와 손상 JSON을 거부하고 시연 계정 선택을 끌 수 있습니다."""
     assert (
@@ -349,8 +350,8 @@ def test_cross_origin_malformed_json_and_disabled_demo(
     assert response.status_code == 400 and response.json["code"] == "http_error"
     off = create_app(
         Settings(
-            database=tmp_path / "off.sqlite3",
             secret_key="test",
+            backend="memory",
             testing=True,
             demo_login=False,
         )

@@ -1,6 +1,15 @@
 """검색 근거와 어긋난 판정은 담당자 검토로 떨어지는지 검증합니다."""
 
-from rag.assist import parse_json_object, run_assist, validate_decision
+from types import SimpleNamespace
+
+from rag.assist import (
+    complete_chat,
+    llm_configured,
+    llm_settings,
+    parse_json_object,
+    run_assist,
+    validate_decision,
+)
 
 
 def sample_search() -> dict:
@@ -217,3 +226,62 @@ def test_search_contract_failure() -> None:
     )
     assert result["reason_code"] == "search_failed"
     assert result["faq"] == []
+
+
+def test_openai_api_provider_uses_responses_and_medium_effort(
+    monkeypatch: object,
+) -> None:
+    """OpenAI API 선택은 Responses API와 medium 추론 설정을 사용합니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "openai_api")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    captured: dict = {}
+
+    def fake_http(url: str, payload: dict, headers: dict) -> dict:
+        captured.update({"url": url, "payload": payload, "headers": headers})
+        return {"output_text": "응답"}
+
+    monkeypatch.setattr("src.llm.complete.http_json", fake_http)
+    assert llm_configured() is True
+    assert complete_chat("시스템", "사용자") == "응답"
+    assert captured["url"] == "https://api.openai.com/v1/responses"
+    assert captured["payload"]["model"] == "gpt-6-luna"
+    assert captured["payload"]["reasoning"] == {"effort": "medium"}
+    assert captured["headers"]["Authorization"] == "Bearer test-key"
+
+
+def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -> None:
+    """Codex CLI 선택은 모델·추론 설정과 읽기 전용 격리를 전달합니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
+    monkeypatch.setenv("OPENAI_API_KEY", "must-not-reach-codex")
+    captured: dict = {}
+    monkeypatch.setattr("src.llm.settings.shutil.which", lambda command: "C:/tools/codex.exe")
+    monkeypatch.setattr("src.llm.complete.shutil.which", lambda command: "C:/tools/codex.exe")
+
+    def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        captured.update({"args": args, **kwargs})
+        return SimpleNamespace(returncode=0, stdout="CLI 응답\n", stderr="")
+
+    monkeypatch.setattr("src.llm.complete.subprocess.run", fake_run)
+    assert llm_configured() is True
+    assert complete_chat("시스템", "사용자") == "CLI 응답"
+    assert "--sandbox" in captured["args"]
+    assert captured["args"][captured["args"].index("--sandbox") + 1] == "read-only"
+    assert "gpt-6-luna" in captured["args"]
+    assert 'model_reasoning_effort="medium"' in captured["args"]
+    assert "OPENAI_API_KEY" not in captured["env"]
+
+
+def test_unknown_provider_is_not_configured(monkeypatch: object) -> None:
+    """지원하지 않는 공급자 값은 호출 가능 상태로 표시하지 않습니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "unknown")
+    settings = llm_settings()
+    assert settings["provider"] == "unknown"
+    assert llm_configured() is False
+
+
+def test_empty_openai_api_key_is_not_configured(monkeypatch: object) -> None:
+    """OPENAI_API_KEY가 공백이면 openai_api를 호출 가능으로 표시하지 않습니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "openai_api")
+    monkeypatch.setenv("OPENAI_API_KEY", "   ")
+    assert llm_settings()["token"] is None
+    assert llm_configured() is False

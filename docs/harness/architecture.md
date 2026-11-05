@@ -1,8 +1,8 @@
 # 시스템 구조
 
-2026-10-31 업무 서버 구현을 추가했다. 시민·담당자 `ui/`는 루트 `src/` Flask API를 호출하고, API의 Pydantic 모델 → 업무 서비스 → 저장소 `Protocol` → 별도 SQLite 경로로 처리한다. Swagger는 같은 모델에서 자동 생성하며 `/docs`에서 제공한다. 시민 응답에는 공개 DTO만 사용한다. 기존 검색 계층과 원본·색인은 분리하며 실제 AI·PostgreSQL 업무 스키마·작업자·SSE는 후속이다. 현재 실행·타입·저장·오류 계약은 [서버 안내](../../src/README.md)를 따른다.
+2026-10-31 업무 서버 구현을 추가했다. 시민·담당자 `ui/`는 루트 `src/` Flask API를 호출하고, API의 Pydantic 모델 → 업무 서비스 → 저장소 `Protocol` → PostgreSQL `complaint_app`으로 처리한다. Swagger는 같은 모델에서 자동 생성하며 `/docs`에서 제공한다. 시민 응답에는 공개 DTO만 사용한다. 기존 검색 계층과 원본·색인은 분리하며 실제 AI·작업자·SSE는 후속이다. 현재 실행·타입·저장·오류 계약은 [서버 안내](../../src/README.md)를 따른다.
 
-기준: 2026-11-01. 검색 계층과 로컬 응대 계층(`rag/assist.py`, `/#/lab`)이 있다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. 최종 모델·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
+기준: 2026-11-05. 검색 계층과 로컬 응대 계층(`src/assist`, `/#/lab`)이 있다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 선택할 수 있고, 실측 평가·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
 
 ## 데이터와 실행 경로
 
@@ -15,11 +15,11 @@ flowchart TD
     Q[CLI 또는 API 입력] --> R[FAQ·사례별 벡터 + BM25 + RRF + 재정렬]
     P --> R
     R --> E[원문·출처·부서 후보 / requires_gate]
-    E -. 예정 .-> G[범용 LLM 판정·코드 정책 검사]
-    G -. 예정 .-> O[FAQ 안내 / 부서 추천 / 담당자 검토]
+    E --> G[LLM 판정·코드 정책 검사]
+    G --> O[FAQ 안내 / 부서 추천 / 담당자 검토]
 ```
 
-이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 `embedding vector(1024)`가 저장되며 검색 순위는 각각 계산한다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개까지 총 7개 테이블을 사용한다.
+이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 현재 프로필 차원의 `embedding`이 저장되며 검색 순위는 각각 계산한다. 기본은 `intfloat/multilingual-e5-small` 384차원이다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개까지 총 7개 테이블을 사용한다.
 
 ## 코드 탐색 지도
 
@@ -28,25 +28,34 @@ flowchart TD
 | [PACKET](../../PACKET/) | 원문 수집과 확인된 부서 별칭 정규화 |
 | [data.py](../../rag/data.py) | 원본 검증, FAQ/사례 검색 본문, 내부 부서 ID 생성 |
 | [config.py](../../rag/config.py) | 모델 리비전·차원·본문/토크나이저 버전·검색 설정 |
-| [models.py](../../rag/models.py) | BGE-M3 임베딩과 긴 문서의 창 단위 재정렬 |
+| [models.py](../../rag/models.py) | 프로필 임베딩(기본 e5-small)과 긴 문서의 창 단위 재정렬 |
 | [korean.py](../../rag/korean.py) | Kiwi 형태소와 BM25용 토큰 빈도 |
 | [complaint_rag.sql](../../db/schema/complaint_rag.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
 | [ingest.py](../../rag/ingest.py) | 벡터 재사용·체크포인트·한 트랜잭션으로 데이터 반영 |
 | [search.py](../../rag/search.py) | 두 검색기·RRF·재정렬·부서 후보 집계 |
 | [api.py](../../rag/api.py), [__main__.py](../../rag/__main__.py) | HTTP API와 표준 라이브러리 CLI 클라이언트 |
+| [assist.py](../../rag/assist.py) | CLI 호환 진입점. 구현은 `src/assist`·`src/llm`·`src/rag` |
+| [src/complaints](../../src/README.md) | 민원 웹 CRUD·세션·정적 UI·Swagger |
+| [src/rag](../../src/README.md) | 검색 API 클라이언트와 검색 전용 계약. `http_json` 전송과 `search_parts` 한 번 순회 |
+| [src/llm](../../src/README.md) | Luna·Codex·기존 호환 LLM 공급자. JSON HTTP는 `src.rag.http`를 재사용 |
+| [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 한 요청에서 검색 조각·LLM 설정을 재사용 |
+| [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
+| [start_web.py](../../scripts/start_web.py) | Windows에서 Flask 시작과 시민 화면 열기 |
+| [ask_assist.py](../../scripts/ask_assist.py) | Windows에서 민원 문장 → 검색 API + LLM 응대 |
 | [verify.py](../../rag/verify.py), [evaluate.py](../../rag/evaluate.py) | 실제 DB 대조와 API 검색 회귀 확인 |
 
 ## 적재 계약
 
 1. 원본 형태·키·출처·부서 상태를 검사하고 검색 본문을 만든다.
-2. 적재 잠금으로 동시 적재를 막고, 같은 모델 서명과 본문의 기존 벡터 또는 SQLite 체크포인트를 재사용한다.
+2. 적재 잠금으로 동시 적재를 막고, 같은 모델 서명과 본문의 기존 벡터 또는 `complaint_rag.embedding_cache` 체크포인트를 재사용한다.
 3. 새 임베딩과 토큰화를 마친 뒤 문서·부서·BM25 통계·색인 메타데이터를 한 트랜잭션으로 반영한다.
 4. 새 원본에서 빠진 문서는 색인에서도 제외한다. 잘못된 일부 원본을 전체 원본처럼 적재하지 않도록 건수와 삭제 목록을 먼저 검토한다.
 
-임베딩 서명은 모델·리비전·차원·정규화·본문 버전을 포함한다. 모델이나 본문 구성 규칙을 바꿀 때는 버전과 재적재를 함께 다룬다. 단순 원문 변경은 본문 해시로 감지한다. 재수집·DB 재적재·검증의 실제 절차는 [운영 문서](runbook.md)에 있다.
+임베딩 서명은 모델·리비전·차원·최대 입력 길이·질문/문서 접두·정규화·본문 버전을 포함한다. 모델이나 본문 구성 규칙을 바꿀 때는 버전과 재적재를 함께 다룬다. 단순 원문 변경은 본문 해시로 감지한다. 재수집·DB 재적재·검증의 실제 절차는 [운영 문서](runbook.md)에 있다.
 
 ## 검색 계약
 
+- 기본 임베딩은 `intfloat/multilingual-e5-small` 384차원이다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`다.
 - 기본 설정은 각 컬렉션에서 벡터 30건, BM25 30건, RRF `k=60`, 재정렬 최대 20건, 반환 5건이다.
 - 재정렬을 끄면 RRF 상위 `limit`건의 원문만 조회한다. 재정렬을 켜면 기존 후보 범위인 `max(limit, rerank_k)`건을 확보한다.
 - `both`도 두 컬렉션을 각각 처리한다. 두 컬렉션의 원시 점수를 합쳐 최종 의사결정을 하지 않는다.
@@ -72,28 +81,28 @@ flowchart TD
 | 공백 입력·검색할 형태소 없음·재정렬 질문 토큰 초과 | 검색 엔진 `ValueError` → `400` |
 | 검색 중 DB·모델 등 예외 | `503` |
 | API 시작 시 색인 없음·버전 불일치 | 시작 실패; API가 제공되지 않을 수 있음 |
-| 범위 밖 민원 | 최근접 문서를 반환할 수 있음. 범위 판정은 `rag/assist.py`가 검색 뒤에 수행한다 |
+| 범위 밖 민원 | 최근접 문서를 반환할 수 있음. 범위 판정은 `src/assist`가 검색 뒤에 수행한다 |
 
 ## LLM 응대 계층
 
-검색 API·DB 구조는 유지하고 그 위에 `rag/assist.py`가 판정 JSON·코드 정책 검사·조건부 FAQ 생성을 연결한다. CLI `python -m rag assist`와 Flask `POST /api/v1/assist`·`/assist/stream`이 같은 함수를 쓴다. 검사기 화면은 `/#/lab`이다.
+검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `/#/lab`도 이 계층을 쓴다.
 
-1. FAQ·사례별 검색 결과를 받은 뒤 LLM이 의도·근거·처리 경로를 구조화해 제안한다. 토큰이 없으면 검색 근거만 남기고 담당자 검토로 연결한다.
+1. FAQ·사례별 검색 결과를 받은 뒤 LLM이 의도·근거·처리 경로를 구조화해 제안한다. 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결한다.
 2. 코드가 출처·부서 후보·필수 조건과 출력 계약을 검사한다. FAQ 현행성 허용 목록은 아직 없다.
 3. FAQ 안내가 허용된 경우에만 같은 LLM을 다시 호출해 답변을 생성한다. 답변과 근거를 검사하고 실패하면 담당자 검토로 보낸다.
 4. 부서 후보·담당자 검토 안내는 템플릿이다. 검사기는 파이프라인 전체가 아니라 짧은 진행 안내만 보여 준다.
 
-판정과 생성은 같은 모델 가중치를 재사용하되 프롬프트·입출력·평가를 구분한다. 구조화 출력과 ID 검사가 답변의 의미적 정확성을 완전히 보장하지는 않으므로 조건 검수·보류 정책과 한국어 평가는 후속이다. 최종 모델은 미선정이다. [변경점과 구현계획](../../plan/언어모델과_검색증강생성_우선_구현계획.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)
+`COMPLAINT_LLM_PROVIDER`로 `openai_api`(Responses API, `gpt-6-luna`·`medium`) 또는 `codex_cli`(읽기 전용 임시 작업공간)를 고른다. 기존 호환 토큰은 `legacy`다. 판정과 생성은 같은 모델 설정을 재사용하되 프롬프트·입출력·평가를 구분한다. 실측 평가와 운영 모델 확정은 후속이다. [변경점과 구현계획](../../plan/언어모델과_검색증강생성_우선_구현계획.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](../cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
 
 LLM 호출은 검색 API 프로세스와 분리한다. Jev는 이후 판정 어댑터의 대체 또는 추가 검토 모듈로 비교하며 초기 실행 의존성에 넣지 않는다.
 
 ## 시연 웹·민원 업무 서버
 
-사용자가 정한 웹 범위는 **민원 게시판·작성 페이지와 민원을 주고받는 서버**다. 2026-10-31 루트 `src/` Flask와 SQLite로 목록·상세·등록·답변·추가 문의·상태 저장을 로컬 구현했다. 검사기 응대는 민원 CRUD와 분리한다.
+사용자가 정한 웹 범위는 **민원 게시판·작성 페이지와 민원을 주고받는 서버**다. 2026-10-31 루트 `src/` Flask로 목록·상세·등록·답변·추가 문의·상태 저장을 로컬 구현했고, 2026-11-05 저장을 PostgreSQL `complaint_app`으로 옮겼다. Swagger는 `/docs`이며 인쇄본은 [Swagger PDF](../청주톡톡_민원_업무_API_Swagger.pdf)다. 검사기 응대는 민원 CRUD와 분리한다.
 
 민원 서버는 입력·역할·조회 범위를 검사하고 민원·대화·상태를 저장한다. 기존 `/search`는 검색 근거 계약을 유지한다. 저장 성공과 AI 처리 성공을 구별하고, 검사기 실패는 등록된 글을 만들지 않는다.
 
-기존 `complaint_rag`는 지식 검색용이며 새 게시글·답변은 `db/app/` SQLite로 구분한다. 시연 서버의 등록·검토 상태와 청주시 공식 접수·외부 부서 이관은 별개다. 화면·저장 구조·API는 [서버 안내](../../src/README.md)와 [시연 웹·민원 서버 계획](../../plan/시연_웹_게시판과_민원_서버_구현계획.md)을 따른다.
+기존 `complaint_rag`는 지식 검색용이며 새 게시글·답변은 `complaint_app`으로 구분한다. 시연 서버의 등록·검토 상태와 청주시 공식 접수·외부 부서 이관은 별개다. 화면·저장 구조·API는 [서버 안내](../../src/README.md)와 [시연 웹·민원 서버 계획](../../plan/시연_웹_게시판과_민원_서버_구현계획.md)을 따른다.
 
 2026-10-27 [통합 상세설계](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md)의 PostgreSQL 업무 스키마·별도 AI 작업자·SSE는 후속이다. 담당자 화면의 AI 작업 모니터는 서버 단계 시연이며 검사기 NDJSON 진행과 구별한다.
 

@@ -17,12 +17,12 @@
 | --- | --- | --- |
 | `자주_묻는_민원.json` | FAQ 원문 94건 | 포함 |
 | `공개_민원_사례.json` | 공개 사례 원문 5,015건 | 포함 |
-| `schema/complaint_rag.sql` | 검색용 PostgreSQL 스키마. `rag/store.py`가 읽음 | 포함 |
-| `schema/complaint_app.sql` | 게시판 PostgreSQL 스키마(후속) | 포함 |
+| `schema/complaint_rag.sql` | 검색용 PostgreSQL 스키마. `rag/store.py`가 `__EMBEDDING_DIM__`을 현재 프로필 차원으로 바꿔 적용 | 포함 |
+| `schema/complaint_app.sql` | 시연 웹 jsonb `complaints`·`idempotency`. 7테이블 정규화는 후속 | 포함 |
 | `dumps/complaint_rag.dump` | 벡터가 들어 있는 검색 DB 복사본 | 제외. 우분투에서 `scripts/export-rag-dump.sh` |
-| `app/complaints.sqlite3` | 시연 웹 민원·답변 SQLite | 제외. 기본 업무 DB 경로 |
+| `app/` | 이전 시연 SQLite 잔여 경로. 현재 업무 저장은 PostgreSQL `complaint_app` | 잔여 `*.sqlite3`는 제외 |
 
-SQL 파일만으로는 행이 없습니다. 다른 컴퓨터에서 검색까지 바로 쓰려면 dump를 함께 복사하거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용하려면 `scripts/apply-db-schema.sh`, dump 복원은 `scripts/restore-rag-dump.sh`입니다. 현재 시연 웹은 PostgreSQL `complaint_app`이 아니라 `db/app/complaints.sqlite3`를 씁니다.
+SQL 파일만으로는 행이 없습니다. 다른 컴퓨터에서 검색까지 바로 쓰려면 dump를 함께 복사하거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용하려면 `scripts/apply-db-schema.sh`, dump 복원은 `scripts/restore-rag-dump.sh`입니다. 현재 시연 웹은 PostgreSQL `complaint_app`에 민원을 저장합니다. 검색 색인은 `complaint_rag`입니다.
 
 이 폴더에는 청주톡톡 사이트에서 수집한 민원 자료를 JSON으로 정리한 파일 두 개가 있습니다. JSON 파일은 UTF-8 인코딩이며, 한글이 그대로 저장됩니다. 두 파일의 상세 페이지는 2026-10-24(UTC)에 전건 재확인했습니다.
 

@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from src.models import (
+from src.complaints.models import (
     Answer,
     Category,
     Complaint,
@@ -13,7 +13,7 @@ from src.models import (
     Status,
     utcnow,
 )
-from src.repository import ComplaintRepository
+from src.complaints.repository import ComplaintRepository
 
 
 def seed_demo(repository: ComplaintRepository) -> int:

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="220" viewBox="0 0 1200 220" role="img" aria-labelledby="lab-title lab-desc">
   <title id="lab-title">응대 검사기 흐름</title>
-  <desc id="lab-desc">시민 작성 양식으로 민원을 남기면 짧은 진행 안내를 보여 주고, 안내 또는 처리 사유를 확인합니다.</desc>
+  <desc id="lab-desc">시민 작성 양식으로 민원을 남기면 검색 클라이언트가 근거를 찾고 LLM이 판정한 뒤, 안내 또는 처리 사유를 확인합니다.</desc>
   <defs>
     <linearGradient id="lab-bg" x1="0" x2="1" y2="1">
       <stop stop-color="#0f172a"/>
@@ -9,16 +9,23 @@
   </defs>
   <rect width="1200" height="220" rx="20" fill="url(#lab-bg)"/>
   <g font-family="Arial, 'Noto Sans KR', sans-serif">
-    <text x="48" y="42" fill="#93c5fd" font-size="13" font-weight="700" letter-spacing="2.4">/#/LAB · ASSIST</text>
-    <text x="48" y="78" fill="#f8fafc" font-size="28" font-weight="700">작성하면 지금 하는 일만 짧게 보여 줍니다</text>
-    <rect x="48" y="108" width="340" height="76" rx="14" fill="#15233a" stroke="#2f6fed" stroke-opacity=".45"/>
-    <text x="72" y="140" fill="#bfdbfe" font-size="13" font-weight="700">1 민원 작성</text>
-    <text x="72" y="164" fill="#e2e8f0" font-size="16">시민 직접 작성 양식</text>
-    <rect x="430" y="108" width="340" height="76" rx="14" fill="#132a2c" stroke="#2dd4bf" stroke-opacity=".4"/>
-    <text x="454" y="140" fill="#99f6e4" font-size="13" font-weight="700">2 짧은 진행</text>
-    <text x="454" y="164" fill="#e2e8f0" font-size="16">안내·사례를 찾고 있어요</text>
-    <rect x="812" y="108" width="340" height="76" rx="14" fill="#2a2416" stroke="#e4c877" stroke-opacity=".4"/>
-    <text x="836" y="140" fill="#fde68a" font-size="13" font-weight="700">3 안내 또는 사유</text>
-    <text x="836" y="164" fill="#e2e8f0" font-size="16">답변 · 부서 후보 · 담당자 검토</text>
+    <text x="48" y="38" fill="#93c5fd" font-size="13" font-weight="700" letter-spacing="2.4">/#/LAB · src/assist</text>
+    <text x="48" y="72" fill="#f8fafc" font-size="24" font-weight="700">작성하면 검색과 판정을 잇고 안내만 보여 줍니다</text>
+    <rect x="48" y="98" width="258" height="90" rx="14" fill="#15233a" stroke="#2f6fed" stroke-opacity=".45"/>
+    <text x="68" y="130" fill="#bfdbfe" font-size="13" font-weight="700">1 민원 작성</text>
+    <text x="68" y="156" fill="#e2e8f0" font-size="15">시민 직접 작성 양식</text>
+    <text x="68" y="176" fill="#64748b" font-size="12">저장하지 않음</text>
+    <rect x="330" y="98" width="258" height="90" rx="14" fill="#132a2c" stroke="#2dd4bf" stroke-opacity=".4"/>
+    <text x="350" y="130" fill="#99f6e4" font-size="13" font-weight="700">2 검색</text>
+    <text x="350" y="156" fill="#e2e8f0" font-size="15">FAQ · 공개 사례</text>
+    <text x="350" y="176" fill="#64748b" font-size="12">src/rag 클라이언트</text>
+    <rect x="612" y="98" width="258" height="90" rx="14" fill="#231b36" stroke="#c4b5fd" stroke-opacity=".4"/>
+    <text x="632" y="130" fill="#ddd6fe" font-size="13" font-weight="700">3 판정</text>
+    <text x="632" y="156" fill="#e2e8f0" font-size="15">LLM · 정책 검사</text>
+    <text x="632" y="176" fill="#64748b" font-size="12">src/llm + 코드 검증</text>
+    <rect x="894" y="98" width="258" height="90" rx="14" fill="#2a2416" stroke="#e4c877" stroke-opacity=".4"/>
+    <text x="914" y="130" fill="#fde68a" font-size="13" font-weight="700">4 안내 또는 사유</text>
+    <text x="914" y="156" fill="#e2e8f0" font-size="15">답변 · 부서 · 검토</text>
+    <text x="914" y="176" fill="#64748b" font-size="12">자동 이관 아님</text>
   </g>
 </svg>

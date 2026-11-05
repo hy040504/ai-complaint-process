@@ -6,9 +6,9 @@ from collections.abc import Iterator
 from flask import Response, current_app, session, stream_with_context
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
-from src.http import actor, reply
+from src.complaints.http import actor, reply
 
-from src.errors import AppError
+from src.complaints.errors import AppError
 from src.assist import (
     assist_examples,
     iter_web_assist,
@@ -16,7 +16,7 @@ from src.assist import (
     run_web_assist,
     search_available,
 )
-from src.models import (
+from src.complaints.models import (
     Actor,
     AnswerInput,
     AssignmentInput,
@@ -38,7 +38,7 @@ from src.models import (
     VersionInput,
     WorkspaceResponse,
 )
-from src.service import ComplaintService, Operation
+from src.complaints.service import ComplaintService, Operation
 
 
 def create_api(service: ComplaintService) -> APIBlueprint:
@@ -87,7 +87,11 @@ def create_api(service: ComplaintService) -> APIBlueprint:
     def health() -> Response:
         """서버 상태와 검색·LLM 설정 여부, 민원 CRUD의 AI 미연결을 반환합니다."""
         return reply(
-            Health(assist_search=search_available(), assist_llm=llm_configured())
+            Health(
+                storage=service.repository.storage,
+                assist_search=search_available(),
+                assist_llm=llm_configured(),
+            )
         )
 
     @api.get(
