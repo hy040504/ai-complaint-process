@@ -10,12 +10,12 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DB_DIR = ROOT / "db"
-FAQ_JSON = DB_DIR / "자주_묻는_민원.json"
-CASES_JSON = DB_DIR / "공개_민원_사례.json"
-RAG_SCHEMA_SQL = DB_DIR / "schema" / "complaint_rag.sql"
-APP_SCHEMA_SQL = DB_DIR / "schema" / "complaint_app.sql"
-RAG_DUMP = DB_DIR / "dumps" / "complaint_rag.dump"
+# 검색 원본 JSON·DDL·벡터 dump. 시연 웹 DDL은 src/complaints/schema.
+ORIGIN_DIR = Path(__file__).resolve().parent / "origin"
+FAQ_JSON = ORIGIN_DIR / "자주_묻는_민원.json"
+CASES_JSON = ORIGIN_DIR / "공개_민원_사례.json"
+RAG_SCHEMA_SQL = ORIGIN_DIR / "schema" / "complaint_rag.sql"
+RAG_DUMP = ORIGIN_DIR / "dumps" / "complaint_rag.dump"
 COLLECTIONS = {"faq": "faq_knowledge", "routing": "routing_cases"}
 DISTRICTS = ("상당구", "서원구", "흥덕구", "청원구")
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"

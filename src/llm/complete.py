@@ -8,10 +8,13 @@ import re
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from src.llm.settings import llm_settings
 from src.rag.http import http_json
+
+_WIN_CODEX_WRAPPERS = {".cmd", ".bat", ".ps1"}
 
 _JSON_BLOCK = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 _FIRST_OBJECT = re.compile(r"\{.*\}", re.DOTALL)
@@ -82,10 +85,46 @@ def complete_openai_response(
     return response_output_text(body)
 
 
+def resolve_codex_argv(command: str) -> list[str]:
+    """Codex 실행 파일을 실제 프로세스로 풀고 인자 접두를 만듭니다.
+
+    Windows에서 `shutil.which("codex")`는 npm의 `codex.cmd`를 고릅니다.
+    `.cmd`는 `cmd.exe`를 거치므로 긴 프롬프트와 표준 입력이 잘릴 수 있어
+    같은 폴더의 `node`와 `codex.js`로 직접 실행합니다.
+
+    Args:
+        command: `COMPLAINT_CODEX_COMMAND` 값입니다.
+
+    Returns:
+        `subprocess.run`에 넣을 실행 파일과 진입 스크립트 목록입니다.
+
+    Raises:
+        ValueError: 실행 파일 또는 Windows npm 진입 스크립트를 찾지 못한 경우
+            발생합니다.
+    """
+    found = shutil.which(command)
+    if not found:
+        raise ValueError(f"Codex CLI 실행 파일을 찾지 못했습니다: {command}")
+    path = Path(found)
+    if os.name == "nt" and path.suffix.lower() in _WIN_CODEX_WRAPPERS:
+        script = path.parent / "node_modules" / "@openai" / "codex" / "bin" / "codex.js"
+        node = shutil.which("node")
+        if node is None or not script.is_file():
+            raise ValueError(
+                "Windows npm Codex 래퍼를 건너뛰려면 node와 "
+                f"{script}가 필요합니다."
+            )
+        return [node, str(script)]
+    return [found]
+
+
 def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) -> str:
     """읽기 전용 임시 작업공간에서 Codex CLI로 모델 출력을 요청합니다.
 
-    하위 프로세스에는 `OPENAI_API_KEY`를 전달하지 않습니다.
+    검색 근거가 들어간 긴 프롬프트는 Windows 명령줄 길이 제한을 피하려고
+    인자 대신 표준 입력으로 보냅니다. npm `codex.cmd`는 `cmd.exe`를 거치지
+    않도록 `node`와 `codex.js`로 풀어 실행합니다. 하위 프로세스에는
+    `OPENAI_API_KEY`를 전달하지 않습니다.
 
     Args:
         settings: `llm_settings()`가 만든 공급자 설정입니다.
@@ -99,9 +138,6 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
         ValueError: 실행 파일이 없거나 종료 코드·본문이 실패한 경우 발생합니다.
     """
     command = os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")
-    executable = shutil.which(command)
-    if not executable:
-        raise ValueError(f"Codex CLI 실행 파일을 찾지 못했습니다: {command}")
     prompt = (
         "도구를 사용하거나 파일을 읽거나 수정하지 마세요. 다음 시스템 지시와 "
         "사용자 입력만 근거로 최종 답변 본문만 반환하세요.\n\n"
@@ -112,7 +148,7 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
     with tempfile.TemporaryDirectory(prefix="cheongju-assist-codex-") as workspace:
         result = subprocess.run(
             [
-                executable,
+                *resolve_codex_argv(command),
                 "exec",
                 "--skip-git-repo-check",
                 "--sandbox",
@@ -123,10 +159,11 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
                 str(settings["model"]),
                 "--config",
                 f'model_reasoning_effort="{settings["reasoning_effort"]}"',
-                prompt,
+                "-",
             ],
             cwd=workspace,
             env=environment,
+            input=prompt,
             capture_output=True,
             encoding="utf-8",
             errors="replace",

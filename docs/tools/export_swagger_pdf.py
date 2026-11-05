@@ -75,6 +75,49 @@ def escape(value: object) -> str:
     return html.escape(str(value), quote=True)
 
 
+def path_html(path: str) -> str:
+    """경로를 슬래시 뒤에서만 줄바꿈할 수 있게 표시합니다.
+
+    Args:
+        path: OpenAPI 경로입니다.
+
+    Returns:
+        `<wbr>`이 들어간 HTML입니다.
+    """
+    return escape(path).replace("/", "/<wbr>")
+
+
+def render_tag_section(
+    title: str,
+    description: str,
+    blocks: list[str],
+) -> str:
+    """절 제목과 첫 블록을 같은 페이지에 묶습니다.
+
+    Args:
+        title: 태그 또는 모델 절 제목입니다.
+        description: 절 설명입니다. 없으면 빈 문자열입니다.
+        blocks: 연산 또는 모델 HTML 목록입니다.
+
+    Returns:
+        한 절의 HTML입니다.
+    """
+    if not blocks:
+        return ""
+    lead = [
+        "<section class='tag'><div class='tag-start'><div class='tag-lead'>",
+        f"<h2>{escape(title)}</h2>",
+    ]
+    if description:
+        lead.append(f"<p class='tag-desc'>{escape(description)}</p>")
+    lead.append("</div>")
+    lead.append(blocks[0])
+    lead.append("</div>")
+    lead.extend(blocks[1:])
+    lead.append("</section>")
+    return "".join(lead)
+
+
 def schema_name(ref: str) -> str:
     """JSON Schema `$ref`에서 모델 이름을 꺼냅니다.
 
@@ -253,7 +296,7 @@ def render_html(spec: dict[str, Any]) -> str:
         CSS,
         "</style></head><body>",
         "<header class='banner'>",
-        f"<p class='kicker'>청주 민원 AI 완충지대 · Flask `/docs` 스냅샷 · 검색 API :8007 제외</p>",
+        "<p class='kicker'>청주 민원 AI 완충지대 · Flask /docs 스냅샷 · 검색 API :8007 제외</p>",
         f"<h1>{escape(title)}</h1>",
         f"<p class='meta'>OpenAPI {escape(version)} · 로컬 시연 · "
         "http://127.0.0.1:5000/docs · 2026-11-05</p>",
@@ -273,7 +316,7 @@ def render_html(spec: dict[str, Any]) -> str:
         parts.append(
             "<tr>"
             f"<td><span class='verb {escape(method.lower())}'>{escape(method)}</span></td>"
-            f"<td><code>{escape(path)}</code></td>"
+            f"<td><code>{path_html(path)}</code></td>"
             f"<td>{escape(tag)}</td>"
             f"<td>{escape(summary)}</td>"
             "</tr>"
@@ -285,20 +328,25 @@ def render_html(spec: dict[str, Any]) -> str:
         if not items:
             continue
         tag_info = tags_meta.get(tag) or {}
-        parts.append(f"<h2>{escape(tag)}</h2>")
-        if tag_info.get("description"):
-            parts.append(
-                f"<p class='tag-desc'>{escape(clean_text(tag_info['description']))}</p>"
+        description = clean_text(str(tag_info.get("description") or ""))
+        parts.append(
+            render_tag_section(
+                tag,
+                description,
+                [
+                    render_operation(method, path, operation, schemas)
+                    for method, path, operation in items
+                ],
             )
-        for method, path, operation in items:
-            parts.append(render_operation(method, path, operation, schemas))
+        )
 
-    parts.append("<h2>모델</h2>")
     parts.append(
-        "<p class='tag-desc'>Swagger UI 하단 Schemas와 같은 구성 요소입니다.</p>"
+        render_tag_section(
+            "모델",
+            "Swagger UI 하단 Schemas와 같은 구성 요소입니다.",
+            [render_model(name, schemas[name]) for name in sorted(schemas)],
+        )
     )
-    for name in sorted(schemas):
-        parts.append(render_model(name, schemas[name]))
     parts.append("</body></html>")
     return "".join(parts)
 
@@ -328,7 +376,7 @@ def render_operation(
         f"<section class='op {escape(method)}'>",
         "<div class='op-head'>",
         f"<span class='verb {escape(method)}'>{escape(method.upper())}</span>",
-        f"<code class='path'>{escape(path)}</code>",
+        f"<code class='path'>{path_html(path)}</code>",
         f"<span class='sum'>{escape(summary)}</span>",
         "</div><div class='op-body'>",
     ]
@@ -371,15 +419,25 @@ def render_operation(
     success = [
         (code, item) for code, item in responses.items() if code not in COMMON_ERRORS
     ]
-    blocks.append("<h3>Responses</h3><table><thead><tr>")
-    blocks.append("<th>코드</th><th>설명</th><th>스키마</th></tr></thead><tbody>")
-    for code, item in success:
-        schema = media_schema((item or {}).get("content"))
+    blocks.append("<h3>Responses</h3><table class='resp'><colgroup>")
+    blocks.append("<col class='col-code'><col><col class='col-schema'></colgroup>")
+    blocks.append("<thead><tr><th>코드</th><th>설명</th><th>스키마</th></tr></thead><tbody>")
+    if success:
+        for code, item in success:
+            schema = media_schema((item or {}).get("content"))
+            blocks.append(
+                "<tr>"
+                f"<td><code>{escape(code)}</code></td>"
+                f"<td>{escape((item or {}).get('description') or '')}</td>"
+                f"<td>{escape(type_label(schema))}</td>"
+                "</tr>"
+            )
+    else:
         blocks.append(
             "<tr>"
-            f"<td><code>{escape(code)}</code></td>"
-            f"<td>{escape((item or {}).get('description') or '')}</td>"
-            f"<td>{escape(type_label(schema))}</td>"
+            "<td><code>200</code></td>"
+            "<td>응대 진행 안내를 NDJSON으로 보내고 마지막에 결과를 붙입니다.</td>"
+            "<td>application/x-ndjson</td>"
             "</tr>"
         )
     blocks.append("</tbody></table>")
@@ -468,12 +526,15 @@ def render_model(name: str, schema: dict[str, Any]) -> str:
 
 CSS = """
 @page { size: A4; margin: 12mm 12mm 14mm; }
+* { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
   color: #3b4151;
   font-size: 9.2pt;
   line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -483,24 +544,46 @@ h1 { font-size: 22pt; margin: 0 0 2mm; color: #3b4151; }
 .meta, .lead, .tag-desc { margin: 0 0 3mm; }
 .lead { color: #3b4151; }
 .notes { margin: 0 0 2mm; padding-left: 5mm; }
-h2 { font-size: 14pt; color: #3b4151; border-bottom: 1px solid #d8dde3; padding-bottom: 1.5mm; margin: 7mm 0 3mm; break-after: avoid; }
-h3 { font-size: 10pt; margin: 3mm 0 1.5mm; color: #3b4151; break-after: avoid; }
-code { font-family: Consolas, "Courier New", monospace; font-size: 8.4pt; }
-table { width: 100%; border-collapse: collapse; margin: 0 0 3mm; font-size: 8.4pt; }
-.op-body table, .model table { break-inside: avoid; }
+.tag-start {
+  break-inside: avoid; page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+.tag-lead {
+  break-inside: avoid; page-break-inside: avoid;
+  break-after: avoid; page-break-after: avoid;
+}
+.tag-start > .op, .tag-start > .model { margin-top: 0; }
+h2 {
+  font-size: 14pt; color: #3b4151; border-bottom: 1px solid #d8dde3;
+  padding-bottom: 1.5mm; margin: 6mm 0 2.5mm;
+  break-after: avoid; page-break-after: avoid;
+}
+h3 { font-size: 10pt; margin: 3mm 0 1.5mm; color: #3b4151; break-after: avoid; page-break-after: avoid; }
+code { font-family: Consolas, "Courier New", monospace; font-size: 8.4pt; word-break: keep-all; overflow-wrap: anywhere; }
+table { width: 100%; max-width: 100%; border-collapse: collapse; margin: 0 0 3mm; font-size: 8.4pt; }
 thead { display: table-header-group; }
-tr { break-inside: avoid; }
+tr { break-inside: avoid; page-break-inside: avoid; }
 th { text-align: left; background: #41444e; color: #fff; padding: 1.6mm 2mm; }
-td { border-bottom: 1px solid #e4e7eb; padding: 1.5mm 2mm; vertical-align: top; word-break: keep-all; overflow-wrap: anywhere; }
+td {
+  border-bottom: 1px solid #e4e7eb; padding: 1.5mm 2mm; vertical-align: top;
+  overflow-wrap: anywhere; word-break: break-word;
+}
 .index { table-layout: fixed; }
-.index .col-method { width: 16mm; }
-.index .col-path { width: 72mm; }
-.index .col-tag { width: 28mm; }
-.index td:nth-child(1), .index td:nth-child(3) { white-space: nowrap; }
-.index td:nth-child(2) code { font-size: 7.4pt; word-break: break-all; }
+.index .col-method { width: 22mm; }
+.index .col-path { width: 78mm; }
+.index .col-tag { width: 24mm; }
+.index td:nth-child(1) { white-space: nowrap; overflow: hidden; }
+.index td:nth-child(1) .verb {
+  min-width: 0; width: 100%; box-sizing: border-box; padding: 0.8mm 1mm;
+}
+.index td:nth-child(2) code {
+  font-size: 7.1pt; word-break: keep-all; overflow-wrap: anywhere;
+}
+.index td:nth-child(3) { overflow-wrap: anywhere; word-break: keep-all; }
 .verb {
   display: inline-block; min-width: 16mm; text-align: center; color: #fff;
   font-weight: 700; font-size: 8pt; padding: 0.8mm 2mm; border-radius: 3px;
+  white-space: nowrap;
 }
 .verb.get, .op.get .op-head { --c: #61affe; }
 .verb.post { --c: #49cc90; }
@@ -510,21 +593,32 @@ td { border-bottom: 1px solid #e4e7eb; padding: 1.5mm 2mm; vertical-align: top; 
 .verb { background: var(--c, #555); }
 .op {
   border: 1px solid #d4d8de; border-radius: 4px; margin: 0 0 4mm;
-  break-inside: auto; background: #fff;
+  background: #fff; overflow: hidden; width: 100%;
+  break-inside: avoid; page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
 .op.get { background: #ebf3fb; border-color: #61affe; }
 .op.post { background: #e8f6f0; border-color: #49cc90; }
 .op.put { background: #fbf1e6; border-color: #fca130; }
 .op.delete { background: #fbe7e7; border-color: #f93e3e; }
 .op-head {
-  display: flex; align-items: flex-start; flex-wrap: wrap; gap: 2mm 3mm;
-  padding: 2.2mm 3mm; break-after: avoid;
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  align-items: start; column-gap: 2.5mm; row-gap: 1.2mm;
+  padding: 2.2mm 3mm;
+  break-inside: avoid; break-after: avoid; page-break-after: avoid;
 }
-.path { font-weight: 700; color: #3b4151; word-break: break-all; }
-.sum { color: #3b4151; }
-.op-body { background: #fff; padding: 3mm 3.5mm 2mm; border-top: 1px solid #e4e7eb; }
+.path { font-weight: 700; color: #3b4151; word-break: keep-all; overflow-wrap: anywhere; min-width: 0; }
+.sum { grid-column: 1 / -1; color: #3b4151; min-width: 0; overflow-wrap: anywhere; }
+.op-body { background: #fff; padding: 3mm 3.5mm 2mm; border-top: 1px solid #e4e7eb; overflow: hidden; }
+.resp { table-layout: fixed; }
+.resp .col-code { width: 18mm; }
+.resp .col-schema { width: 48mm; }
 .errors { color: #6b7280; font-size: 8.2pt; }
-.model { break-inside: avoid; margin: 0 0 4mm; padding: 2mm 0 0; }
+.model {
+  break-inside: avoid; page-break-inside: avoid; margin: 0 0 4mm; padding: 2mm 0 0;
+  overflow: hidden;
+}
 """
 
 

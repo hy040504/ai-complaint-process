@@ -18,4 +18,8 @@ db/app/*.sqlite3
 db/app/*.sqlite3-*
 db/dumps/*.dump
 db/dumps/*.list
+rag/origin/dumps/*.dump
+rag/origin/dumps/*.list
+rag/corpus/dumps/*.dump
+rag/corpus/dumps/*.list
 .mypy_cache/

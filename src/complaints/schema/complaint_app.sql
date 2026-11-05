@@ -10,8 +10,8 @@
 --     현재 Flask 계약은 Pydantic 민원 문서를 통째로 보존하므로 jsonb payload 를 쓴다.
 --
 -- 실행 방법
---   - 검색 스키마가 있으면 먼저 db/schema/complaint_rag.sql
---   - 명령 : psql -d <DB이름> -f db/schema/complaint_app.sql
+--   - 검색 스키마가 있으면 먼저 rag/origin/schema/complaint_rag.sql
+--   - 명령 : psql -d <DB이름> -f src/complaints/schema/complaint_app.sql
 --   - IF NOT EXISTS 이므로 여러 번 실행해도 기존 행을 지우지 않는다.
 --   - 서버도 시작 시 같은 DDL을 적용한다.
 -- =====================================================================

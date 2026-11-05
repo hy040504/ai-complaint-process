@@ -2,9 +2,21 @@
 
 ## 2026-11-05
 
+- CASE-035~039 패치의 Google 형식 한국어 주석을 맞추고, Windows 포트 확인·새 콘솔 기동·libpq 기본값을 `scripts/console_spawn.py`로 모았다. README에 `rag/origin`·`start-rag.cmd` 배지와 표를 넣었다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
+
+- 검색 원본 JSON·검색 스키마·벡터 dump를 `rag/origin/`으로 옮기고, 시연 웹 업무 DDL은 `src/complaints/schema/`에 둔다. 루트 `db/`는 이전 경로 안내와 SQLite 잔여만 남긴다. [CASE-039](docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
+
+- Windows에서 Codex CLI 프롬프트가 명령줄 길이 제한을 넘지 않도록 `codex exec -`의 표준 입력으로 보내고, npm `codex.cmd`는 `node`와 `codex.js`로 풀어 실행한다. [CASE-038](docs/cases/사례-038-Windows-Codex-명령줄-길이-2026-11-05.md)
+
+- 응대 LLM의 API(`openai_api`)와 CLI(`codex_cli`)를 루트 `.env`에서 고른다. 키 칸이 있는 `.env`를 만들고, 기존 호환 토큰 키도 `.env`에서 읽는다.
+
+- 이 Windows 호스트에 PostgreSQL 18.6·pgvector 0.8.7·RAG `.venv`를 사용자 디렉터리로 준비하고 e5-small 색인 5,109건을 적재했다. `start-rag.cmd`로 DB와 검색 API를 다시 켠다. 캐시 저장은 `cursor.executemany`를 쓴다. [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+
+- Windows `ask-assist.cmd`는 localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 이미 실행 중이거나 원격 주소면 다시 시작하지 않으며 `--no-start`로 끌 수 있다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md)
+
 - CASE-031~033 패치의 Google 형식 한국어 주석을 맞추고, 현재 문서의 SQLite·`complaint_app` 미사용 표기를 고쳤다. 업무 SQL 식별자는 저장소 생성 때 한 번 조합하고, 적재 캐시는 해시 목록을 묶어 읽는다. README에 두 스키마·Swagger PDF·PG 업무 칩을 넣었다. [CASE-034](docs/cases/사례-034-패치-주석-문서-최적화-2026-11-05.md)
 
-- Flask 민원 웹 `/docs` Swagger와 같은 OpenAPI 3.1 계약을 인쇄본 PDF로 `docs/`에 둔다. 검색 API `:8007/docs`는 포함하지 않는다. 재생성은 `python docs/tools/export_swagger_pdf.py`다. [CASE-033](docs/cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md)
+- Flask 민원 웹 `/docs` Swagger와 같은 OpenAPI 3.1 계약을 인쇄본 PDF로 `docs/`에 둔다. 검색 API `:8007/docs`는 포함하지 않는다. 재생성은 `python docs/tools/export_swagger_pdf.py`다. 인쇄 시 카드 절단·고아 제목·경로 잘림을 고친 뒤 25쪽으로 다시 뽑았다. [CASE-033](docs/cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md)
 
 - CASE-026이 남긴 루트 `src/*.py` 호환 모듈 9개를 삭제하고, 테스트는 `src.complaints`에서 직접 import한다. Flask 조립은 `app.py`에 둔다. [CASE-032](docs/cases/사례-032-호환모듈-제거-2026-11-05.md)
 

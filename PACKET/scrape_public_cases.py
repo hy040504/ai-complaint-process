@@ -15,7 +15,9 @@ from department_normalization import normalize_public_record
 
 
 MENU_KEY = "7401"
-DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "db" / "공개_민원_사례.json"
+DEFAULT_OUTPUT = (
+    Path(__file__).resolve().parent.parent / "rag" / "origin" / "공개_민원_사례.json"
+)
 DETAIL_FIELDS = {
     "민원신청일": "complaint_date",
     "민원요지": "summary",
@@ -320,7 +322,7 @@ def main() -> None:
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help="저장할 JSON 파일 경로 (기본값: db/공개_민원_사례.json)",
+        help="저장할 JSON 파일 경로 (기본값: rag/origin/공개_민원_사례.json)",
     )
     parser.add_argument(
         "--delay",

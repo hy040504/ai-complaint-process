@@ -18,7 +18,7 @@ py -3.12 -m venv .venv-web
 
 Windows에서는 저장소 루트의 [`start-web.cmd`](../start-web.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. 이 스크립트는 [`scripts/start_web.py`](../scripts/start_web.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 시민 화면을 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다.
 
-검색 API가 실행 중이면 [`ask-assist.cmd`](../ask-assist.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/ask_assist.py`](../scripts/ask_assist.py)다. 검색 서버는 별도로 `python -m rag serve`가 필요하다. 기본 임베딩은 CPU용 `e5-small`이며 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다.
+[`ask-assist.cmd`](../ask-assist.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/ask_assist.py`](../scripts/ask_assist.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`start-rag.cmd`](../start-rag.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/console_spawn.py`](../scripts/console_spawn.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `e5-small`이며 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 실행 의존성만 설치하려면 `src/requirements.txt`를 사용한다. Linux에서는 `python3.12 -m venv .venv-web`로 준비하고 `.venv-web/bin/python`을 사용한다. 환경 준비 후 `npm --prefix ui run dev`도 같은 Flask 서버를 실행하는 편의 명령이다.
 
@@ -115,7 +115,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 ## 데이터·게시·작업 경계
 
-- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. 변경·버전 검사와 등록 중복 방지는 트랜잭션 안에서 수행한다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](../db/schema/complaint_app.sql)
+- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. 변경·버전 검사와 등록 중복 방지는 트랜잭션 안에서 수행한다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](complaints/schema/complaint_app.sql)
 - 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
@@ -128,6 +128,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
 | `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
+| `RAG_PYTHON` | `ask-assist.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
+| `RAG_SERVE_WAIT_SECONDS` | 검색 API 준비 대기, 기본 180 |
 | `COMPLAINT_LLM_PROVIDER` | `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
 | `COMPLAINT_LLM_MODEL` · `COMPLAINT_LLM_REASONING_EFFORT` | 기본 `gpt-6-luna` · `medium` |
@@ -140,10 +142,12 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부 |
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
 
-`.env.example`을 `.env`로 복사한 뒤 한 공급자를 선택합니다. `openai_api`는
-`OPENAI_API_KEY`를 사용해 Responses API로 `gpt-6-luna`의 `medium` 추론을 요청합니다.
-`codex_cli`는 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec`으로 실행하며,
-`OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
+저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.
+`COMPLAINT_LLM_PROVIDER=openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을
+요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
+긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 키를 바꾼 뒤에는 `ask-assist.cmd`와 Flask를
+다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 
 ```powershell

@@ -1,5 +1,6 @@
 """검색 근거와 어긋난 판정은 담당자 검토로 떨어지는지 검증합니다."""
 
+from pathlib import Path
 from types import SimpleNamespace
 
 from rag.assist import (
@@ -10,6 +11,7 @@ from rag.assist import (
     run_assist,
     validate_decision,
 )
+from src.llm.complete import resolve_codex_argv
 
 
 def sample_search() -> dict:
@@ -268,7 +270,48 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     assert captured["args"][captured["args"].index("--sandbox") + 1] == "read-only"
     assert "gpt-6-luna" in captured["args"]
     assert 'model_reasoning_effort="medium"' in captured["args"]
+    assert captured["args"][-1] == "-"
+    assert captured["args"][0] == "C:/tools/codex.exe"
+    assert "[시스템 지시]" in captured["input"]
+    assert "사용자" in captured["input"]
     assert "OPENAI_API_KEY" not in captured["env"]
+
+
+def test_windows_codex_cmd_wrapper_runs_node_entry(tmp_path: Path, monkeypatch: object) -> None:
+    """Windows npm `codex.cmd`는 cmd.exe 대신 node와 진입 스크립트를 씁니다."""
+    npm_bin = tmp_path / "npm"
+    script = npm_bin / "node_modules" / "@openai" / "codex" / "bin" / "codex.js"
+    script.parent.mkdir(parents=True)
+    script.write_text("/* test */\n", encoding="utf-8")
+    wrapper = npm_bin / "codex.cmd"
+    wrapper.write_text("@echo off\n", encoding="utf-8")
+    node = tmp_path / "node.exe"
+    node.write_text("", encoding="utf-8")
+
+    def fake_which(name: str) -> str | None:
+        if name == "codex":
+            return str(wrapper)
+        if name == "node":
+            return str(node)
+        return None
+
+    monkeypatch.setattr("src.llm.complete.os.name", "nt")
+    monkeypatch.setattr("src.llm.complete.shutil.which", fake_which)
+    argv = resolve_codex_argv("codex")
+    assert argv == [str(node), str(script)]
+
+    captured: dict = {}
+
+    def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        captured["args"] = args
+        return SimpleNamespace(returncode=0, stdout="CLI 응답\n", stderr="")
+
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
+    monkeypatch.setattr("src.llm.complete.subprocess.run", fake_run)
+    assert complete_chat("시스템", "사용자") == "CLI 응답"
+    assert captured["args"][0] == str(node)
+    assert captured["args"][1] == str(script)
+    assert captured["args"][-1] == "-"
 
 
 def test_unknown_provider_is_not_configured(monkeypatch: object) -> None:

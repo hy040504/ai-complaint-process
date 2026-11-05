@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 
 import psycopg
@@ -24,11 +25,30 @@ _HNSW_INDEX = {
 }
 
 
+def apply_connect_defaults() -> None:
+    """Windows에서 비어 있는 libpq 연결 기본값을 채웁니다.
+
+    Linux 네이티브 환경은 `scripts/native-env.sh`가 소켓과 계정을 지정하므로
+    여기서 덮어쓰지 않습니다. 이미 있는 환경변수는 유지합니다.
+    검색 엔진은 `scripts/`를 의존하지 않습니다. CMD 기동 쪽 같은 기본값은
+    `scripts/console_spawn.py`의 `apply_windows_libpq`입니다.
+    """
+    if os.name != "nt":
+        return
+    os.environ.setdefault("PGHOST", "127.0.0.1")
+    os.environ.setdefault("PGPORT", "5432")
+    os.environ.setdefault("PGDATABASE", "complaints_native")
+    user = os.environ.get("USERNAME") or os.environ.get("USER")
+    if user:
+        os.environ.setdefault("PGUSER", user)
+
+
 @contextmanager
 def connect(initialize: bool = False):
     """표준 PG 환경변수로 연결하고 pgvector 타입을 등록합니다.
 
     `PGHOST`/`PGPORT`/`PGDATABASE`/`PGUSER`/`PGPASSWORD`를 사용합니다.
+    Windows에서 값이 비면 localhost의 `complaints_native`를 씁니다.
 
     Args:
         initialize: 연결 시 스키마와 색인이 없으면 생성할지 나타냅니다.
@@ -36,6 +56,7 @@ def connect(initialize: bool = False):
     Yields:
         호출자가 쿼리와 트랜잭션을 관리하는 PostgreSQL 연결입니다.
     """
+    apply_connect_defaults()
     with psycopg.connect(connect_timeout=10, row_factory=dict_row) as conn:
         if initialize:
             conn.execute(schema_sql())

@@ -9,7 +9,7 @@
 ```mermaid
 flowchart TD
     S[청주톡톡] --> C[PACKET 수집·부서 정규화]
-    C --> J[db 원본 JSON 2개]
+    C --> J[rag/origin 원본 JSON 2개]
     J --> I[입력 검증·본문 구성·임베딩·Kiwi 토큰화]
     I --> P[(PostgreSQL complaint_rag)]
     Q[CLI 또는 API 입력] --> R[FAQ·사례별 벡터 + BM25 + RRF + 재정렬]
@@ -30,7 +30,7 @@ flowchart TD
 | [config.py](../../rag/config.py) | 모델 리비전·차원·본문/토크나이저 버전·검색 설정 |
 | [models.py](../../rag/models.py) | 프로필 임베딩(기본 e5-small)과 긴 문서의 창 단위 재정렬 |
 | [korean.py](../../rag/korean.py) | Kiwi 형태소와 BM25용 토큰 빈도 |
-| [complaint_rag.sql](../../db/schema/complaint_rag.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
+| [complaint_rag.sql](../../rag/origin/schema/complaint_rag.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
 | [ingest.py](../../rag/ingest.py) | 벡터 재사용·체크포인트·한 트랜잭션으로 데이터 반영 |
 | [search.py](../../rag/search.py) | 두 검색기·RRF·재정렬·부서 후보 집계 |
 | [api.py](../../rag/api.py), [__main__.py](../../rag/__main__.py) | HTTP API와 표준 라이브러리 CLI 클라이언트 |
@@ -41,7 +41,7 @@ flowchart TD
 | [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 한 요청에서 검색 조각·LLM 설정을 재사용 |
 | [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
 | [start_web.py](../../scripts/start_web.py) | Windows에서 Flask 시작과 시민 화면 열기 |
-| [ask_assist.py](../../scripts/ask_assist.py) | Windows에서 민원 문장 → 검색 API + LLM 응대 |
+| [ask_assist.py](../../scripts/ask_assist.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
 | [verify.py](../../rag/verify.py), [evaluate.py](../../rag/evaluate.py) | 실제 DB 대조와 API 검색 회귀 확인 |
 
 ## 적재 계약

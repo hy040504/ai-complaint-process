@@ -17,6 +17,7 @@ from .config import (
     EMBEDDING_MODEL,
     EMBEDDING_REVISION,
     FAQ_JSON,
+    ROOT,
     TOKENIZER_VERSION,
     embedding_signature,
 )
@@ -36,13 +37,29 @@ log = logging.getLogger(__name__)
 _CACHE_CHUNK = 500
 
 
+def _source_label(path: Path) -> str:
+    """적재 메타데이터에 넣을 원본 경로를 저장소 기준 상대 경로로 만듭니다.
+
+    Args:
+        path: FAQ 또는 사례 JSON 경로입니다.
+
+    Returns:
+        저장소 루트 기준 POSIX 경로입니다. 루트 밖이면 절대 경로입니다.
+    """
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
 def cached_vectors(conn, signature: str, hashes: list[str]) -> dict[str, np.ndarray]:
     """서명과 본문 해시로 체크포인트 벡터를 한꺼번에 읽습니다.
 
     Args:
         conn: 적재 트랜잭션의 PostgreSQL 연결입니다.
         signature: 임베딩 프로필 서명입니다.
-        hashes: 조회할 `embedding_hash` 목록입니다.
+        hashes: 조회할 `text_hash` 목록입니다.
 
     Returns:
         본문 해시를 키로 하는 float32 벡터 사전입니다. 차원·유한성 검사를
@@ -161,13 +178,14 @@ def ingest(
                             vector.astype("<f4").tobytes(),
                         )
                     )
-                conn.executemany(
-                    "INSERT INTO complaint_rag.embedding_cache "
-                    "(signature, text_hash, vector) VALUES (%s, %s, %s) "
-                    "ON CONFLICT (signature, text_hash) DO UPDATE "
-                    "SET vector = EXCLUDED.vector",
-                    payloads,
-                )
+                with conn.cursor() as cursor:
+                    cursor.executemany(
+                        "INSERT INTO complaint_rag.embedding_cache "
+                        "(signature, text_hash, vector) VALUES (%s, %s, %s) "
+                        "ON CONFLICT (signature, text_hash) DO UPDATE "
+                        "SET vector = EXCLUDED.vector",
+                        payloads,
+                    )
                 conn.commit()
                 log.info(
                     "임베딩 %d/%d 완료",
@@ -226,8 +244,8 @@ def ingest(
                 "reused_embeddings": reused,
                 "cached_embeddings": cached,
                 "source_files": {
-                    "faq": str(faq_path or "db/자주_묻는_민원.json"),
-                    "routing": str(cases_path or "db/공개_민원_사례.json"),
+                    "faq": _source_label(faq_path or FAQ_JSON),
+                    "routing": _source_label(cases_path or CASES_JSON),
                 },
             },
         )

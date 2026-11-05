@@ -174,8 +174,12 @@ def main() -> None:
     """명령줄에서 지정한 두 JSON에 확인된 부서 정규화 규칙을 적용합니다."""
     root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description="기존 두 JSON에 확인된 부서 정규화 규칙을 적용합니다.")
-    parser.add_argument("--public", type=Path, default=root / "db/공개_민원_사례.json")
-    parser.add_argument("--faq", type=Path, default=root / "db/자주_묻는_민원.json")
+    parser.add_argument(
+        "--public", type=Path, default=root / "rag/origin/공개_민원_사례.json"
+    )
+    parser.add_argument(
+        "--faq", type=Path, default=root / "rag/origin/자주_묻는_민원.json"
+    )
     args = parser.parse_args()
     cases = json.loads(args.public.read_text(encoding="utf-8"))
     faq = json.loads(args.faq.read_text(encoding="utf-8"))

@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import os
-import socket
 import subprocess
+import sys
 import time
 import urllib.request
 import webbrowser
 from pathlib import Path
+
+_SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+from console_spawn import port_open as tcp_open, spawn_console
 
 ROOT = Path(__file__).resolve().parent.parent
 PYTHON = ROOT / ".venv-web" / "Scripts" / "python.exe"
@@ -62,11 +68,7 @@ def port_open(port: int) -> bool:
     Returns:
         `127.0.0.1`에서 연결되면 True입니다.
     """
-    try:
-        with socket.create_connection(("127.0.0.1", port), 0.5):
-            return True
-    except OSError:
-        return False
+    return tcp_open("127.0.0.1", port)
 
 
 def health_ok(url: str) -> bool:
@@ -110,11 +112,9 @@ def start_server() -> None:
     """새 콘솔 창에서 Flask 업무 서버를 실행합니다.
 
     창을 닫으면 서버 프로세스도 함께 종료됩니다. Windows가 아니면
-    현재 프로세스 그룹에서 실행합니다.
+    새 세션으로 실행합니다.
     """
-    command = ["cmd.exe", "/k", str(PYTHON), "-m", "src"]
-    flags = int(getattr(subprocess, "CREATE_NEW_CONSOLE", 0))
-    subprocess.Popen(command, cwd=str(ROOT), creationflags=flags)
+    spawn_console([str(PYTHON), "-m", "src"], cwd=ROOT)
 
 
 def main() -> int:

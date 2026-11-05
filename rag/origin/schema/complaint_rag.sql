@@ -17,11 +17,11 @@
 --       embedding_cache     재적재 때 재사용할 벡터 체크포인트
 --
 -- 실행 방법
---   - psql -d <DB이름> -f db/schema/complaint_rag.sql
+--   - psql -d <DB이름> -f rag/origin/schema/complaint_rag.sql
 --   - pgvector 확장이 필요하다. (맨 위 CREATE EXTENSION)
 --   - IF NOT EXISTS 가 붙어 있어서 여러 번 실행해도 이미 있는 것은 건드리지 않는다.
 --   - complaint_app.sql 보다 먼저 실행한다.
---   - 행 데이터는 이 파일에 없다. JSON 적재 또는 db/dumps/complaint_rag.dump 복원을 쓴다.
+--   - 행 데이터는 이 파일에 없다. JSON 적재 또는 rag/origin/dumps/complaint_rag.dump 복원을 쓴다.
 --
 -- 이 파일의 주석에 대해
 --   - DDL은 검색 적재가 사용하는 스키마와 같고, 설명 주석을 함께 둔다.

@@ -1,6 +1,7 @@
 """민원 웹·RAG·LLM 패키지와 연결 계층이 분리돼 동작하는지 확인합니다."""
 
 from src.assist import run_assist
+from src.complaints.config import APP_SCHEMA_SQL
 from src.llm import llm_configured, llm_settings
 from src.rag import require_search_contract, search_parts
 
@@ -34,6 +35,15 @@ def _search() -> dict:
             "routing_cases": {"hits": [], "department_candidates": []},
         },
     }
+
+
+def test_app_schema_sql_lives_with_complaints() -> None:
+    """업무 DDL이 민원 웹 패키지 아래에 있는지 확인합니다."""
+    assert APP_SCHEMA_SQL.is_file()
+    assert APP_SCHEMA_SQL.parent.name == "schema"
+    assert APP_SCHEMA_SQL.parent.parent.name == "complaints"
+    text = APP_SCHEMA_SQL.read_text(encoding="utf-8")
+    assert "CREATE SCHEMA IF NOT EXISTS complaint_app" in text
 
 
 def test_search_parts_indexes_faq_once() -> None:

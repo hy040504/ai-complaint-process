@@ -20,7 +20,9 @@ from department_normalization import normalize_faq_detail
 
 BASE_URL = "https://toktalk.cheongju.go.kr/home/sub.do"
 MENU_KEY = "7403"
-DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "db" / "자주_묻는_민원.json"
+DEFAULT_OUTPUT = (
+    Path(__file__).resolve().parent.parent / "rag" / "origin" / "자주_묻는_민원.json"
+)
 FIELDS = {
     "경제투자": "invest",
     "교통": "transport",
@@ -396,7 +398,7 @@ def main() -> None:
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help="저장할 JSON 파일 경로 (기본값: db/자주_묻는_민원.json)",
+        help="저장할 JSON 파일 경로 (기본값: rag/origin/자주_묻는_민원.json)",
     )
     parser.add_argument(
         "--delay",

@@ -18,18 +18,19 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 코드·주석·커밋 작성 | [작성 규칙](코드_작성과_주석_규칙.md) | 한국어와 기존 docstring 형식을 어떻게 지키는가? |
 | 버그·개선·결정 추적 | [사례 색인](../cases/README.md), [작성 양식](../cases/사례_작성_양식.md) | 관련 이력·미해결 원인·검증 근거를 어디에 남기는가? |
 | 코드 이해 | [시스템 구조](architecture.md) | 수집부터 검색 응답까지 어떻게 연결되는가? |
-| 데이터 변경 | [데이터 계약](data-contracts.md), [데이터 사전](../../db/README.md) | 무엇을 보존하고 JSON·스키마·덤프·업무 PostgreSQL은 어디에 두는가? |
+| 데이터 변경 | [데이터 계약](data-contracts.md), [데이터 사전](../../rag/origin/README.md) | 무엇을 보존하고 JSON·스키마·덤프·업무 PostgreSQL은 어디에 두는가? |
 | 패치·사례 추적 | [문서 목차](../README.md#변경패치-목록), [사례 색인](../cases/README.md) | 지금까지 어떤 변경이 적용됐는가? |
 | 판정·답변 연결 | [판정 정책](decision-policy.md) | FAQ 답변·부서 추천·사람 검토를 어떻게 구별하는가? |
 | 웹·민원 서버 설계 | [시연 웹 계획](../../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·답변 교환·저장과 AI 응대를 어떻게 연결하는가? |
 | 수동 검색 시험 | [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴) | FAQ·부서 사례와 원본 근거를 어떻게 확인하는가? |
-| 민원 문장 RAG+LLM 응대 | [`ask-assist.cmd`](../../ask-assist.cmd), [`ask_assist.py`](../../scripts/ask_assist.py) | 검색 API 위에서 검사기와 같은 연결을 어떻게 보는가? |
+| 민원 문장 RAG+LLM 응대 | [`ask-assist.cmd`](../../ask-assist.cmd), [`ask_assist.py`](../../scripts/ask_assist.py) | 검색 API 위에서 검사기와 같은 연결을 어떻게 보는가? 꺼진 localhost API는 자동 시작하는가? |
+| Windows 검색 DB·API 기동 | [`start-rag.cmd`](../../start-rag.cmd), [`windows_rag.py`](../../scripts/windows_rag.py) | 사용자 디렉터리 PostgreSQL과 `:8007`을 어떻게 다시 켜는가? |
 | 변경 검증 | [평가 기준](evaluation.md) | 무엇을 실행하고 결과를 어떻게 해석하는가? |
 | 서버·색인 관리 | [네이티브 운영 안내](네이티브_운영.md), [운영 절차](runbook.md) | 상태 확인·갱신·복구를 어떻게 수행하는가? |
 | 다음 구현 | [실행 계획](../../plan/harness-roadmap.md) | 어떤 순서로 만들고 언제 완료로 보는가? |
 | 변경된 구성·모델 검토 | [우선 구현계획](../../plan/언어모델과_검색증강생성_우선_구현계획.md), [모델·미세조정 제안](../../plan/모델_선정과_미세조정_제안.md) | LLM + RAG를 먼저 어떻게 만들고 무엇을 나중에 비교하는가? |
 
-프로젝트 소개는 [루트 README](../../README.md), 원본 필드와 파일 배치는 [데이터 사전](../../db/README.md), 설치와 검색 사용법은 [RAG README](../../rag/README.md), 패치 한눈에 보기는 [문서 목차](../README.md)가 담당한다. 상세 필드와 설치법을 여러 문서에 다시 나열하기보다 해당 문서로 연결한다.
+프로젝트 소개는 [루트 README](../../README.md), 원본 필드와 파일 배치는 [데이터 사전](../../rag/origin/README.md), 설치와 검색 사용법은 [RAG README](../../rag/README.md), 패치 한눈에 보기는 [문서 목차](../README.md)가 담당한다. 상세 필드와 설치법을 여러 문서에 다시 나열하기보다 해당 문서로 연결한다.
 
 ## 확인된 기반과 빈자리
 

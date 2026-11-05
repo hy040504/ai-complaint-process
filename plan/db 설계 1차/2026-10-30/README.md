@@ -1,6 +1,6 @@
 # DB 스키마 설명
 
-2026-10-31 이후 실행용 파일은 `db/schema/complaint_rag.sql`, `db/schema/complaint_app.sql`이다. 이 폴더는 2026-10-30 설계 복사본이다.
+2026-11-05 이후 실행용 파일은 `rag/origin/schema/complaint_rag.sql`, `src/complaints/schema/complaint_app.sql`이다. 이 폴더는 2026-10-30 설계 복사본이다.
 
 ## 파일 구성
 

@@ -1,3 +1,3 @@
--- 검색 스키마 DDL은 db/schema/complaint_rag.sql 로 옮겼습니다.
+-- 검색 스키마 DDL은 rag/origin/schema/complaint_rag.sql 로 옮겼습니다.
 -- 적재 코드와 psql 적용은 그 파일을 사용합니다.
 -- 이 경로는 이전 문서·명령을 찾는 사람을 위한 안내입니다.

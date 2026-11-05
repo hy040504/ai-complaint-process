@@ -31,8 +31,9 @@
 
 | 변경 대상 | 위치 | 함께 볼 문서 |
 | --- | --- | --- |
-| 수집·부서 정규화 | `PACKET/` | [데이터 사전](db/README.md), [데이터 계약](docs/harness/data-contracts.md) |
-| 원본 JSON·스키마 SQL·검색 덤프·업무 스키마 | `db/` | [데이터 사전](db/README.md), [데이터 계약](docs/harness/data-contracts.md) |
+| 수집·부서 정규화 | `PACKET/` | [데이터 사전](rag/origin/README.md), [데이터 계약](docs/harness/data-contracts.md) |
+| 검색 원본 JSON·검색 스키마·덤프 | `rag/origin/` | [데이터 사전](rag/origin/README.md), [데이터 계약](docs/harness/data-contracts.md) |
+| 시연 웹 업무 스키마 | `src/complaints/schema/` | [서버 안내](src/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
 | LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `python -m rag assist`, `/#/lab` | [판정 정책 초안](docs/harness/decision-policy.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [실행 과제](plan/harness-roadmap.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/complaints/`, `src/app.py`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
@@ -66,7 +67,7 @@ RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 
 ## 데이터와 실행 환경 보호
 
-- `.env`, `.rag-data/`, `.rag-cache/`, `db/dumps/*.dump`, `db/app/*.sqlite3`, `PACKET/*.saz`, `.partial`은 Git에 넣지 않는다. SAZ에는 쿠키가 있다. 자격 증명을 로그·문서·명령 출력에 노출하지 않는다.
+- `.env`, `.rag-data/`, `.rag-cache/`, `rag/origin/dumps/*.dump`, `db/app/*.sqlite3`, `PACKET/*.saz`, `.partial`은 Git에 넣지 않는다. SAZ에는 쿠키가 있다. 자격 증명을 로그·문서·명령 출력에 노출하지 않는다.
 - 이 호스트의 다른 서비스와 GPU 작업은 이 프로젝트 범위가 아니다. 현재 검색은 CPU로 실행한다.
 - API와 적재 프로세스의 모델 중복 로드를 피한다. 재적재가 필요할 때만 [갱신 절차](docs/harness/runbook.md)를 따른다.
 - 원본 데이터 변경을 요청받지 않은 작업에서 수집기·정규화기·재적재를 임의로 실행하지 않는다. 변경 시 원본 및 검증된 부서 정보의 복구 경로를 확보한다.

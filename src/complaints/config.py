@@ -8,6 +8,8 @@ import secrets
 from typing import Literal
 
 ROOT = Path(__file__).resolve().parents[2]
+# 시연 웹 PostgreSQL DDL. 검색 스키마는 rag/origin/schema.
+APP_SCHEMA_SQL = Path(__file__).resolve().parent / "schema" / "complaint_app.sql"
 StoreBackend = Literal["postgresql", "memory"]
 
 

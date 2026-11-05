@@ -13,8 +13,13 @@ _LLM_ENV_KEYS = frozenset(
         "COMPLAINT_LLM_REASONING_EFFORT",
         "COMPLAINT_CODEX_COMMAND",
         "OPENAI_API_KEY",
+        "COMPLAINT_LLM_URL",
+        "COMPLAINT_LLM_TOKEN",
+        "PUBLIC_LLM_TOKEN",
+        "XAI_API_KEY",
     }
 )
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 _LLM_ENV_LOADED = False
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 DEFAULT_LUNA_MODEL = "gpt-6-luna"
@@ -40,16 +45,17 @@ def optional_env(name: str) -> str | None:
 def load_llm_env_file() -> None:
     """저장소 루트 `.env`의 LLM 설정만 프로세스 환경에 한 번 보완합니다.
 
-    이미 있는 운영체제 환경변수는 덮어쓰지 않습니다. 지원하는 LLM 키 외의
-    값은 읽지 않습니다. 파일이 없으면 아무 작업도 하지 않습니다.
+    `COMPLAINT_LLM_PROVIDER`로 `openai_api`(Responses API 키) 또는
+    `codex_cli`(로그인된 Codex 실행 파일)를 고릅니다. 이미 있는 운영체제
+    환경변수는 덮어쓰지 않습니다. 지원하는 LLM 키 외의 값은 읽지 않습니다.
+    파일이 없으면 아무 작업도 하지 않습니다.
     """
     global _LLM_ENV_LOADED
     if _LLM_ENV_LOADED:
         return
     _LLM_ENV_LOADED = True
-    path = Path(__file__).resolve().parents[2] / ".env"
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = _ENV_FILE.read_text(encoding="utf-8").splitlines()
     except FileNotFoundError:
         return
     for line in lines:
@@ -83,11 +89,11 @@ def luna_settings(
     return {
         "provider": provider,
         "url": url,
-        "model": os.environ.get("COMPLAINT_LLM_MODEL", DEFAULT_LUNA_MODEL),
+        "model": optional_env("COMPLAINT_LLM_MODEL") or DEFAULT_LUNA_MODEL,
         "token": token,
         "auth": auth,
-        "reasoning_effort": os.environ.get(
-            "COMPLAINT_LLM_REASONING_EFFORT", DEFAULT_REASONING_EFFORT
+        "reasoning_effort": (
+            optional_env("COMPLAINT_LLM_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT
         ),
     }
 

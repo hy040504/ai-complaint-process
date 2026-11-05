@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# db/schema SQL로 검색·업무 PostgreSQL 스키마를 적용합니다. 행 데이터는 넣지 않습니다.
+# 검색·업무 PostgreSQL 스키마 SQL을 적용합니다. 행 데이터는 넣지 않습니다.
 set -euo pipefail
 source "$(dirname "$0")/native-env.sh"
-RAG_SQL="$RAG_ROOT/db/schema/complaint_rag.sql"
-APP_SQL="$RAG_ROOT/db/schema/complaint_app.sql"
+RAG_SQL="$RAG_ROOT/rag/origin/schema/complaint_rag.sql"
+APP_SQL="$RAG_ROOT/src/complaints/schema/complaint_app.sql"
 if [[ ! -f "$RAG_SQL" || ! -f "$APP_SQL" ]]; then
-  printf '%s\n' "db/schema SQL 파일이 없습니다." >&2
+  printf '%s\n' "검색 또는 업무 스키마 SQL 파일이 없습니다." >&2
   exit 1
 fi
 python3 - <<'PY' | psql -d "$PGDATABASE" -v ON_ERROR_STOP=1

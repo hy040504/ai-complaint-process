@@ -1,13 +1,13 @@
 # 데이터 계약
 
-이 문서는 데이터 변경과 후속 모델 연결에서 지켜야 할 의미를 정의한다. 필드 목록과 수집 명령은 [데이터 사전](../../db/README.md), DB 자료형·제약은 [검색 스키마](../../db/schema/complaint_rag.sql)를 따른다.
+이 문서는 데이터 변경과 후속 모델 연결에서 지켜야 할 의미를 정의한다. 필드 목록과 수집 명령은 [데이터 사전](../../rag/origin/README.md), DB 자료형·제약은 [검색 스키마](../../rag/origin/schema/complaint_rag.sql)를 따른다.
 
 ## 원본과 식별자
 
 | 항목 | 계약 |
 | --- | --- |
-| FAQ 원본 | `db/자주_묻는_민원.json`: 분야 키와 레코드 배열의 객체 |
-| 사례 원본 | `db/공개_민원_사례.json`: 레코드 배열 |
+| FAQ 원본 | `rag/origin/자주_묻는_민원.json`: 분야 키와 레코드 배열의 객체 |
+| 사례 원본 | `rag/origin/공개_민원_사례.json`: 레코드 배열 |
 | 문서 키 | `(corpus, source_id)`; `source_id`는 사이트 상세 페이지의 `no` 문자열 |
 | 원문 보존 | 원본 레코드를 DB `payload`에 보존하고 검색 결과 `evidence`로 반환 |
 | 출처 | `source_url`과 `retrieved_at` 유지. 수집 시각은 정책의 유효성 확인 시각이 아님 |

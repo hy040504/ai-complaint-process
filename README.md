@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-ask--assist-334155?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-ask--assist-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-start--rag-1e3a5f?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -20,14 +20,14 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-05 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `start-web.cmd`·`ask-assist.cmd`. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `start-web.cmd`·`start-rag.cmd`·`ask-assist.cmd`. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
 > **다음:** 운영 DB 5,109건 재임베딩과 검색 예제 재평가, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `ask-assist.cmd` | 민원 CRUD의 LLM 연결 |
-| FAQ 94 · 사례 5,015 · 부서 127 검색 | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `start-web.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI 선택 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
+| FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
+| Windows `start-web.cmd` · `start-rag.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI 선택 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -36,14 +36,16 @@
 | 시민 사이트 | `http://127.0.0.1:5000/#/citizen` | Windows: [`start-web.cmd`](start-web.cmd) |
 | 담당자 사이트 | `http://127.0.0.1:5000/#/staff` | 같은 Flask 서버 |
 | 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 민원 CRUD와 분리, 저장 없음 |
-| 민원 응대 CMD | [`ask-assist.cmd`](ask-assist.cmd) | 검색 API 필요, 기본 재정렬 끔 |
+| 민원 응대 CMD | [`ask-assist.cmd`](ask-assist.cmd) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
+| RAG 기동 CMD | [`start-rag.cmd`](start-rag.cmd) | Windows PostgreSQL·검색 API `:8007` |
 | API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
-| 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [DB 경로](db/README.md) |
+| 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
 
 | 패키지 | 역할 | 위치 |
 | --- | --- | --- |
 | 민원 웹 | CRUD·세션·Swagger·정적 UI | [`src/complaints`](src/README.md) |
+| 검색 원본 | FAQ·사례 JSON·검색 DDL | [`rag/origin`](rag/origin/README.md) |
 | 검색 클라이언트 | 검색 API 호출, FAQ·사례 근거 | [`src/rag`](src/README.md) · 엔진은 [`rag/`](rag/README.md) |
 | LLM | Luna·Codex·legacy 공급자 | [`src/llm`](src/README.md) |
 | 응대 | 검색 다음 판정·정책 검사·조건부 FAQ | [`src/assist`](src/README.md) |
@@ -112,7 +114,7 @@ flowchart LR
 | `routing_cases` | 민원 원문·과거 처리 맥락·현재 부서 연결 | 제목 + 민원 요지 | 5,015건 |
 | `department_directory` | 부서 ID·현행 명칭·별칭·관할 및 검증 상태 | 일반 관계형 테이블로 관리 | 127개 |
 
-FAQ·사례 테이블에는 현재 프로필 차원의 `embedding` 벡터가 함께 저장됩니다. 기본은 384차원입니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](db/schema/complaint_rag.sql) · [데이터 폴더](db/README.md) · [시스템 구조](docs/harness/architecture.md)
+FAQ·사례 테이블에는 현재 프로필 차원의 `embedding` 벡터가 함께 저장됩니다. 기본은 384차원입니다. `routing_cases.department_id`는 부서 사전을 참조합니다. BM25 토큰·통계와 색인 메타데이터를 관리하는 보조 테이블까지 총 **7개 테이블**입니다. [SQL 스키마](rag/origin/schema/complaint_rag.sql) · [데이터 사전](rag/origin/README.md) · [시스템 구조](docs/harness/architecture.md)
 
 | 검색 단계 | 현재 설정 |
 | --- | --- |
@@ -191,7 +193,7 @@ Qwen3.5-4B부터 비교하고 추가 학습 없이 시작하는 안은 [모델 �
 
 요지가 없는 58건은 제목으로 검색하고 과거 답변이 없는 101건도 보존합니다. 두 집합은 겹칠 수 있습니다. FAQ의 대상·접수 조건·주의사항은 유지했으나 정책 내용·연락처의 현행성 검증은 별도로 필요합니다. **수집일은 정책 유효성 확인일이 아닙니다.**
 
-원본: [청주톡톡 FAQ](https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403) · [공개 민원 사례](https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401). 수집·정규화 기준일과 필드·누락값·변경 전 표기 보존 범위는 [데이터 사전](db/README.md)에 정리했습니다.
+원본: [청주톡톡 FAQ](https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403) · [공개 민원 사례](https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401). 수집·정규화 기준일과 필드·누락값·변경 전 표기 보존 범위는 [데이터 사전](rag/origin/README.md)에 정리했습니다.
 
 ## 빠른 시작
 
@@ -201,11 +203,12 @@ Windows에서 시민 화면까지 한 번에 열려면 저장소 루트의 [`sta
 start-web.cmd
 ```
 
-검색 API가 켜져 있으면 민원 문장으로 RAG+LLM 응대를 볼 수 있습니다. Windows는 [`ask-assist.cmd`](ask-assist.cmd)입니다.
+Windows에서 검색 DB와 API를 다시 켜려면 [`start-rag.cmd`](start-rag.cmd)입니다. 검색 API가 꺼져 있으면 [`ask-assist.cmd`](ask-assist.cmd)가 localhost에서 `python -m rag serve`를 별도 창으로 시작합니다. PostgreSQL이 꺼져 있으면 `start-rag.cmd`가 먼저 필요합니다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 ```bat
 ask-assist.cmd 대형폐기물 배출 방법이 궁금합니다
 ask-assist.cmd --example faq
+ask-assist.cmd --no-start --example faq
 ```
 
 **메뉴로 직접 검색해 보기:** [검색 테스트 TUI](rag/test_search.sh)를 실행하면 상태 확인, FAQ·사례 검색, 예제 질의, 재정렬·관할 설정을 사용할 수 있습니다.
@@ -255,11 +258,11 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 </details>
 
-데이터 갱신 시에는 [수집·정규화 방법](db/README.md)과 [백업·재적재 절차](docs/harness/runbook.md)를 따릅니다. 변경 없는 벡터는 재사용하며 모델·본문 구성 규칙 변경에 따른 재생성은 별도로 구분합니다.
+데이터 갱신 시에는 [수집·정규화 방법](rag/origin/README.md)과 [백업·재적재 절차](docs/harness/runbook.md)를 따릅니다. 변경 없는 벡터는 재사용하며 모델·본문 구성 규칙 변경에 따른 재생성은 별도로 구분합니다.
 
 ## 검증 근거
 
-2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest rag/tests/test_assist.py rag/tests/test_embedding_config.py src/tests` **49개가 통과**했고 PostgreSQL 왕복 1개는 `RUN_PG_TESTS`가 없어 건너뛰었습니다. [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest src/tests rag/tests/test_assist.py` **59개가 통과**했고 PostgreSQL 왕복 1개는 `RUN_PG_TESTS`가 없어 건너뛰었습니다. RAG `.venv`에서 경로·검색·임베딩 설정 테스트 **16개가 통과**했습니다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
 
 2026-10-28 네이티브 환경에서 화면 회귀를 포함한 **전체 테스트 27개가 통과**했습니다. Bash 검색 메뉴의 실제 FAQ·사례 검색과 입력·저장·API 실패 처리를 확인했습니다. [CASE-011](docs/cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 
@@ -285,7 +288,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | [프로젝트 사례 색인](docs/cases/README.md) | 버그·개선·결정·검증 이력, 미해결 과제와 작성 양식 |
 | [변경 이력](CHANGELOG.md) | 데이터·검색·하네스·문서 패치 내용 |
 | [작업 지침](AGENTS.md) · [하네스 안내](docs/harness/README.md) | 개발 규칙, 구조, 계약, 평가, 운영 |
-| [RAG 실행 문서](rag/README.md) · [데이터 사전](db/README.md) | 설치·검색·원본 필드·수집·정규화 |
+| [RAG 실행 문서](rag/README.md) · [데이터 사전](rag/origin/README.md) | 설치·검색·원본 필드·수집·정규화 |
 | [MVP 실행 계획](plan/harness-roadmap.md) | 다음 작업·완료 조건·결정 기록 |
 | [LLM + RAG 우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md) | 기존 계획의 변경점·처리 흐름·Jev 후속 확장 |
 | [시연 웹·민원 서버 구현계획](plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·작성·상세·답변 교환, 저장·API 제안과 완료 조건 |
@@ -296,7 +299,8 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 ai-complaint-process/
 ├── README.md / CHANGELOG.md / AGENTS.md
 ├── start-web.cmd                 # Windows Flask 시작·시민 화면
-├── ask-assist.cmd                # Windows 민원 → RAG+LLM 응대
+├── start-rag.cmd                 # Windows PostgreSQL·검색 API 시작
+├── ask-assist.cmd                # Windows 민원 → RAG+LLM 응대. 꺼진 검색 API 자동 시작
 ├── .env.example                  # 응대 LLM 공급자 예시
 ├── src/
 │   ├── app.py                    # Flask 팩토리
@@ -305,10 +309,10 @@ ai-complaint-process/
 │   ├── llm/                      # Luna·Codex·legacy 공급자
 │   └── assist/                   # RAG와 LLM을 잇는 응대
 ├── ui/                           # 시민·담당자·검사기 화면
-├── scripts/                      # 네이티브 실행·start_web.py
+├── scripts/                      # 네이티브 실행·start_web·windows_rag·console_spawn
 ├── docs/                         # 목차·사례·하네스·배너
-├── rag/                          # 검색 엔진·색인·CLI 호환 진입점
-├── db/                           # 원본 JSON·검색/업무 스키마·덤프 경로
+├── rag/                          # 검색 엔진·색인·CLI. 원본은 origin/
+├── db/                           # 이전 경로 안내·SQLite 잔여. 검색 원본은 rag/origin/
 ├── plan/                         # 원본 계획서·MVP 실행 계획
 └── PACKET/                       # 수집기·부서 정규화
 ```

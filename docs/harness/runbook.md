@@ -1,6 +1,6 @@
 # 실행·갱신·복구 절차
 
-현재 운영 기준은 [네이티브 설치·실행·갱신·복구](네이티브_운영.md)다. 설치·적재·API·DB 검사·백업·복구를 해당 문서의 명령으로 수행한다. 현재 실행 구성은 호스트 PostgreSQL과 Python 가상환경·사용자 서비스다. 원본 JSON·스키마 SQL·검색 dump·시연 웹 `complaint_app` 경로는 [데이터 사전](../../db/README.md)을 따른다.
+현재 운영 기준은 [네이티브 설치·실행·갱신·복구](네이티브_운영.md)다. 설치·적재·API·DB 검사·백업·복구를 해당 문서의 명령으로 수행한다. 현재 실행 구성은 호스트 PostgreSQL과 Python 가상환경·사용자 서비스다. 원본 JSON·스키마 SQL·검색 dump는 [데이터 사전](../../rag/origin/README.md), 시연 웹 `complaint_app` DDL은 [업무 스키마](../../src/complaints/schema/complaint_app.sql)를 따른다.
 
 ## 시연 웹·민원 서버의 운영 항목
 
