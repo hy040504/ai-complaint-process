@@ -192,6 +192,9 @@ def test_run_assist_without_llm_keeps_retrieval() -> None:
     assert (
         "대상" in result["faq"][0]["excerpt"] or "배출자" in result["faq"][0]["excerpt"]
     )
+    assert result["codex"][0]["role"] == "decision"
+    assert result["codex"][0]["sent"] is False
+    assert "faq_candidates" in result["codex"][0]["user"]
 
 
 def test_run_assist_faq_path_uses_second_call() -> None:
@@ -217,6 +220,9 @@ def test_run_assist_faq_path_uses_second_call() -> None:
     assert result["handoff_required"] is False
     assert "과태료" in (result["answer"] or "")
     assert len(calls) == 2
+    assert [item["role"] for item in result["codex"]] == ["decision", "faq_answer"]
+    assert result["codex"][0]["system"] == "PREFIX-00 + PREFIX-01"
+    assert result["codex"][1]["user"]["faq"][0]["source_id"] == "faq-1"
 
 
 def test_search_contract_failure() -> None:
@@ -277,7 +283,9 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     assert captured["args"][-1] == "-"
     assert captured["args"][0] == "C:/tools/codex.exe"
     assert "search_complaint_rag" in captured["input"]
-    assert "src.llm.rag_mcp" in " ".join(captured["args"])
+    joined = " ".join(captured["args"])
+    assert "src.llm.rag_mcp" in joined
+    assert '["-u", "-m", "src.llm.rag_mcp"]' in joined
     assert "--ignore-user-config" in captured["args"]
     assert "[시스템 지시]" in captured["input"]
     assert "사용자" in captured["input"]

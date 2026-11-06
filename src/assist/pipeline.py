@@ -4,6 +4,7 @@
 `retrieval_only` / `requires_gate`를 유지하고, 그 위에 판정·정책 검사·
 조건부 FAQ 생성을 올립니다. 시스템 지시는 `docs/harness/prompts/`의
 PREFIX 파일을 조립한 `DECISION_SYSTEM`·`ANSWER_SYSTEM`입니다.
+결과의 `codex`는 모델에 넣은 사용자 JSON 목록입니다.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from typing import Any, Callable
 from src.assist.constants import ANSWER_SYSTEM, DECISION_SYSTEM, PROGRESS_LABELS
 from src.assist.policy import (
     citizen_answer,
-    decision_prompt,
+    decision_payload,
     empty_decision,
     public_hit,
     validate_decision,
@@ -88,6 +89,7 @@ def build_result(
     llm_on: bool,
     raw_decision: dict[str, Any] | None = None,
     parts: SearchParts | None = None,
+    codex: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """세 갈래 응대와 근거·단계를 한 객체로 묶습니다.
 
@@ -102,6 +104,7 @@ def build_result(
         llm_on: 이번 호출에서 모델을 사용했는지입니다.
         raw_decision: 검사 전 모델 출력입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
+        codex: Codex에 넣은 호출 목록입니다. 없으면 빈 목록입니다.
 
     Returns:
         API·CLI가 공유하는 응대 결과입니다.
@@ -143,6 +146,7 @@ def build_result(
             "elapsed_ms": search.get("elapsed_ms"),
             "pipeline": search.get("pipeline"),
         },
+        "codex": list(codex or []),
     }
 
 
@@ -217,6 +221,8 @@ def iter_assist(
 
     yield progress("review")
     parts = search_parts(search)
+    user_payload = decision_payload(text, district, search, parts)
+    decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
     chat: Callable[[str, str], str] | None
     if llm_fn is USE_ENV_LLM:
         if llm_on:
@@ -241,12 +247,7 @@ def iter_assist(
         ]
     else:
         try:
-            raw_decision = parse_json_object(
-                chat(
-                    DECISION_SYSTEM,
-                    decision_prompt(text, district, search, parts),
-                )
-            )
+            raw_decision = parse_json_object(chat(DECISION_SYSTEM, decision_user))
             stages.append(stage("판정", started, True))
             checked = time.perf_counter()
             decision, failures = validate_decision(raw_decision, search, parts)
@@ -256,6 +257,14 @@ def iter_assist(
             decision = empty_decision("invalid_model_output")
             failures = [str(exc)]
 
+    codex_calls: list[dict[str, Any]] = [
+        {
+            "role": "decision",
+            "system": "PREFIX-00 + PREFIX-01",
+            "user": user_payload,
+            "sent": chat is not None,
+        }
+    ]
     generated: str | None = None
     if decision["outcome"] == "faq_answer" and chat is not None:
         yield progress("write")
@@ -265,12 +274,11 @@ def iter_assist(
             for ref in decision["evidence_refs"]
             if ref["corpus"] == "faq"
         ]
+        faq_user = {"query": text, "faq": selected}
         try:
             generated = chat(
                 ANSWER_SYSTEM,
-                json.dumps(
-                    {"query": text, "faq": selected}, ensure_ascii=False, indent=2
-                ),
+                json.dumps(faq_user, ensure_ascii=False, indent=2),
             ).strip()
             if len(generated) < 20:
                 raise ValueError("FAQ 답변이 너무 짧습니다.")
@@ -282,6 +290,14 @@ def iter_assist(
             decision["reason_code"] = "faq_generation_failed"
             failures.append(str(exc))
             generated = None
+        codex_calls.append(
+            {
+                "role": "faq_answer",
+                "system": "PREFIX-00 + PREFIX-02",
+                "user": faq_user,
+                "sent": True,
+            }
+        )
 
     yield {
         "type": "done",
@@ -296,6 +312,7 @@ def iter_assist(
             llm_on=chat is not None,
             raw_decision=raw_decision,
             parts=parts,
+            codex=codex_calls,
         ),
     }
 

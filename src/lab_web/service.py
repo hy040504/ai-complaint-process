@@ -1,7 +1,8 @@
 """민원 JSON을 검색 질의로 만들고 RAG+판정 파이프라인에 넘깁니다.
 
 민원 CRUD 테이블에는 쓰지 않습니다. 검색은 `src.rag` 검색 API이고,
-판정은 `src.assist`입니다.
+판정은 `src.assist`입니다. 응대 결과의 `codex`는 모델에 넣은 사용자
+JSON입니다.
 """
 
 from collections.abc import Callable

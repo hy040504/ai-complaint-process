@@ -149,6 +149,7 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "민원 보내기" in html
+    assert "Codex에 보낸 데이터" in html
     assert "/#/citizen" not in html
     assert 'name="title"' in html
 

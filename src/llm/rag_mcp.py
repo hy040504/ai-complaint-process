@@ -1,7 +1,8 @@
 """`search_complaint_rag` 하나만 제공하는 MCP stdio 서버입니다.
 
-Codex 자식 프로세스로 실행합니다. 표준 입출력의 Content-Length 프레임만
-읽고, 민원 문장을 검색 API로 넘깁니다.
+Codex 자식 프로세스로 실행합니다. 표준 입력은 MCP 규격의 줄 단위
+JSON-RPC와 예전 Content-Length 프레임을 모두 받습니다. 응답은 받은
+형식과 같게 씁니다. 민원 문장은 검색 API로만 넘깁니다.
 """
 
 from __future__ import annotations
@@ -141,8 +142,100 @@ def _tool_error(request_id: Any, message: str) -> dict[str, Any]:
     }
 
 
+def _as_rpc_object(payload: Any) -> dict[str, Any]:
+    """JSON-RPC 본문이 객체인지 확인합니다.
+
+    Args:
+        payload: `json.loads` 결과입니다.
+
+    Returns:
+        JSON 객체입니다.
+
+    Raises:
+        ValueError: 배열·문자열 등 객체가 아닌 경우 발생합니다.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("MCP 본문은 JSON 객체여야 합니다.")
+    return payload
+
+
+def _decode_json_line(line: bytes) -> dict[str, Any]:
+    """한 줄 JSON-RPC 본문을 객체로 바꿉니다.
+
+    Args:
+        line: 개행이 포함될 수 있는 UTF-8 한 줄입니다.
+
+    Returns:
+        JSON 객체입니다.
+
+    Raises:
+        ValueError: 본문이 JSON 객체가 아닌 경우 발생합니다.
+        json.JSONDecodeError: JSON 문법 오류입니다.
+    """
+    text = line.decode("utf-8").lstrip("\ufeff").strip()
+    return _as_rpc_object(json.loads(text))
+
+
+def read_stdio_message(stream: Any) -> tuple[dict[str, Any] | None, str | None]:
+    """stdio에서 MCP 메시지 하나와 프레임 형식을 읽습니다.
+
+    Codex는 줄 단위 JSON-RPC를 보냅니다. 예전 단위 테스트는
+    Content-Length 헤더를 씁니다. `{`로 시작하면 줄 단위로 읽고,
+    그 밖에는 Content-Length 프레임으로 읽습니다.
+
+    Args:
+        stream: 바이너리 읽기 스트림입니다.
+
+    Returns:
+        `(메시지, ndjson|content-length)`입니다. 입력이 끝나면
+        `(None, None)`입니다.
+    """
+    first = stream.readline()
+    if not first:
+        return None, None
+    stripped = first.lstrip()
+    if stripped.startswith(b"\xef\xbb\xbf"):
+        stripped = stripped[3:].lstrip()
+    if stripped.startswith(b"{"):
+        return _decode_json_line(first), "ndjson"
+    headers: dict[str, str] = {}
+    line = first
+    while True:
+        if line in (b"\r\n", b"\n"):
+            break
+        key, _, value = line.decode("ascii").partition(":")
+        headers[key.lower().strip()] = value.strip()
+        line = stream.readline()
+        if not line:
+            return None, None
+    length = int(headers.get("content-length", "0"))
+    if length <= 0:
+        return None, None
+    payload = json.loads(stream.read(length).decode("utf-8"))
+    return _as_rpc_object(payload), "content-length"
+
+
+def write_stdio_message(stream: Any, payload: dict[str, Any], framing: str) -> None:
+    """JSON-RPC 응답을 지정한 프레임 형식으로 씁니다.
+
+    줄 단위 전송은 본문에 생 개행이 들어가면 안 되므로 공백 없는
+    JSON을 씁니다.
+
+    Args:
+        stream: 바이너리 쓰기 스트림입니다.
+        payload: 응답 객체입니다.
+        framing: `ndjson` 또는 `content-length`입니다.
+    """
+    raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    if framing == "ndjson":
+        stream.write(raw + b"\n")
+    else:
+        stream.write(f"Content-Length: {len(raw)}\r\n\r\n".encode("ascii") + raw)
+    stream.flush()
+
+
 def read_message(stream: Any) -> dict[str, Any] | None:
-    """Content-Length 프레임 하나를 읽습니다.
+    """stdio 메시지 하나만 읽습니다.
 
     Args:
         stream: 바이너리 읽기 스트림입니다.
@@ -150,19 +243,8 @@ def read_message(stream: Any) -> dict[str, Any] | None:
     Returns:
         JSON 객체입니다. 입력이 끝나면 None입니다.
     """
-    headers: dict[str, str] = {}
-    while True:
-        line = stream.readline()
-        if not line:
-            return None
-        if line in (b"\r\n", b"\n"):
-            break
-        key, _, value = line.decode("ascii").partition(":")
-        headers[key.lower().strip()] = value.strip()
-    length = int(headers.get("content-length", "0"))
-    if length <= 0:
-        return None
-    return json.loads(stream.read(length).decode("utf-8"))
+    message, _framing = read_stdio_message(stream)
+    return message
 
 
 def write_message(stream: Any, payload: dict[str, Any]) -> None:
@@ -172,20 +254,26 @@ def write_message(stream: Any, payload: dict[str, Any]) -> None:
         stream: 바이너리 쓰기 스트림입니다.
         payload: 응답 객체입니다.
     """
-    raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    stream.write(f"Content-Length: {len(raw)}\r\n\r\n".encode("ascii") + raw)
-    stream.flush()
+    write_stdio_message(stream, payload, "content-length")
 
 
 def serve_stdio() -> None:
-    """표준 입력이 닫힐 때까지 MCP 요청을 처리합니다."""
+    """표준 입력이 닫힐 때까지 MCP 요청을 처리합니다.
+
+    첫 요청의 프레임 형식을 기억하고 같은 형식으로 응답합니다.
+    """
+    inbound = sys.stdin.buffer
+    outbound = sys.stdout.buffer
+    framing = "ndjson"
     while True:
-        message = read_message(sys.stdin.buffer)
+        message, found = read_stdio_message(inbound)
         if message is None:
             return
+        if found:
+            framing = found
         response = dispatch(message)
         if response is not None:
-            write_message(sys.stdout.buffer, response)
+            write_stdio_message(outbound, response, framing)
 
 
 if __name__ == "__main__":

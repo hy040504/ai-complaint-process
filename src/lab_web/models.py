@@ -56,7 +56,13 @@ class LabComplaint(Model):
 
 
 class LlmEnvelope(Model):
-    """검색에 넣은 질의와 파이프라인 진행 상태입니다."""
+    """검색에 넣은 질의와 파이프라인 진행 상태입니다.
+
+    Attributes:
+        status: 검색·판정이 끝났는지, 검색 서버 연결이 실패했는지입니다.
+        sent: 응대 파이프라인을 호출했으면 True입니다.
+        query: 제목·상세로 만든 검색 질의입니다.
+    """
 
     status: Literal["completed", "search_failed"]
     sent: bool
@@ -64,7 +70,16 @@ class LlmEnvelope(Model):
 
 
 class LabAcceptResult(Model):
-    """수신 후 검색·판정까지 마친 응답입니다."""
+    """수신 후 검색·판정까지 마친 응답입니다.
+
+    Attributes:
+        accepted: 수신 성공입니다.
+        complaint: 검증된 민원 내용입니다.
+        search_query: 검색 API에 넣은 질의입니다.
+        llm: 파이프라인 진행 봉투입니다.
+        assist: 세 갈래 응대와 `codex` 호출 목록입니다.
+        message: 화면에 보여줄 짧은 안내입니다.
+    """
 
     accepted: Literal[True] = True
     complaint: LabComplaint

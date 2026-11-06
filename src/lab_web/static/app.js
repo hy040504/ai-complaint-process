@@ -59,10 +59,48 @@ async function loadFields() {
 }
 
 /**
+ * 응대 결과를 화면에 채웁니다.
+ *
+ * @param {ReturnType<typeof readComplaint>} payload 검사기에 보낸 민원입니다.
+ * @param {object} received 서버 JSON입니다. `assist.codex`는 모델 사용자 JSON입니다.
+ * @returns {void}
+ */
+function showResult(payload, received) {
+  const assist = received.assist || {};
+  document.querySelector("#result-message").textContent = received.message;
+  document.querySelector("#result-outcome").textContent =
+    outcomeNames[assist.outcome] || assist.outcome || "";
+  document.querySelector("#result-answer").textContent = assist.answer || "";
+  const hits = document.querySelector("#result-hits");
+  hits.replaceChildren();
+  for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {
+    const item = document.createElement("li");
+    item.textContent = `${hit.corpus === "routing" ? "사례" : "FAQ"} · ${hit.title || hit.sourceId || ""}`;
+    hits.append(item);
+  }
+  if (!hits.childElementCount) {
+    const item = document.createElement("li");
+    item.textContent = "표시할 자료가 없습니다.";
+    hits.append(item);
+  }
+  document.querySelector("#codex-json").textContent = JSON.stringify(
+    assist.codex || [],
+    null,
+    2,
+  );
+  document.querySelector("#sent-json").textContent = JSON.stringify(payload, null, 2);
+  document.querySelector("#received-json").textContent = JSON.stringify(
+    received,
+    null,
+    2,
+  );
+}
+
+/**
  * 민원 JSON을 수신 API로 보냅니다.
  *
  * @param {ReturnType<typeof readComplaint>} payload 민원 내용입니다.
- * @returns {Promise<object>}
+ * @returns {Promise<object>} 검색·판정 결과입니다.
  */
 export async function sendComplaint(payload) {
   const response = await fetch("/api/v1/lab/complaints", {
@@ -79,6 +117,11 @@ export async function sendComplaint(payload) {
   return value;
 }
 
+/**
+ * 작성 폼 제출과 글자 수 표시를 연결합니다.
+ *
+ * @returns {void}
+ */
 function bind() {
   const form = document.querySelector("#complaint-form");
   const title = document.querySelector("#title");
@@ -105,33 +148,7 @@ function bind() {
     const payload = readComplaint(form);
     try {
       const received = await sendComplaint(payload);
-      const assist = received.assist || {};
-      document.querySelector("#result-message").textContent = received.message;
-      document.querySelector("#result-outcome").textContent =
-        outcomeNames[assist.outcome] || assist.outcome || "";
-      document.querySelector("#result-answer").textContent = assist.answer || "";
-      const hits = document.querySelector("#result-hits");
-      hits.replaceChildren();
-      for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {
-        const item = document.createElement("li");
-        item.textContent = `${hit.corpus === "routing" ? "사례" : "FAQ"} · ${hit.title || hit.sourceId || ""}`;
-        hits.append(item);
-      }
-      if (!hits.childElementCount) {
-        const item = document.createElement("li");
-        item.textContent = "표시할 자료가 없습니다.";
-        hits.append(item);
-      }
-      document.querySelector("#sent-json").textContent = JSON.stringify(
-        payload,
-        null,
-        2,
-      );
-      document.querySelector("#received-json").textContent = JSON.stringify(
-        received,
-        null,
-        2,
-      );
+      showResult(payload, received);
       result.hidden = false;
       result.scrollIntoView({ block: "start" });
     } catch (error) {

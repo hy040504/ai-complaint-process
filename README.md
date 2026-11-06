@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -24,22 +24,22 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
-> **다음:** 이 브랜치에서 검사기 RAG+LLM 응답, 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정, Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
+> **다음:** 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
-| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
-| FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `웹-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 실측 평가 · 공식 이관 |
+| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · `python -m rag assist` · `민원-응대.cmd` | PREFIX-03/04 · 민원 CRUD의 LLM 연결 |
+| FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 제목·상세로 검색 후 PREFIX-00+01 판정. `assist.codex` | 시민 챗봇 실연결 · 담당자 SSE |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. MCP는 NDJSON. 도구는 `search_complaint_rag`만 | 실측 평가 · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
 | 화면 | 주소 | 실행 |
 | --- | --- | --- |
 | 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
-| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 추출 프론트 + JSON 수신. Windows [`검사기-시작.cmd`](검사기-시작.cmd) · Linux [`start-lab.sh`](start-lab.sh) |
-| 기존 시연 Flask | `http://127.0.0.1:5000/#/lab` | 민원 CRUD 서버. 이 브랜치 검사기 웹과 포트를 나눔 |
+| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`검사기-시작.cmd`](검사기-시작.cmd) · Linux [`start-lab.sh`](start-lab.sh) |
+| 기존 시연 Flask | `http://127.0.0.1:5000/#/lab` | 민원 CRUD 서버의 검사기 해시. 이 브랜치 기본은 `:5010` |
 | 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
@@ -54,6 +54,7 @@
 | 검색 클라이언트 | 검색 API 호출, FAQ·사례 근거 | [`src/rag`](src/README.md) · 엔진은 [`rag/`](rag/README.md) |
 | LLM | Luna·Codex·legacy 공급자 | [`src/llm`](src/README.md) |
 | 응대 | 검색 다음 판정·정책 검사·조건부 FAQ | [`src/assist`](src/README.md) · [`prompts/`](docs/harness/prompts/README.md) |
+| 검사기 웹 | 작성 화면·민원 JSON 수신·검색·판정 | [`src/lab_web`](src/lab_web/README.md) · `:5010` |
 
 설계 문서는 [LLM + RAG 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md), [웹 상세설계](plan/민원_웹_MVP_상세설계와_분야별_작업계획.md), [모델 제안](plan/모델_선정과_미세조정_제안.md)을 이어서 읽습니다.
 
@@ -63,7 +64,7 @@
 
 ## 현재 구현 상태
 
-시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. `version` 칸이 없는 예전 `complaints` 테이블은 저장소 준비 때 채웁니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
+시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. `version` 칸이 없는 예전 `complaints` 테이블은 저장소 준비 때 채웁니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/lab_web` `:5010`과 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
 
 | 영역 | 구성·역할 | 상태 |
 | --- | --- | --- |
@@ -74,12 +75,12 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
-| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`/#/lab` · `gpt-6-luna` API 또는 Codex CLI 선택 · 실측 평가 후속 |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · `gpt-6-luna` API 또는 Codex CLI 선택 · 실측 평가 후속 |
 | 시연 웹 | 시민·담당자 화면, 목록·CRUD·초안·게시·단계 시연 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `웹-시작.cmd` |
-| 응대 검사기 | `/#/lab` 시민 작성 양식·짧은 진행 안내 | 민원 저장 없음 · 시민 챗봇은 고정 응답 |
+| 응대 검사기 | `:5010` 작성 → 검색 → 판정. `assist.codex` 표시 | 민원 저장 없음 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
-현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `/#/lab`는 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 PostgreSQL `complaint_app`으로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
+현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `src/lab_web` `:5010`은 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 PostgreSQL `complaint_app`으로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
 
 웹 단계는 민원 목록·작성·상세에서 서버에 저장된 글과 답변·처리 상태를 확인하도록 구성합니다. 같은 AI 응대 계층을 CLI와 공유하고, 등록한 민원은 기존 RAG 지식과 구분해 저장하는 안을 제안합니다. [시연 웹·민원 서버 구현계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)
 
@@ -92,24 +93,25 @@
 
 ## 응대 검사기
 
-`/#/lab`은 내부 기술 검토용입니다. 시민 직접 작성 양식으로 민원을 남기면 저장된 안내와 사례를 찾고, 지금 하는 일만 짧게 보여 준 뒤 안내 문장 또는 처리 사유를 표시합니다. 민원은 저장하지 않으며 공식 접수·자동 이관이 아닙니다.
+`llm` 브랜치의 기본 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)입니다. 제목과 상세로 검색 API를 먼저 호출하고 PREFIX-00+01 판정을 붙입니다. 결과에는 시민 안내와 함께 `assist.codex` 사용자 JSON을 보여 줍니다. 민원은 저장하지 않으며 공식 접수·자동 이관이 아닙니다. 기존 Flask 해시 `/#/lab`는 `:5000` CRUD 서버에 남아 있습니다.
 
 ```mermaid
 flowchart LR
-    W[시민 작성 양식] --> L[짧은 진행 안내]
-    L --> A{바로 안내 가능?}
-    A -->|FAQ 근거·모델 통과| F[안내 문장]
-    A -->|현장 조치| D[부서 후보 · 이관 아님]
-    A -->|근거 부족·모델 없음·오류| H[담당자 검토 사유]
+    W[lab_web :5010 작성] --> S[검색 API :8007]
+    S --> C[PREFIX-00+01]
+    C --> V[코드 검증]
+    V -->|faq_answer| F[안내 문장]
+    V -->|department_suggestion| D[부서 후보 · 이관 아님]
+    V -->|human_handoff| H[담당자 검토 사유]
     classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
     classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12
-    class W,L,A,F,D ready
+    class W,S,C,V,F,D ready
     class H human
 ```
 
 진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. LLM은 `.env`의 `COMPLAINT_LLM_PROVIDER`로 고릅니다.
 
-시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)의 PREFIX `.txt`입니다. `src/assist/prompts.py`가 읽어 조립하며, 민원·검색 후보는 `user` JSON에만 둡니다. 호출마다 **공통 헌법 `PREFIX-00`과 그 작업 블록 하나**를 붙입니다. Codex가 쓸 수 있는 도구는 `search_complaint_rag` 하나이며, 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받습니다. 후보가 이미 있으면 다시 호출하지 않고, 순화 작업은 이 도구를 쓰지 않습니다.
+시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)의 PREFIX `.txt`입니다. `src/assist/prompts.py`가 읽어 조립하며, 민원·검색 후보는 `user` JSON에만 둡니다. 호출마다 **공통 헌법 `PREFIX-00`과 그 작업 블록 하나**를 붙입니다. Codex가 쓸 수 있는 도구는 `search_complaint_rag` 하나이며, 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받습니다. 후보가 이미 있으면 다시 호출하지 않고, 순화 작업은 이 도구를 쓰지 않습니다. MCP stdio는 줄 단위 JSON-RPC입니다.
 
 | 호출 | 시스템 프롬프트 | 하는 일 | 지금 |
 | --- | --- | --- | --- |
@@ -118,7 +120,7 @@ flowchart LR
 | 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | 파일만 · 미연결 |
 | 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 파일만 · 미연결 |
 
-[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-059](docs/cases/사례-059-검사기-Codex입력-표시-2026-11-06.md)
 
 ## 저장과 검색
 
@@ -225,7 +227,7 @@ setup.cmd --check
 ./setup.sh --check
 ```
 
-Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열립니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md)
+Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
 
 ```bat
 웹-시작.cmd

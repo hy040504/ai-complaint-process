@@ -2,7 +2,7 @@
 
 `llm` 브랜치에서 시민·담당자 화면을 빼고 응대 검사기만 추출한 작은 서버입니다. 민원 JSON을 받으면 제목·상세로 검색 API를 먼저 호출하고 `src.assist`가 판정합니다. `complaint_app`에는 저장하지 않습니다.
 
-`search_complaint_rag`는 PostgreSQL이 제공하는 프로그램이 아닙니다. 이 저장소가 Codex에 붙인 MCP 도구이며, 내부에서 `rag serve` 검색 API만 호출합니다. 검사기 웹의 기본 경로는 그 도구를 모델이 부르기 전에 **코드가 `run_web_assist`로 같은 검색을 먼저** 돌립니다.
+`search_complaint_rag`는 PostgreSQL이 제공하는 프로그램이 아닙니다. 이 저장소가 Codex에 붙인 MCP 도구이며, 내부에서 `rag serve` 검색 API만 호출합니다. 검사기 웹의 기본 경로는 그 도구를 모델이 부르기 전에 **코드가 `run_web_assist`로 같은 검색을 먼저** 돌립니다. Codex와의 MCP 핸드셰이크는 줄 단위 JSON-RPC입니다. [CASE-058](../../docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
 
 ## 실행
 
@@ -36,4 +36,4 @@ Windows [`검사기-시작.cmd`](../../검사기-시작.cmd) · [`웹-시작.cmd
 
 `district`는 생략하거나 빈 문자열이면 `null`입니다. 허용 분야는 `도로·교통`, `환경·청소`, `공원·녹지`, `생활·복지`, `주택·건축`, `기타`입니다. 허용 지역은 `상당구`, `서원구`, `흥덕구`, `청원구`입니다. 그 밖 필드는 422입니다.
 
-검색 질의(`searchQuery`)는 제목과 상세 내용만 합칩니다. `district`는 구 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다. 응답의 `assist`는 `POST /api/v1/assist`와 같은 판정 계약입니다.
+검색 질의(`searchQuery`)는 제목과 상세 내용만 합칩니다. `district`는 구 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다. 응답의 `assist`는 `POST /api/v1/assist`와 같은 판정 계약입니다. `assist.codex`는 Codex에 넣은 호출 목록입니다. 1차는 `PREFIX-00 + PREFIX-01`과 검색 후보 JSON이고, `faq_answer`이면 `PREFIX-00 + PREFIX-02` 호출이 이어집니다. 시스템 지시 전문은 넣지 않습니다. [CASE-059](../../docs/cases/사례-059-검사기-Codex입력-표시-2026-11-06.md) · [CASE-060](../../docs/cases/사례-060-패치-주석-문서-최적화-2026-11-06.md)

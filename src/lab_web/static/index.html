@@ -83,9 +83,15 @@
         <p id="result-answer"></p>
         <h3>참고한 자료</h3>
         <ul id="result-hits"></ul>
-        <h3>보낸 JSON</h3>
+        <h3>Codex에 보낸 데이터</h3>
+        <p id="codex-note" class="hint-block">
+          1차 판정 사용자 JSON입니다. 시스템 지시는 PREFIX-00+01이며 민원마다
+          바뀌지 않습니다. FAQ 안내가 나가면 PREFIX-00+02 호출이 이어집니다.
+        </p>
+        <pre id="codex-json"></pre>
+        <h3>검사기에 보낸 JSON</h3>
         <pre id="sent-json"></pre>
-        <h3>받은 JSON</h3>
+        <h3>검사기가 받은 JSON</h3>
         <pre id="received-json"></pre>
       </section>
       <p id="error" class="error" hidden></p>

@@ -9,8 +9,8 @@
   </defs>
   <rect width="1200" height="220" rx="20" fill="url(#lab-bg)"/>
   <g font-family="Arial, 'Noto Sans KR', sans-serif">
-    <text x="48" y="38" fill="#93c5fd" font-size="13" font-weight="700" letter-spacing="2.4">/#/LAB · src/assist</text>
-    <text x="48" y="72" fill="#f8fafc" font-size="24" font-weight="700">작성하면 검색과 판정을 잇고 안내만 보여 줍니다</text>
+    <text x="48" y="38" fill="#93c5fd" font-size="13" font-weight="700" letter-spacing="2.4">lab_web :5010 · src/assist</text>
+    <text x="48" y="72" fill="#f8fafc" font-size="24" font-weight="700">작성하면 검색과 판정을 잇고 안내와 Codex 입력을 보여 줍니다</text>
     <rect x="48" y="98" width="258" height="90" rx="14" fill="#15233a" stroke="#2f6fed" stroke-opacity=".45"/>
     <text x="68" y="130" fill="#bfdbfe" font-size="13" font-weight="700">1 민원 작성</text>
     <text x="68" y="156" fill="#e2e8f0" font-size="15">시민 직접 작성 양식</text>
@@ -22,7 +22,7 @@
     <rect x="612" y="98" width="258" height="90" rx="14" fill="#231b36" stroke="#c4b5fd" stroke-opacity=".4"/>
     <text x="632" y="130" fill="#ddd6fe" font-size="13" font-weight="700">3 판정</text>
     <text x="632" y="156" fill="#e2e8f0" font-size="15">LLM · 정책 검사</text>
-    <text x="632" y="176" fill="#64748b" font-size="12">src/llm + 코드 검증</text>
+    <text x="632" y="176" fill="#64748b" font-size="12">Codex · 코드 검증</text>
     <rect x="894" y="98" width="258" height="90" rx="14" fill="#2a2416" stroke="#e4c877" stroke-opacity=".4"/>
     <text x="914" y="130" fill="#fde68a" font-size="13" font-weight="700">4 안내 또는 사유</text>
     <text x="914" y="156" fill="#e2e8f0" font-size="15">답변 · 부서 · 검토</text>

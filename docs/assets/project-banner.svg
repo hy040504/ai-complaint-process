@@ -32,6 +32,8 @@
     <text x="529" y="222" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">PREFIX</text>
     <rect x="604" y="200" width="168" height="34" rx="17" fill="#12352f" stroke="#2dd4bf" stroke-opacity=".45"/>
     <text x="688" y="222" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">RAG 도구</text>
+    <rect x="784" y="200" width="132" height="34" rx="17" fill="#111b2e" stroke="#e4c877" stroke-opacity=".45"/>
+    <text x="850" y="222" fill="#fde68a" font-size="13" font-weight="700" text-anchor="middle">Lab :5010</text>
     <rect x="50" y="248" width="108" height="34" rx="17" fill="#142433" stroke="#38bdf8" stroke-opacity=".4"/>
     <text x="104" y="270" fill="#bae6fd" font-size="13" font-weight="700" text-anchor="middle">민원 웹</text>
     <rect x="170" y="248" width="88" height="34" rx="17" fill="#142c28" stroke="#2dd4bf" stroke-opacity=".4"/>
@@ -59,6 +61,6 @@
     <circle cx="870" cy="242" r="7" fill="#a78bfa"/>
     <text x="890" y="238" fill="#f1f5f9" font-size="16" font-weight="700">담당자 연결</text>
     <text x="890" y="258" fill="#94a3b8" font-size="12">검사기 · 담당자 검토</text>
-    <text x="50" y="328" fill="#64748b" font-size="13">dragonkue/multilingual-e5-small-ko · search_complaint_rag · PREFIX · 검색-시작.cmd</text>
+    <text x="50" y="328" fill="#64748b" font-size="13">lab_web :5010 · MCP NDJSON · dragonkue/multilingual-e5-small-ko · search_complaint_rag</text>
   </g>
 </svg>

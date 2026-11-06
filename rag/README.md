@@ -6,7 +6,7 @@
 
 이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
 
-`python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 구현은 `src/assist`(연결), `src/rag`(검색 클라이언트), `src/llm`(공급자)에 있고 `rag/assist.py`는 CLI 호환 진입점입니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. 검사기 화면은 Flask `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
+`python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 구현은 `src/assist`(연결), `src/rag`(검색 클라이언트), `src/llm`(공급자)에 있고 `rag/assist.py`는 CLI 호환 진입점입니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. `llm` 브랜치 검사기 화면은 `src/lab_web` `:5010`입니다. 기존 Flask 해시는 `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
 
 `COMPLAINT_LLM_PROVIDER=openai_api`로 선택하면 `OPENAI_API_KEY` 환경변수를 이용해
 OpenAI Responses API의 `gpt-6-luna`·`medium` 설정을 사용합니다. `codex_cli`를 선택하면

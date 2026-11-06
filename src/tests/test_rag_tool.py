@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import io
 
-from src.llm.rag_mcp import dispatch, read_message, write_message
+from src.llm.rag_mcp import (
+    dispatch,
+    read_message,
+    read_stdio_message,
+    write_message,
+    write_stdio_message,
+)
 from src.llm.rag_tool import search_complaint_rag
 
 
@@ -98,3 +104,37 @@ def test_mcp_frame_roundtrip() -> None:
     assert response is not None
     assert response["id"] == 7
     assert response["result"]["serverInfo"]["name"] == "complaint-rag"
+
+
+def test_mcp_ndjson_initialize_roundtrip() -> None:
+    """Codex stdio처럼 줄 단위 JSON-RPC로 초기화에 응답합니다."""
+    incoming = io.BytesIO(
+        b'{"jsonrpc":"2.0","id":1,"method":"initialize","params":'
+        b'{"protocolVersion":"2025-06-18"}}\n'
+    )
+    message, framing = read_stdio_message(incoming)
+    assert framing == "ndjson"
+    assert message is not None
+    response = dispatch(message)
+    assert response is not None
+    assert response["result"]["protocolVersion"] == "2025-06-18"
+    outgoing = io.BytesIO()
+    write_stdio_message(outgoing, response, framing)
+    body = outgoing.getvalue()
+    assert body.startswith(b"{")
+    assert b"Content-Length" not in body
+    assert body.endswith(b"\n")
+    listed = dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+    assert listed is not None
+    assert listed["result"]["tools"][0]["name"] == "search_complaint_rag"
+
+
+def test_mcp_ndjson_accepts_utf8_bom() -> None:
+    """UTF-8 BOM이 있어도 줄 단위 JSON으로 읽습니다."""
+    incoming = io.BytesIO(
+        b'\xef\xbb\xbf{"jsonrpc":"2.0","id":3,"method":"initialize","params":{}}\n'
+    )
+    message, framing = read_stdio_message(incoming)
+    assert framing == "ndjson"
+    assert message is not None
+    assert message["id"] == 3

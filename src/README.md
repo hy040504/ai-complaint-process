@@ -39,25 +39,29 @@ Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"st
 
 ```mermaid
 flowchart LR
-    UI[시민·담당자·검사기 UI] --> APP[src/app.py]
+    LAB[src/lab_web :5010] --> A[src/assist 연결]
+    UI[시민·담당자 UI] --> APP[src/app.py]
     APP --> W[src/complaints 민원 웹]
-    APP --> A[src/assist 연결]
+    APP --> A
     A --> R[src/rag 검색 클라이언트]
     A --> L[src/llm 공급자]
+    L --> MCP[rag_mcp NDJSON]
     W --> APPDB[(PostgreSQL complaint_app)]
     R --> S[rag/ 검색 API :8007]
+    MCP --> S
     S --> PG[(PostgreSQL complaint_rag)]
     L --> M[OpenAI API 또는 Codex CLI]
 ```
 
-읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. 검사기 경로는 `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
+읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 응답의 `codex`는 모델에 넣은 사용자 JSON이다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
-| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
+| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
+| `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. MCP 핸드셰이크는 NDJSON |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
@@ -78,9 +82,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역 목록 |
-| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. 분야는 검색 질의에서 제외. 민원 미저장 |
+| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. `assist.codex` 포함. 분야는 검색 질의에서 제외. 민원 미저장 |
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
-| `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음 |
+| `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음. 응답에 `codex` |
 | `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷 |
@@ -130,6 +134,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | 환경 변수 | 기본 동작 |
 | --- | --- |
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
+| `LAB_WEB_PORT` | 검사기 웹, 기본 `5010` |
 | `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
 | `RAG_PYTHON` | `민원-응대.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
 | `RAG_SERVE_WAIT_SECONDS` | 검색 API 준비 대기, 기본 180 |
@@ -149,7 +154,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 `COMPLAINT_LLM_PROVIDER=openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을
 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` MCP만 붙이며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` MCP만 붙이며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. 계층형 프리픽스 캐싱 적용은

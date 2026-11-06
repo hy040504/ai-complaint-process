@@ -2,7 +2,7 @@
 
 2026-10-31 업무 서버 구현을 추가했다. 시민·담당자 `ui/`는 루트 `src/` Flask API를 호출하고, API의 Pydantic 모델 → 업무 서비스 → 저장소 `Protocol` → PostgreSQL `complaint_app`으로 처리한다. Swagger는 같은 모델에서 자동 생성하며 `/docs`에서 제공한다. 시민 응답에는 공개 DTO만 사용한다. 기존 검색 계층과 원본·색인은 분리하며 실제 AI·작업자·SSE는 후속이다. 현재 실행·타입·저장·오류 계약은 [서버 안내](../../src/README.md)를 따른다.
 
-기준: 2026-11-06. 검색 계층과 로컬 응대 계층(`src/assist`, `/#/lab`)이 있다. LLM이 따를 완충지대 계약은 [LLM 완충지대 하네스](LLM_완충지대_하네스.md), 시스템 접두 원문은 [`prompts/`](prompts/README.md)다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 선택할 수 있고, 실측 평가·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
+기준: 2026-11-06. 검색 계층과 로컬 응대 계층(`src/assist`, `src/lab_web` `:5010`)이 있다. LLM이 따를 완충지대 계약은 [LLM 완충지대 하네스](LLM_완충지대_하네스.md), 시스템 접두 원문은 [`prompts/`](prompts/README.md)다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 선택할 수 있고, 실측 평가·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
 
 ## 데이터와 실행 경로
 
@@ -86,7 +86,7 @@ flowchart TD
 
 ## LLM 응대 계층
 
-검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `/#/lab`도 이 계층을 쓴다.
+검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `src/lab_web` `:5010`도 이 계층을 쓴다. 응답의 `codex`는 모델에 넣은 사용자 JSON이다.
 
 1. FAQ·사례별 검색 결과를 받은 뒤 LLM이 의도·근거·처리 경로를 구조화해 제안한다. 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결한다.
 2. 코드가 출처·부서 후보·필수 조건과 출력 계약을 검사한다. FAQ 현행성 허용 목록은 아직 없다.

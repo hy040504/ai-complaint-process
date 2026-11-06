@@ -333,6 +333,25 @@ class AssistEvidenceRef(Model):
     source_id: str
 
 
+class CodexCall(Model):
+    """Codex CLI 한 호출에 넣은 시스템 표시와 사용자 JSON입니다.
+
+    시스템 지시 전문은 PREFIX 파일이고, 여기에는 민원마다 바뀌는
+    사용자 JSON만 둡니다. `user` 키는 판정 계약의 뱀형입니다.
+
+    Attributes:
+        role: `decision`은 1차 판정, `faq_answer`는 FAQ 안내입니다.
+        system: PREFIX 조합 이름입니다.
+        user: Codex stdin 사용자 JSON입니다.
+        sent: 모델에 실제로 넣었으면 True입니다.
+    """
+
+    role: Literal["decision", "faq_answer"]
+    system: str
+    user: dict[str, Any]
+    sent: bool
+
+
 class AssistDecision(Model):
     """코드 검증을 거친 판정입니다."""
 
@@ -363,7 +382,13 @@ class AssistRetrieval(Model):
 
 
 class AssistResponse(Model):
-    """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다."""
+    """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다.
+
+    Attributes:
+        outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
+        automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
+        codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.
+    """
 
     query: str
     district: str | None = None
@@ -380,6 +405,7 @@ class AssistResponse(Model):
     stages: list[AssistStage]
     llm_configured: bool
     retrieval: AssistRetrieval
+    codex: list[CodexCall] = Field(default_factory=list)
 
 
 class ComplaintResponse(RootModel[PublicComplaint | Complaint]):

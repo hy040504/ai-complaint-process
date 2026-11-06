@@ -136,11 +136,18 @@ button:disabled {
 }
 pre {
   overflow: auto;
+  max-height: 420px;
   background: #0f172a;
   color: #e2e8f0;
   border-radius: 12px;
   padding: 12px;
   font-size: 12px;
+}
+.hint-block {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 8px;
 }
 .error {
   color: #b91c1c;

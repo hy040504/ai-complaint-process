@@ -2,6 +2,12 @@
 
 ## 2026-11-06
 
+- CASE-057~059 패치의 Google 형식 한국어 주석을 맞추고, MCP JSON 본문 검사를 한 함수로 모은다. README에 Lab :5010·MCP NDJSON 배지와 검사기 검색·판정 현재 단계를 적었다. [CASE-060](docs/cases/사례-060-패치-주석-문서-최적화-2026-11-06.md)
+
+- 응대 검사기 결과에 Codex 1차(및 FAQ 2차) 사용자 JSON을 `assist.codex`로 보여 준다. PREFIX 전문은 넣지 않는다. [CASE-059](docs/cases/사례-059-검사기-Codex입력-표시-2026-11-06.md)
+
+- Codex MCP 서버가 줄 단위 JSON-RPC 핸드셰이크를 받도록 고친다. 예전 `Content-Length` 프레임도 유지한다. [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
+
 - 검사기 웹이 민원 JSON을 받은 뒤 제목·상세로 검색 API를 먼저 호출하고 `src.assist` 판정을 붙인다. 분야는 검색 질의에 넣지 않는다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md)
 
 - `검사기-시작.cmd`를 CRLF로 고쳐 cmd.exe가 줄을 명령으로 오인하지 않게 한다. `*.cmd`는 `.gitattributes`에서 CRLF를 유지한다.

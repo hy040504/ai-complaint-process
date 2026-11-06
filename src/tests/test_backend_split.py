@@ -91,6 +91,10 @@ def test_bridge_runs_search_then_llm() -> None:
     assert result["handoff_required"] is False
     assert "과태료" in (result["answer"] or "")
     assert len(calls) == 2
+    assert [item["role"] for item in result["codex"]] == ["decision", "faq_answer"]
+    assert result["codex"][0]["sent"] is True
+    assert result["codex"][0]["user"]["query"] == "대형폐기물 배출 방법을 알고 싶어요."
+    assert result["codex"][1]["user"]["faq"][0]["source_id"] == "faq-1"
     assert result["retrieval"]["retrieval_only"] is True
     assert result["retrieval"]["decision"] == "requires_gate"
 

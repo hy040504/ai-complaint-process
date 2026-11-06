@@ -90,7 +90,7 @@ flowchart LR
 
 | 경로 | 서버 응답 | LLM과의 관계 |
 | --- | --- | --- |
-| `POST /api/v1/assist`, `/assist/stream`, `/#/lab`, `민원-응대.cmd` | 안내문 또는 검토 사유, 검색 근거, `automaticTransfer: false`. 민원을 **저장하지 않음** | 위 4절 파이프라인 |
+| `POST /api/v1/assist`, `/assist/stream`, `src/lab_web` `:5010`, `민원-응대.cmd` | 안내문 또는 검토 사유, 검색 근거, `assist.codex`, `automaticTransfer: false`. 민원을 **저장하지 않음** | 위 4절 파이프라인 |
 | `GET /api/v1/health` | `assistSearch`·`assistLlm`은 검색·토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 | CRUD에 LLM을 붙이지 않음 |
 | 시민 CRUD `/#/citizen` | 저장된 글·게시된 답변만. 미게시 초안 없음 | 현재 LLM 미연결 |
 | 담당자 `/#/staff` | 초안·게시·이력. 단계 시연은 명시적 | 현재 LLM 미연결 |

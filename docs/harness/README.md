@@ -6,7 +6,7 @@
 
 계획 갱신 기준일은 **2026-11-06 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
 
-현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `/#/lab`, Windows `민원-응대.cmd`)이 있다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
+현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `민원-응대.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 
 CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고받는 서버를 포함한다. 2026-10-31 [시민·담당자 UI](../../ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](../../src/README.md)를 구현했다. 2026-11-05 `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md). PostgreSQL `complaint_app` 업무 저장·서버 세션 역할·작성자·버전 검사와 API 기반 저장을 적용했다. 실제 민원 CRUD의 LLM 연결·SSE·운영 본인인증·공식 이관은 미구현이다. 검색 위 판정·검사기는 [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)에 있다. 기존 RAG 지식·환경은 분리한다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 

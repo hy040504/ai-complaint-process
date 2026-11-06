@@ -1,4 +1,8 @@
-"""선택한 LLM 공급자로 한 번의 텍스트 완성을 요청합니다."""
+"""선택한 LLM 공급자로 한 번의 텍스트 완성을 요청합니다.
+
+`codex_cli`는 검색 도구 MCP만 붙입니다. MCP Python은 `-u`로 띄워
+줄 단위 JSON-RPC 핸드셰이크가 버퍼에 묶이지 않게 합니다.
+"""
 
 from __future__ import annotations
 
@@ -149,6 +153,9 @@ def codex_tool_instruction(allowed: tuple[str, ...] = CODEX_ALLOWED_TOOLS) -> st
 def codex_mcp_args(python: str, root: str) -> list[str]:
     """이번 Codex 실행에 검색 도구 MCP만 붙이는 인자를 만듭니다.
 
+    Python은 `-u`로 띄워 표준 입출력 버퍼가 핸드셰이크를 묶지 않게
+    합니다. 서버는 줄 단위 JSON-RPC를 받습니다.
+
     Args:
         python: MCP 서버를 띄울 Python 실행 파일입니다.
         root: `src` 패키지가 있는 저장소 루트입니다.
@@ -161,7 +168,7 @@ def codex_mcp_args(python: str, root: str) -> list[str]:
     root_path = root.replace("\\", "/")
     values = {
         f"{server}.command": json.dumps(python_path),
-        f"{server}.args": '["-m", "src.llm.rag_mcp"]',
+        f"{server}.args": '["-u", "-m", "src.llm.rag_mcp"]',
         f"{server}.cwd": json.dumps(root_path),
         f"{server}.enabled_tools": f'["{RAG_TOOL_NAME}"]',
         f"{server}.default_tools_approval_mode": '"auto"',
@@ -184,7 +191,8 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
     않도록 `node`와 `codex.js`로 풀어 실행합니다. 본문 순서는 고정 실행
     래퍼 → `[시스템 지시]` → `[사용자 입력]`입니다. 하위 프로세스에는
     `OPENAI_API_KEY`를 전달하지 않습니다. 도구는 `search_complaint_rag`만
-    MCP로 붙이고, 사용자 설정의 다른 MCP 서버는 읽지 않습니다.
+    MCP로 붙이고, 사용자 설정의 다른 MCP 서버는 읽지 않습니다. MCP Python은
+    `-u`로 띄워 줄 단위 JSON-RPC 핸드셰이크가 버퍼에 묶이지 않게 합니다.
 
     Args:
         settings: `llm_settings()`가 만든 공급자 설정입니다.
