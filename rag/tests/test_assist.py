@@ -156,6 +156,24 @@ def test_mixed_request_goes_to_handoff() -> None:
     assert decision["reason_code"] == "mixed_request"
 
 
+def test_condition_unclear_cannot_be_faq_answer() -> None:
+    """조건 부족 사유는 FAQ 자동 안내로 남기지 않습니다."""
+    decision, failures = validate_decision(
+        {
+            "scope": "in_scope",
+            "intent": "information",
+            "outcome": "faq_answer",
+            "reason_code": "condition_unclear",
+            "evidence_refs": [{"corpus": "faq", "source_id": "faq-1"}],
+            "department_ids": [],
+        },
+        sample_search(),
+    )
+    assert decision["outcome"] == "human_handoff"
+    assert decision["reason_code"] == "condition_unclear"
+    assert failures
+
+
 def test_progress_callback_uses_short_labels() -> None:
     """진행 안내는 파이프라인 전체가 아니라 짧은 작업 설명만 넘깁니다."""
     seen: list[tuple[str, str]] = []

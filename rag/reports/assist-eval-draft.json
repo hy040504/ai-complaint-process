@@ -1,12 +1,13 @@
 {
-  "description": "초안 응대 평가셋. 검색 Hit@5와 구별한다. 운영 모델 선정이 아니다.",
+  "description": "초안 응대 평가셋. 검색 Hit@5와 구별한다. 운영 모델 선정이 아니다. 400문항이 아니다.",
   "review_status": "draft",
   "provider": "codex_cli",
   "model": "gpt-6-luna",
-  "passed": 10,
-  "total": 10,
-  "elapsed_ms": 190429.4,
-  "note": "FAQ_성인여권만 PREFIX-01 보강 후 재실행해 condition_unclear·FAQ 1312277 근거를 확인했다. 나머지 9건은 이전 초안 실행이다.",
+  "split": "dev",
+  "passed": 26,
+  "total": 26,
+  "elapsed_ms": 25447.2,
+  "note": "개발셋 26건. 보류 3건은 실행하지 않았다. FAQ_생활쓰레기시간은 모델이 faq_answer와 condition_unclear를 같이 내 코드가 검토로 고친 뒤 재실행했다. 400문항이 아니다.",
   "results": [
     {
       "name": "FAQ_대형폐기물",
@@ -18,6 +19,36 @@
       ],
       "ok": true,
       "elapsed_ms": 21955.8
+    },
+    {
+      "name": "FAQ_대형폐기물_오탈자",
+      "group_id": "faq-bulky-waste",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 22742.7
+    },
+    {
+      "name": "FAQ_대형폐기물_인터넷신고",
+      "group_id": "faq-bulky-waste",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 13979.4
     },
     {
       "name": "FAQ_버스분실물",
@@ -69,6 +100,85 @@
       "elapsed_ms": 14981.4
     },
     {
+      "name": "FAQ_미세먼지알리미",
+      "group_id": "faq-dust-sms",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 19548.5
+    },
+    {
+      "name": "FAQ_인감증명_용도",
+      "group_id": "faq-seal-certificate",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 14654.4
+    },
+    {
+      "name": "FAQ_종량제무료",
+      "group_id": "faq-free-bags",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 17003.5
+    },
+    {
+      "name": "FAQ_생활쓰레기시간",
+      "group_id": "faq-household-waste-hours",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "condition_unclear",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": [
+        "condition_unclear",
+        "insufficient_evidence"
+      ],
+      "ok": true,
+      "elapsed_ms": 25447.1
+    },
+    {
+      "name": "FAQ_건축신고_면적초과",
+      "group_id": "faq-building-report-area",
+      "bundle": "faq_apply",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "condition_unclear",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff",
+        "department_suggestion"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 22325.0
+    },
+    {
       "name": "부서_버스무정차",
       "outcome": "department_suggestion",
       "reason_code": "action_required",
@@ -91,6 +201,22 @@
       ],
       "ok": true,
       "elapsed_ms": 24348.0
+    },
+    {
+      "name": "부서_상당구포트홀",
+      "group_id": "routing-pothole-sangdang",
+      "bundle": "department",
+      "split": "dev",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 23295.4
     },
     {
       "name": "부서_폐기물판매처",
@@ -118,6 +244,101 @@
       "elapsed_ms": 21715.8
     },
     {
+      "name": "부서_위치없음포트홀",
+      "group_id": "routing-pothole-no-district",
+      "bundle": "department",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "condition_unclear",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff",
+        "department_suggestion"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 29646.6
+    },
+    {
+      "name": "조치_대형폐기물무단투기",
+      "group_id": "action-illegal-dump",
+      "bundle": "action_like_faq",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "department_unverified",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 23800.0
+    },
+    {
+      "name": "조치_불법주정차현장",
+      "group_id": "action-parking-now",
+      "bundle": "action_like_faq",
+      "split": "dev",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 29758.1
+    },
+    {
+      "name": "복합_폐기물과가로등",
+      "group_id": "mixed-waste-and-light",
+      "bundle": "uncertain_mixed",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "mixed_request",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": [
+        "mixed_request"
+      ],
+      "ok": true,
+      "elapsed_ms": 26674.6
+    },
+    {
+      "name": "불확실_짧은질의",
+      "group_id": "unclear-short-light",
+      "bundle": "uncertain_mixed",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "condition_unclear",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 17973.7
+    },
+    {
+      "name": "긴급_가스냄새",
+      "group_id": "safety-gas",
+      "bundle": "uncertain_mixed",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 26456.5
+    },
+    {
       "name": "범위밖_검색과판정분리",
       "outcome": "human_handoff",
       "reason_code": "out_of_scope",
@@ -127,6 +348,36 @@
       ],
       "ok": true,
       "elapsed_ms": 21404.0
+    },
+    {
+      "name": "범위밖_서울가로등",
+      "group_id": "oos-seoul-light",
+      "bundle": "oos",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "out_of_scope",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 29008.0
+    },
+    {
+      "name": "오용_지시주입_영주권",
+      "group_id": "oos-immigration",
+      "bundle": "abuse",
+      "split": "dev",
+      "outcome": "human_handoff",
+      "reason_code": "out_of_scope",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 20670.6
     }
   ]
 }

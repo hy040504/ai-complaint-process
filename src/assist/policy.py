@@ -181,6 +181,9 @@ def validate_decision(
             outcome = "human_handoff"
             reason = "policy_rejected"
             failures.append("FAQ 안내는 information 의도에만 허용합니다.")
+        elif reason == "condition_unclear":
+            outcome = "human_handoff"
+            failures.append("조건이 부족하면 FAQ 자동 안내를 허용하지 않습니다.")
         elif not any(ref["corpus"] == "faq" for ref in refs):
             outcome = "human_handoff"
             reason = "insufficient_evidence"

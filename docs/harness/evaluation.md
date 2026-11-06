@@ -32,7 +32,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 | SQL·RRF·토큰화·지역 필터 | 코드·격리 DB 테스트, 색인 호환성, 관련 검색 회귀 |
 | 임베딩·재정렬 모델 | 모델 리비전·색인 호환성, 검색 회귀, 같은 입력의 품질·시간 비교 |
 | API 입력·출력 | 정상 입력, `400/422/503` 경로, 검색 전용 계약, CLI 호환성 |
-| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 초안 갈래 10건은 `scripts/응대_평가.py` |
+| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 초안 평가셋은 `scripts/응대_평가.py`(기본 개발셋) |
 | 시연 웹·민원 업무 서버 | 등록·영속화·조회·답변 교환·역할·상태 전이·중복 제출·AI 실패 시 민원 보존; 현재 미구현 |
 | 후속 Jev·LoRA 도입 | 같은 검색 근거·보류 평가셋으로 기본 LLM + RAG와 각각 비교 |
 
@@ -59,7 +59,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 
 2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
 
-2026-11-06 `scripts/응대_평가.py`는 같은 10개 질의의 **응대 갈래**만 초안으로 본다. `FAQ_성인여권`은 검색 1위 FAQ 본문에 필요 서류가 없어 `human_handoff`/`condition_unclear`가 맞다. 라벨을 고친 뒤 여권 문항을 재실행했고 초안 10/10이다. 나머지 9건은 이전 실행이다. 운영 모델 선정이 아니다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-063](../cases/사례-063-여권FAQ조건부족-검사기사유표시-2026-11-06.md)
+2026-11-06 `scripts/응대_평가.py`는 초안 응대 평가셋의 **갈래**만 본다. 문항은 유형별 29건(개발 26·보류 3)이다. 기본 실행은 개발셋이며 보류 문항은 프롬프트 조정에 쓰지 않는다. `FAQ_성인여권`과 `FAQ_생활쓰레기시간`은 검색 Hit가 있어도 FAQ 본문에 질문 항목이 없어 `human_handoff`/`condition_unclear`가 맞다. 조건 부족 사유는 코드가 `faq_answer`를 막는다. 개발셋 26/26은 운영 모델 선정이 아니다. 400문항은 제안이다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-064](../cases/사례-064-초안응대평가셋확대-2026-11-06.md)
 
 PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인한다. openai_api `cached_tokens`는 `.env`의 키가 비어 건너뛰었다. [조립 보고서](../../rag/reports/prefix-cache-assembly.json) · [비교](../../rag/reports/assist-provider-compare.json)
 
@@ -69,7 +69,7 @@ PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인�
 
 ## 추가할 한국어 평가셋
 
-다음 항목은 **제안**이며 아직 평가 데이터·러너가 없다. [모델 제안서](../../plan/모델_선정과_미세조정_제안.md)에 초기 비교용 400문항과 개발/보류 분할안을 정리했다. 초기 모델 평가에 Jev 실행을 요구하지 않는다.
+여섯 묶음의 초안 29건은 [`rag/assist_eval_queries.json`](../../rag/assist_eval_queries.json)에 있고, `scripts/응대_평가.py`가 개발셋만 기본 실행한다. [모델 제안서](../../plan/모델_선정과_미세조정_제안.md)의 초기 비교용 **400문항은 제안**이며 아직 검수·작성이 없다. 초안을 400문항 완료로 표시하지 않는다. 초기 모델 평가에 Jev 실행을 요구하지 않는다.
 
 | 묶음 | 반드시 포함할 상황 |
 | --- | --- |
@@ -84,7 +84,7 @@ PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인�
 
 의미가 같은 문장의 표현 변형과 같은 원본에서 만든 사례는 `group_id`로 묶어 개발셋·보류 평가셋 사이에 나누지 않는다. 임계값은 개발셋에서 정하고 보류 평가셋은 최종 비교에 사용한다. 정답 근거가 검색용 지식베이스에 있는 것은 RAG의 목적에 부합하지만, 보류 질문·라벨을 모델 조정에 사용하지 않는다.
 
-예상 라벨 형식 예시다. 현재 `evaluation_queries.json` 또는 `rag.evaluate`가 이 형식을 지원하는 것은 아니다.
+검색 회귀 `rag.evaluate`는 Hit@5만 본다. 응대 갈래 칸은 `assist_eval_queries.json`이 쓴다. 검색 순위를 안내 정답으로 복사하지 않는다.
 
 ```json
 {
