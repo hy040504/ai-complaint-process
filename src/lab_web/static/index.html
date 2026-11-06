@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111b2e" />
     <meta
       name="description"
-      content="응대 검사기. 민원 내용을 JSON으로 보내 언어 모델 호출 전에 수신을 확인합니다."
+      content="응대 검사기. 민원 JSON을 받아 RAG 검색 후 판정합니다."
     />
     <title>응대 검사기 · 민원톡톡</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -32,8 +32,8 @@
     </header>
     <main id="main">
       <p class="lead">
-        제목, 민원 분야, 발생 지역, 상세 내용을 JSON으로 보냅니다. 서버는
-        언어 모델에 넘길 봉투를 만들고, 이 단계에서는 모델을 호출하지 않습니다.
+        제목과 상세 내용으로 저장된 안내·사례를 먼저 찾고, 그다음 판정합니다.
+        발생 지역은 검색 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다.
       </p>
       <form id="complaint-form">
         <label for="title">제목 <em>*</em></label>
@@ -77,8 +77,12 @@
         <button type="submit" id="submit">민원 보내기</button>
       </form>
       <section id="result" hidden>
-        <h2>서버 수신</h2>
+        <h2>응대 결과</h2>
         <p id="result-message"></p>
+        <p id="result-outcome"></p>
+        <p id="result-answer"></p>
+        <h3>참고한 자료</h3>
+        <ul id="result-hits"></ul>
         <h3>보낸 JSON</h3>
         <pre id="sent-json"></pre>
         <h3>받은 JSON</h3>

@@ -25,7 +25,7 @@ py -3.12 -m venv .venv-web
 | 주소 | 제공 내용 |
 | --- | --- |
 | http://127.0.0.1:5010/ | 추출한 응대 검사기 웹. 민원 JSON 수신 |
-| http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·분야·지역·상세 JSON. 모델 미호출 |
+| http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정 |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
@@ -78,7 +78,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역 목록 |
-| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·분야·지역·상세 JSON 수신. 모델 미호출·민원 미저장 |
+| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. 분야는 검색 질의에서 제외. 민원 미저장 |
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
 | `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음 |
 | `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |

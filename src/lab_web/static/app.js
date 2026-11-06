@@ -2,6 +2,12 @@
  * 응대 검사기 작성 화면입니다. 민원 필드를 JSON으로 서버에 보냅니다.
  */
 
+const outcomeNames = {
+  faq_answer: "안내를 드렸습니다",
+  department_suggestion: "담당 부서 후보로 넘겼습니다",
+  human_handoff: "담당자가 이어서 살펴봅니다",
+};
+
 /**
  * 폼 값을 서버 계약 JSON으로 만듭니다.
  *
@@ -99,7 +105,23 @@ function bind() {
     const payload = readComplaint(form);
     try {
       const received = await sendComplaint(payload);
+      const assist = received.assist || {};
       document.querySelector("#result-message").textContent = received.message;
+      document.querySelector("#result-outcome").textContent =
+        outcomeNames[assist.outcome] || assist.outcome || "";
+      document.querySelector("#result-answer").textContent = assist.answer || "";
+      const hits = document.querySelector("#result-hits");
+      hits.replaceChildren();
+      for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {
+        const item = document.createElement("li");
+        item.textContent = `${hit.corpus === "routing" ? "사례" : "FAQ"} · ${hit.title || hit.sourceId || ""}`;
+        hits.append(item);
+      }
+      if (!hits.childElementCount) {
+        const item = document.createElement("li");
+        item.textContent = "표시할 자료가 없습니다.";
+        hits.append(item);
+      }
       document.querySelector("#sent-json").textContent = JSON.stringify(
         payload,
         null,

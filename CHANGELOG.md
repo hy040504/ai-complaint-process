@@ -2,6 +2,8 @@
 
 ## 2026-11-06
 
+- 검사기 웹이 민원 JSON을 받은 뒤 제목·상세로 검색 API를 먼저 호출하고 `src.assist` 판정을 붙인다. 분야는 검색 질의에 넣지 않는다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md)
+
 - `검사기-시작.cmd`를 CRLF로 고쳐 cmd.exe가 줄을 명령으로 오인하지 않게 한다. `*.cmd`는 `.gitattributes`에서 CRLF를 유지한다.
 
 - 응대 검사기 프론트를 `src/lab_web/static`으로 추출하고, 민원 JSON을 받는 작은 Flask를 `:5010`에 둔다. `POST /api/v1/lab/complaints`는 언어 모델용 봉투만 만들고 호출·CRUD 저장은 하지 않는다. GitHub 기본 브랜치는 `llm`이다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md)

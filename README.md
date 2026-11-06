@@ -20,7 +20,7 @@
 
 > [!IMPORTANT]
 > **브랜치 `llm` · GitHub 기본 브랜치 · 응대 검사기 웹**<br>
-> 추출한 작성 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)다. 제목·민원 분야·발생 지역·상세 내용을 JSON으로 `POST /api/v1/lab/complaints`에 보낸다. 서버는 언어 모델용 질의를 만들고 이 단계에서는 모델을 호출하지 않는다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md) · [`src/lab_web`](src/lab_web/README.md)
+> 추출한 작성 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)다. `POST /api/v1/lab/complaints`는 제목·상세로 검색 API를 먼저 호출하고 판정한다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>

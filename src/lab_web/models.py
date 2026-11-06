@@ -1,6 +1,6 @@
 """검사기 웹이 주고받는 JSON 계약을 정의합니다.
 
-민원 CRUD 테이블에 쓰지 않습니다. 언어 모델 호출 전 수신 확인용입니다.
+민원 CRUD 테이블에 쓰지 않습니다. 응대 결과는 `src.assist` 계약을 따릅니다.
 """
 
 from typing import Annotated, Literal
@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.alias_generators import to_camel
 
+from src.complaints.models import AssistResponse
 from src.lab_web.constants import CATEGORIES, DISTRICTS, Category, District
 
 Title = Annotated[
@@ -55,20 +56,22 @@ class LabComplaint(Model):
 
 
 class LlmEnvelope(Model):
-    """언어 모델에 넘길 묶음입니다. 이 단계에서는 호출하지 않습니다."""
+    """검색에 넣은 질의와 파이프라인 진행 상태입니다."""
 
-    status: Literal["accepted"] = "accepted"
-    sent: Literal[False] = False
-    query: Annotated[str, StringConstraints(min_length=1, max_length=2200)]
+    status: Literal["completed", "search_failed"]
+    sent: bool
+    query: Annotated[str, StringConstraints(min_length=1, max_length=2000)]
 
 
 class LabAcceptResult(Model):
-    """수신 성공 응답입니다."""
+    """수신 후 검색·판정까지 마친 응답입니다."""
 
     accepted: Literal[True] = True
     complaint: LabComplaint
+    search_query: str
     llm: LlmEnvelope
-    message: str = "민원 내용을 받았습니다. 언어 모델 호출은 다음 단계입니다."
+    assist: AssistResponse
+    message: str = "검색 후보를 찾은 뒤 판정했습니다."
 
 
 class LabFields(Model):
@@ -84,7 +87,8 @@ class LabHealth(Model):
     status: Literal["ok"] = "ok"
     service: Literal["lab_web"] = "lab_web"
     intake: Literal[True] = True
-    llm_sent: Literal[False] = False
+    search_available: bool = False
+    llm_configured: bool = False
 
 
 class ErrorBody(Model):

@@ -1,7 +1,7 @@
 """응대 검사기 전용 Flask 앱입니다.
 
-정적 화면과 민원 JSON 수신 API만 제공합니다. PostgreSQL 업무 저장과
-기존 `/#/lab` SPA를 의존하지 않습니다.
+정적 화면과 민원 JSON 수신 API를 제공합니다. 수신 후 `src.assist`가
+검색 API를 먼저 호출하고 판정합니다. 민원 CRUD 테이블에는 쓰지 않습니다.
 """
 
 from pathlib import Path
@@ -9,8 +9,9 @@ from pathlib import Path
 from flask import Flask, Response, jsonify, request, send_from_directory
 from pydantic import BaseModel, ValidationError
 
+from src.assist import llm_configured, search_available
 from src.lab_web.models import ErrorBody, LabComplaint, LabFields, LabHealth
-from src.lab_web.service import accept_complaint
+from src.lab_web.service import AssistFn, handle_complaint
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -63,8 +64,11 @@ def _invalid(error: ValidationError) -> Response:
     )
 
 
-def create_app() -> Flask:
+def create_app(assist_fn: AssistFn | None = None) -> Flask:
     """검사기 웹 앱을 만듭니다.
+
+    Args:
+        assist_fn: 테스트용 응대 함수입니다. 생략하면 `run_web_assist`입니다.
 
     Returns:
         정적 파일과 수신 API를 가진 Flask 앱입니다.
@@ -74,6 +78,7 @@ def create_app() -> Flask:
         static_folder=str(STATIC_DIR),
         static_url_path="",
     )
+    app.config["LAB_ASSIST_FN"] = assist_fn
 
     @app.get("/")
     def index() -> Response:
@@ -83,7 +88,12 @@ def create_app() -> Flask:
     @app.get("/api/v1/health")
     def health() -> Response:
         """검사기 웹이 켜져 있는지 확인합니다."""
-        return _json(LabHealth())
+        return _json(
+            LabHealth(
+                search_available=search_available(),
+                llm_configured=llm_configured(),
+            )
+        )
 
     @app.get("/api/v1/lab/fields")
     def fields() -> Response:
@@ -92,10 +102,10 @@ def create_app() -> Flask:
 
     @app.post("/api/v1/lab/complaints")
     def create_complaint() -> Response:
-        """민원 JSON을 받아 언어 모델용 봉투를 만듭니다.
+        """민원 JSON을 받아 검색 후 판정합니다.
 
-        본문은 `title`, `category`, `district`, `body`입니다. 민원 CRUD에
-        저장하지 않고 모델도 호출하지 않습니다.
+        검색 질의는 제목과 상세 내용입니다. `district`는 구 필터입니다.
+        민원 분야는 검색 질의에 넣지 않습니다. 민원 CRUD에는 저장하지 않습니다.
         """
         raw = request.get_json(silent=True)
         if not isinstance(raw, dict):
@@ -110,6 +120,17 @@ def create_app() -> Flask:
             complaint = LabComplaint.model_validate(raw)
         except ValidationError as error:
             return _invalid(error)
-        return _json(accept_complaint(complaint), 202)
+        try:
+            return _json(
+                handle_complaint(
+                    complaint,
+                    assist_fn=app.config.get("LAB_ASSIST_FN"),
+                )
+            )
+        except (OSError, ValueError, TypeError) as exc:
+            return _json(
+                ErrorBody(code="assist_failed", message=str(exc)[:200]),
+                503,
+            )
 
     return app
