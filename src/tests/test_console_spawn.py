@@ -11,8 +11,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def console_spawn() -> ModuleType:
-    """scripts/console_spawn.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "console_spawn.py"
+    """scripts/콘솔_기동.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "콘솔_기동.py"
     spec = importlib.util.spec_from_file_location("console_spawn", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

@@ -16,7 +16,7 @@
 
 ## 2. 배경·증상과 기대 동작
 
-- 관찰한 사실과 영향: `ask-assist.cmd`에 「나무가 쓰러짐」을 넣으면 LLM은 설정된 상태로 `invalid_model_output`이 나고, 정책 검사에 `Codex CLI 호출 실패: The command line is too long.`이 표시됐다.
+- 관찰한 사실과 영향: `민원-응대.cmd`에 「나무가 쓰러짐」을 넣으면 LLM은 설정된 상태로 `invalid_model_output`이 나고, 정책 검사에 `Codex CLI 호출 실패: The command line is too long.`이 표시됐다.
 - 기대 동작 또는 요구사항: 검색 근거가 길어도 Codex CLI 판정이 Windows에서 호출되어야 한다.
 - 확인 근거와 시점: 2026-11-05 사용자 실행 출력.
 
@@ -42,7 +42,7 @@
 | 수행일·환경 | 확인 방법·명령 | 실제 결과 | 증거 파일·커밋 |
 | --- | --- | --- | --- |
 | 2026-11-05 UTC / Windows / `.venv-web` | `pytest rag/tests/test_assist.py src/tests/test_llm_env.py -q` | 18 passed | 로컬 |
-| 2026-11-05 UTC / Windows / `codex_cli` | `python scripts/ask_assist.py --no-start "나무가 쓰러짐"` | `human_handoff` / `condition_unclear`, 판정 9.3s, 정책 실패 없음 | 로컬 실호출 |
+| 2026-11-05 UTC / Windows / `codex_cli` | `python scripts/민원_응대.py --no-start "나무가 쓰러짐"` | `human_handoff` / `condition_unclear`, 판정 9.3s, 정책 실패 없음 | 로컬 실호출 |
 
 - 명령줄 길이 오류는 재현되지 않았다. 짧은 문장 「나무가 쓰러짐」은 적용 조건이 부족해 담당자 검토로 연결됐다. 판정 JSON 품질·운영 모델 확정은 후속이다.
 

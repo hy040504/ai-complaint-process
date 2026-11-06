@@ -1,4 +1,8 @@
-"""Windows에서 민원 문장을 받아 RAG 검색과 LLM 응대를 표시합니다."""
+"""Windows에서 민원 문장을 받아 RAG 검색과 LLM 응대를 표시합니다.
+
+localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를
+시작합니다. 민원 CRUD와 검색 색인은 변경하지 않습니다.
+"""
 
 from __future__ import annotations
 
@@ -18,7 +22,7 @@ if str(ROOT) not in sys.path:
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from console_spawn import apply_windows_libpq, port_open, spawn_console
+from 콘솔_기동 import apply_windows_libpq, port_open, spawn_console
 from src.assist import EXAMPLES, render_assist, run_assist
 from src.llm.settings import load_llm_env_file
 from src.rag import search_api_url, search_available
@@ -184,7 +188,7 @@ def search_server_env() -> dict[str, str]:
 def start_search_server(python: Path, host: str, port: int) -> subprocess.Popen[bytes]:
     """별도 창 또는 세션에서 `python -m rag serve`를 시작합니다.
 
-    Windows에서는 `start-web.cmd`와 같이 새 콘솔을 엽니다. 창을 닫으면
+    Windows에서는 `웹-시작.cmd`와 같이 새 콘솔을 엽니다. 창을 닫으면
     검색 서버도 함께 종료됩니다.
 
     Args:

@@ -2,7 +2,8 @@
 
 민원 CRUD와 검색 색인을 변경하지 않습니다. 검색 응답은
 `retrieval_only` / `requires_gate`를 유지하고, 그 위에 판정·정책 검사·
-조건부 FAQ 생성을 올립니다.
+조건부 FAQ 생성을 올립니다. 시스템 지시는 `docs/harness/prompts/`의
+PREFIX 파일을 조립한 `DECISION_SYSTEM`·`ANSWER_SYSTEM`입니다.
 """
 
 from __future__ import annotations
@@ -241,7 +242,10 @@ def iter_assist(
     else:
         try:
             raw_decision = parse_json_object(
-                chat(DECISION_SYSTEM, decision_prompt(text, district, search, parts))
+                chat(
+                    DECISION_SYSTEM,
+                    decision_prompt(text, district, search, parts),
+                )
             )
             stages.append(stage("판정", started, True))
             checked = time.perf_counter()

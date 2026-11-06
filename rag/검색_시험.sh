@@ -2,7 +2,7 @@
 # 검색 API를 시험하는 메뉴입니다. 서비스·원본·색인을 변경하지 않습니다.
 # 줄 끝은 LF만 사용합니다. Windows CRLF는 WSL bash에서 set -o pipefail을 실패시킵니다.
 set -uo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../scripts/native-env.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../scripts/네이티브_환경.sh"
 cd "$RAG_ROOT" || exit 1
 # 네이티브 Linux venv, Windows venv, 시스템 python3/python 순으로 클라이언트를 고릅니다.
 if [[ -x "$RAG_ROOT/.venv/bin/python" ]]; then
@@ -33,9 +33,9 @@ fi
 # 인자 없이 실행하면 대화형 메뉴, 옵션을 주면 자동 점검용 명령을 실행합니다.
 usage() {
   cat <<'HELP'
-사용법: bash rag/test_search.sh
-        bash rag/test_search.sh --status
-        bash rag/test_search.sh --search '민원 내용' [검색 옵션]
+사용법: bash rag/검색_시험.sh
+        bash rag/검색_시험.sh --status
+        bash rag/검색_시험.sh --search '민원 내용' [검색 옵션]
 검색 옵션: --collection faq|routing|both  --district 흥덕구
            --limit 1~20  --rerank  --no-rerank  --json
 공통 옵션: --api-url http://127.0.0.1:8007  --help

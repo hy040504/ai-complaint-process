@@ -11,7 +11,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from console_spawn import apply_windows_libpq, port_open, spawn_console, wait_for_port
+from 콘솔_기동 import apply_windows_libpq, port_open, spawn_console, wait_for_port
 
 ROOT = Path(__file__).resolve().parent.parent
 PG_BIN = ROOT / ".rag-data" / "pgsql" / "bin"

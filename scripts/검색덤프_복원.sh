@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # rag/origin/dumps/complaint_rag.dump 를 현재 DB에 복원합니다. dump가 없으면 스키마만 적용합니다.
 set -euo pipefail
-source "$(dirname "$0")/native-env.sh"
+source "$(dirname "$0")/네이티브_환경.sh"
 DUMP_FILE="$RAG_ROOT/rag/origin/dumps/complaint_rag.dump"
 RAG_SQL="$RAG_ROOT/rag/origin/schema/complaint_rag.sql"
 if [[ -f "$DUMP_FILE" ]]; then

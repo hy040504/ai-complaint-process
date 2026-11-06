@@ -1,12 +1,20 @@
 # 변경 이력
 
+## 2026-11-06
+
+- CASE-043·044 패치의 Google 형식 한국어 주석을 맞추고, PREFIX 파일은 이름 목록으로 한 번에 읽으며, 문장 임베딩 L2는 numpy에서 먼저 계산한다. README에 PREFIX 배지·하네스 목차·배너 칩을 넣었다. [CASE-045](docs/cases/사례-045-패치-주석-문서-최적화-2026-11-06.md)
+
+- `docs/harness`를 LLM 완충지대 계약과 개발·운영 문서로 나누고, 프리픽스 캐싱용 실제 시스템 프롬프트(`PREFIX-00`~`04`)를 `docs/harness/prompts/`에 두었다. 1·2차 응대 호출은 이 파일을 읽어 조립한다. [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
+
 ## 2026-11-05
+
+- 한 문장을 RAG e5-small로 임베딩해 벡터 숫자만 출력하는 `문장_임베딩.py`·`문장-임베딩.cmd`를 추가하고, 실행 스크립트·CMD·`rag/검색_시험.sh` 파일명을 한국어로 바꿨다. Windows `웹_시작.py`는 Flask에 libpq 기본값을 넘긴다. [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md)
 
 - 두 원본 기획서 분석(`VoteLab_AI민원_상세기획안_상세분석.md`, `민원AI_계획서_상세분석.md`)과 현재 프로젝트(`src/assist`, `src/rag`, `src/llm`) 계약을 통합하여 AI 정보 전달·응답 하네스, 추후 Prefix Caching 적용을 위한 계층별 고정 시스템 프롬프트(`PREFIX-00~04`) 지침, 개인정보·긴급·처분성·특이민원 안전 가드레일 문서를 `docs/harness/`에 추가했다. [CASE-042](docs/cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
 
 - 시연 웹이 쓰지 않는 `db/app/complaints.sqlite3`와 `.web-data` sqlite·구 Flask 로그를 삭제하고, 추적 `db/app` 안내 폴더를 없앤다. Flask 세션 키와 검색 PostgreSQL은 유지한다. [CASE-041](docs/cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)
 
-- CASE-035~039 패치의 Google 형식 한국어 주석을 맞추고, Windows 포트 확인·새 콘솔 기동·libpq 기본값을 `scripts/console_spawn.py`로 모았다. README에 `rag/origin`·`start-rag.cmd` 배지와 표를 넣었다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
+- CASE-035~039 패치의 Google 형식 한국어 주석을 맞추고, Windows 포트 확인·새 콘솔 기동·libpq 기본값을 `scripts/콘솔_기동.py`로 모았다. README에 `rag/origin`·`검색-시작.cmd` 배지와 표를 넣었다. [CASE-040](docs/cases/사례-040-패치-주석-문서-최적화-2026-11-05.md)
 
 - 검색 원본 JSON·검색 스키마·벡터 dump를 `rag/origin/`으로 옮기고, 시연 웹 업무 DDL은 `src/complaints/schema/`에 둔다. 루트 `db/`는 이전 경로 안내만 남긴다. [CASE-039](docs/cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
 
@@ -14,9 +22,9 @@
 
 - 응대 LLM의 API(`openai_api`)와 CLI(`codex_cli`)를 루트 `.env`에서 고른다. 키 칸이 있는 `.env`를 만들고, 기존 호환 토큰 키도 `.env`에서 읽는다.
 
-- 이 Windows 호스트에 PostgreSQL 18.6·pgvector 0.8.7·RAG `.venv`를 사용자 디렉터리로 준비하고 e5-small 색인 5,109건을 적재했다. `start-rag.cmd`로 DB와 검색 API를 다시 켠다. 캐시 저장은 `cursor.executemany`를 쓴다. [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+- 이 Windows 호스트에 PostgreSQL 18.6·pgvector 0.8.7·RAG `.venv`를 사용자 디렉터리로 준비하고 e5-small 색인 5,109건을 적재했다. `검색-시작.cmd`로 DB와 검색 API를 다시 켠다. 캐시 저장은 `cursor.executemany`를 쓴다. [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
-- Windows `ask-assist.cmd`는 localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 이미 실행 중이거나 원격 주소면 다시 시작하지 않으며 `--no-start`로 끌 수 있다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md)
+- Windows `민원-응대.cmd`는 localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 이미 실행 중이거나 원격 주소면 다시 시작하지 않으며 `--no-start`로 끌 수 있다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md)
 
 - CASE-031~033 패치의 Google 형식 한국어 주석을 맞추고, 현재 문서의 SQLite·`complaint_app` 미사용 표기를 고쳤다. 업무 SQL 식별자는 저장소 생성 때 한 번 조합하고, 적재 캐시는 해시 목록을 묶어 읽는다. README에 두 스키마·Swagger PDF·PG 업무 칩을 넣었다. [CASE-034](docs/cases/사례-034-패치-주석-문서-최적화-2026-11-05.md)
 
@@ -28,9 +36,9 @@
 
 - 2026-11-05 작업(CASE-023~034)을 보고용으로 요약한 문서를 추가했다. [진행 보고](docs/진행보고-2026-11-05.md)
 
-- CASE-029 패치의 Google 형식 한국어 주석을 맞추고, 임베딩 시 문서마다 토크나이저를 한 번 더 돌리던 경로를 없앴다. 스키마 SQL은 프로세스에서 한 번만 읽고, 차원 정렬이 일어난 뒤에만 `SET NOT NULL`을 건다. README 배너·상태 표에 e5-small과 `ask-assist.cmd`를 넣고, 데이터 계약의 긴 본문 정책을 프로필 한도 절단으로 고쳤다. [CASE-030](docs/cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md)
+- CASE-029 패치의 Google 형식 한국어 주석을 맞추고, 임베딩 시 문서마다 토크나이저를 한 번 더 돌리던 경로를 없앴다. 스키마 SQL은 프로세스에서 한 번만 읽고, 차원 정렬이 일어난 뒤에만 `SET NOT NULL`을 건다. README 배너·상태 표에 e5-small과 `민원-응대.cmd`를 넣고, 데이터 계약의 긴 본문 정책을 프로필 한도 절단으로 고쳤다. [CASE-030](docs/cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md)
 
-- 검색 임베딩 기본값을 CPU용 `intfloat/multilingual-e5-small`(384차원)로 바꿨다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지한다. Windows `ask-assist.cmd`로 민원 문장을 넣으면 실행 중인 검색 API 위에서 RAG+LLM 응대를 보여 준다. [CASE-029](docs/cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md)
+- 검색 임베딩 기본값을 CPU용 `intfloat/multilingual-e5-small`(384차원)로 바꿨다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지한다. Windows `민원-응대.cmd`로 민원 문장을 넣으면 실행 중인 검색 API 위에서 RAG+LLM 응대를 보여 준다. [CASE-029](docs/cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md)
 
 - README 배너·검사기 그림을 한국어 카드와 네 패키지 칩으로 맞추고, 지금 됨/검사기/아직 표와 백엔드 패키지 표를 넣었다. JSON HTTP는 `src.rag.http` 한 곳으로 모으고, 응대 한 요청에서 검색 조각과 환경 LLM 설정을 재사용한다. [CASE-028](docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 
@@ -40,7 +48,7 @@
 
 - 최근 패치의 Google 형식 한국어 docstring을 코드와 맞추고, `.env` LLM 키를 한 번만 읽으며 공백 API 키는 미설정으로 다룬다. README 바로 시작 표·배너·저장소 트리를 현재 구현에 맞게 정리했다. [CASE-025](docs/cases/사례-025-패치-주석-문서-최적화-2026-11-05.md)
 
-- Windows용 `start-web.cmd`와 `scripts/start_web.py`를 추가했다. `.venv-web`의 Flask 업무 서버를 별도 창에서 시작하고 준비 상태를 확인한 뒤 기본 브라우저의 시민 화면을 열며, 이미 실행 중인 서버는 재시작하지 않는다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md)
+- Windows용 `웹-시작.cmd`와 `scripts/웹_시작.py`를 추가했다. `.venv-web`의 Flask 업무 서버를 별도 창에서 시작하고 준비 상태를 확인한 뒤 기본 브라우저의 시민 화면을 열며, 이미 실행 중인 서버는 재시작하지 않는다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md)
 
 - 응대 검사기의 LLM 공급자를 `COMPLAINT_LLM_PROVIDER`로 선택하도록 확장했다. `openai_api`는 `.env`의 `OPENAI_API_KEY`로 OpenAI Responses API에 `gpt-6-luna`·`medium`을 요청하고, `codex_cli`는 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 실행한다. 검색 전용 계약과 코드 정책 검증, 민원 CRUD 분리는 유지한다. [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
 
@@ -68,7 +76,7 @@
 
 - 시민 헤더의 청주시 로고를 왼쪽으로 옮기고 ‘시민특별시’를 ‘민원톡톡’으로 교체했다. 이름을 남색·파란색으로 구성하고 PC·모바일 정렬과 접근성 이름을 맞췄다. [CASE-015 후속](docs/cases/사례-015-예시-시민-화면-디자인과-효과-반영-2026-10-31.md)
 
-- 검색 원본 JSON·스키마 SQL·검색 덤프·업무 SQLite 경로를 `db/` 아래로 모았다. 적재 코드는 `db/schema/complaint_rag.sql`을 읽고, 시연 웹 기본 DB는 `db/app/complaints.sqlite3`이다. dump 내보내기·복원 스크립트를 추가했다. 벡터 dump는 Git에 넣지 않으며 우분투에서 `scripts/export-rag-dump.sh`로 만든다. [CASE-016](docs/cases/사례-016-프로젝트-내부-DB-파일-배치-2026-10-31.md)
+- 검색 원본 JSON·스키마 SQL·검색 덤프·업무 SQLite 경로를 `db/` 아래로 모았다. 적재 코드는 `db/schema/complaint_rag.sql`을 읽고, 시연 웹 기본 DB는 `db/app/complaints.sqlite3`이다. dump 내보내기·복원 스크립트를 추가했다. 벡터 dump는 Git에 넣지 않으며 우분투에서 `scripts/검색덤프_내보내기.sh`로 만든다. [CASE-016](docs/cases/사례-016-프로젝트-내부-DB-파일-배치-2026-10-31.md)
 
 - 예시 HTML의 시민 웹을 기준으로 파랑·남색 UI, 시민특별시·CI 헤더, 소식·가로 서비스·접수 영역, 모바일 하단 메뉴와 바텀시트·말풍선·타이핑·등록 확인 효과를 반영했다. 실제 Flask 저장·게시·추가 문의를 유지하며 시연 안내와 실제 행정 기능을 구별한다. [CASE-015](docs/cases/사례-015-예시-시민-화면-디자인과-효과-반영-2026-10-31.md)
 
@@ -78,7 +86,7 @@
 
 ## 2026-10-30
 
-- Windows에서 꺼낸 Bash 스크립트의 CRLF 줄 끝 때문에 `rag/test_search.sh`가 WSL bash에서 `pipefail` 오류로 실패하던 문제를 고쳤다. `*.sh`는 LF로 유지하고 Python 클라이언트 탐색을 보완했다. [CASE-019](docs/cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md)
+- Windows에서 꺼낸 Bash 스크립트의 CRLF 줄 끝 때문에 `rag/검색_시험.sh`가 WSL bash에서 `pipefail` 오류로 실패하던 문제를 고쳤다. `*.sh`는 LF로 유지하고 Python 클라이언트 탐색을 보완했다. [CASE-019](docs/cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md)
 
 ## 2026-10-28
 

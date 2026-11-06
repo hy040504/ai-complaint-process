@@ -1,4 +1,8 @@
-"""Windows에서 Flask 민원 서버를 시작하고 시민 화면을 엽니다."""
+"""Windows에서 Flask 민원 서버를 시작하고 시민 화면을 엽니다.
+
+자식 프로세스에는 `apply_windows_libpq`로 `PGHOST`·`PGDATABASE` 기본값을
+채웁니다. 이미 있는 환경변수는 덮어쓰지 않습니다.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from console_spawn import port_open as tcp_open, spawn_console
+from 콘솔_기동 import apply_windows_libpq, port_open as tcp_open, spawn_console
 
 ROOT = Path(__file__).resolve().parent.parent
 PYTHON = ROOT / ".venv-web" / "Scripts" / "python.exe"
@@ -108,13 +112,25 @@ def wait_until_ready(url: str, seconds: float = 30.0) -> bool:
     return False
 
 
+def flask_env() -> dict[str, str]:
+    """Flask 서버에 넘길 환경변수를 만듭니다.
+
+    Windows에서 비어 있는 `PGHOST`·`PGDATABASE`를 채웁니다. 이미 있는
+    값은 덮어쓰지 않습니다.
+
+    Returns:
+        libpq 기본값을 채운 환경 딕셔너리입니다.
+    """
+    return apply_windows_libpq(os.environ.copy())
+
+
 def start_server() -> None:
     """새 콘솔 창에서 Flask 업무 서버를 실행합니다.
 
     창을 닫으면 서버 프로세스도 함께 종료됩니다. Windows가 아니면
     새 세션으로 실행합니다.
     """
-    spawn_console([str(PYTHON), "-m", "src"], cwd=ROOT)
+    spawn_console([str(PYTHON), "-m", "src"], cwd=ROOT, env=flask_env())
 
 
 def main() -> int:

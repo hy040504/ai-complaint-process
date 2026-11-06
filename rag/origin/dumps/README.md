@@ -9,8 +9,8 @@
 저장소 루트에서:
 
 ```bash
-source scripts/native-env.sh
-scripts/export-rag-dump.sh
+source scripts/네이티브_환경.sh
+scripts/검색덤프_내보내기.sh
 ```
 
 프로젝트 폴더를 다른 컴퓨터로 복사할 때 이 dump 파일을 함께 가져갑니다. Git에는 넣지 않습니다.
@@ -20,9 +20,9 @@ scripts/export-rag-dump.sh
 PostgreSQL 18과 pgvector를 설치한 뒤:
 
 ```bash
-scripts/setup-native-db.sh
-source scripts/native-env.sh
-scripts/restore-rag-dump.sh
+scripts/검색DB_준비.sh
+source scripts/네이티브_환경.sh
+scripts/검색덤프_복원.sh
 ```
 
 dump가 없으면 스키마만 만들고, 원본 JSON으로 다시 임베딩하려면 `.venv/bin/python -m rag ingest`를 실행합니다. 검색 API는 질의 벡터를 위해 모델 캐시도 필요합니다.

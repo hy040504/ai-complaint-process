@@ -1,6 +1,6 @@
 """Windows에서 별도 콘솔 프로세스 기동과 TCP 포트 확인을 맡습니다.
 
-`ask_assist.py`·`windows_rag.py`·`start_web.py`가 같은 기동 규칙을 씁니다.
+`민원_응대.py`·`검색_시작.py`·`웹_시작.py`가 같은 기동 규칙을 씁니다.
 검색 엔진 `rag.store.apply_connect_defaults`는 이 모듈을 의존하지 않습니다.
 """
 
@@ -60,7 +60,7 @@ def wait_for_port(
 def apply_windows_libpq(env: dict[str, str]) -> dict[str, str]:
     """Windows에서 비어 있는 libpq 연결 기본값을 채웁니다.
 
-    Linux 네이티브는 `scripts/native-env.sh`가 소켓과 계정을 지정하므로
+    Linux 네이티브는 `scripts/네이티브_환경.sh`가 소켓과 계정을 지정하므로
     여기서는 Windows만 다룹니다. 이미 있는 값은 덮어쓰지 않습니다.
 
     Args:

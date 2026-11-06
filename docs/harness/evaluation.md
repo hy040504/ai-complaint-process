@@ -13,13 +13,13 @@
 | `rag.evaluate` | API 예제에서 기대 문서/부서가 상위 5개 안에 있는지, 검색 전용 계약 | 자동 답변 정확도, 범위 밖 탐지율, 운영 임계값 |
 
 ```bash
-source scripts/native-env.sh
+source scripts/네이티브_환경.sh
 RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 .venv/bin/python -m rag.verify
 python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 ```
 
-`scripts/setup-native-db.sh`로 준비한 테스트 템플릿과 DB 생성 권한을 사용한다. `RUN_PG_TESTS=1`을 빼면 격리 DB 테스트 3개를 건너뛴다. 템플릿에는 확장만 포함하며 운영 데이터는 복사하지 않는다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
+`scripts/검색DB_준비.sh`로 준비한 테스트 템플릿과 DB 생성 권한을 사용한다. `RUN_PG_TESTS=1`을 빼면 격리 DB 테스트 3개를 건너뛴다. 템플릿에는 확장만 포함하며 운영 데이터는 복사하지 않는다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
 
 수동 검색 확인은 [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴)를 사용할 수 있다. 2026-10-28에는 네이티브 환경에서 화면 회귀 2개를 포함한 전체 테스트 27개가 통과했다. [CASE-011](../cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 

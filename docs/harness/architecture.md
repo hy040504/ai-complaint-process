@@ -2,7 +2,7 @@
 
 2026-10-31 업무 서버 구현을 추가했다. 시민·담당자 `ui/`는 루트 `src/` Flask API를 호출하고, API의 Pydantic 모델 → 업무 서비스 → 저장소 `Protocol` → PostgreSQL `complaint_app`으로 처리한다. Swagger는 같은 모델에서 자동 생성하며 `/docs`에서 제공한다. 시민 응답에는 공개 DTO만 사용한다. 기존 검색 계층과 원본·색인은 분리하며 실제 AI·작업자·SSE는 후속이다. 현재 실행·타입·저장·오류 계약은 [서버 안내](../../src/README.md)를 따른다.
 
-기준: 2026-11-05. 검색 계층과 로컬 응대 계층(`src/assist`, `/#/lab`)이 있다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 선택할 수 있고, 실측 평가·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
+기준: 2026-11-06. 검색 계층과 로컬 응대 계층(`src/assist`, `/#/lab`)이 있다. LLM이 따를 완충지대 계약은 [LLM 완충지대 하네스](LLM_완충지대_하네스.md), 시스템 접두 원문은 [`prompts/`](prompts/README.md)다. 검색 API는 `retrieval_only` / `requires_gate`만 반환하고, 판정·정책 검사는 그 위에 둔다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 선택할 수 있고, 실측 평가·FAQ 현행성 허용 목록은 미정이다. Jev는 기준 성능 확보 후 확장한다.
 
 ## 데이터와 실행 경로
 
@@ -38,10 +38,11 @@ flowchart TD
 | [src/complaints](../../src/README.md) | 민원 웹 CRUD·세션·정적 UI·Swagger |
 | [src/rag](../../src/README.md) | 검색 API 클라이언트와 검색 전용 계약. `http_json` 전송과 `search_parts` 한 번 순회 |
 | [src/llm](../../src/README.md) | Luna·Codex·기존 호환 LLM 공급자. JSON HTTP는 `src.rag.http`를 재사용 |
-| [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 한 요청에서 검색 조각·LLM 설정을 재사용 |
+| [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 시스템 접두는 [`prompts/`](prompts/README.md) |
 | [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
-| [start_web.py](../../scripts/start_web.py) | Windows에서 Flask 시작과 시민 화면 열기 |
-| [ask_assist.py](../../scripts/ask_assist.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
+| [웹_시작.py](../../scripts/웹_시작.py) | Windows에서 Flask 시작과 시민 화면 열기 |
+| [민원_응대.py](../../scripts/민원_응대.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
+| [문장_임베딩.py](../../scripts/문장_임베딩.py) | 한 문장의 임베딩 숫자. 검색 API·DB 없음 |
 | [verify.py](../../rag/verify.py), [evaluate.py](../../rag/evaluate.py) | 실제 DB 대조와 API 검색 회귀 확인 |
 
 ## 적재 계약

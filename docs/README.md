@@ -4,7 +4,7 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-05 UTC**.
+기준일: **2026-11-06 UTC**.
 
 ## 시작점
 
@@ -12,18 +12,20 @@
 | --- | --- |
 | 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
-| 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test_search.sh) |
+| 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
-| 시민·담당자 화면 실행 | [UI 안내](../ui/README.md), Windows는 [`start-web.cmd`](../start-web.cmd) |
-| 민원 문장으로 RAG+LLM 응대 | Windows [`ask-assist.cmd`](../ask-assist.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
-| Windows PostgreSQL·검색 API 기동 | [`start-rag.cmd`](../start-rag.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
+| 시민·담당자 화면 실행 | [UI 안내](../ui/README.md), Windows는 [`웹-시작.cmd`](../웹-시작.cmd) |
+| 한 문장 임베딩 숫자 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md) |
+| 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
+| Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
 | Flask 민원 웹·검색 클라이언트·LLM·응대 연결 | [서버 안내](../src/README.md), [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) |
 | 응대 검사기 LLM 공급자 선택 | [서버 안내](../src/README.md), `.env.example`, [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) |
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
 | 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |
 | 버그·개선·결정의 경위와 미해결 과제 확인·기록 | [프로젝트 사례 색인](cases/README.md), [사례 작성 양식](cases/사례_작성_양식.md) |
 | Jev 없는 LLM + RAG 연결 준비 | [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md), [판정 정책 초안](harness/decision-policy.md) |
-| AI 입출력 계약·프리픽스 캐싱 시스템 프롬프트·안전 가드레일 | [AI 정보 전달과 응답 하네스](harness/AI_정보전달과_응답_하네스.md), [시스템 프롬프트·프리픽스 캐싱 지침](harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [AI 안전·보안 가드레일](harness/AI_안전_보안_가드레일.md) |
+| AI 완충지대에서 LLM이 지킬 사항·RAG·응답·서버 | [LLM 완충지대 하네스](harness/LLM_완충지대_하네스.md), [실제 프리픽스](harness/prompts/README.md) |
+| AI 입출력 계약·프리픽스 캐싱 규칙·안전 가드레일 | [입출력 하네스](harness/AI_정보전달과_응답_하네스.md), [캐싱 지침](harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [안전 가드레일](harness/AI_안전_보안_가드레일.md) |
 | 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) |
 | CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
 | Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](tools/export_swagger_pdf.py) |
@@ -31,7 +33,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`ask-assist.cmd`까지 로컬에서 동작합니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 e5-small이며 기존 dump는 bge-m3입니다. Windows는 `start-web.cmd`로 서버와 시민 화면을 열고, `start-rag.cmd`로 PostgreSQL과 검색 API를 켭니다. 5,109건 재임베딩·실측 평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 미구현입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내 시스템 접두는 `docs/harness/prompts/` PREFIX-00~02입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 e5-small이며 기존 dump는 bge-m3입니다. Windows는 `웹-시작.cmd`로 서버와 시민 화면을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 5,109건 재임베딩·실측 평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 미구현입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -39,12 +41,12 @@
 | 검색 테이블 정의 | `rag/origin/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
 | 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql` | Git에 포함. jsonb `complaints`·`idempotency`. 7테이블 정규화는 후속 |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
-| 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/export-rag-dump.sh` |
+| 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/검색덤프_내보내기.sh` |
 | 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
 | 임베딩 체크포인트 | `complaint_rag.embedding_cache` | 적재 벡터 재사용. 예전 sqlite 캐시 대체 |
 | 모델 캐시 | `.rag-cache/` | Hugging Face 모델·평가 보고. Git 제외 |
 
-SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 쓰려면 dump를 가져가거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용은 `scripts/apply-db-schema.sh`, dump 복원은 `scripts/restore-rag-dump.sh`입니다. [CASE-016](cases/사례-016-프로젝트-내부-DB-파일-배치-2026-10-31.md) · [CASE-039](cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
+SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 쓰려면 dump를 가져가거나 JSON으로 `python -m rag ingest`를 실행합니다. 스키마만 적용은 `scripts/검색스키마_적용.sh`, dump 복원은 `scripts/검색덤프_복원.sh`입니다. [CASE-016](cases/사례-016-프로젝트-내부-DB-파일-배치-2026-10-31.md) · [CASE-039](cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md)
 
 ## 변경·패치 목록
 
@@ -52,25 +54,28 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-045](cases/사례-045-패치-주석-문서-최적화-2026-11-06.md) | 2026-11-06 | CASE-043·044 주석·README 디자인·PREFIX 조립 정리 | 완료 · 이 커밋 |
+| [CASE-044](cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md) | 2026-11-06 | LLM 완충지대 하네스 정리와 PREFIX-00~04 원문 파일 | 완료 · GitHub는 CASE-045 |
+| [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md) | 2026-11-05 | 한 문장 임베딩 숫자 출력과 실행 스크립트 한국어 파일명 | 완료 · GitHub는 CASE-045 |
 | [CASE-042](cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md) | 2026-11-05 | 두 기획서와 현재 코드를 결합한 AI 입출력·프리픽스 캐싱 시스템 프롬프트·안전 가드레일 하네스 3종 | 완료 · 로컬 문서 |
 | [CASE-041](cases/사례-041-잔여-SQLite-삭제-2026-11-05.md) | 2026-11-05 | 시연 sqlite 잔여와 `db/app` 안내 폴더 삭제 | 완료 · 로컬 |
 | [CASE-040](cases/사례-040-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | CASE-035~039 주석·README 디자인·콘솔 기동 공유 | 완료 · 로컬 |
 | [CASE-039](cases/사례-039-검색코퍼스와-업무스키마-배치-2026-11-05.md) | 2026-11-05 | 검색 원본을 `rag/origin`, 업무 스키마를 `src/complaints/schema`로 배치 | 완료 · 로컬 경로 |
 | [CASE-038](cases/사례-038-Windows-Codex-명령줄-길이-2026-11-05.md) | 2026-11-05 | Codex CLI stdin + Windows npm 래퍼 우회 | 완료 · 로컬. 실호출 확인 |
 | [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) | 2026-11-05 | Windows 사용자 디렉터리 PostgreSQL·RAG `.venv`·e5-small 적재 | 완료 · 이 호스트 로컬 |
-| [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) | 2026-11-05 | `ask-assist.cmd`가 꺼진 localhost 검색 API를 자동 시작 | 완료 · 로컬 스크립트. 실검색은 후속 |
+| [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) | 2026-11-05 | `민원-응대.cmd`가 꺼진 localhost 검색 API를 자동 시작 | 완료 · 로컬 스크립트. 실검색은 후속 |
 | [CASE-034](cases/사례-034-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | CASE-031~033 주석·현재 문서·README 디자인·캐시 조회 | 완료 · 로컬 |
 | [CASE-033](cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md) | 2026-11-05 | Flask `/docs` Swagger를 OpenAPI 스냅샷 PDF로 `docs/`에 저장 | 완료 · 로컬 문서 |
 | [CASE-032](cases/사례-032-호환모듈-제거-2026-11-05.md) | 2026-11-05 | 루트 호환 모듈 삭제, `src.complaints` 직접 import | 완료 · 로컬 |
 | [CASE-031](cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) | 2026-11-05 | 시연 웹·임베딩 캐시를 PostgreSQL로 통일 | 완료 · 로컬. 7테이블 정규화는 후속 |
 | [진행 보고](진행보고-2026-11-05.md) | 2026-11-05 | CASE-023~034을 보고용으로 요약한 문서 | 로컬 문서 |
 | [CASE-030](cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | e5-small·CMD 주석·README 디자인·중복 토큰화 정리 | 완료 · 로컬. 재임베딩은 후속 |
-| [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md) | 2026-11-05 | CPU용 e5-small 임베딩 기본값과 `ask-assist.cmd` | 완료 · 재임베딩은 후속 |
+| [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md) | 2026-11-05 | CPU용 e5-small 임베딩 기본값과 `민원-응대.cmd` | 완료 · 재임베딩은 후속 |
 | [CASE-028](cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md) | 2026-11-05 | README 히어로·배너와 검색 조각·HTTP 재사용 | 완료 · 로컬 |
 | [CASE-027](cases/사례-027-분리-패치-주석-문서-점검-2026-11-05.md) | 2026-11-05 | 분리 코드 Google 주석·README/docs 경로 정리 | 완료 · 로컬 |
 | [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) | 2026-11-05 | `src/`를 민원 웹·RAG·LLM·연결 계층으로 분리 | 완료 · 로컬. CRUD AI는 후속 |
 | [CASE-025](cases/사례-025-패치-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | 패치 코드 주석·README 디자인·공급자 설정 조회 정리 | 완료 · 로컬 |
-| [CASE-024](cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md) | 2026-11-05 | Windows `start-web.cmd`로 Flask 시작과 시민 화면 열기 | 완료 · 로컬 개발용 |
+| [CASE-024](cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md) | 2026-11-05 | Windows `웹-시작.cmd`로 Flask 시작과 시민 화면 열기 | 완료 · 로컬 개발용 |
 | [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) | 2026-11-05 | GPT-6 Luna `medium`의 OpenAI API·Codex CLI 선택 | 완료 · 실측 평가는 후속 |
 | [CASE-022](cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) | 2026-11-01 | RAG 검색 위 판정·정책 검사 CLI/API와 `/#/lab` 검사기 | 완료 · 로컬. 최종 모델 미선정 |
 | [CASE-021](cases/사례-021-Flask-서버-코드-구조-간소화-2026-10-31.md) | 2026-10-31 | Flask 앱 조립과 HTTP·업무 처리 간소화 | 완료 · 서버 구조 |
@@ -81,7 +86,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 | [CASE-015](cases/사례-015-예시-시민-화면-디자인과-효과-반영-2026-10-31.md) | 2026-10-31 | 시민 화면 파랑 UI, 민원톡톡 헤더, 서비스 아이콘 SVG, 모바일 효과 | 완료 · 로컬 UI |
 | [CASE-014](cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) | 2026-10-31 | Flask 업무 서버·Swagger·SQLite 저장, UI를 API에 연결 | 완료 · 로컬 서버. 실제 AI·SSE·운영 인증 미구현 |
 | [CASE-013](cases/사례-013-시민과-담당자-웹-UI-구현-2026-10-31.md) | 2026-10-31 | 시민·담당자 로컬 UI와 CRUD·초안·게시 흐름 | 완료 · 로컬 UI |
-| [CASE-019](cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md) | 2026-10-30 | `rag/test_search.sh` CRLF로 인한 WSL `pipefail` 수정, `*.sh`는 LF | 완료 |
+| [CASE-019](cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md) | 2026-10-30 | `rag/검색_시험.sh` CRLF로 인한 WSL `pipefail` 수정, `*.sh`는 LF | 완료 |
 | [CASE-011](cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md) | 2026-10-28 | FAQ·사례 검색 Bash TUI와 원문·출처 표시 | 완료 |
 | [CASE-010](cases/사례-010-네이티브-검색환경-전환-2026-10-28.md) | 2026-10-28 | Docker 제거, 호스트 PostgreSQL 18 + 사용자 검색 서비스 | 완료 |
 | [CASE-009](cases/사례-009-게시판-CRUD와-AI-모니터링-통합설계-2026-10-27.md) | 2026-10-27 | CRUD·AI 모니터 통합 상세설계, 분야별 38개 작업 | 완료 · 설계 문서. 전체 목표 기능은 후속 |
@@ -140,4 +145,4 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 - 개별 버그·개선·설계·운영 기록은 [사례 관리 규칙](cases/README.md)에 따라 번호와 한국어 파일명으로 작성합니다. 경위·증거는 사례에, 현재 적용할 기준은 하네스·데이터·실행 문서에 기록하고 서로 연결합니다.
 - `.env`, PostgreSQL 클러스터, 모델 캐시, `.web-data/`, `rag/origin/dumps/*.dump`, 쿠키가 포함된 SAZ는 Git에 넣지 않습니다. 검색 원본 JSON과 검색 스키마 SQL은 `rag/origin/`에 둡니다. 이전 시연 SQLite 잔여는 [CASE-041](cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)에서 삭제했습니다.
 
-외부 LLM 독립 예제는 [../scripts/public_llm_client.py](../scripts/public_llm_client.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.
+외부 LLM 독립 예제는 [../scripts/외부_LLM_예제.py](../scripts/외부_LLM_예제.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.

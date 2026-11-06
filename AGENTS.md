@@ -5,7 +5,7 @@
 ## 먼저 읽을 문서
 
 1. [README](README.md): 목적, 확정 사항, 현재 구현 범위.
-2. [하네스 안내](docs/harness/README.md): 작업 종류별로 읽을 문서.
+2. [하네스 안내](docs/harness/README.md): 작업 종류별로 읽을 문서. 응대 LLM은 [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md)와 [`prompts/`](docs/harness/prompts/README.md)를 먼저 본다.
 3. [프로젝트 사례](docs/cases/README.md): 관련 버그·조치·설계 결정과 미해결 과제.
 4. 수정하는 코드와 해당 테스트. 문서와 코드가 다르면 차이를 확인하고 함께 수정한다.
 
@@ -35,7 +35,7 @@
 | 검색 원본 JSON·검색 스키마·덤프 | `rag/origin/` | [데이터 사전](rag/origin/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 시연 웹 업무 스키마 | `src/complaints/schema/` | [서버 안내](src/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
-| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `python -m rag assist`, `/#/lab` | [판정 정책](docs/harness/decision-policy.md), [AI 입출력 하네스](docs/harness/AI_정보전달과_응답_하네스.md), [프리픽스 캐싱 지침](docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md), [우선 구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md) |
+| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `docs/harness/prompts/`, `python -m rag assist`, `/#/lab` | [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md), [실제 프리픽스](docs/harness/prompts/README.md), [판정 정책](docs/harness/decision-policy.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/complaints/`, `src/app.py`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
 
@@ -50,7 +50,7 @@ git status --short
 python3 -m rag status
 
 # 모델 추론 없이 코드와 격리 PostgreSQL을 검증한다. 네이티브 DB·테스트 템플릿이 필요하다.
-source scripts/native-env.sh
+source scripts/네이티브_환경.sh
 RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 .venv/bin/python -m rag.verify
 ```
@@ -85,4 +85,4 @@ RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 - 과거 실행 결과에는 실행 시점을 남긴다. 작업 완료와 기능 구현·원격 업로드·운영 반영을 구별하고, 수행하지 않은 검증이나 반영을 완료로 적지 않는다.
 - `docs/cases`는 프로젝트 개발 기록이다. RAG의 민원 검색 데이터와 혼합해 적재하지 않는다.
 
-외부 LLM 독립 예제는 [scripts/public_llm_client.py](scripts/public_llm_client.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달한다. 응대 검사기의 GPT-6 Luna 공급자 설정은 [서버 안내](src/README.md)와 `.env.example`을 따르며, 운영 모델 확정은 후속 작업이다.
+한 문장의 임베딩 숫자는 [scripts/문장_임베딩.py](scripts/문장_임베딩.py)다. 검색 API·DB·LLM을 쓰지 않는다. 외부 LLM 독립 예제는 [scripts/외부_LLM_예제.py](scripts/외부_LLM_예제.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달한다. 응대 검사기의 GPT-6 Luna 공급자 설정은 [서버 안내](src/README.md)와 `.env.example`을 따르며, 운영 모델 확정은 후속 작업이다.

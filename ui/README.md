@@ -14,7 +14,7 @@
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-Windows에서는 저장소 루트의 [`start-web.cmd`](../start-web.cmd)를 실행하면 Flask 서버를 별도 창에서 시작하고, 준비가 끝나면 기본 브라우저의 시민 화면을 연다.
+Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 실행하면 Flask 서버를 별도 창에서 시작하고, 준비가 끝나면 기본 브라우저의 시민 화면을 연다.
 
 - 시민: http://127.0.0.1:5000/#/citizen
 - 담당자: http://127.0.0.1:5000/#/staff

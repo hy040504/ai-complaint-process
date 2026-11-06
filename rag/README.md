@@ -27,18 +27,19 @@ python3 -m rag status
 python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필요한가요?' --collection faq
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
 python3 -m rag assist --example faq
-# Windows: ask-assist.cmd --example faq
-# 검색 API가 꺼져 있으면 ask-assist.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
+# Windows: 민원-응대.cmd --example faq
+# 검색 API가 꺼져 있으면 민원-응대.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
+# 한 문장 벡터 숫자만: 문장-임베딩.cmd --raw 나무가 쓰러짐
 ```
 
 API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.
 
 ## 검색 테스트 메뉴
 
-저장소 루트 또는 다른 작업 디렉터리에서 [test_search.sh](test_search.sh)를 실행하면 한국어 메뉴가 열립니다. Bash와 Python이 필요하며 상태·검색은 실행 중인 API를 사용합니다. 가상환경이 없으면 `python3`를 API 클라이언트로 사용하지만 DB 무결성 검사에는 네이티브 의존성이 설치된 환경이 필요합니다.
+저장소 루트 또는 다른 작업 디렉터리에서 [검색_시험.sh](검색_시험.sh)를 실행하면 한국어 메뉴가 열립니다. Bash와 Python이 필요하며 상태·검색은 실행 중인 API를 사용합니다. 가상환경이 없으면 `python3`를 API 클라이언트로 사용하지만 DB 무결성 검사에는 네이티브 의존성이 설치된 환경이 필요합니다.
 
 ```bash
-bash rag/test_search.sh
+bash rag/검색_시험.sh
 # 다른 디렉터리에서는 스크립트의 절대 경로를 사용합니다.
 ```
 
@@ -59,11 +60,11 @@ bash rag/test_search.sh
 자동 점검이나 JSON 출력을 원하면 옵션으로 실행합니다.
 
 ```bash
-bash rag/test_search.sh --status
-bash rag/test_search.sh --search '대형폐기물 배출 방법' --collection faq --limit 3
-bash rag/test_search.sh --search '흥덕구 도로 포트홀 보수 요청' --collection routing --district 흥덕구 --rerank
-bash rag/test_search.sh --search '여권 발급 방법' --collection faq --json
-bash rag/test_search.sh --help
+bash rag/검색_시험.sh --status
+bash rag/검색_시험.sh --search '대형폐기물 배출 방법' --collection faq --limit 3
+bash rag/검색_시험.sh --search '흥덕구 도로 포트홀 보수 요청' --collection routing --district 흥덕구 --rerank
+bash rag/검색_시험.sh --search '여권 발급 방법' --collection faq --json
+bash rag/검색_시험.sh --help
 ```
 
 `RAG_API_URL` 또는 `--api-url`로 API 주소를 지정할 수 있습니다. API 오류 시 비정상 종료 코드를 반환합니다. 메뉴에서는 오류를 표시한 뒤 다음 입력을 받습니다. 검색할 때마다 새 모델을 로드하지 않고 API의 공유 모델을 사용합니다. 색상은 일반 터미널에서만 적용하며 `NO_COLOR=1`로 끌 수 있습니다. 긴 결과는 터미널의 스크롤로 확인합니다.
@@ -136,12 +137,12 @@ FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문�
 백업과 데이터 변경 검토 후 [네이티브 운영 안내](../docs/harness/네이티브_운영.md)에 따라 실행합니다.
 
 ```bash
-source scripts/native-env.sh
+source scripts/네이티브_환경.sh
 .venv/bin/python -m rag.verify
 RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 ```
 
-`RUN_PG_TESTS=1`로 전체 테스트를 실행합니다. `scripts/setup-native-db.sh`가 확장을 설치한 `complaint_rag_test_template`을 준비하므로 테스트 계정에는 DB 생성 권한만 필요하며 superuser는 필요하지 않습니다.
+`RUN_PG_TESTS=1`로 전체 테스트를 실행합니다. `scripts/검색DB_준비.sh`가 확장을 설치한 `complaint_rag_test_template`을 준비하므로 테스트 계정에는 DB 생성 권한만 필요하며 superuser는 필요하지 않습니다.
 
 2026-10-25 코드·주석 점검에서 코드·격리 DB 검증 **25개가 통과**했습니다. 변경 범위와 검색 결과 대조는 [CASE-006](../docs/cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)에 기록합니다.
 

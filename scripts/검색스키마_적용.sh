@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 검색·업무 PostgreSQL 스키마 SQL을 적용합니다. 행 데이터는 넣지 않습니다.
 set -euo pipefail
-source "$(dirname "$0")/native-env.sh"
+source "$(dirname "$0")/네이티브_환경.sh"
 RAG_SQL="$RAG_ROOT/rag/origin/schema/complaint_rag.sql"
 APP_SQL="$RAG_ROOT/src/complaints/schema/complaint_app.sql"
 if [[ ! -f "$RAG_SQL" || ! -f "$APP_SQL" ]]; then

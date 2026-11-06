@@ -16,9 +16,9 @@ py -3.12 -m venv .venv-web
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-Windows에서는 저장소 루트의 [`start-web.cmd`](../start-web.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. 이 스크립트는 [`scripts/start_web.py`](../scripts/start_web.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 시민 화면을 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다.
+Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. 이 스크립트는 [`scripts/웹_시작.py`](../scripts/웹_시작.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 시민 화면을 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다. Flask 자식 환경에는 Windows libpq 기본값(`PGHOST`·`PGDATABASE=complaints_native`)을 채운다.
 
-[`ask-assist.cmd`](../ask-assist.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/ask_assist.py`](../scripts/ask_assist.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`start-rag.cmd`](../start-rag.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/console_spawn.py`](../scripts/console_spawn.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `e5-small`이며 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+한 문장의 임베딩 숫자만 보려면 [`문장-임베딩.cmd`](../문장-임베딩.cmd)다. 검색 API·DB·LLM을 쓰지 않고 RAG `.venv`의 e5-small만 올린다. [`민원-응대.cmd`](../민원-응대.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/민원_응대.py`](../scripts/민원_응대.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`검색-시작.cmd`](../검색-시작.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/콘솔_기동.py`](../scripts/콘솔_기동.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `e5-small`이며 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 실행 의존성만 설치하려면 `src/requirements.txt`를 사용한다. Linux에서는 `python3.12 -m venv .venv-web`로 준비하고 `.venv-web/bin/python`을 사용한다. 환경 준비 후 `npm --prefix ui run dev`도 같은 Flask 서버를 실행하는 편의 명령이다.
 
@@ -57,7 +57,7 @@ flowchart LR
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
-| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. 입출력·프리픽스 경계는 [하네스](../docs/harness/AI_정보전달과_응답_하네스.md) |
+| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
@@ -128,7 +128,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
 | `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
-| `RAG_PYTHON` | `ask-assist.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
+| `RAG_PYTHON` | `민원-응대.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
 | `RAG_SERVE_WAIT_SECONDS` | 검색 API 준비 대기, 기본 180 |
 | `COMPLAINT_LLM_PROVIDER` | `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
@@ -146,7 +146,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 `COMPLAINT_LLM_PROVIDER=openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을
 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 키를 바꾼 뒤에는 `ask-assist.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. 계층형 프리픽스 캐싱 적용은

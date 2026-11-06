@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 관리자 권한으로 현재 OS 계정의 DB와 확장을 준비합니다. 기존 DB는 삭제하지 않습니다.
 set -euo pipefail
-source "$(dirname "$0")/native-env.sh"
+source "$(dirname "$0")/네이티브_환경.sh"
 if [[ "$PGHOST" != /var/run/postgresql || "$PGUSER" != "$(id -un)" ]]; then
   printf '%s\n' '초기 준비는 현재 OS 계정과 로컬 PostgreSQL 소켓을 사용해야 합니다.' >&2
   exit 1

@@ -15,7 +15,7 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$RAG_ROOT
-ExecStart=$RAG_ROOT/scripts/native-serve.sh
+ExecStart=$RAG_ROOT/scripts/검색서비스_실행.sh
 Restart=on-failure
 RestartSec=10
 

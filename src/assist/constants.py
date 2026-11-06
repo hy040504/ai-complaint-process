@@ -1,14 +1,14 @@
 """응대 파이프라인이 공유하는 허용 값과 안내 문구입니다.
 
 판정 JSON의 범위·의도·갈래와 시민 진행 안내, 고정 예시 질문을 둡니다.
-`DECISION_SYSTEM`·`ANSWER_SYSTEM`은 현재 구현된 고정 시스템 지시입니다.
-계층형 `PREFIX-00`~`PREFIX-04`와 프리픽스 캐싱 적용은
-`docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md`의 후속 명세입니다.
+시스템 지시는 `docs/harness/prompts/`의 PREFIX 파일을 읽어 조립합니다.
 """
 
 from __future__ import annotations
 
 from typing import Any
+
+from src.assist.prompts import ANSWER_SYSTEM, DECISION_SYSTEM
 
 SCOPES = ("in_scope", "out_of_scope", "uncertain")
 INTENTS = ("information", "action", "mixed", "unclear")
@@ -80,21 +80,4 @@ EXAMPLES: list[dict[str, Any]] = [
         "district": "상당구",
     },
 ]
-# 판정 호출의 고정 시스템 지시. 민원 원문·검색 후보는 user JSON에만 둔다.
-DECISION_SYSTEM = """당신은 청주 민원 검색 근거를 읽는 판정기입니다. 시민 답변 문장을 쓰지 말고 JSON 객체만 반환하세요.
-규칙은 다음과 같습니다.
-- FAQ 후보는 안내 근거입니다. 공개 사례의 과거 답변은 현재 정책이 아닙니다.
-- 정보 문의이고 선택한 FAQ의 대상·기간·주의가 요청을 충분히 설명하면 outcome은 faq_answer입니다.
-- 단속·보수·수거 등 실제 조치 요청이면 faq_answer를 쓰지 않습니다. 유효한 부서 후보가 있으면 department_suggestion, 없으면 human_handoff입니다.
-- 안내와 조치가 섞이면 mixed이며 outcome은 human_handoff입니다.
-- evidence_refs의 corpus는 faq 또는 routing이고 source_id는 입력 후보에 있는 값만 사용합니다.
-- department_ids는 department_candidates의 department_id만 사용합니다.
-- 추측한 출처·부서·연락처를 만들지 않습니다.
-형식:
-{"scope":"in_scope|out_of_scope|uncertain","intent":"information|action|mixed|unclear","outcome":"faq_answer|department_suggestion|human_handoff","reason_code":"ok|insufficient_evidence|out_of_scope|action_required|mixed_request|department_unverified|condition_unclear","evidence_refs":[{"corpus":"faq","source_id":"..."}],"department_ids":[]}
-"""
-# FAQ 안내 생성의 고정 시스템 지시. 선택된 FAQ 원문만 user JSON으로 넘긴다.
-ANSWER_SYSTEM = """선택한 FAQ 원문만 사용해 한국어 안내를 작성합니다. 대상·접수 방법·처리기간·주의사항을 빼지 마세요.
-원문에 없는 전화번호·부서·기한·조건을 추가하지 마세요. 과거 민원 사례 답변을 섞지 마세요.
-공식 접수 완료처럼 말하지 마세요. 평문만 반환하세요.
-"""
+

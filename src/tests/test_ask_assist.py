@@ -12,8 +12,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def ask_assist() -> ModuleType:
-    """scripts/ask_assist.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "ask_assist.py"
+    """scripts/민원_응대.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "민원_응대.py"
     spec = importlib.util.spec_from_file_location("ask_assist", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

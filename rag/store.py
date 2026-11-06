@@ -28,10 +28,10 @@ _HNSW_INDEX = {
 def apply_connect_defaults() -> None:
     """Windows에서 비어 있는 libpq 연결 기본값을 채웁니다.
 
-    Linux 네이티브 환경은 `scripts/native-env.sh`가 소켓과 계정을 지정하므로
+    Linux 네이티브 환경은 `scripts/네이티브_환경.sh`가 소켓과 계정을 지정하므로
     여기서 덮어쓰지 않습니다. 이미 있는 환경변수는 유지합니다.
     검색 엔진은 `scripts/`를 의존하지 않습니다. CMD 기동 쪽 같은 기본값은
-    `scripts/console_spawn.py`의 `apply_windows_libpq`입니다.
+    `scripts/콘솔_기동.py`의 `apply_windows_libpq`입니다.
     """
     if os.name != "nt":
         return
