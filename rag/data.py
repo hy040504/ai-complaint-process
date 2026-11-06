@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from PACKET.department_normalization import DEPARTMENT_ALIASES, ORGANIZATION_URL
-from .config import DISTRICTS, ROOT, digest
+from .config import CASES_JSON, DISTRICTS, FAQ_JSON, digest
 
 DEPARTMENT_NAMESPACE = uuid.UUID("ea41f8fa-9802-45e2-b8a5-de987c872879")
 STATUSES = {"current", "normalized", "renamed", "review_required"}
@@ -91,8 +91,8 @@ def case_text(record: dict) -> str:
     return normalize_text("\n".join(lines))
 
 
-def load_sources(faq_path: Path = ROOT / "db/자주_묻는_민원.json",
-                 cases_path: Path = ROOT / "db/공개_민원_사례.json") -> tuple[list[dict], list[dict], list[dict]]:
+def load_sources(faq_path: Path = FAQ_JSON,
+                 cases_path: Path = CASES_JSON) -> tuple[list[dict], list[dict], list[dict]]:
     """두 원본을 검증하고 검색 문서와 부서 디렉터리를 구성합니다.
 
     Args:

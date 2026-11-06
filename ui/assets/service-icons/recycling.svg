@@ -1,0 +1,7 @@
+<svg class="service-artwork" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="폐기물" focusable="false" data-service-icon="recycling"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/><path d="m24 20 5-8a4 4 0 0 1 7 0l8 13" fill="none" stroke="#2f6fed" stroke-width="5"/>
+    <path d="m36 24 9 2 2-9" fill="none"/>
+    <path d="m47 32 7 12a4 4 0 0 1-4 6H34" fill="none" stroke="#42a88e" stroke-width="5"/>
+    <path d="m39 44-7 6 7 6" fill="none" stroke="#42a88e"/>
+    <path d="M24 50H13a4 4 0 0 1-4-6l8-14" fill="none" stroke="#6b96e7" stroke-width="5"/>
+    <path d="m9 33 9-4 4 9" fill="none" stroke="#6b96e7"/>
+    <circle cx="31" cy="35" r="5" fill="#d9f1e9" stroke="none"/></svg>

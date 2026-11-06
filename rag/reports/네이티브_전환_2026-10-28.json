@@ -1,0 +1,79 @@
+{
+  "recorded_at": "2026-10-28T17:47:17.757228+00:00",
+  "runtime": "호스트 PostgreSQL 18 + pgvector 0.8.1 / Python 3.12 가상환경",
+  "tests": {
+    "command": "source scripts/native-env.sh && RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider",
+    "result": "25 passed in 5.21s",
+    "privileges": "일반 DB 계정의 CREATEDB 및 확장만 설치한 템플릿 사용. superuser 불필요"
+  },
+  "integrity": {
+    "passed": true,
+    "checks": [
+      "faq: 94건 원본/출처/1024차원 정규화 벡터/한국어 BM25 대조",
+      "routing: 5015건 원본/출처/1024차원 정규화 벡터/한국어 BM25 대조",
+      "department_directory: 127개 현행 명칭/별칭/내부 ID 대조",
+      "FAQ/사례 HNSW 색인 2개 및 BM25 문서 빈도 확인"
+    ],
+    "counts": {
+      "faq_knowledge": 94,
+      "routing_cases": 5015,
+      "department_directory": 127,
+      "review_required": 27,
+      "duties_unverified": 127
+    },
+    "configuration": {
+      "tokenizer": "kiwi-0.24.1-content-words-v1",
+      "schema_version": 1,
+      "embedding_model": "BAAI/bge-m3",
+      "embedding_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+      "embedding_dimension": 1024,
+      "embedding_signature": "8a1344a3d25a9db8de319e4acef163b1a2f9d9c9272424d7c8cc37106d344a61"
+    },
+    "last_ingestion": {
+      "finished_at": "2026-10-24T13:58:29.039400+00:00",
+      "source_files": {
+        "faq": "db/자주_묻는_민원.json",
+        "routing": "db/공개_민원_사례.json"
+      },
+      "new_embeddings": 0,
+      "source_documents": 5109,
+      "cached_embeddings": 0,
+      "reused_embeddings": 5109
+    }
+  },
+  "status": {
+    "status": "ready",
+    "counts": {
+      "faq_knowledge": 94,
+      "routing_cases": 5015,
+      "department_directory": 127,
+      "review_required": 27,
+      "duties_unverified": 127
+    },
+    "configuration": {
+      "tokenizer": "kiwi-0.24.1-content-words-v1",
+      "schema_version": 1,
+      "embedding_model": "BAAI/bge-m3",
+      "embedding_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+      "embedding_dimension": 1024,
+      "embedding_signature": "8a1344a3d25a9db8de319e4acef163b1a2f9d9c9272424d7c8cc37106d344a61"
+    },
+    "last_ingestion": {
+      "finished_at": "2026-10-24T13:58:29.039400+00:00",
+      "source_files": {
+        "faq": "db/자주_묻는_민원.json",
+        "routing": "db/공개_민원_사례.json"
+      },
+      "new_embeddings": 0,
+      "source_documents": 5109,
+      "cached_embeddings": 0,
+      "reused_embeddings": 5109
+    }
+  },
+  "service": "active",
+  "limitations": [
+    "OS 재부팅 자체는 미시험. 사용자 서비스 재시작 후 API 준비 확인은 수행했다.",
+    "LLM 판정·답변·웹은 미구현.",
+    "초기 이전 때의 검색 예제 검증과 이번 무결성·테스트 검증은 실행 시점이 다르다."
+  ]
+}

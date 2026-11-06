@@ -1,0 +1,118 @@
+/* 작은 보조 문구도 밝은 바탕에서 읽을 수 있도록 대비를 보완합니다. */
+.page-heading > .connection {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.page-heading p {
+  word-break: keep-all;
+}
+.hero p,
+.ai-invite p,
+.help-card p,
+.page-heading p,
+.guide-step p,
+.faq-panel details p,
+.prose,
+.modal-content > p {
+  color: #647b69;
+}
+.field-hint,
+.muted,
+.row-sub,
+.date-cell,
+.id-cell,
+.table-meta,
+.pagination,
+.job-meta,
+.job-updated,
+.monitor-note,
+.chat-disclaimer,
+.evidence-note,
+.detail-note,
+.answer-person small,
+.answer-person b span,
+.progress-list small,
+.timeline time,
+.demo-caption,
+.tiny-label,
+.summary-counts a > span,
+.recent-complaint p,
+.preview-row .date,
+.district,
+.notice-strip,
+.metric-card p,
+.metric-label,
+.chart-legend,
+.job-summary span {
+  color: #73866f;
+}
+.quick-card > span:last-child,
+.hero-foot,
+.home-topline,
+.section-title > span,
+.staff-profile p,
+.side-note p,
+.staff-guide p {
+  color: #74866f;
+}
+.form-steps > span,
+.waiting-answer p,
+.waiting-answer h3,
+.chat-heading small {
+  color: #708569;
+}
+.prose {
+  font-size: 13px;
+}
+.row-title {
+  font-size: 13px;
+}
+.page-heading p {
+  font-size: 13px;
+}
+.quick-card > span:last-child {
+  font-size: 10px;
+}
+.hero p {
+  font-size: 13px;
+}
+.hero-foot {
+  font-size: 11px;
+}
+.preview-row b {
+  font-size: 12px;
+}
+.ai-invite p,
+.help-card p {
+  font-size: 12px;
+}
+.demo-caption {
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .hero p {
+    font-size: 11px;
+  }
+  .hero-foot {
+    font-size: 9px;
+  }
+  .page-heading p {
+    font-size: 11px;
+  }
+  .prose {
+    font-size: 12px;
+  }
+  .ai-invite p,
+  .help-card p {
+    font-size: 11px;
+  }
+  .preview-row b {
+    font-size: 11px;
+  }
+  .demo-caption {
+    font-size: 9px;
+  }
+  .art-caption {
+    display: none;
+  }
+}

@@ -1,0 +1,5 @@
+<svg class="service-artwork" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="소음·환경" focusable="false" data-service-icon="environment"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/><path d="M13 27h11l14-11v34L24 39H13a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" fill="#dbe8ff"/>
+    <path d="M24 27v12"/>
+    <path d="M45 24a13 13 0 0 1 0 18m6-24a22 22 0 0 1 0 30" fill="none"/>
+    <path d="m18 40 3 11h7l-3-11" fill="#fff" stroke="#537aaf"/>
+    <path d="M15 32h4" stroke="#8eafe2"/></svg>

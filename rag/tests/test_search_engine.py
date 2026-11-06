@@ -19,7 +19,9 @@ def isolated_engine(monkeypatch):
         검색 엔진, 원문 조회 대역, 모델 대역의 튜플입니다.
     """
     models = Mock()
-    models.encode.return_value = [[0.0] * 1024]
+    from rag.config import DIMENSION
+
+    models.encode.return_value = [[0.0] * DIMENSION]
     # RRF 뒤쪽 후보에 더 높은 점수를 줘 넓은 재정렬 후보 유지 여부를 확인합니다.
     models.rerank.side_effect = lambda query, texts: list(range(len(texts)))
     tokenizer = Mock()
@@ -45,12 +47,15 @@ def isolated_engine(monkeypatch):
         """
         return {
             sid: {
-                "source_id": sid, "title": "합성 민원 " + sid,
+                "source_id": sid,
+                "title": "합성 민원 " + sid,
                 "search_text": "버스 정류장 " + sid,
                 "source_url": "https://example.test/" + sid,
                 "payload": {"corpus": corpus, "source_id": sid},
-                "routing_eligible": False, "summary_missing": False,
-                "department_status": "review_required", "department_id": None,
+                "routing_eligible": False,
+                "summary_missing": False,
+                "department_status": "review_required",
+                "department_id": None,
             }
             for sid in source_ids
         }
@@ -66,7 +71,11 @@ def isolated_engine(monkeypatch):
     [(False, 5, 5), (False, 20, 20), (True, 5, 20), (True, 20, 20)],
 )
 def test_candidate_fetch_preserves_ranking_and_retrieval_contract(
-    isolated_engine, collection, rerank, limit, fetched_count,
+    isolated_engine,
+    collection,
+    rerank,
+    limit,
+    fetched_count,
 ):
     """불필요한 본문 조회를 줄이면서 재정렬 후보·결과·검색 계약을 보존합니다.
 
@@ -78,7 +87,9 @@ def test_candidate_fetch_preserves_ranking_and_retrieval_contract(
         fetched_count: 해당 조건에서 조회해야 할 원문 수입니다.
     """
     engine, fetched, models = isolated_engine
-    result = engine.search("버스 정류장", collection=collection, limit=limit, rerank=rerank)
+    result = engine.search(
+        "버스 정류장", collection=collection, limit=limit, rerank=rerank
+    )
     corpora = list(COLLECTIONS) if collection == "both" else [collection]
     assert set(result["results"]) == {COLLECTIONS[corpus] for corpus in corpora}
     assert result["retrieval_only"] and result["decision"] == "requires_gate"
@@ -86,14 +97,17 @@ def test_candidate_fetch_preserves_ranking_and_retrieval_contract(
     assert all(len(call.args[2]) == fetched_count for call in fetched.call_args_list)
     expected_ids = (
         [str(i) for i in range(20, 20 - limit, -1)]
-        if rerank else [str(i) for i in range(1, limit + 1)]
+        if rerank
+        else [str(i) for i in range(1, limit + 1)]
     )
     for corpus in corpora:
         response = result["results"][COLLECTIONS[corpus]]
         assert [hit["source_id"] for hit in response["hits"]] == expected_ids
         assert all(hit["evidence"]["corpus"] == corpus for hit in response["hits"])
         assert response["candidate_counts"] == {
-            "vector": 30, "bm25": 0, "fused": 30,
+            "vector": 30,
+            "bm25": 0,
+            "fused": 30,
             "reranked": fetched_count if rerank else 0,
         }
         if corpus == "routing":

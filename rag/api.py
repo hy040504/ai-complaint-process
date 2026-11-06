@@ -1,4 +1,5 @@
 """검색 모델을 재사용하며 근거 검색과 부서 조회 API를 제공합니다."""
+
 from __future__ import annotations
 
 import logging
@@ -19,7 +20,9 @@ search_lock = Lock()
 
 @asynccontextmanager
 async def lifespan(app):
-    """색인을 확인하고 API가 공유할 검색 모델과 토크나이저를 준비합니다.
+    """색인을 확인하고 검색 임베딩·토크나이저만 미리 올립니다.
+
+    재정렬 모델은 첫 `rerank=true` 요청에서 지연 로드합니다.
 
     Args:
         app: 수명 주기를 관리할 FastAPI 애플리케이션입니다.
@@ -32,7 +35,6 @@ async def lifespan(app):
         check_index(conn)
     engine = SearchEngine()
     engine.models.embedding
-    engine.models.load_reranker()
     engine.tokenizer.tokens("청주시 버스 민원")
     log.info("검색 API 준비 완료")
     yield
@@ -75,7 +77,9 @@ def health():
             return {"status": "ready", **read_status(conn)}
     except Exception:
         log.exception("검색 색인 상태 확인 실패")
-        raise HTTPException(status_code=503, detail="검색 색인을 사용할 수 없습니다.") from None
+        raise HTTPException(
+            status_code=503, detail="검색 색인을 사용할 수 없습니다."
+        ) from None
 
 
 @app.post("/search")
@@ -99,7 +103,9 @@ def search(request: SearchRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from None
     except Exception:
         log.exception("검색 실패")
-        raise HTTPException(status_code=503, detail="검색에 실패했습니다. 서버 로그를 확인해 주세요.") from None
+        raise HTTPException(
+            status_code=503, detail="검색에 실패했습니다. 서버 로그를 확인해 주세요."
+        ) from None
 
 
 @app.get("/departments")
@@ -113,7 +119,16 @@ def departments(query: str = Query(default="", max_length=200)):
         이름과 검증 상태를 포함하는 부서 목록입니다.
     """
     with connect() as conn:
-        rows = conn.execute("SELECT * FROM complaint_rag.department_directory ORDER BY canonical_name").fetchall()
+        rows = conn.execute(
+            "SELECT * FROM complaint_rag.department_directory ORDER BY canonical_name"
+        ).fetchall()
     needle = query.strip()
-    return {"departments": [r for r in rows if not needle or needle in r["canonical_name"]
-                             or any(needle in alias for alias in r["aliases"])]}
+    return {
+        "departments": [
+            r
+            for r in rows
+            if not needle
+            or needle in r["canonical_name"]
+            or any(needle in alias for alias in r["aliases"])
+        ]
+    }
