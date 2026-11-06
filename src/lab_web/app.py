@@ -1,7 +1,8 @@
 """응대 검사기 전용 Flask 앱입니다.
 
 정적 화면과 민원 JSON 수신 API를 제공합니다. 수신 후 `src.assist`가
-검색 API를 먼저 호출하고 판정합니다. 민원 CRUD 테이블에는 쓰지 않습니다.
+검색 API를 먼저 호출하고 판정합니다. 테스트 기록은 `.rag-cache/lab-runs`
+JSON이며 민원 CRUD 테이블에는 쓰지 않습니다.
 """
 
 from pathlib import Path
@@ -25,6 +26,7 @@ from src.lab_web.runs import (
     default_runs_dir,
     list_runs,
     load_run,
+    run_summary,
     save_run,
 )
 from src.lab_web.service import AssistFn, handle_complaint
@@ -78,6 +80,18 @@ def _invalid(error: ValidationError) -> Response:
         ),
         422,
     )
+
+
+def _runs_dir(app: Flask) -> Path:
+    """앱 설정의 기록 폴더를 돌려줍니다.
+
+    Args:
+        app: 검사기 Flask 앱입니다.
+
+    Returns:
+        JSON 기록을 두는 경로입니다.
+    """
+    return Path(app.config["LAB_RUNS_DIR"])
 
 
 def create_app(
@@ -155,7 +169,7 @@ def create_app(
         received = result.model_dump(mode="json", by_alias=True)
         try:
             record = save_run(
-                Path(app.config["LAB_RUNS_DIR"]),
+                _runs_dir(app),
                 payload=complaint.model_dump(mode="json", by_alias=True),
                 received=received,
             )
@@ -164,28 +178,25 @@ def create_app(
                 ErrorBody(code="run_save_failed", message=str(exc)[:200]),
                 503,
             )
-        result.run = LabRunSummary(
-            id=str(record["id"]),
-            at=str(record["at"]),
-            title=str(record["title"]),
-            outcome=str(record["outcome"]),
-            reason_code=str(record["reasonCode"]),
-        )
+        result.run = LabRunSummary.model_validate(run_summary(record))
         return _json(result)
 
     @app.get("/api/v1/lab/runs")
     def get_runs() -> Response:
         """파일로 남긴 테스트 기록 목록을 줍니다."""
         items = [
-            LabRunSummary.model_validate(item)
-            for item in list_runs(Path(app.config["LAB_RUNS_DIR"]))
+            LabRunSummary.model_validate(item) for item in list_runs(_runs_dir(app))
         ]
         return _json(LabRunList(items=items))
 
     @app.get("/api/v1/lab/runs/<run_id>")
     def get_run(run_id: str) -> Response:
-        """기록 한 건의 민원과 응대 결과를 줍니다."""
-        record = load_run(Path(app.config["LAB_RUNS_DIR"]), run_id)
+        """기록 한 건의 민원과 응대 결과를 줍니다.
+
+        Args:
+            run_id: 파일 이름에 쓰는 기록 ID입니다.
+        """
+        record = load_run(_runs_dir(app), run_id)
         if record is None:
             return _json(
                 ErrorBody(code="run_not_found", message="기록을 찾지 못했습니다."),
@@ -202,7 +213,7 @@ def create_app(
     @app.delete("/api/v1/lab/runs")
     def delete_runs() -> Response:
         """파일로 남긴 테스트 기록을 모두 지웁니다."""
-        removed = clear_runs(Path(app.config["LAB_RUNS_DIR"]))
+        removed = clear_runs(_runs_dir(app))
         return _json(LabClearResult(removed=removed))
 
     return app

@@ -4,7 +4,7 @@
 
 이 묶음은 **(A) 민원 AI 완충지대에서 LLM이 따를 계약**과 **(B) 사람·개발 도구가 코드를 고칠 때 쓸 운영 하네스**를 나눈다. 응대 모델은 (A)를 먼저 읽고, 검색 엔진·Flask·적재를 고칠 때는 (B)를 읽는다.
 
-계획 갱신 기준일은 **2026-11-06 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
+계획 갱신 기준일은 **2026-11-07 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
 
 현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `민원-응대.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 

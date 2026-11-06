@@ -28,7 +28,7 @@ const reasonNames = {
  * 기록 시각을 짧게 표시합니다.
  *
  * @param {string} iso ISO 시각입니다.
- * @returns {string}
+ * @returns {string} 월·일·시각 문구입니다.
  */
 export function formatRunTime(iso) {
   const date = new Date(iso);
@@ -152,6 +152,23 @@ function showResult(payload, received, sourceText = "") {
 }
 
 /**
+ * JSON 응답을 읽고 실패면 안내 문구를 던집니다.
+ *
+ * @param {Response} response fetch 응답입니다.
+ * @param {string} fallback 본문에 message가 없을 때 쓸 문구입니다.
+ * @returns {Promise<object>} 본문 객체입니다.
+ */
+async function readJsonResponse(response, fallback) {
+  const value = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(value?.message || fallback);
+    error.status = response.status;
+    throw error;
+  }
+  return value;
+}
+
+/**
  * 민원 JSON을 수신 API로 보냅니다.
  *
  * @param {ReturnType<typeof readComplaint>} payload 민원 내용입니다.
@@ -163,26 +180,17 @@ export async function sendComplaint(payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const value = await response.json().catch(() => null);
-  if (!response.ok) {
-    const error = new Error(value?.message || "서버가 민원을 받지 못했습니다.");
-    error.status = response.status;
-    throw error;
-  }
-  return value;
+  return readJsonResponse(response, "서버가 민원을 받지 못했습니다.");
 }
 
 /**
  * 파일로 남긴 테스트 기록 목록을 불러옵니다.
  *
- * @returns {Promise<object[]>}
+ * @returns {Promise<object[]>} 최신순 요약 목록입니다.
  */
 export async function fetchRuns() {
   const response = await fetch("/api/v1/lab/runs");
-  const value = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(value?.message || "테스트 기록을 불러오지 못했습니다.");
-  }
+  const value = await readJsonResponse(response, "테스트 기록을 불러오지 못했습니다.");
   return value.items || [];
 }
 
@@ -194,11 +202,7 @@ export async function fetchRuns() {
  */
 export async function fetchRun(runId) {
   const response = await fetch(`/api/v1/lab/runs/${encodeURIComponent(runId)}`);
-  const value = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(value?.message || "테스트 기록을 찾지 못했습니다.");
-  }
-  return value;
+  return readJsonResponse(response, "테스트 기록을 찾지 못했습니다.");
 }
 
 /**
@@ -208,10 +212,7 @@ export async function fetchRun(runId) {
  */
 export async function clearSavedRuns() {
   const response = await fetch("/api/v1/lab/runs", { method: "DELETE" });
-  const value = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(value?.message || "테스트 기록을 지우지 못했습니다.");
-  }
+  const value = await readJsonResponse(response, "테스트 기록을 지우지 못했습니다.");
   return value.removed || 0;
 }
 

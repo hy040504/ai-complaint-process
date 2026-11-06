@@ -116,6 +116,9 @@ def validate_decision(
 ) -> tuple[dict[str, Any], list[str]]:
     """모델 판정을 검색 근거·부서 후보와 대조합니다.
 
+    `faq_answer`와 `condition_unclear`가 같이 오면 안내를 막고
+    `human_handoff`로 고칩니다.
+
     Args:
         raw: 모델이 반환한 객체입니다.
         search: 검색 API 응답입니다.

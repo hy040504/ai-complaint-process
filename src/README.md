@@ -24,8 +24,9 @@ py -3.12 -m venv .venv-web
 
 | 주소 | 제공 내용 |
 | --- | --- |
-| http://127.0.0.1:5010/ | 추출한 응대 검사기 웹. 민원 JSON 수신 |
-| http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정 |
+| http://127.0.0.1:5010/ | 추출한 응대 검사기 웹. 민원 JSON 수신. 오른쪽 테스트 기록 |
+| http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정. 기록은 `.rag-cache/lab-runs` |
+| http://127.0.0.1:5010/api/v1/lab/runs | `GET` 기록 목록 · `DELETE` 모두 삭제 |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
@@ -61,7 +62,7 @@ flowchart LR
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
-| `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. MCP 핸드셰이크는 NDJSON |
+| `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. 테스트 기록은 `.rag-cache/lab-runs`. MCP 핸드셰이크는 NDJSON |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
@@ -82,7 +83,10 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역 목록 |
-| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. `assist.codex` 포함. 분야는 검색 질의에서 제외. 민원 미저장 |
+| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. `assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
+| 검사기 웹 `GET /api/v1/lab/runs` | 테스트 기록 목록. 최신순 |
+| 검사기 웹 `GET /api/v1/lab/runs/<id>` | 기록 한 건. 모델을 다시 부르지 않음 |
+| 검사기 웹 `DELETE /api/v1/lab/runs` | 기록 JSON 모두 삭제 |
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
 | `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음. 응답에 `codex` |
 | `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |

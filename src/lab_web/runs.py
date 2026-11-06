@@ -16,6 +16,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS_DIR = ROOT / ".rag-cache" / "lab-runs"
 RUN_ID_RE = re.compile(r"^[0-9A-Za-z-]{10,64}$")
+"""파일 이름에 쓸 기록 ID입니다. 경로 구분자와 점은 넣지 않습니다."""
 
 
 def default_runs_dir() -> Path:
@@ -29,7 +30,11 @@ def default_runs_dir() -> Path:
 
 
 def new_run_id() -> str:
-    """파일 이름에 쓸 기록 ID를 만듭니다."""
+    """파일 이름에 쓸 기록 ID를 만듭니다.
+
+    Returns:
+        UTC 시각과 짧은 난수를 붙인 ID입니다.
+    """
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return f"{stamp}-{uuid.uuid4().hex[:8]}"
 
@@ -53,7 +58,12 @@ def run_path(directory: Path, run_id: str) -> Path:
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    """임시 파일에 쓴 뒤 교체합니다."""
+    """임시 파일에 쓴 뒤 대상 경로로 교체합니다.
+
+    Args:
+        path: 최종 JSON 경로입니다.
+        payload: 저장할 객체입니다.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(
@@ -61,6 +71,41 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
         encoding="utf-8",
     )
     tmp.replace(path)
+
+
+def _read_json(path: Path) -> dict[str, Any] | None:
+    """JSON 객체를 읽습니다. 깨진 파일은 건너뜁니다.
+
+    Args:
+        path: JSON 파일 경로입니다.
+
+    Returns:
+        객체이거나 읽지 못하면 None입니다.
+    """
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return raw if isinstance(raw, dict) else None
+
+
+def run_summary(raw: dict[str, Any], stem: str = "") -> dict[str, Any]:
+    """목록에 쓰는 짧은 칸만 남깁니다.
+
+    Args:
+        raw: 기록 JSON입니다.
+        stem: `id`가 없을 때 쓸 파일 이름입니다.
+
+    Returns:
+        `id`·`at`·`title`·`outcome`·`reasonCode`입니다.
+    """
+    return {
+        "id": str(raw.get("id") or stem),
+        "at": str(raw.get("at") or ""),
+        "title": str(raw.get("title") or ""),
+        "outcome": str(raw.get("outcome") or ""),
+        "reasonCode": str(raw.get("reasonCode") or ""),
+    }
 
 
 def save_run(
@@ -80,6 +125,10 @@ def save_run(
 
     Returns:
         저장한 기록 딕셔너리입니다.
+
+    Raises:
+        ValueError: `run_id`가 파일 이름 규칙을 벗어나면 발생합니다.
+        OSError: 파일을 쓰지 못하면 발생합니다.
     """
     ident = run_id or new_run_id()
     assist = received.get("assist") or {}
@@ -109,21 +158,10 @@ def list_runs(directory: Path) -> list[dict[str, Any]]:
         return []
     items: list[dict[str, Any]] = []
     for path in directory.glob("*.json"):
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        raw = _read_json(path)
+        if raw is None or not raw.get("id"):
             continue
-        if not isinstance(raw, dict) or not raw.get("id"):
-            continue
-        items.append(
-            {
-                "id": str(raw.get("id") or path.stem),
-                "at": str(raw.get("at") or ""),
-                "title": str(raw.get("title") or ""),
-                "outcome": str(raw.get("outcome") or ""),
-                "reasonCode": str(raw.get("reasonCode") or ""),
-            }
-        )
+        items.append(run_summary(raw, path.stem))
     items.sort(
         key=lambda item: (str(item.get("at") or ""), str(item.get("id") or "")),
         reverse=True,
@@ -147,11 +185,7 @@ def load_run(directory: Path, run_id: str) -> dict[str, Any] | None:
         return None
     if not path.is_file():
         return None
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return raw if isinstance(raw, dict) else None
+    return _read_json(path)
 
 
 def clear_runs(directory: Path) -> int:

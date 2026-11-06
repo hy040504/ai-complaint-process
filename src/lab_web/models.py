@@ -127,7 +127,11 @@ class LabHealth(Model):
 
 
 class LabRunList(Model):
-    """저장된 테스트 기록 목록입니다."""
+    """저장된 테스트 기록 목록입니다.
+
+    Attributes:
+        items: 최신순 요약입니다.
+    """
 
     items: list[LabRunSummary] = Field(default_factory=list)
 
@@ -145,7 +149,11 @@ class LabRunRecord(LabRunSummary):
 
 
 class LabClearResult(Model):
-    """기록 삭제 결과입니다."""
+    """기록 삭제 결과입니다.
+
+    Attributes:
+        removed: 지운 JSON 파일 수입니다.
+    """
 
     removed: int
 

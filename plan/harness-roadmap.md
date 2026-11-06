@@ -1,6 +1,6 @@
 # 하네스 보완과 MVP 실행 계획
 
-> 2026-11-06 진행 갱신: PREFIX-00~04 호출과 조립 적격을 검사기·CLI에 두었다. 초안 응대 평가셋은 유형별 29건이며 개발셋 26/26을 `codex_cli`에서 기록했다. 보류 3건과 400문항은 후속이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 민원 CRUD AI·시민 챗봇·SSE·7테이블 정규화는 후속이다. [CASE-064](../docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-062](../docs/cases/사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md)
+> 2026-11-07 진행 갱신: PREFIX-00~04 호출과 조립 적격을 검사기·CLI에 두었다. 초안 응대 평가셋은 유형별 29건이며 개발셋 26/26을 `codex_cli`에서 기록했다. 검사기 테스트 기록은 `.rag-cache/lab-runs` JSON이다. 보류 3건과 400문항은 후속이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 민원 CRUD AI·시민 챗봇·SSE·7테이블 정규화는 후속이다. [CASE-067](../docs/cases/사례-067-패치-주석-문서-최적화-2026-11-07.md) · [CASE-064](../docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md)
 >
 > 2026-11-05 진행 갱신: Flask `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. 민원 CRUD는 PostgreSQL `complaint_app` jsonb다. `python -m rag assist`와 `POST /api/v1/assist`·`/assist/stream`, `/#/lab`은 `src.assist`가 검색과 LLM을 잇는다. 실측 평가·시민 챗봇 실연결·민원 CRUD AI·7테이블 정규화는 후속이다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-023](../docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md)
 >

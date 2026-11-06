@@ -14,7 +14,7 @@
     <rect x="48" y="98" width="258" height="90" rx="14" fill="#15233a" stroke="#2f6fed" stroke-opacity=".45"/>
     <text x="68" y="130" fill="#bfdbfe" font-size="13" font-weight="700">1 민원 작성</text>
     <text x="68" y="156" fill="#e2e8f0" font-size="15">시민 직접 작성 양식</text>
-    <text x="68" y="176" fill="#64748b" font-size="12">저장하지 않음</text>
+    <text x="68" y="176" fill="#64748b" font-size="12">업무 DB 없음 · 파일 기록</text>
     <rect x="330" y="98" width="258" height="90" rx="14" fill="#132a2c" stroke="#2dd4bf" stroke-opacity=".4"/>
     <text x="350" y="130" fill="#99f6e4" font-size="13" font-weight="700">2 검색</text>
     <text x="350" y="156" fill="#e2e8f0" font-size="15">FAQ · 공개 사례</text>

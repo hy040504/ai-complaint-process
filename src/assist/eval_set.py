@@ -21,7 +21,9 @@ BUNDLES = (
     "uncertain_mixed",
     "abuse",
 )
+"""초안 평가 여섯 묶음입니다. 400문항 제안과 구별합니다."""
 SPLITS = ("dev", "holdout")
+"""개발셋과 보류셋입니다. 같은 `group_id`는 한쪽에만 둡니다."""
 REQUIRED = (
     "name",
     "group_id",
@@ -32,6 +34,8 @@ REQUIRED = (
     "must_not",
     "note",
 )
+DISTRICTS = ("상당구", "서원구", "흥덕구", "청원구")
+"""검사기 작성 화면과 같은 구 목록입니다."""
 
 
 def load_eval_spec(path: Path | None = None) -> dict[str, Any]:
@@ -42,6 +46,10 @@ def load_eval_spec(path: Path | None = None) -> dict[str, Any]:
 
     Returns:
         설명·검수 상태·문항 목록을 담은 딕셔너리입니다.
+
+    Raises:
+        OSError: 파일을 읽지 못하면 발생합니다.
+        json.JSONDecodeError: JSON이 아니면 발생합니다.
     """
     target = path or EVAL_PATH
     return json.loads(target.read_text(encoding="utf-8"))
@@ -119,12 +127,7 @@ def validate_eval_spec(spec: dict[str, Any]) -> list[str]:
                     if reason not in REASON_CODES:
                         failures.append(f"{prefix} 허용되지 않은 사유: {reason}")
         district = item.get("district")
-        if district is not None and district not in (
-            "상당구",
-            "서원구",
-            "흥덕구",
-            "청원구",
-        ):
+        if district is not None and district not in DISTRICTS:
             failures.append(f"{prefix}.district가 허용 구가 아닙니다: {district}")
     return failures
 
@@ -139,7 +142,7 @@ def select_items(
 
     Args:
         spec: 평가셋입니다.
-        split: `dev`·`holdout`·`all`입니다.
+        split: `dev` 또는 `holdout`입니다. `all`이면 둘 다 남깁니다.
         only: 있으면 이 이름만 남깁니다.
         missing_names: 있으면 이 집합에 없는 이름만 남깁니다.
 

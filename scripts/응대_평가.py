@@ -11,6 +11,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -24,7 +25,7 @@ from src.rag import search_available
 REPORT_PATH = ROOT / "rag" / "reports" / "assist-eval-draft.json"
 
 
-def score_item(item: dict, result: dict) -> bool:
+def score_item(item: dict[str, Any], result: dict[str, Any]) -> bool:
     """한 문항의 갈래·금지를 채점합니다.
 
     Args:
@@ -51,7 +52,14 @@ def score_item(item: dict, result: dict) -> bool:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """평가 실행 옵션을 읽습니다."""
+    """평가 실행 옵션을 읽습니다.
+
+    Args:
+        argv: 명령줄 인자입니다. 생략하면 `sys.argv`입니다.
+
+    Returns:
+        분할·문항 이름·이어 실행 여부입니다.
+    """
     parser = argparse.ArgumentParser(description="초안 응대 갈래 평가")
     parser.add_argument(
         "--split",
@@ -85,21 +93,28 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print("\n".join(failures), file=sys.stderr)
         return 1
-    previous: dict = {}
+    previous: dict[str, Any] = {}
     if REPORT_PATH.is_file():
         previous = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
-    done = {row["name"] for row in previous.get("results") or [] if "name" in row}
-    missing = done if args.missing else None
-    items = select_items(spec, split=args.split, only=args.only, missing_names=missing)
+    previous_rows = [
+        row
+        for row in previous.get("results") or []
+        if isinstance(row, dict) and "name" in row
+    ]
+    by_name = {row["name"]: row for row in previous_rows}
+    missing = set(by_name) if args.missing else None
+    split_items = select_items(spec, split=args.split)
+    items = split_items
+    if args.only:
+        items = [item for item in items if item.get("name") == args.only]
+    if missing is not None:
+        items = [item for item in items if item.get("name") not in missing]
     if not items:
         print("실행할 문항이 없습니다.", flush=True)
         return 0
     if not search_available():
         print("검색 API가 없습니다.", file=sys.stderr)
         return 1
-    by_name = {
-        row["name"]: row for row in previous.get("results") or [] if "name" in row
-    }
     started_all = time.perf_counter()
     for item in items:
         started = time.perf_counter()
@@ -125,11 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         by_name[item["name"]] = row
         print(json.dumps(row, ensure_ascii=False), flush=True)
-    ordered = []
-    for item in select_items(spec, split=args.split if args.split != "all" else "all"):
-        row = by_name.get(item["name"])
-        if row:
-            ordered.append(row)
+    ordered = [by_name[item["name"]] for item in split_items if item["name"] in by_name]
     passed = sum(1 for row in ordered if row.get("ok"))
     report = {
         "description": spec["description"],

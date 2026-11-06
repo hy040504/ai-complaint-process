@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -23,7 +23,7 @@
 > 추출한 작성 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)다. `POST /api/v1/lab/complaints`는 제목·상세로 검색 API를 먼저 호출하고 판정한다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
-> **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
+> **현재 단계 · 2026-11-07 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
 > **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·오른쪽 테스트 기록(파일), PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3건 미실행, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원). e5-small-ko 검색 예제 10건은 상위 5개 포함·`requires_gate`를 통과했습니다.<br>
 > **다음:** openai_api `cached_tokens` 실측(키 필요), 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
@@ -75,9 +75,9 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
-| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · `gpt-6-luna` API 또는 Codex CLI 선택 · 초안 평가 9/10 · openai_api 캐시 실측은 키 후속 |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · `gpt-6-luna` API 또는 Codex CLI 선택 · 초안 평가 개발 26/26 · 보류 3건 미실행 · 400문항 아님 · openai_api 캐시 실측은 키 후속 |
 | 시연 웹 | 시민·담당자 화면, 목록·CRUD·초안·게시·단계 시연 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `웹-시작.cmd` |
-| 응대 검사기 | `:5010` 작성 → 검색 → 판정. `assist.codex` 표시 | 민원 저장 없음 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
+| 응대 검사기 | `:5010` 작성 → 검색 → 판정. `assist.codex` 표시 | 업무 DB 없음 · `.rag-cache/lab-runs` 파일 기록 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
 현재 검색 CLI는 **FAQ 원문과 출처, 유사 사례와 부서 후보를 JSON으로 반환**합니다. 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다. 이는 검색 후 별도 판단이 필요하다는 의미이며 Jev 전용 계약이 아닙니다. `python3 -m rag assist`와 `src/lab_web` `:5010`은 그 검색 결과 위에 판정·정책 검사를 올립니다. 시연 웹의 등록·답변 교환은 Flask와 PostgreSQL `complaint_app`으로 구현했으며 검사기와 민원 CRUD는 분리합니다. 청주시 공식 접수·외부 부서 이관 연계는 별도 개발 범위입니다.
@@ -93,7 +93,7 @@
 
 ## 응대 검사기
 
-`llm` 브랜치의 기본 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)입니다. 제목과 상세로 검색 API를 먼저 호출하고 PREFIX-00+01 판정을 붙입니다. 결과에는 시민 안내와 함께 `assist.codex` 사용자 JSON을 보여 줍니다. 민원은 저장하지 않으며 공식 접수·자동 이관이 아닙니다. 기존 Flask 해시 `/#/lab`는 `:5000` CRUD 서버에 남아 있습니다.
+`llm` 브랜치의 기본 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)입니다. 제목과 상세로 검색 API를 먼저 호출하고 PREFIX-00+01 판정을 붙입니다. 결과에는 시민 안내와 함께 `assist.codex` 사용자 JSON을 보여 줍니다. 민원 CRUD 테이블에는 쓰지 않으며, 화면 오른쪽 테스트 기록은 `.rag-cache/lab-runs` JSON으로 남깁니다. 공식 접수·자동 이관이 아닙니다. 기존 Flask 해시 `/#/lab`는 `:5000` CRUD 서버에 남아 있습니다.
 
 ```mermaid
 flowchart LR
@@ -120,7 +120,7 @@ flowchart LR
 | 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내를 덮지 않음 |
 | 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 원문 힌트가 있을 때만. 자동 차단 아님 |
 
-[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-059](docs/cases/사례-059-검사기-Codex입력-표시-2026-11-06.md)
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-064](docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-066](docs/cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-067](docs/cases/사례-067-패치-주석-문서-최적화-2026-11-07.md)
 
 ## 저장과 검색
 
