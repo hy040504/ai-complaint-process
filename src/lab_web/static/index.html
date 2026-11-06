@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111b2e" />
+    <meta
+      name="description"
+      content="응대 검사기. 민원 내용을 JSON으로 보내 언어 모델 호출 전에 수신을 확인합니다."
+    />
+    <title>응대 검사기 · 민원톡톡</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">본문 바로가기</a>
+    <div class="demo-bar">
+      <span class="demo-label">LAB</span>
+      <span>민원톡톡 · 응대 검사기 · 민원은 저장하지 않습니다</span>
+    </div>
+    <header>
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+          <rect width="40" height="40" rx="12" fill="#087f72" />
+          <path d="M11 11h18v15H19l-7 5v-5h-1z" fill="white" />
+        </svg>
+        <div>
+          <strong>민원<span>톡톡</span></strong>
+          <small>응대 검사기</small>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <p class="lead">
+        제목, 민원 분야, 발생 지역, 상세 내용을 JSON으로 보냅니다. 서버는
+        언어 모델에 넘길 봉투를 만들고, 이 단계에서는 모델을 호출하지 않습니다.
+      </p>
+      <form id="complaint-form">
+        <label for="title">제목 <em>*</em></label>
+        <input
+          id="title"
+          name="title"
+          required
+          maxlength="120"
+          placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요."
+        />
+        <div class="hint">
+          <span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span>
+          <span id="title-count">0/120</span>
+        </div>
+        <div class="grid">
+          <div>
+            <label for="category">민원 분야 <em>*</em></label>
+            <select id="category" name="category" required></select>
+          </div>
+          <div>
+            <label for="district">발생 지역</label>
+            <select id="district" name="district">
+              <option value="">지정하지 않음</option>
+            </select>
+          </div>
+        </div>
+        <label for="body">상세 내용 <em>*</em></label>
+        <textarea
+          id="body"
+          name="body"
+          required
+          minlength="10"
+          maxlength="2000"
+          rows="9"
+          placeholder="어디에서, 언제, 어떤 일이 있었나요?"
+        ></textarea>
+        <div class="hint">
+          <span>최소 10자. 첨부파일은 후속입니다.</span>
+          <span id="body-count">0/2,000</span>
+        </div>
+        <button type="submit" id="submit">민원 보내기</button>
+      </form>
+      <section id="result" hidden>
+        <h2>서버 수신</h2>
+        <p id="result-message"></p>
+        <h3>보낸 JSON</h3>
+        <pre id="sent-json"></pre>
+        <h3>받은 JSON</h3>
+        <pre id="received-json"></pre>
+      </section>
+      <p id="error" class="error" hidden></p>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

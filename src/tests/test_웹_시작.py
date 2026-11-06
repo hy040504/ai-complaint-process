@@ -20,20 +20,16 @@ def start_web() -> ModuleType:
     return module
 
 
-def test_flask_env_sets_windows_libpq(
+def test_flask_env_sets_lab_port(
     start_web: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """PGDATABASE가 비어 있으면 complaints_native를 채웁니다."""
-    monkeypatch.delenv("PGHOST", raising=False)
-    monkeypatch.delenv("PGDATABASE", raising=False)
-    monkeypatch.delenv("PGPORT", raising=False)
+    """LAB_WEB_PORT가 비어 있으면 5010을 채웁니다."""
+    monkeypatch.delenv("LAB_WEB_PORT", raising=False)
     env = start_web.flask_env()
-    assert env["PGHOST"] == "127.0.0.1"
-    assert env["PGPORT"] == "5432"
-    assert env["PGDATABASE"] == "complaints_native"
+    assert env["LAB_WEB_PORT"] == "5010"
 
 
 def test_health_url_uses_port(start_web: ModuleType) -> None:
     """health 주소는 지정한 포트를 씁니다."""
-    assert start_web._health_url(5000).endswith(":5000/api/v1/health")
-    assert start_web._site_url(5001).endswith(":5001/#/lab")
+    assert start_web._health_url(5010).endswith(":5010/api/v1/health")
+    assert start_web._site_url(5011).endswith(":5011/")

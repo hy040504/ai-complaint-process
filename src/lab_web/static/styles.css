@@ -1,0 +1,159 @@
+:root {
+  color-scheme: light;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  --ink: #1b2233;
+  --muted: #5b6780;
+  --line: #dfe6f1;
+  --accent: #2f6fed;
+  --lab: #111b2e;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #f4f6fa;
+}
+.skip {
+  position: absolute;
+  left: -999px;
+}
+.skip:focus {
+  left: 12px;
+  top: 12px;
+  background: white;
+  padding: 8px;
+}
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 24px;
+  background: var(--lab);
+  color: #b8c4db;
+  font-size: 13px;
+}
+.demo-label {
+  border: 1px solid #69724d;
+  color: #e4c877;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+header,
+main {
+  width: min(720px, calc(100% - 32px));
+  margin: 0 auto;
+}
+header {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+}
+.brand strong {
+  display: block;
+  font-size: 18px;
+}
+.brand span {
+  color: var(--accent);
+}
+.brand small {
+  color: var(--muted);
+}
+.lead {
+  color: var(--muted);
+  line-height: 1.6;
+}
+form,
+#result {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+label em {
+  color: #c2410c;
+  font-style: normal;
+}
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  width: 100%;
+}
+input,
+select,
+textarea {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hint {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+button {
+  margin-top: 16px;
+  background: var(--accent);
+  color: white;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+pre {
+  overflow: auto;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 12px;
+}
+.error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 12px;
+  padding: 12px;
+}
+#result-message {
+  color: #166534;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

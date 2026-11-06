@@ -1,0 +1,115 @@
+"""응대 검사기 전용 Flask 앱입니다.
+
+정적 화면과 민원 JSON 수신 API만 제공합니다. PostgreSQL 업무 저장과
+기존 `/#/lab` SPA를 의존하지 않습니다.
+"""
+
+from pathlib import Path
+
+from flask import Flask, Response, jsonify, request, send_from_directory
+from pydantic import BaseModel, ValidationError
+
+from src.lab_web.models import ErrorBody, LabComplaint, LabFields, LabHealth
+from src.lab_web.service import accept_complaint
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+_FIELD_LABELS = {
+    "title": "제목",
+    "category": "민원 분야",
+    "district": "발생 지역",
+    "body": "상세 내용",
+}
+
+
+def _json(model: BaseModel, status: int = 200) -> Response:
+    """검증된 모델을 camelCase JSON으로 돌려줍니다.
+
+    Args:
+        model: Pydantic 모델입니다.
+        status: HTTP 상태 코드입니다.
+
+    Returns:
+        Flask JSON 응답입니다.
+    """
+    response = jsonify(model.model_dump(mode="json", by_alias=True))
+    response.status_code = status
+    return response
+
+
+def _invalid(error: ValidationError) -> Response:
+    """잘못된 필드 이름만 안내하고 입력 원문은 넣지 않습니다.
+
+    Args:
+        error: Pydantic 검증 오류입니다.
+
+    Returns:
+        422 JSON 응답입니다.
+    """
+    names: list[str] = []
+    for item in error.errors():
+        loc = item.get("loc") or ()
+        if loc:
+            names.append(str(loc[0]))
+    unique = list(dict.fromkeys(names))
+    labels = [_FIELD_LABELS.get(name, name) for name in unique] or ["요청"]
+    return _json(
+        ErrorBody(
+            code="invalid_request",
+            message=f"{', '.join(labels)}을(를) 확인해 주세요.",
+            fields=unique,
+        ),
+        422,
+    )
+
+
+def create_app() -> Flask:
+    """검사기 웹 앱을 만듭니다.
+
+    Returns:
+        정적 파일과 수신 API를 가진 Flask 앱입니다.
+    """
+    app = Flask(
+        __name__,
+        static_folder=str(STATIC_DIR),
+        static_url_path="",
+    )
+
+    @app.get("/")
+    def index() -> Response:
+        """검사기 작성 화면을 돌려줍니다."""
+        return send_from_directory(STATIC_DIR, "index.html")
+
+    @app.get("/api/v1/health")
+    def health() -> Response:
+        """검사기 웹이 켜져 있는지 확인합니다."""
+        return _json(LabHealth())
+
+    @app.get("/api/v1/lab/fields")
+    def fields() -> Response:
+        """작성 양식의 분야·지역 목록을 줍니다."""
+        return _json(LabFields())
+
+    @app.post("/api/v1/lab/complaints")
+    def create_complaint() -> Response:
+        """민원 JSON을 받아 언어 모델용 봉투를 만듭니다.
+
+        본문은 `title`, `category`, `district`, `body`입니다. 민원 CRUD에
+        저장하지 않고 모델도 호출하지 않습니다.
+        """
+        raw = request.get_json(silent=True)
+        if not isinstance(raw, dict):
+            return _json(
+                ErrorBody(
+                    code="invalid_json",
+                    message="민원 내용은 JSON 객체로 보내 주세요.",
+                ),
+                400,
+            )
+        try:
+            complaint = LabComplaint.model_validate(raw)
+        except ValidationError as error:
+            return _invalid(error)
+        return _json(accept_complaint(complaint), 202)
+
+    return app

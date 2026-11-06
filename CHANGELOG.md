@@ -2,6 +2,8 @@
 
 ## 2026-11-06
 
+- 응대 검사기 프론트를 `src/lab_web/static`으로 추출하고, 민원 JSON을 받는 작은 Flask를 `:5010`에 둔다. `POST /api/v1/lab/complaints`는 언어 모델용 봉투만 만들고 호출·CRUD 저장은 하지 않는다. GitHub 기본 브랜치는 `llm`이다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md)
+
 - GitHub `llm` 브랜치를 만들고 기본 화면을 `/#/lab` 응대 검사기로 고정한다. 시민·담당자 해시는 검사기로 보낸다. 민원 문장 → RAG+LLM 응답 경로만 이 브랜치에서 개발한다. [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
 
 - Windows `setup.cmd`와 Linux `setup.sh`로 가상환경·PostgreSQL/pgvector·임베딩 모델을 준비한다. 기존 한국어 실행기의 영어 파일명 bash 별칭을 둔다. `--check`는 설치 없이 확인만 한다. [CASE-054](docs/cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md)

@@ -1,7 +1,7 @@
-"""Windows에서 Flask 민원 서버를 시작하고 응대 검사기를 엽니다.
+"""Windows에서 응대 검사기 웹을 시작하고 작성 화면을 엽니다.
 
-자식 프로세스에는 `apply_windows_libpq`로 `PGHOST`·`PGDATABASE` 기본값을
-채웁니다. 이미 있는 환경변수는 덮어쓰지 않습니다.
+`python -m src.lab_web`을 켜며 기본 포트는 5010입니다. 기존 민원 CRUD
+Flask(:5000)는 종료하지 않습니다.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from 콘솔_기동 import apply_windows_libpq, port_open as tcp_open, spawn_console
+from 콘솔_기동 import port_open as tcp_open, spawn_console
 
 ROOT = Path(__file__).resolve().parent.parent
 PYTHON = ROOT / ".venv-web" / "Scripts" / "python.exe"
@@ -26,17 +26,17 @@ _NO_PROXY = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def _port() -> int:
-    """COMPLAINT_PORT에서 확인할 포트를 읽습니다.
+    """LAB_WEB_PORT에서 확인할 포트를 읽습니다.
 
     Returns:
-        양의 정수 포트입니다. 없거나 잘못된 값이면 5000입니다.
+        양의 정수 포트입니다. 없거나 잘못된 값이면 5010입니다.
     """
-    raw = os.environ.get("COMPLAINT_PORT", "5000")
+    raw = os.environ.get("LAB_WEB_PORT", "5010")
     try:
         value = int(raw)
     except (TypeError, ValueError):
-        return 5000
-    return value if value > 0 else 5000
+        return 5010
+    return value if value > 0 else 5010
 
 
 def _health_url(port: int) -> str:
@@ -58,9 +58,9 @@ def _site_url(port: int) -> str:
         port: Flask가 바인딩한 포트입니다.
 
     Returns:
-        `/#/lab` 주소입니다.
+        검사기 웹 루트 주소입니다.
     """
-    return f"http://127.0.0.1:{port}/#/lab"
+    return f"http://127.0.0.1:{port}/"
 
 
 def port_open(port: int) -> bool:
@@ -113,15 +113,14 @@ def wait_until_ready(url: str, seconds: float = 30.0) -> bool:
 
 
 def flask_env() -> dict[str, str]:
-    """Flask 서버에 넘길 환경변수를 만듭니다.
-
-    Windows에서 비어 있는 `PGHOST`·`PGDATABASE`를 채웁니다. 이미 있는
-    값은 덮어쓰지 않습니다.
+    """검사기 웹에 넘길 환경변수를 만듭니다.
 
     Returns:
-        libpq 기본값을 채운 환경 딕셔너리입니다.
+        현재 프로세스 환경의 복사본입니다.
     """
-    return apply_windows_libpq(os.environ.copy())
+    env = os.environ.copy()
+    env.setdefault("LAB_WEB_PORT", str(_port()))
+    return env
 
 
 def start_server() -> None:
@@ -130,7 +129,7 @@ def start_server() -> None:
     창을 닫으면 서버 프로세스도 함께 종료됩니다. Windows가 아니면
     새 세션으로 실행합니다.
     """
-    spawn_console([str(PYTHON), "-m", "src"], cwd=ROOT, env=flask_env())
+    spawn_console([str(PYTHON), "-m", "src.lab_web"], cwd=ROOT, env=flask_env())
 
 
 def main() -> int:
@@ -159,7 +158,7 @@ def main() -> int:
     if port_open(port):
         print(f"이미 {port} 포트에서 서버가 실행 중입니다.")
     else:
-        print("Flask 민원 서버를 시작합니다. 별도 창을 닫으면 서버도 종료됩니다.")
+        print("응대 검사기 웹을 시작합니다. 별도 창을 닫으면 서버도 종료됩니다.")
         start_server()
 
     if not wait_until_ready(health):

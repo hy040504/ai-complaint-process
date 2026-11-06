@@ -2,7 +2,7 @@
 
 이 프로젝트는 청주 민원의 1차 응대를 위한 AI 완충지대다. FAQ로 안내 근거를 찾고, 공개 사례로 담당 부서 후보를 찾으며, 근거가 부족하면 담당자 검토로 연결하는 것을 목표로 한다. 사용자와의 설명 및 프로젝트 문서는 한국어를 기본으로 한다.
 
-**브랜치 `llm`(2026-11-06):** 화면은 [`/#/lab`](http://127.0.0.1:5000/#/lab) 응대 검사기만 연다. 민원 문장 → RAG 검색 → LLM 판정·안내가 이 브랜치의 개발 범위다. 시민·담당자 CRUD·SSE·공식 이관은 `main`에 두고 이 UI에서는 열지 않는다. 작업 위치는 `ui/src/lab.js`, `src/assist/`, `src/rag/`, `src/llm/`, 루트 `rag/`다. [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
+**브랜치 `llm`(2026-11-06):** GitHub 기본 브랜치다. 추출한 응대 검사기 웹은 [`src/lab_web/`](src/lab_web/README.md), 주소 `http://127.0.0.1:5010/`이다. 프론트는 제목·분야·지역·상세 내용을 JSON으로 `POST /api/v1/lab/complaints`에 보낸다. 이 단계는 수신만 하고 언어 모델은 호출하지 않는다. 시민·담당자 CRUD는 `python -m src`(:5000)에 남긴다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md)
 
 ## 먼저 읽을 문서
 
@@ -38,6 +38,7 @@
 | 시연 웹 업무 스키마 | `src/complaints/schema/` | [서버 안내](src/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
 | LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `docs/harness/prompts/`, `python -m rag assist`, `/#/lab` | [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md), [실제 프리픽스](docs/harness/prompts/README.md), [판정 정책](docs/harness/decision-policy.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md) |
+| 추출 응대 검사기 웹·민원 JSON 수신 | `src/lab_web/`, `python -m src.lab_web`, `:5010` | [검사기 웹](src/lab_web/README.md), [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/complaints/`, `src/app.py`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
 

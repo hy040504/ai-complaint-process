@@ -19,8 +19,8 @@
 ---
 
 > [!IMPORTANT]
-> **브랜치 `llm` · 2026-11-06 · 응대 검사기 집중**<br>
-> 기본 화면은 [`http://127.0.0.1:5000/#/lab`](http://127.0.0.1:5000/#/lab)다. 민원 문장 → RAG 검색 → LLM 판정·안내만 이 브랜치에서 개발한다. 시민·담당자 해시는 검사기로 보낸다. CRUD 소스는 `main`에 남겨 두며 이 UI에서는 열지 않는다. [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
+> **브랜치 `llm` · GitHub 기본 브랜치 · 응대 검사기 웹**<br>
+> 추출한 작성 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)다. 제목·민원 분야·발생 지역·상세 내용을 JSON으로 `POST /api/v1/lab/complaints`에 보낸다. 서버는 언어 모델용 질의를 만들고 이 단계에서는 모델을 호출하지 않는다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
@@ -38,8 +38,8 @@
 | 화면 | 주소 | 실행 |
 | --- | --- | --- |
 | 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
-| 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 이 브랜치 기본 화면. Windows [`웹-시작.cmd`](웹-시작.cmd) · Linux [`start-web.sh`](start-web.sh) |
-| 시민·담당자 | `/#/citizen` · `/#/staff` | `llm` 브랜치에서는 검사기로 보냄. 소스는 `main`에 유지 |
+| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 추출 프론트 + JSON 수신. Windows [`검사기-시작.cmd`](검사기-시작.cmd) · Linux [`start-lab.sh`](start-lab.sh) |
+| 기존 시연 Flask | `http://127.0.0.1:5000/#/lab` | 민원 CRUD 서버. 이 브랜치 검사기 웹과 포트를 나눔 |
 | 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
@@ -225,7 +225,7 @@ setup.cmd --check
 ./setup.sh --check
 ```
 
-Windows에서 응대 검사기까지 한 번에 열려면 저장소 루트의 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `.venv-web`이 준비되어 있으면 Flask를 별도 창에서 시작하고, 이미 실행 중이면 `/#/lab`을 엽니다. Linux는 [`start-web.sh`](start-web.sh)입니다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md) · [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
+Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열립니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-056](docs/cases/사례-056-응대검사기-웹추출과-수신API-2026-11-06.md)
 
 ```bat
 웹-시작.cmd
