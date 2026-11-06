@@ -60,7 +60,7 @@ flowchart LR
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
-| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ 생성. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
+| `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
 | `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. MCP 핸드셰이크는 NDJSON |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |

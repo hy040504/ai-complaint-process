@@ -11,7 +11,7 @@
 3. [프로젝트 사례](docs/cases/README.md): 관련 버그·조치·설계 결정과 미해결 과제.
 4. 수정하는 코드와 해당 테스트. 문서와 코드가 다르면 차이를 확인하고 함께 수정한다.
 
-현재 구현은 **검색 CLI/API와 시민·담당자 UI 및 Flask 업무 서버·Swagger·PostgreSQL `complaint_app` 업무 저장**이다. 업무 서버는 루트 [`src/`](src/README.md), 화면은 [`ui/`](ui/README.md)에 둔다. 2026-10-25 사용자 결정에 따라 **초기 AI MVP는 Jev 없는 LLM + RAG**, Jev는 기준 성능 확보 후 추가하는 확장으로 둔다. 실제 민원 CRUD의 LLM 연결·시민 챗봇·SSE·운영 인증·행정 이관은 미구현이며 담당자 AI 작업은 명시적인 단계 시연이다. 검색 위 판정은 `python -m rag assist`와 `src.lab_web` `:5010`이다. `/#/lab`는 기존 CRUD Flask 해시다. `gpt-6-luna`·`medium`은 `openai_api` 또는 `codex_cli` 공급자로 선택할 수 있으나 실측 평가와 운영 모델 확정은 후속이다. 한국어 직접 입력과 무료 모델 우선은 유지하며 Papago는 추후 비교한다. 같은 범용 LLM 재사용과 LoRA 보류는 [구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md)·[모델 제안](plan/모델_선정과_미세조정_제안.md)을 기준으로 검토한다.
+현재 구현은 **검색 CLI/API와 시민·담당자 UI 및 Flask 업무 서버·Swagger·PostgreSQL `complaint_app` 업무 저장**이다. 업무 서버는 루트 [`src/`](src/README.md), 화면은 [`ui/`](ui/README.md)에 둔다. 2026-10-25 사용자 결정에 따라 **초기 AI MVP는 Jev 없는 LLM + RAG**, Jev는 기준 성능 확보 후 추가하는 확장으로 둔다. 실제 민원 CRUD의 LLM 연결·시민 챗봇·SSE·운영 인증·행정 이관은 미구현이며 담당자 AI 작업은 명시적인 단계 시연이다. 검색 위 판정은 `python -m rag assist`와 `src.lab_web` `:5010`이다. PREFIX-03은 FAQ가 아닐 때 담당자 초안, PREFIX-04는 원문 힌트가 있을 때 순화이며 시민 갈래를 덮지 않는다. `/#/lab`는 기존 CRUD Flask 해시다. `gpt-6-luna`·`medium`은 `openai_api` 또는 `codex_cli` 공급자로 선택할 수 있으나 실측 평가와 운영 모델 확정은 후속이다. 한국어 직접 입력과 무료 모델 우선은 유지하며 Papago는 추후 비교한다. 같은 범용 LLM 재사용과 LoRA 보류는 [구현계획](plan/언어모델과_검색증강생성_우선_구현계획.md)·[모델 제안](plan/모델_선정과_미세조정_제안.md)을 기준으로 검토한다.
 
 시연 웹의 등록·조회·수정·철회·추가 문의·답변 초안·게시·이력을 Flask와 PostgreSQL `complaint_app`에 구현했다. 검색 색인은 `complaint_rag`에 두고 행을 섞지 않는다. 시연 서버의 등록은 청주시 공식 접수·외부 부서 이관과 구별한다. 현재 실행·API·타입·검증 범위는 [서버 안내](src/README.md)를 따른다. 7테이블 정규화·실제 AI·SSE 등 후속 범위는 [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md)과 구별한다.
 

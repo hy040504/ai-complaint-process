@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from src.assist.constants import ANSWER_SYSTEM, DECISION_SYSTEM
+from src.assist.constants import (
+    ANSWER_SYSTEM,
+    DECISION_SYSTEM,
+    SPECIAL_SANITIZE_SYSTEM,
+    STAFF_DRAFT_SYSTEM,
+)
 from src.assist.prompts import (
     PREFIX_00,
     PREFIX_01,
@@ -53,6 +58,10 @@ def test_staff_and_sanitize_prefixes_load() -> None:
     assert "순화 요약" in PREFIX_04
     assert "search_complaint_rag를 호출하지 않습니다." in PREFIX_04
     assert "자동 차단" in PREFIX_04
+    assert STAFF_DRAFT_SYSTEM == join_prefix(PREFIX_00, PREFIX_03)
+    assert SPECIAL_SANITIZE_SYSTEM == join_prefix(PREFIX_00, PREFIX_04)
+    assert STAFF_DRAFT_SYSTEM.startswith("[시스템 헌법:")
+    assert SPECIAL_SANITIZE_SYSTEM.startswith("[시스템 헌법:")
 
 
 def test_decision_and_answer_exclude_staff_prefixes() -> None:

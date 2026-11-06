@@ -340,13 +340,13 @@ class CodexCall(Model):
     사용자 JSON만 둡니다. `user` 키는 판정 계약의 뱀형입니다.
 
     Attributes:
-        role: `decision`은 1차 판정, `faq_answer`는 FAQ 안내입니다.
+        role: 1차 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
         system: PREFIX 조합 이름입니다.
         user: Codex stdin 사용자 JSON입니다.
         sent: 모델에 실제로 넣었으면 True입니다.
     """
 
-    role: Literal["decision", "faq_answer"]
+    role: Literal["decision", "faq_answer", "staff_draft", "sanitize"]
     system: str
     user: dict[str, Any]
     sent: bool
@@ -372,6 +372,33 @@ class AssistStage(Model):
     ok: bool
 
 
+class StaffSummaryCard(Model):
+    """담당자가 볼 민원 요약 카드입니다."""
+
+    core_summary: str
+    citizen_request: str
+    location_or_target: str
+    missing_info: list[str]
+
+
+class StaffDraft(Model):
+    """PREFIX-03 담당자 초안입니다. 시민에게 게시하지 않습니다."""
+
+    summary_card: StaffSummaryCard
+    draft_answer: str
+    citations: list[AssistEvidenceRef]
+    requires_field_check: bool
+
+
+class SanitizeResult(Model):
+    """PREFIX-04 순화 결과입니다. 접수 거부·자동 차단이 아닙니다."""
+
+    sanitized_summary: str
+    legitimate_requests: list[str]
+    risk_signals: list[str]
+    human_protection_review_needed: bool
+
+
 class AssistRetrieval(Model):
     """원본 검색 계약을 검사기에 그대로 전달합니다."""
 
@@ -388,6 +415,8 @@ class AssistResponse(Model):
         outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
         automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
         codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.
+        staff_draft: 담당자 초안입니다. FAQ 안내이거나 검증 실패면 비웁니다.
+        sanitize: 순화 요약입니다. 원문 힌트가 없으면 비웁니다.
     """
 
     query: str
@@ -406,6 +435,8 @@ class AssistResponse(Model):
     llm_configured: bool
     retrieval: AssistRetrieval
     codex: list[CodexCall] = Field(default_factory=list)
+    staff_draft: StaffDraft | None = None
+    sanitize: SanitizeResult | None = None
 
 
 class ComplaintResponse(RootModel[PublicComplaint | Complaint]):

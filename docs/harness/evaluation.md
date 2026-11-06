@@ -57,6 +57,8 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 
 2026-10-25 코드·주석 점검에서 기존 13개와 후보 조회 회귀 12개, 총 **25개 테스트가 통과**했다. 추가 회귀는 모델·DB 대역을 사용하며 실제 모델의 검색 품질 평가와 구별한다. 변경·실행 근거는 [CASE-006](../cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)에 있다.
 
+2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
+
 2026-10-24 기준 코드·DB 테스트 13개와 API 예제 10개가 통과했다. [검색 보고서](../../rag/reports/retrieval-smoke.json)의 FAQ 5개·부서 4개는 기대 대상이 1위였지만 평가 코드의 통과 조건은 **상위 5개 포함**이다. 범위 밖 예제 1개는 `requires_gate` 유지만 확인한다. 실제 범위 밖 판정에 성공했다는 결과가 아니다.
 
 기존 근거: [DB 대조](../../rag/reports/data-integrity.json), [재적재](../../rag/reports/reingestion.json), [API 계약](../../rag/reports/api-contract.json), [원본 보존](../../rag/reports/source-preservation.json). 이 중 일부는 당시 수행 결과를 저장한 보고서이며 모두를 생성하는 단일 자동화 명령이 있는 것은 아니다.

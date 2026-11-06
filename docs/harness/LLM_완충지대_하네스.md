@@ -62,8 +62,8 @@ AI는 공식 접수 창구가 아니고, 배정 확정 권한도 없다. 검색 
 | 1차 판정 | PREFIX-00 + PREFIX-01 | 설명 없는 판정 JSON 한 개 | `validate_decision` 후 갈래 결정 |
 | FAQ 안내 | PREFIX-00 + PREFIX-02 | 조건이 남은 한국어 평문 | 20자 미만이면 담당자 검토 |
 | 부서 추천·담당자 검토 | (모델 자유 문장 없음) | 호출하지 않음 | 코드 템플릿으로 시민 문구 구성 |
-| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | **미연결** |
-| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | **미연결** |
+| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내 미게시 |
+| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | 원문 힌트가 있을 때만. 자동 차단 아님 |
 
 판정 JSON 필드: `scope`, `intent`, `outcome`, `reason_code`, `evidence_refs`, `department_ids`. 허용 값은 [`src/assist/constants.py`](../../src/assist/constants.py)와 같다.
 

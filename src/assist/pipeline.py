@@ -4,6 +4,7 @@
 `retrieval_only` / `requires_gate`를 유지하고, 그 위에 판정·정책 검사·
 조건부 FAQ 생성을 올립니다. 시스템 지시는 `docs/harness/prompts/`의
 PREFIX 파일을 조립한 `DECISION_SYSTEM`·`ANSWER_SYSTEM`입니다.
+담당자 초안은 PREFIX-03, 순화는 PREFIX-04이며 시민 갈래를 덮지 않습니다.
 결과의 `codex`는 모델에 넣은 사용자 JSON 목록입니다.
 """
 
@@ -14,7 +15,20 @@ import time
 from collections.abc import Iterator
 from typing import Any, Callable
 
-from src.assist.constants import ANSWER_SYSTEM, DECISION_SYSTEM, PROGRESS_LABELS
+from src.assist.constants import (
+    ANSWER_SYSTEM,
+    DECISION_SYSTEM,
+    PROGRESS_LABELS,
+    SPECIAL_SANITIZE_SYSTEM,
+    STAFF_DRAFT_SYSTEM,
+)
+from src.assist.followup import (
+    needs_sanitize,
+    sanitize_payload,
+    staff_draft_payload,
+    validate_sanitize,
+    validate_staff_draft,
+)
 from src.assist.policy import (
     citizen_answer,
     decision_payload,
@@ -90,6 +104,8 @@ def build_result(
     raw_decision: dict[str, Any] | None = None,
     parts: SearchParts | None = None,
     codex: list[dict[str, Any]] | None = None,
+    staff_draft: dict[str, Any] | None = None,
+    sanitize: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """세 갈래 응대와 근거·단계를 한 객체로 묶습니다.
 
@@ -105,6 +121,8 @@ def build_result(
         raw_decision: 검사 전 모델 출력입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
         codex: Codex에 넣은 호출 목록입니다. 없으면 빈 목록입니다.
+        staff_draft: PREFIX-03 담당자 초안입니다. 없으면 비웁니다.
+        sanitize: PREFIX-04 순화 결과입니다. 없으면 비웁니다.
 
     Returns:
         API·CLI가 공유하는 응대 결과입니다.
@@ -147,6 +165,8 @@ def build_result(
             "pipeline": search.get("pipeline"),
         },
         "codex": list(codex or []),
+        "staff_draft": staff_draft,
+        "sanitize": sanitize,
     }
 
 
@@ -299,6 +319,67 @@ def iter_assist(
             }
         )
 
+    sanitize: dict[str, Any] | None = None
+    if chat is not None and needs_sanitize(text):
+        yield progress("sanitize")
+        started = time.perf_counter()
+        sanitize_user = sanitize_payload(text)
+        try:
+            sanitize = validate_sanitize(
+                parse_json_object(
+                    chat(
+                        SPECIAL_SANITIZE_SYSTEM,
+                        json.dumps(sanitize_user, ensure_ascii=False, indent=2),
+                    )
+                )
+            )
+            if sanitize is None:
+                raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
+            stages.append(stage("순화", started, True))
+        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            stages.append(stage("순화", started, False))
+            failures.append(str(exc))
+            sanitize = None
+        codex_calls.append(
+            {
+                "role": "sanitize",
+                "system": "PREFIX-00 + PREFIX-04",
+                "user": sanitize_user,
+                "sent": True,
+            }
+        )
+
+    staff_draft: dict[str, Any] | None = None
+    if chat is not None and decision["outcome"] != "faq_answer":
+        yield progress("draft")
+        started = time.perf_counter()
+        draft_user = staff_draft_payload(text, district, search, decision, parts)
+        try:
+            staff_draft = validate_staff_draft(
+                parse_json_object(
+                    chat(
+                        STAFF_DRAFT_SYSTEM,
+                        json.dumps(draft_user, ensure_ascii=False, indent=2),
+                    )
+                ),
+                parts,
+            )
+            if staff_draft is None:
+                raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
+            stages.append(stage("담당자초안", started, True))
+        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            stages.append(stage("담당자초안", started, False))
+            failures.append(str(exc))
+            staff_draft = None
+        codex_calls.append(
+            {
+                "role": "staff_draft",
+                "system": "PREFIX-00 + PREFIX-03",
+                "user": draft_user,
+                "sent": True,
+            }
+        )
+
     yield {
         "type": "done",
         "result": build_result(
@@ -313,6 +394,8 @@ def iter_assist(
             raw_decision=raw_decision,
             parts=parts,
             codex=codex_calls,
+            staff_draft=staff_draft,
+            sanitize=sanitize,
         ),
     }
 
@@ -327,7 +410,7 @@ def run_assist(
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
     on_progress: Callable[[str, str], None] | None = None,
 ) -> dict[str, Any]:
-    """검색 → 판정 → 정책 검사 → 조건부 FAQ 생성 순서로 응대 결과를 만듭니다.
+    """검색 → 판정 → 정책 검사 → 조건부 FAQ·순화·담당자 초안 순서로 응대 결과를 만듭니다.
 
     Args:
         query: 한국어 민원 원문입니다.
@@ -377,8 +460,26 @@ def render_assist(result: dict[str, Any]) -> str:
         "시민 안내:",
         str(result.get("answer") or "(없음)"),
         "",
-        "FAQ 근거:",
     ]
+    draft = result.get("staff_draft")
+    if isinstance(draft, dict):
+        lines.extend(
+            [
+                "담당자 초안(미게시):",
+                str(draft.get("draft_answer") or "(없음)"),
+                "",
+            ]
+        )
+    cleaned = result.get("sanitize")
+    if isinstance(cleaned, dict):
+        lines.extend(
+            [
+                "순화 요약(담당자 참고):",
+                str(cleaned.get("sanitized_summary") or "(없음)"),
+                "",
+            ]
+        )
+    lines.append("FAQ 근거:")
     for hit in result.get("faq") or []:
         lines.append(
             f"  [{hit.get('rank')}] {hit.get('title')} ({hit.get('source_id')})"

@@ -81,12 +81,23 @@
         <p id="result-message"></p>
         <p id="result-outcome"></p>
         <p id="result-answer"></p>
+        <h3>담당자 초안 (미게시)</h3>
+        <p id="staff-note" class="hint-block">
+          PREFIX-00+03 결과입니다. 시민 안내를 덮지 않으며 공식 게시가 아닙니다.
+        </p>
+        <p id="result-draft"></p>
+        <h3>순화 요약 (담당자 참고)</h3>
+        <p id="sanitize-note" class="hint-block">
+          PREFIX-00+04 결과입니다. 접수 거부나 자동 차단이 아닙니다.
+        </p>
+        <p id="result-sanitize"></p>
         <h3>참고한 자료</h3>
         <ul id="result-hits"></ul>
         <h3>Codex에 보낸 데이터</h3>
         <p id="codex-note" class="hint-block">
           1차 판정 사용자 JSON입니다. 시스템 지시는 PREFIX-00+01이며 민원마다
-          바뀌지 않습니다. FAQ 안내가 나가면 PREFIX-00+02 호출이 이어집니다.
+          바뀌지 않습니다. FAQ 안내면 PREFIX-00+02, 담당자 초안은 PREFIX-00+03,
+          순화는 PREFIX-00+04가 이어집니다.
         </p>
         <pre id="codex-json"></pre>
         <h3>검사기에 보낸 JSON</h3>

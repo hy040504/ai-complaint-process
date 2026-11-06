@@ -1,0 +1,130 @@
+{
+  "description": "응대 파이프라인 실측. 운영 모델 선정이 아닙니다.",
+  "provider": "codex_cli",
+  "model": "gpt-6-luna",
+  "elapsed_ms": 70716.7,
+  "results": [
+    {
+      "name": "FAQ_대형폐기물",
+      "query": "대형폐기물 배출 방법을 알고 싶어요.",
+      "district": null,
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "staff_draft": false,
+      "sanitize": false,
+      "codex_roles": [
+        "decision",
+        "faq_answer"
+      ],
+      "stages": [
+        {
+          "name": "검색",
+          "elapsed_ms": 414.9,
+          "ok": true
+        },
+        {
+          "name": "판정",
+          "elapsed_ms": 6913.5,
+          "ok": true
+        },
+        {
+          "name": "정책검사",
+          "elapsed_ms": 0.0,
+          "ok": true
+        },
+        {
+          "name": "답변생성",
+          "elapsed_ms": 11605.4,
+          "ok": true
+        },
+        {
+          "name": "검증",
+          "elapsed_ms": 0.0,
+          "ok": true
+        }
+      ],
+      "elapsed_ms": 18940.3
+    },
+    {
+      "name": "조치_가로등",
+      "query": "우리집 앞 가로등이 밤새 깜빡거려 수리를 요청합니다.",
+      "district": "흥덕구",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "staff_draft": true,
+      "sanitize": false,
+      "codex_roles": [
+        "decision",
+        "staff_draft"
+      ],
+      "stages": [
+        {
+          "name": "검색",
+          "elapsed_ms": 143.0,
+          "ok": true
+        },
+        {
+          "name": "판정",
+          "elapsed_ms": 8771.5,
+          "ok": true
+        },
+        {
+          "name": "정책검사",
+          "elapsed_ms": 0.0,
+          "ok": true
+        },
+        {
+          "name": "담당자초안",
+          "elapsed_ms": 12986.4,
+          "ok": true
+        }
+      ],
+      "elapsed_ms": 21907.6
+    },
+    {
+      "name": "순화_가로등",
+      "query": "쓰레기같은 가로등을 지금 고쳐 주세요.",
+      "district": "흥덕구",
+      "outcome": "human_handoff",
+      "reason_code": "department_unverified",
+      "automatic_transfer": false,
+      "staff_draft": true,
+      "sanitize": true,
+      "codex_roles": [
+        "decision",
+        "sanitize",
+        "staff_draft"
+      ],
+      "stages": [
+        {
+          "name": "검색",
+          "elapsed_ms": 128.9,
+          "ok": true
+        },
+        {
+          "name": "판정",
+          "elapsed_ms": 9093.9,
+          "ok": true
+        },
+        {
+          "name": "정책검사",
+          "elapsed_ms": 0.0,
+          "ok": true
+        },
+        {
+          "name": "순화",
+          "elapsed_ms": 7250.7,
+          "ok": true
+        },
+        {
+          "name": "담당자초안",
+          "elapsed_ms": 13388.9,
+          "ok": true
+        }
+      ],
+      "elapsed_ms": 29868.7
+    }
+  ]
+}

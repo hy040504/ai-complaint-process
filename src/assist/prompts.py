@@ -2,7 +2,8 @@
 
 원본은 `docs/harness/prompts/PREFIX-00.txt` ~ `PREFIX-04.txt`입니다.
 가변 민원·검색 결과는 넣지 않습니다. LF만 유지합니다.
-PREFIX-03·04는 담당자 초안·순화용이며 현재 판정 파이프라인은 쓰지 않습니다.
+PREFIX-03·04는 담당자 초안·순화용이며 1차 판정·FAQ 안내 시스템 지시에는
+넣지 않습니다. 호출은 `src.assist.pipeline`의 후속 단계입니다.
 """
 
 from __future__ import annotations

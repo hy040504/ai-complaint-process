@@ -8,7 +8,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.assist.prompts import ANSWER_SYSTEM, DECISION_SYSTEM
+from src.assist.prompts import (
+    ANSWER_SYSTEM,
+    DECISION_SYSTEM,
+    SPECIAL_SANITIZE_SYSTEM,
+    STAFF_DRAFT_SYSTEM,
+)
 
 SCOPES = ("in_scope", "out_of_scope", "uncertain")
 INTENTS = ("information", "action", "mixed", "unclear")
@@ -47,6 +52,8 @@ PROGRESS_LABELS = {
     "search": "저장된 안내와 사례를 찾고 있어요",
     "review": "찾은 자료를 살펴보고 있어요",
     "write": "안내문을 준비하고 있어요",
+    "sanitize": "거친 표현을 정리하고 있어요",
+    "draft": "담당자용 초안을 준비하고 있어요",
 }
 EXAMPLES: list[dict[str, Any]] = [
     {
@@ -80,4 +87,3 @@ EXAMPLES: list[dict[str, Any]] = [
         "district": "상당구",
     },
 ]
-

@@ -2,6 +2,8 @@
 
 ## 2026-11-06
 
+- PREFIX-03 담당자 초안과 PREFIX-04 순화를 검사기·CLI 후속 호출로 잇는다. 시민 갈래와 민원 CRUD는 바꾸지 않는다. e5-small-ko 검색 예제 10건을 재평가하고 현재 공급자 실측을 기록한다. [CASE-061](docs/cases/사례-061-PREFIX-03-04-검색재평가-실측-2026-11-06.md)
+
 - CASE-057~059 패치의 Google 형식 한국어 주석을 맞추고, MCP JSON 본문 검사를 한 함수로 모은다. README에 Lab :5010·MCP NDJSON 배지와 검사기 검색·판정 현재 단계를 적었다. [CASE-060](docs/cases/사례-060-패치-주석-문서-최적화-2026-11-06.md)
 
 - 응대 검사기 결과에 Codex 1차(및 FAQ 2차) 사용자 JSON을 `assist.codex`로 보여 준다. PREFIX 전문은 넣지 않는다. [CASE-059](docs/cases/사례-059-검사기-Codex입력-표시-2026-11-06.md)

@@ -71,6 +71,14 @@ function showResult(payload, received) {
   document.querySelector("#result-outcome").textContent =
     outcomeNames[assist.outcome] || assist.outcome || "";
   document.querySelector("#result-answer").textContent = assist.answer || "";
+  const draft = assist.staffDraft;
+  document.querySelector("#result-draft").textContent = draft
+    ? draft.draftAnswer || ""
+    : "이번 민원에는 담당자 초안을 만들지 않았습니다.";
+  const cleaned = assist.sanitize;
+  document.querySelector("#result-sanitize").textContent = cleaned
+    ? cleaned.sanitizedSummary || ""
+    : "거친 표현 힌트가 없어 순화 호출을 건너뛰었습니다.";
   const hits = document.querySelector("#result-hits");
   hits.replaceChildren();
   for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {

@@ -150,6 +150,8 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     html = response.get_data(as_text=True)
     assert "민원 보내기" in html
     assert "Codex에 보낸 데이터" in html
+    assert "담당자 초안 (미게시)" in html
+    assert "순화 요약 (담당자 참고)" in html
     assert "/#/citizen" not in html
     assert 'name="title"' in html
 
