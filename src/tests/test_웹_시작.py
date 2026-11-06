@@ -36,4 +36,4 @@ def test_flask_env_sets_windows_libpq(
 def test_health_url_uses_port(start_web: ModuleType) -> None:
     """health 주소는 지정한 포트를 씁니다."""
     assert start_web._health_url(5000).endswith(":5000/api/v1/health")
-    assert start_web._site_url(5001).endswith(":5001/#/citizen")
+    assert start_web._site_url(5001).endswith(":5001/#/lab")

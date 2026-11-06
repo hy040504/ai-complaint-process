@@ -66,17 +66,6 @@ export let labPending = false;
 export let labError = "";
 
 /**
- * 화면 안 이동 링크를 만듭니다.
- *
- * @param {string} text 링크 내용입니다.
- * @param {string} path 해시 경로입니다.
- * @param {string} [cls] 추가 클래스입니다.
- * @returns {string} 화면에 사용할 HTML입니다.
- */
-const a = (text, path, cls = "") =>
-  `<a class="${cls}" href="#${path}">${text}</a>`;
-
-/**
  * 제목·분야·본문을 검색 질의로 합칩니다.
  *
  * @param {{title?:string,category?:string,body?:string}} values 작성 값입니다.
@@ -94,13 +83,13 @@ export function labQuery(values) {
 }
 
 /**
- * 시민 사이트와 같은 헤더를 쓰는 검사기 껍데기를 만듭니다.
+ * 응대 검사기만 여는 껍데기를 만듭니다. 시민·담당자 화면 링크는 두지 않습니다.
  *
  * @param {string} content 본문 HTML입니다.
  * @returns {string} 페이지 HTML입니다.
  */
 export function labShell(content) {
-  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · 민원은 저장하지 않습니다</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff")}${a("응대 검사기", "/lab", "selected")}</div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="다른 시연 화면">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff")}</nav><div class="citizen-header-actions">${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>로컬 검사기 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
+  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · RAG + LLM · 민원은 저장하지 않습니다</span></span></div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><div class="citizen-header-actions">${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>llm 브랜치 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
 }
 
 /**

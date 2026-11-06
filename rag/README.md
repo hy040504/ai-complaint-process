@@ -28,9 +28,12 @@ python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필�
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
 python3 -m rag assist --example faq
 # Windows: 민원-응대.cmd --example faq
+# Linux: ./ask-assist.sh --example faq
 # 검색 API가 꺼져 있으면 민원-응대.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
 # 한 문장 벡터와 pgvector 이웃: 문장-임베딩.cmd 나무가 쓰러짐
+# Linux: ./embed-sentence.sh '나무가 쓰러짐'
 # 벡터 숫자만: 문장-임베딩.cmd --raw 나무가 쓰러짐
+# 환경 준비: setup.cmd / ./setup.sh  (--check 는 확인만)
 ```
 
 API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.
@@ -41,6 +44,7 @@ API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓�
 
 ```bash
 bash rag/검색_시험.sh
+bash rag/test-search.sh
 # 다른 디렉터리에서는 스크립트의 절대 경로를 사용합니다.
 ```
 

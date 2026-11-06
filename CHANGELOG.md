@@ -2,6 +2,10 @@
 
 ## 2026-11-06
 
+- GitHub `llm` 브랜치를 만들고 기본 화면을 `/#/lab` 응대 검사기로 고정한다. 시민·담당자 해시는 검사기로 보낸다. 민원 문장 → RAG+LLM 응답 경로만 이 브랜치에서 개발한다. [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
+
+- Windows `setup.cmd`와 Linux `setup.sh`로 가상환경·PostgreSQL/pgvector·임베딩 모델을 준비한다. 기존 한국어 실행기의 영어 파일명 bash 별칭을 둔다. `--check`는 설치 없이 확인만 한다. [CASE-054](docs/cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md)
+
 - CASE-051·052 패치의 Google 형식 한국어 주석을 맞추고, pgvector 이웃 조회에 검색 엔진과 같은 HNSW `strict_order`를 쓴다. README 다음 단계에서 이미 끝난 재임베딩을 뺀다. [CASE-053](docs/cases/사례-053-패치-주석-문서-최적화-2026-11-06.md)
 
 - 검색 임베딩 기본값을 `dragonkue/multilingual-e5-small-ko`(384차원, 리비전 `bba4cb8e3299d445c04f62bf62e2b26461d03715`)로 바꾼다. 이 호스트에서 5,109건을 `--reembed`했다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`이다. [CASE-052](docs/cases/사례-052-한국어-e5-small-ko-임베딩-2026-11-06.md)

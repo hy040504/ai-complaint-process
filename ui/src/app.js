@@ -84,12 +84,22 @@ let loadSequence = 0;
  * @returns {object} 현재 경로·쿼리·역할 정보입니다.
  */
 function currentRoute() {
-  const [path, query] = (location.hash.slice(1) || "/citizen").split("?");
+  const [path, query] = (location.hash.slice(1) || "/lab").split("?");
   return {
     path,
     params: new URLSearchParams(query),
     staff: path.startsWith("/staff"),
   };
+}
+/**
+ * llm 브랜치는 응대 검사기만 연다. 다른 해시는 `/lab`으로 보낸다.
+ *
+ * @returns {boolean} 주소를 바꿨으면 true입니다.
+ */
+function focusLabHash() {
+  if (location.hash.slice(1).split("?")[0] === "/lab") return false;
+  location.replace("#/lab");
+  return true;
 }
 /**
  * 저장 오류를 포함한 작업 결과를 보조 기술에도 알립니다.
@@ -180,6 +190,7 @@ async function perform(action, message, rerender = true) {
  * @returns {Promise<void>} 비동기 작업의 완료 결과입니다.
  */
 async function loadScreen() {
+  if (focusLabHash()) return;
   const sequence = ++loadSequence;
   route = currentRoute();
   if (route.path === "/lab") {

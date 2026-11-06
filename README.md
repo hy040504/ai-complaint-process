@@ -18,27 +18,31 @@
 
 ---
 
+> [!IMPORTANT]
+> **브랜치 `llm` · 2026-11-06 · 응대 검사기 집중**<br>
+> 기본 화면은 [`http://127.0.0.1:5000/#/lab`](http://127.0.0.1:5000/#/lab)다. 민원 문장 → RAG 검색 → LLM 판정·안내만 이 브랜치에서 개발한다. 시민·담당자 해시는 검사기로 보낸다. CRUD 소스는 `main`에 남겨 두며 이 UI에서는 열지 않는다. [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
+
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
-> **다음:** 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
+> **다음:** 이 브랜치에서 검사기 RAG+LLM 응답, 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `웹-시작.cmd` · `검색-시작.cmd` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 실측 평가 · 공식 이관 |
+| Windows `setup.cmd` · `웹-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 실측 평가 · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
 | 화면 | 주소 | 실행 |
 | --- | --- | --- |
-| 시민 사이트 | `http://127.0.0.1:5000/#/citizen` | Windows: [`웹-시작.cmd`](웹-시작.cmd) |
-| 담당자 사이트 | `http://127.0.0.1:5000/#/staff` | 같은 Flask 서버 |
-| 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 민원 CRUD와 분리, 저장 없음 |
-| 민원 응대 CMD | [`민원-응대.cmd`](민원-응대.cmd) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
-| 문장 임베딩 CMD | [`문장-임베딩.cmd`](문장-임베딩.cmd) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
-| RAG 기동 CMD | [`검색-시작.cmd`](검색-시작.cmd) | PostgreSQL·검색 API는 별도 창. 이미 켜져 있으면 상태만 보여주고 키 입력 후 닫힘 |
+| 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
+| 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 이 브랜치 기본 화면. Windows [`웹-시작.cmd`](웹-시작.cmd) · Linux [`start-web.sh`](start-web.sh) |
+| 시민·담당자 | `/#/citizen` · `/#/staff` | `llm` 브랜치에서는 검사기로 보냄. 소스는 `main`에 유지 |
+| 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
+| 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
+| RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
 | API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
@@ -209,19 +213,36 @@ Qwen3.5-4B부터 비교하고 추가 학습 없이 시작하는 안은 [모델 �
 
 ## 빠른 시작
 
-Windows에서 시민 화면까지 한 번에 열려면 저장소 루트의 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `.venv-web`이 준비되어 있으면 Flask를 별도 창에서 시작하고, 이미 실행 중이면 그 주소를 엽니다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md)
+처음 받은 저장소에서는 가상환경·PostgreSQL/pgvector·임베딩 모델을 [`setup.cmd`](setup.cmd)(Windows) 또는 [`setup.sh`](setup.sh)(Linux)로 준비합니다. Docker는 쓰지 않습니다. `--check`는 설치 없이 준비 상태만 확인합니다. 검색 원문 5,109건 적재는 dump 복원 또는 `python -m rag ingest`이며 setup 기본 범위가 아닙니다. [CASE-054](docs/cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md)
+
+```bat
+setup.cmd
+setup.cmd --check
+```
+
+```bash
+./setup.sh
+./setup.sh --check
+```
+
+Windows에서 응대 검사기까지 한 번에 열려면 저장소 루트의 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `.venv-web`이 준비되어 있으면 Flask를 별도 창에서 시작하고, 이미 실행 중이면 `/#/lab`을 엽니다. Linux는 [`start-web.sh`](start-web.sh)입니다. [CASE-024](docs/cases/사례-024-Windows-서버-시작-스크립트-2026-11-05.md) · [CASE-055](docs/cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md)
 
 ```bat
 웹-시작.cmd
 ```
 
-Windows에서 검색 DB와 API를 다시 켜려면 [`검색-시작.cmd`](검색-시작.cmd)입니다. 검색 API가 꺼져 있으면 [`민원-응대.cmd`](민원-응대.cmd)가 localhost에서 `python -m rag serve`를 별도 창으로 시작합니다. PostgreSQL이 꺼져 있으면 `검색-시작.cmd`가 먼저 필요합니다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+Windows에서 검색 DB와 API를 다시 켜려면 [`검색-시작.cmd`](검색-시작.cmd)입니다. Linux 검색 API는 [`start-search.sh`](start-search.sh)입니다. 검색 API가 꺼져 있으면 [`민원-응대.cmd`](민원-응대.cmd) 또는 [`ask-assist.sh`](ask-assist.sh)가 localhost에서 `python -m rag serve`를 시작합니다. PostgreSQL이 꺼져 있으면 Windows는 `검색-시작.cmd`가 먼저 필요합니다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 ```bat
 민원-응대.cmd 대형폐기물 배출 방법이 궁금합니다
 민원-응대.cmd --example faq
 민원-응대.cmd --no-start --example faq
 문장-임베딩.cmd --raw 나무가 쓰러짐
+```
+
+```bash
+./ask-assist.sh --example faq
+./embed-sentence.sh --raw '나무가 쓰러짐'
 ```
 
 **메뉴로 직접 검색해 보기:** [검색 테스트 TUI](rag/검색_시험.sh)를 실행하면 상태 확인, FAQ·사례 검색, 예제 질의, 재정렬·관할 설정을 사용할 수 있습니다.
@@ -311,10 +332,11 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 ```text
 ai-complaint-process/
 ├── README.md / CHANGELOG.md / AGENTS.md
-├── 웹-시작.cmd                   # Windows Flask 시작·시민 화면
-├── 검색-시작.cmd                 # Windows PostgreSQL·검색 API 시작
-├── 민원-응대.cmd                 # Windows 민원 → RAG+LLM 응대. 꺼진 검색 API 자동 시작
-├── 문장-임베딩.cmd               # 한 문장 벡터와 pgvector 이웃. --raw 는 숫자만
+├── setup.cmd / setup.sh          # 가상환경·PostgreSQL·임베딩 모델 준비. --check 는 확인만
+├── 웹-시작.cmd / start-web.sh    # Flask 시작. Linux는 포그라운드 :5000
+├── 검색-시작.cmd / start-search.sh
+├── 민원-응대.cmd / ask-assist.sh
+├── 문장-임베딩.cmd / embed-sentence.sh
 ├── .env.example                  # 응대 LLM 공급자 예시
 ├── src/
 │   ├── app.py                    # Flask 팩토리

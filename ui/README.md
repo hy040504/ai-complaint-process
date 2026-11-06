@@ -14,11 +14,10 @@
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 실행하면 Flask 서버를 별도 창에서 시작하고, 준비가 끝나면 기본 브라우저의 시민 화면을 연다.
+Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 실행하면 Flask 서버를 별도 창에서 시작하고, 준비가 끝나면 기본 브라우저의 응대 검사기를 연다. `llm` 브랜치의 기본 화면은 검사기다.
 
-- 시민: http://127.0.0.1:5000/#/citizen
-- 담당자: http://127.0.0.1:5000/#/staff
 - 응대 검사기: http://127.0.0.1:5000/#/lab
+- 시민·담당자 해시(`/citizen`, `/staff`)는 이 브랜치에서 `/lab`으로 보낸다.
 - Swagger: http://127.0.0.1:5000/docs · 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf)
 - Node.js가 있으면 `npm --prefix ui run dev`도 같은 Flask 서버를 실행한다.
 - 포트 변경은 `$env:COMPLAINT_PORT = '5001'`을 설정한다.

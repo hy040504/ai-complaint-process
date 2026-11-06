@@ -1,4 +1,4 @@
-"""Windows에서 Flask 민원 서버를 시작하고 시민 화면을 엽니다.
+"""Windows에서 Flask 민원 서버를 시작하고 응대 검사기를 엽니다.
 
 자식 프로세스에는 `apply_windows_libpq`로 `PGHOST`·`PGDATABASE` 기본값을
 채웁니다. 이미 있는 환경변수는 덮어쓰지 않습니다.
@@ -52,15 +52,15 @@ def _health_url(port: int) -> str:
 
 
 def _site_url(port: int) -> str:
-    """기본 브라우저로 열 시민 화면 주소를 만듭니다.
+    """기본 브라우저로 열 응대 검사기 주소를 만듭니다.
 
     Args:
         port: Flask가 바인딩한 포트입니다.
 
     Returns:
-        `/#/citizen` 주소입니다.
+        `/#/lab` 주소입니다.
     """
-    return f"http://127.0.0.1:{port}/#/citizen"
+    return f"http://127.0.0.1:{port}/#/lab"
 
 
 def port_open(port: int) -> bool:
@@ -134,7 +134,7 @@ def start_server() -> None:
 
 
 def main() -> int:
-    """가상환경을 확인하고 서버 준비 후 시민 화면을 엽니다.
+    """가상환경을 확인하고 서버 준비 후 응대 검사기를 엽니다.
 
     Returns:
         성공 0, 가상환경·준비 실패 1입니다.

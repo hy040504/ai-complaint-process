@@ -14,7 +14,8 @@
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
-| 시민·담당자 화면 실행 | [UI 안내](../ui/README.md), Windows는 [`웹-시작.cmd`](../웹-시작.cmd) |
+| 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) |
+| 응대 검사기 (`llm` 브랜치 기본) | [UI 안내](../ui/README.md), `http://127.0.0.1:5000/#/lab`, Windows [`웹-시작.cmd`](../웹-시작.cmd), Linux [`start-web.sh`](../start-web.sh), [CASE-055](cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md) |
 | 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
 | Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
@@ -33,7 +34,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내 시스템 접두는 `docs/harness/prompts/` PREFIX-00~02입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `웹-시작.cmd`로 서버와 시민 화면을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. 검색 예제 재평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내 시스템 접두는 `docs/harness/prompts/` PREFIX-00~02입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `웹-시작.cmd`로 서버와 `/#/lab` 검사기를 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. `llm` 브랜치에서는 시민·담당자 해시를 검사기로 보냅니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. 검색 예제 재평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -54,6 +55,8 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-055](cases/사례-055-llm브랜치-응대검사기-집중-2026-11-06.md) | 2026-11-06 | GitHub `llm` 브랜치, 기본 화면 `/#/lab` | 완료 · 브랜치 세팅 |
+| [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) | 2026-11-06 | setup.cmd/setup.sh와 영어 파일명 Linux 실행기 | 완료 · GitHub는 `llm` 브랜치 |
 | [CASE-053](cases/사례-053-패치-주석-문서-최적화-2026-11-06.md) | 2026-11-06 | CASE-051·052 주석·README·이웃 조회 순서 정리 | 완료 · 이 커밋 |
 | [CASE-052](cases/사례-052-한국어-e5-small-ko-임베딩-2026-11-06.md) | 2026-11-06 | 기본 임베딩을 dragonkue multilingual-e5-small-ko로 바꾸고 5,109건 재적재 | 완료 · GitHub는 CASE-053 |
 | [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) | 2026-11-06 | 문장 임베딩 뒤에 FAQ·사례 pgvector 이웃 출력 | 완료 · GitHub는 CASE-053 |

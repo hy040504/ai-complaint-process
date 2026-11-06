@@ -16,7 +16,7 @@ py -3.12 -m venv .venv-web
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. 이 스크립트는 [`scripts/웹_시작.py`](../scripts/웹_시작.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 시민 화면을 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다. Flask 자식 환경에는 Windows libpq 기본값(`PGHOST`·`PGDATABASE=complaints_native`)을 채운다.
+처음 환경은 저장소 루트의 [`setup.cmd`](../setup.cmd) 또는 Linux [`setup.sh`](../setup.sh)로 가상환경·DB·모델을 준비한다. `--check`는 설치 없이 확인만 한다. Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 더블클릭하거나 명령 프롬프트에서 실행할 수 있다. Linux는 [`start-web.sh`](../start-web.sh)다. 이 스크립트는 [`scripts/웹_시작.py`](../scripts/웹_시작.py)로 `.venv-web`을 확인하고 Flask 서버를 별도 창에서 시작한 뒤, `/api/v1/health`가 준비되면 기본 브라우저에서 응대 검사기(`/#/lab`)를 연다. 서버가 이미 실행 중이면 새 서버를 만들지 않고 기존 주소를 연다. `COMPLAINT_PORT`를 설정했다면 그 포트로 확인·실행한다. Flask 자식 환경에는 Windows libpq 기본값(`PGHOST`·`PGDATABASE=complaints_native`)을 채운다.
 
 한 문장의 임베딩과 pgvector 이웃은 [`문장-임베딩.cmd`](../문장-임베딩.cmd)다. RAG `.venv`의 현재 프로필로 벡터를 만든 뒤 FAQ·공개 사례를 따로 조회하고, `--raw`는 숫자만 출력한다. 검색 API·LLM은 쓰지 않는다. [`민원-응대.cmd`](../민원-응대.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/민원_응대.py`](../scripts/민원_응대.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`검색-시작.cmd`](../검색-시작.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/콘솔_기동.py`](../scripts/콘솔_기동.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
@@ -24,9 +24,8 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 �
 
 | 주소 | 제공 내용 |
 | --- | --- |
-| http://127.0.0.1:5000/#/citizen | 시민 사이트 |
-| http://127.0.0.1:5000/#/staff | 담당자 사이트 |
-| http://127.0.0.1:5000/#/lab | RAG·LLM 응대 검사기 · 민원 CRUD와 분리 |
+| http://127.0.0.1:5000/#/lab | RAG·LLM 응대 검사기. `llm` 브랜치 기본 화면 · 민원 CRUD와 분리 |
+| http://127.0.0.1:5000/#/citizen · `/#/staff` | 이 브랜치 UI에서는 `/#/lab`으로 보냄 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
 | http://127.0.0.1:5000/api/v1/health | 상태·저장 방식·실제 AI 연결 여부 |
