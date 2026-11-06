@@ -333,6 +333,14 @@ class AssistEvidenceRef(Model):
     source_id: str
 
 
+class LlmUsage(Model):
+    """한 호출의 토큰 사용량입니다. Codex CLI는 비웁니다."""
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_tokens: int | None = None
+
+
 class CodexCall(Model):
     """Codex CLI 한 호출에 넣은 시스템 표시와 사용자 JSON입니다.
 
@@ -344,12 +352,14 @@ class CodexCall(Model):
         system: PREFIX 조합 이름입니다.
         user: Codex stdin 사용자 JSON입니다.
         sent: 모델에 실제로 넣었으면 True입니다.
+        usage: openai_api가 준 토큰 사용량입니다. CLI면 비웁니다.
     """
 
     role: Literal["decision", "faq_answer", "staff_draft", "sanitize"]
     system: str
     user: dict[str, Any]
     sent: bool
+    usage: LlmUsage | None = None
 
 
 class AssistDecision(Model):

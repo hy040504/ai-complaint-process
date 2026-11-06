@@ -11,7 +11,12 @@ from rag.assist import (
     run_assist,
     validate_decision,
 )
-from src.llm.complete import codex_tool_instruction, resolve_codex_argv
+from src.llm.complete import (
+    codex_tool_instruction,
+    complete_result,
+    resolve_codex_argv,
+    usage_from_openai,
+)
 
 
 def sample_search() -> dict:
@@ -255,6 +260,36 @@ def test_openai_api_provider_uses_responses_and_medium_effort(
     assert captured["payload"]["model"] == "gpt-6-luna"
     assert captured["payload"]["reasoning"] == {"effort": "medium"}
     assert captured["headers"]["Authorization"] == "Bearer test-key"
+
+
+def test_openai_usage_reads_cached_tokens(monkeypatch: object) -> None:
+    """Responses usage의 cached_tokens를 본문과 함께 읽습니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "openai_api")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    def fake_http(url: str, payload: dict, headers: dict) -> dict:
+        return {
+            "output_text": "응답",
+            "usage": {
+                "input_tokens": 2000,
+                "output_tokens": 80,
+                "input_tokens_details": {"cached_tokens": 1500},
+            },
+        }
+
+    monkeypatch.setattr("src.llm.complete.http_json", fake_http)
+    result = complete_result("시스템", "사용자")
+    assert result.text == "응답"
+    assert result.usage == {
+        "input_tokens": 2000,
+        "output_tokens": 80,
+        "cached_tokens": 1500,
+    }
+    assert usage_from_openai({"usage": {}}) == {
+        "input_tokens": None,
+        "output_tokens": None,
+        "cached_tokens": None,
+    }
 
 
 def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -> None:

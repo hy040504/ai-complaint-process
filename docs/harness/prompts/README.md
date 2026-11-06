@@ -12,6 +12,6 @@
 | [`PREFIX-03.txt`](PREFIX-03.txt) | `PREFIX-00` + 이 파일 → `STAFF_DRAFT_SYSTEM` | 담당자 초안. FAQ가 아니면 호출. 시민 안내를 덮지 않음 |
 | [`PREFIX-04.txt`](PREFIX-04.txt) | `PREFIX-00` + 이 파일 → `SPECIAL_SANITIZE_SYSTEM` | 순화 요약. 원문 힌트가 있을 때만. 검색 도구 없음 |
 
-Codex에 허용한 도구는 `search_complaint_rag` 하나입니다. 민원 원문을 검색 API로 넘기고, 후보가 이미 있으면 다시 호출하지 않습니다. 순화 작업은 이 도구를 호출하지 않습니다. 가변 민원·검색 후보는 `user` JSON에만 둡니다. 키 순서와 공급자별 전달 위치는 [캐싱 지침 4절](../시스템_프롬프트와_프리픽스_캐싱_지침.md#4-가변-사용자-입력dynamic-suffix-직렬화-규격)을 따릅니다.
+Codex에 허용한 도구는 `search_complaint_rag` 하나입니다. 민원 원문을 검색 API로 넘기고, 후보가 이미 있으면 다시 호출하지 않습니다. 순화 작업은 이 도구를 호출하지 않습니다. 가변 민원·검색 후보는 `user` JSON에만 둡니다. 키 순서와 공급자별 전달 위치는 [캐싱 지침 4절](../시스템_프롬프트와_프리픽스_캐싱_지침.md#4-가변-사용자-입력dynamic-suffix-직렬화-규격)을 따릅니다. 조립 적격은 [`src/assist/prefix_cache.py`](../../../src/assist/prefix_cache.py)가 검사합니다. openai_api `cached_tokens`는 키가 있을 때 [`scripts/응대_비교.py`](../../../scripts/응대_비교.py)가 기록합니다.
 
 프롬프트를 고치면 이 파일을 고치고 관련 테스트를 실행합니다. 마크다운 본문에 다른 원문을 복제해 두지 않습니다.

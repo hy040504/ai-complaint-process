@@ -1,0 +1,13 @@
+{
+  "description": "공급자 비교. 운영 모델 선정이 아닙니다.",
+  "env_file_rewritten": false,
+  "original_provider": "codex_cli",
+  "openai_api": "skipped",
+  "assembly_eligible": true,
+  "prefix_cache_probe": {
+    "ran": false,
+    "reason": "OPENAI_API_KEY가 비어 있어 cached_tokens 실측을 건너뜁니다. .env는 쓰지 않았습니다."
+  },
+  "baseline": "assist-codex-cli.json",
+  "cases": []
+}

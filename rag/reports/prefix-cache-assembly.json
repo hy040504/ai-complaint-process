@@ -1,0 +1,45 @@
+{
+  "description": "PREFIX 조립 적격 검사. OpenAI cached_tokens 실측이 아닙니다.",
+  "openai_prefix_cache_min_tokens": 1024,
+  "prefix_00_chars": 1550,
+  "prefix_00_estimated_tokens": 1034,
+  "lf_only": true,
+  "dynamic_slots": [],
+  "shared_prefix_00": true,
+  "assembly_eligible": true,
+  "systems": [
+    {
+      "system": "PREFIX-00 + PREFIX-01",
+      "chars": 4050,
+      "estimated_tokens": 2092,
+      "starts_with_prefix_00": true,
+      "matches_join": true,
+      "meets_openai_min_tokens": true
+    },
+    {
+      "system": "PREFIX-00 + PREFIX-02",
+      "chars": 2308,
+      "estimated_tokens": 1522,
+      "starts_with_prefix_00": true,
+      "matches_join": true,
+      "meets_openai_min_tokens": true
+    },
+    {
+      "system": "PREFIX-00 + PREFIX-03",
+      "chars": 2415,
+      "estimated_tokens": 1510,
+      "starts_with_prefix_00": true,
+      "matches_join": true,
+      "meets_openai_min_tokens": true
+    },
+    {
+      "system": "PREFIX-00 + PREFIX-04",
+      "chars": 2385,
+      "estimated_tokens": 1457,
+      "starts_with_prefix_00": true,
+      "matches_join": true,
+      "meets_openai_min_tokens": true
+    }
+  ],
+  "codex_cli_note": "codex_cli는 호출마다 새 프로세스라 KV 캐시 적중을 이 값으로 확인할 수 없습니다. cached_tokens는 openai_api Responses usage입니다."
+}

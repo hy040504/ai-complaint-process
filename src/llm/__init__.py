@@ -4,14 +4,22 @@
 담당합니다.
 """
 
-from src.llm.complete import complete_chat, parse_json_object
+from src.llm.complete import (
+    complete_chat,
+    complete_result,
+    parse_json_object,
+    usage_from_openai,
+)
 from src.rag.http import http_json
-from src.llm.settings import llm_configured, llm_settings
+from src.llm.settings import llm_configured, llm_settings, optional_env
 
 __all__ = [
     "complete_chat",
+    "complete_result",
     "http_json",
     "llm_configured",
     "llm_settings",
+    "optional_env",
     "parse_json_object",
+    "usage_from_openai",
 ]

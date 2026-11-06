@@ -2,6 +2,8 @@
 
 ## 2026-11-06
 
+- PREFIX 조립이 캐시 적격인지 검사하고, openai_api 비교는 `.env`를 쓰지 않은 채 키가 없으면 건너뛴다. 초안 응대 평가 10건을 현재 공급자로 기록한다. [CASE-062](docs/cases/사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md)
+
 - PREFIX-03 담당자 초안과 PREFIX-04 순화를 검사기·CLI 후속 호출로 잇는다. 시민 갈래와 민원 CRUD는 바꾸지 않는다. e5-small-ko 검색 예제 10건을 재평가하고 현재 공급자 실측을 기록한다. [CASE-061](docs/cases/사례-061-PREFIX-03-04-검색재평가-실측-2026-11-06.md)
 
 - CASE-057~059 패치의 Google 형식 한국어 주석을 맞추고, MCP JSON 본문 검사를 한 함수로 모은다. README에 Lab :5010·MCP NDJSON 배지와 검사기 검색·판정 현재 단계를 적었다. [CASE-060](docs/cases/사례-060-패치-주석-문서-최적화-2026-11-06.md)
@@ -248,4 +250,4 @@
 
 ## 남은 작업
 
-이 호스트는 2026-11-06에 5,109건을 `dragonkue/multilingual-e5-small-ko`로 다시 임베딩했다. 검색 예제 10건 재평가, Luna 실측, 민원 CRUD의 LLM 연결, 시민 챗봇·담당자 SSE, 운영 인증·공식 이관이 남아 있습니다. 공식 업무분장·관할과 FAQ 현행성 보완, 한국어 판정 평가셋도 후속입니다. Jev와 LoRA는 기본 LLM + RAG 평가 이후 과제입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.
+이 호스트는 2026-11-06에 5,109건을 `dragonkue/multilingual-e5-small-ko`로 다시 임베딩했다. 검색 예제 10건과 초안 응대 10건(9/10)을 기록했다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 민원 CRUD의 LLM 연결, 시민 챗봇·담당자 SSE, 운영 인증·공식 이관이 남아 있습니다. 공식 업무분장·관할과 FAQ 현행성 보완, 한국어 400문항 평가셋도 후속입니다. Jev와 LoRA는 기본 LLM + RAG 평가 이후 과제입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.

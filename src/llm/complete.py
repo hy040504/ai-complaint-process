@@ -14,11 +14,61 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple, TypedDict
 
 from src.llm.rag_tool import RAG_TOOL_NAME, RAG_TOOL_USAGE
 from src.llm.settings import llm_settings
 from src.rag.http import http_json
+
+
+class CompleteUsage(TypedDict):
+    """한 번의 완성 호출에서 읽은 토큰 사용량입니다.
+
+    `cached_tokens`는 Responses API가 프리픽스 캐시를 적중했을 때만
+    채워집니다. Codex CLI는 이 값을 돌려주지 않습니다.
+    """
+
+    input_tokens: int | None
+    output_tokens: int | None
+    cached_tokens: int | None
+
+
+class CompleteResult(NamedTuple):
+    """완성 본문과 공급자가 준 사용량입니다."""
+
+    text: str
+    usage: CompleteUsage | None
+
+
+def _as_int(value: Any) -> int | None:
+    """JSON 숫자 칸을 int로 읽습니다."""
+    return value if isinstance(value, int) else None
+
+
+def usage_from_openai(body: Any) -> CompleteUsage | None:
+    """Responses API 본문에서 입력·출력·캐시 토큰을 꺼냅니다.
+
+    Args:
+        body: Responses API JSON입니다.
+
+    Returns:
+        사용량 칸이 있으면 딕셔너리, 없으면 None입니다.
+    """
+    if not isinstance(body, dict):
+        return None
+    raw = body.get("usage")
+    if not isinstance(raw, dict):
+        return None
+    details = raw.get("input_tokens_details")
+    cached: int | None = None
+    if isinstance(details, dict):
+        cached = _as_int(details.get("cached_tokens"))
+    return CompleteUsage(
+        input_tokens=_as_int(raw.get("input_tokens")),
+        output_tokens=_as_int(raw.get("output_tokens")),
+        cached_tokens=cached,
+    )
+
 
 _WIN_CODEX_WRAPPERS = {".cmd", ".bat", ".ps1"}
 
@@ -71,6 +121,25 @@ def complete_openai_response(
     Raises:
         ValueError: API 키가 없거나 응답에 텍스트가 없는 경우 발생합니다.
     """
+    return complete_openai_result(settings, system, user).text
+
+
+def complete_openai_result(
+    settings: dict[str, str | None], system: str, user: str
+) -> CompleteResult:
+    """OpenAI Responses API 본문과 사용량을 함께 반환합니다.
+
+    Args:
+        settings: `llm_settings()`가 만든 공급자 설정입니다.
+        system: 시스템 지시입니다.
+        user: 사용자 본문입니다.
+
+    Returns:
+        모델 텍스트와 `usage`입니다.
+
+    Raises:
+        ValueError: API 키가 없거나 응답에 텍스트가 없는 경우 발생합니다.
+    """
     token = settings["token"]
     url = settings["url"]
     if not token or not url:
@@ -88,7 +157,7 @@ def complete_openai_response(
             "User-Agent": "cheongju-assist/0.1",
         },
     )
-    return response_output_text(body)
+    return CompleteResult(response_output_text(body), usage_from_openai(body))
 
 
 def resolve_codex_argv(command: str) -> list[str]:
@@ -246,15 +315,17 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
     return text
 
 
-def complete_chat(
+def complete_result(
     system: str,
     user: str,
     settings: dict[str, str | None] | None = None,
-) -> str:
-    """선택한 LLM 공급자로 한 번의 완성을 요청합니다.
+) -> CompleteResult:
+    """선택한 LLM 공급자로 한 번의 완성과 사용량을 요청합니다.
 
     `system`은 요청마다 바뀌지 않는 고정 지시이고, `user`는 민원·검색 후보
     같은 가변 본문입니다. 프리픽스 캐싱을 쓸 때도 이 경계를 유지합니다.
+    `openai_api`만 `cached_tokens`를 채웁니다. `codex_cli`는 프로세스마다
+    새로 뜨므로 호출 사이 KV 캐시를 이 값으로 확인할 수 없습니다.
 
     Args:
         system: 시스템 지시입니다.
@@ -262,7 +333,7 @@ def complete_chat(
         settings: 이미 읽은 공급자 설정입니다. 생략하면 `llm_settings()`를 한 번 읽습니다.
 
     Returns:
-        모델이 반환한 메시지 문자열입니다.
+        본문과 사용량입니다. 공급자가 사용량을 안 주면 usage는 None입니다.
 
     Raises:
         ValueError: 공급자 설정이 없거나 응답 형식이 잘못된 경우 발생합니다.
@@ -270,9 +341,9 @@ def complete_chat(
     if settings is None:
         settings = llm_settings()
     if settings["provider"] == "openai_api":
-        return complete_openai_response(settings, system, user)
+        return complete_openai_result(settings, system, user)
     if settings["provider"] == "codex_cli":
-        return complete_codex_cli(settings, system, user)
+        return CompleteResult(complete_codex_cli(settings, system, user), None)
     if not settings["token"] or not settings["url"] or not settings["model"]:
         raise ValueError("LLM 토큰·주소·모델이 설정되지 않았습니다.")
     headers = {"User-Agent": "cheongju-assist/0.1"}
@@ -300,7 +371,28 @@ def complete_chat(
         raise ValueError("LLM 응답에 메시지 본문이 없습니다.") from exc
     if not isinstance(content, str) or not content.strip():
         raise ValueError("LLM 응답 본문이 비어 있습니다.")
-    return content
+    return CompleteResult(content, usage_from_openai(body))
+
+
+def complete_chat(
+    system: str,
+    user: str,
+    settings: dict[str, str | None] | None = None,
+) -> str:
+    """선택한 LLM 공급자로 한 번의 완성을 요청합니다.
+
+    Args:
+        system: 시스템 지시입니다.
+        user: 사용자 본문입니다.
+        settings: 이미 읽은 공급자 설정입니다. 생략하면 `llm_settings()`를 한 번 읽습니다.
+
+    Returns:
+        모델이 반환한 메시지 문자열입니다.
+
+    Raises:
+        ValueError: 공급자 설정이 없거나 응답 형식이 잘못된 경우 발생합니다.
+    """
+    return complete_result(system, user, settings=settings).text
 
 
 def parse_json_object(text: str) -> dict[str, Any]:

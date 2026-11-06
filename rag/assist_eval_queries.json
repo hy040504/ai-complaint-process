@@ -1,0 +1,86 @@
+{
+  "description": "초안 응대 평가셋. 검색 Hit@5와 구별한다. 운영 모델 선정이 아니다.",
+  "review_status": "draft",
+  "items": [
+    {
+      "name": "FAQ_대형폐기물",
+      "query": "낡은 소파와 장롱을 버리려는데 대형폐기물 배출은 어떻게 하나요?",
+      "district": null,
+      "expected_outcomes": ["faq_answer"],
+      "must_not": ["automatic_transfer"],
+      "note": "배출 방법 안내"
+    },
+    {
+      "name": "FAQ_버스분실물",
+      "query": "청주 시내버스에 지갑을 두고 내렸는데 분실물은 어디에 문의하나요?",
+      "district": null,
+      "expected_outcomes": ["faq_answer"],
+      "must_not": ["automatic_transfer"],
+      "note": "분실물 문의 안내"
+    },
+    {
+      "name": "FAQ_자동차세",
+      "query": "자동차세를 한꺼번에 미리 내는 연납 신청 방법은?",
+      "district": null,
+      "expected_outcomes": ["faq_answer"],
+      "must_not": ["automatic_transfer"],
+      "note": "연납 신청 안내"
+    },
+    {
+      "name": "FAQ_성인여권",
+      "query": "성인이 여권을 처음 발급받으려면 어떤 서류를 준비해야 하나요?",
+      "district": null,
+      "expected_outcomes": ["faq_answer"],
+      "must_not": ["automatic_transfer"],
+      "note": "여권 서류 안내"
+    },
+    {
+      "name": "FAQ_면접정장",
+      "query": "청주에서 취업 면접용 정장을 무료로 빌릴 수 있나요?",
+      "district": null,
+      "expected_outcomes": ["faq_answer"],
+      "must_not": ["automatic_transfer"],
+      "note": "정장 대여 안내"
+    },
+    {
+      "name": "부서_버스무정차",
+      "query": "711번 버스가 승객이 있는데도 정류장에 서지 않고 지나갔습니다. 운전자 교육과 시정을 요청합니다.",
+      "district": null,
+      "expected_outcomes": ["department_suggestion", "human_handoff"],
+      "must_not": ["faq_answer", "automatic_transfer"],
+      "note": "현장 시정 요청. 부서 미검증이면 검토"
+    },
+    {
+      "name": "부서_흥덕구포트홀",
+      "query": "흥덕구 옥산면 동림리 239-1 일원 도로에 포트홀이 생겼습니다. 보수해 주세요.",
+      "district": "흥덕구",
+      "expected_outcomes": ["department_suggestion", "human_handoff"],
+      "must_not": ["faq_answer", "automatic_transfer"],
+      "note": "도로 보수 요청"
+    },
+    {
+      "name": "부서_폐기물판매처",
+      "query": "20L 불연성폐기물 특수마대를 어디서 살 수 있나요? 가게에는 40L만 있습니다.",
+      "district": null,
+      "expected_outcomes": ["faq_answer", "department_suggestion", "human_handoff"],
+      "must_not": ["automatic_transfer"],
+      "note": "판매처 문의. FAQ 또는 부서 후보"
+    },
+    {
+      "name": "부서_청주페이",
+      "query": "청주페이 인센티브가 적용되지 않는 가맹점이 있어서 불편합니다. 충전할 때 인센티브를 지급하도록 변경해 주세요.",
+      "district": null,
+      "expected_outcomes": ["department_suggestion", "human_handoff"],
+      "must_not": ["faq_answer", "automatic_transfer"],
+      "note": "제도 변경 요청"
+    },
+    {
+      "name": "범위밖_검색과판정분리",
+      "query": "캐나다 영주권을 신청하려고 하는데 청주시에서 심사해 줄 수 있나요?",
+      "district": null,
+      "expected_outcomes": ["human_handoff"],
+      "must_not": ["faq_answer", "automatic_transfer"],
+      "note": "청주시 소관 밖. 거부가 아니라 담당자 검토"
+    }
+  ]
+}

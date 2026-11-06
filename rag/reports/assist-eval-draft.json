@@ -1,0 +1,126 @@
+{
+  "description": "초안 응대 평가셋. 검색 Hit@5와 구별한다. 운영 모델 선정이 아니다.",
+  "review_status": "draft",
+  "provider": "codex_cli",
+  "model": "gpt-6-luna",
+  "passed": 9,
+  "total": 10,
+  "elapsed_ms": 190429.4,
+  "results": [
+    {
+      "name": "FAQ_대형폐기물",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "ok": true,
+      "elapsed_ms": 21955.8
+    },
+    {
+      "name": "FAQ_버스분실물",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "ok": true,
+      "elapsed_ms": 12644.3
+    },
+    {
+      "name": "FAQ_자동차세",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "ok": true,
+      "elapsed_ms": 17448.2
+    },
+    {
+      "name": "FAQ_성인여권",
+      "outcome": "human_handoff",
+      "reason_code": "insufficient_evidence",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "ok": false,
+      "elapsed_ms": 15442.2
+    },
+    {
+      "name": "FAQ_면접정장",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer"
+      ],
+      "ok": true,
+      "elapsed_ms": 14981.4
+    },
+    {
+      "name": "부서_버스무정차",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "ok": true,
+      "elapsed_ms": 20114.6
+    },
+    {
+      "name": "부서_흥덕구포트홀",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "ok": true,
+      "elapsed_ms": 24348.0
+    },
+    {
+      "name": "부서_폐기물판매처",
+      "outcome": "human_handoff",
+      "reason_code": "department_unverified",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer",
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "ok": true,
+      "elapsed_ms": 20374.6
+    },
+    {
+      "name": "부서_청주페이",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "ok": true,
+      "elapsed_ms": 21715.8
+    },
+    {
+      "name": "범위밖_검색과판정분리",
+      "outcome": "human_handoff",
+      "reason_code": "out_of_scope",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "ok": true,
+      "elapsed_ms": 21404.0
+    }
+  ]
+}

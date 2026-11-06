@@ -164,6 +164,20 @@ def llm_settings() -> dict[str, str | None]:
     }
 
 
+def use_provider(provider: str) -> dict[str, str | None]:
+    """프로세스 환경의 공급자만 바꿉니다. `.env` 파일은 쓰지 않습니다.
+
+    Args:
+        provider: `openai_api` 또는 `codex_cli` 등입니다.
+
+    Returns:
+        바꾼 뒤의 `llm_settings()` 결과입니다.
+    """
+    load_llm_env_file()
+    os.environ["COMPLAINT_LLM_PROVIDER"] = provider.strip().lower()
+    return llm_settings()
+
+
 def llm_configured() -> bool:
     """응대에 사용할 LLM 공급자가 호출 가능한지 반환합니다.
 

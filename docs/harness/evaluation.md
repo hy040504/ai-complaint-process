@@ -32,7 +32,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 | SQL·RRF·토큰화·지역 필터 | 코드·격리 DB 테스트, 색인 호환성, 관련 검색 회귀 |
 | 임베딩·재정렬 모델 | 모델 리비전·색인 호환성, 검색 회귀, 같은 입력의 품질·시간 비교 |
 | API 입력·출력 | 정상 입력, `400/422/503` 경로, 검색 전용 계약, CLI 호환성 |
-| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 현재 미구현 |
+| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 초안 갈래 10건은 `scripts/응대_평가.py` |
 | 시연 웹·민원 업무 서버 | 등록·영속화·조회·답변 교환·역할·상태 전이·중복 제출·AI 실패 시 민원 보존; 현재 미구현 |
 | 후속 Jev·LoRA 도입 | 같은 검색 근거·보류 평가셋으로 기본 LLM + RAG와 각각 비교 |
 
@@ -58,6 +58,10 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 2026-10-25 코드·주석 점검에서 기존 13개와 후보 조회 회귀 12개, 총 **25개 테스트가 통과**했다. 추가 회귀는 모델·DB 대역을 사용하며 실제 모델의 검색 품질 평가와 구별한다. 변경·실행 근거는 [CASE-006](../cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)에 있다.
 
 2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
+
+2026-11-06 `scripts/응대_평가.py`는 같은 10개 질의의 **응대 갈래**만 초안으로 본다. `codex_cli`/`gpt-6-luna`에서 9/10이 기대 갈래와 맞았고 `automatic_transfer`는 모두 거짓이다. `FAQ_성인여권`은 `human_handoff`/`insufficient_evidence`로 기대 `faq_answer`와 달랐다. 운영 모델 선정이 아니다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json)
+
+PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인한다. openai_api `cached_tokens`는 `.env`의 키가 비어 건너뛰었다. [조립 보고서](../../rag/reports/prefix-cache-assembly.json) · [비교](../../rag/reports/assist-provider-compare.json)
 
 2026-10-24 기준 코드·DB 테스트 13개와 API 예제 10개가 통과했다. [검색 보고서](../../rag/reports/retrieval-smoke.json)의 FAQ 5개·부서 4개는 기대 대상이 1위였지만 평가 코드의 통과 조건은 **상위 5개 포함**이다. 범위 밖 예제 1개는 `requires_gate` 유지만 확인한다. 실제 범위 밖 판정에 성공했다는 결과가 아니다.
 

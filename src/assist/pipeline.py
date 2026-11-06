@@ -15,10 +15,10 @@ import time
 from collections.abc import Iterator
 from typing import Any, Callable
 
-from src.assist.constants import (
+from src.assist.constants import PROGRESS_LABELS
+from src.assist.prompts import (
     ANSWER_SYSTEM,
     DECISION_SYSTEM,
-    PROGRESS_LABELS,
     SPECIAL_SANITIZE_SYSTEM,
     STAFF_DRAFT_SYSTEM,
 )
@@ -36,7 +36,8 @@ from src.assist.policy import (
     public_hit,
     validate_decision,
 )
-from src.llm import complete_chat, llm_configured, llm_settings, parse_json_object
+from src.llm import complete_result, llm_configured, llm_settings, parse_json_object
+from src.llm.complete import CompleteUsage
 from src.rag import (
     SearchParts,
     compact_faq,
@@ -243,19 +244,40 @@ def iter_assist(
     parts = search_parts(search)
     user_payload = decision_payload(text, district, search, parts)
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
+    usage_box: list[CompleteUsage | None] = [None]
     chat: Callable[[str, str], str] | None
     if llm_fn is USE_ENV_LLM:
         if llm_on:
             bound = llm_settings()
 
             def chat_env(system: str, user: str) -> str:
-                return complete_chat(system, user, settings=bound)
+                result = complete_result(system, user, settings=bound)
+                usage_box[0] = result.usage
+                return result.text
 
             chat = chat_env
         else:
             chat = None
     else:
         chat = llm_fn if callable(llm_fn) else None
+
+    def record_call(
+        role: str,
+        system_label: str,
+        user_obj: dict[str, Any],
+        sent: bool,
+    ) -> dict[str, Any]:
+        """모델에 넣은 사용자 JSON과 사용량을 한 칸에 담습니다."""
+        item: dict[str, Any] = {
+            "role": role,
+            "system": system_label,
+            "user": user_obj,
+            "sent": sent,
+        }
+        if sent and usage_box[0] is not None:
+            item["usage"] = usage_box[0]
+        return item
+
     raw_decision: dict[str, Any] | None = None
     started = time.perf_counter()
     if chat is None:
@@ -278,12 +300,12 @@ def iter_assist(
             failures = [str(exc)]
 
     codex_calls: list[dict[str, Any]] = [
-        {
-            "role": "decision",
-            "system": "PREFIX-00 + PREFIX-01",
-            "user": user_payload,
-            "sent": chat is not None,
-        }
+        record_call(
+            "decision",
+            "PREFIX-00 + PREFIX-01",
+            user_payload,
+            chat is not None,
+        )
     ]
     generated: str | None = None
     if decision["outcome"] == "faq_answer" and chat is not None:
@@ -311,12 +333,7 @@ def iter_assist(
             failures.append(str(exc))
             generated = None
         codex_calls.append(
-            {
-                "role": "faq_answer",
-                "system": "PREFIX-00 + PREFIX-02",
-                "user": faq_user,
-                "sent": True,
-            }
+            record_call("faq_answer", "PREFIX-00 + PREFIX-02", faq_user, True)
         )
 
     sanitize: dict[str, Any] | None = None
@@ -341,12 +358,7 @@ def iter_assist(
             failures.append(str(exc))
             sanitize = None
         codex_calls.append(
-            {
-                "role": "sanitize",
-                "system": "PREFIX-00 + PREFIX-04",
-                "user": sanitize_user,
-                "sent": True,
-            }
+            record_call("sanitize", "PREFIX-00 + PREFIX-04", sanitize_user, True)
         )
 
     staff_draft: dict[str, Any] | None = None
@@ -372,12 +384,7 @@ def iter_assist(
             failures.append(str(exc))
             staff_draft = None
         codex_calls.append(
-            {
-                "role": "staff_draft",
-                "system": "PREFIX-00 + PREFIX-03",
-                "user": draft_user,
-                "sent": True,
-            }
+            record_call("staff_draft", "PREFIX-00 + PREFIX-03", draft_user, True)
         )
 
     yield {

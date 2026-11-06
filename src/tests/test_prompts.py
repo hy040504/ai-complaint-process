@@ -70,3 +70,17 @@ def test_decision_and_answer_exclude_staff_prefixes() -> None:
     assert "순화 요약" not in DECISION_SYSTEM
     assert "답변 초안" not in ANSWER_SYSTEM
     assert "순화 요약" not in ANSWER_SYSTEM
+
+
+def test_prefix_cache_assembly_is_eligible() -> None:
+    """네 시스템 지시가 PREFIX-00으로 시작하고 동적 슬롯이 없습니다."""
+    from src.assist.prefix_cache import prefix_cache_report
+
+    report = prefix_cache_report()
+    assert report["assembly_eligible"] is True
+    assert report["lf_only"] is True
+    assert report["dynamic_slots"] == []
+    assert report["shared_prefix_00"] is True
+    assert all(row["starts_with_prefix_00"] for row in report["systems"])
+    assert all(row["matches_join"] for row in report["systems"])
+    assert report["systems"][0]["meets_openai_min_tokens"] is True

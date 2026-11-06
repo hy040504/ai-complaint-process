@@ -24,14 +24,14 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원). e5-small-ko 검색 예제 10건은 상위 5개 포함·`requires_gate`를 통과했습니다.<br>
-> **다음:** PREFIX 캐시 적중 실측, openai_api와 비교 실측, 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), PREFIX 조립 적격 검사, 초안 응대 평가 9/10, Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원). e5-small-ko 검색 예제 10건은 상위 5개 포함·`requires_gate`를 통과했습니다.<br>
+> **다음:** openai_api `cached_tokens` 실측(키 필요), 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 제목·상세로 검색 후 PREFIX-00+01 판정. `assist.codex` | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. MCP는 NDJSON. PREFIX-03/04 | openai_api 비교 실측 · 공식 이관 |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. MCP는 NDJSON. PREFIX-03/04 · 조립 적격 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -75,7 +75,7 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
-| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · `gpt-6-luna` API 또는 Codex CLI 선택 · 실측 평가 후속 |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · `gpt-6-luna` API 또는 Codex CLI 선택 · 초안 평가 9/10 · openai_api 캐시 실측은 키 후속 |
 | 시연 웹 | 시민·담당자 화면, 목록·CRUD·초안·게시·단계 시연 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `웹-시작.cmd` |
 | 응대 검사기 | `:5010` 작성 → 검색 → 판정. `assist.codex` 표시 | 민원 저장 없음 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |

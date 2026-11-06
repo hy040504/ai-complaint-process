@@ -157,8 +157,11 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` MCP만 붙이며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
-시스템 지시와 민원·검색 후보 JSON은 분리합니다. 계층형 프리픽스 캐싱 적용은
-[지침](../docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md)의 후속입니다.
+시스템 지시와 민원·검색 후보 JSON은 분리합니다. PREFIX 조립 적격은
+[`src/assist/prefix_cache.py`](assist/prefix_cache.py)가 검사하고, openai_api
+`cached_tokens`는 키가 있을 때 [`scripts/응대_비교.py`](../scripts/응대_비교.py)가
+기록합니다. `.env` 파일은 비교 스크립트가 쓰지 않습니다.
+[지침](../docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md) · [CASE-062](../docs/cases/사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md).
 
 ```powershell
 .\.venv-web\Scripts\python.exe -m mypy --config-file src/mypy.ini
@@ -171,4 +174,4 @@ npm --prefix ui test
 
 2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
 
-**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 민원 CRUD의 실제 LLM 연결·작업자·SSE, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 응대 검사기의 GPT-6 Luna API·Codex CLI 어댑터는 구현됐지만 운영 자격 증명·사용량 관리·실측 평가는 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.
+**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 민원 CRUD의 실제 LLM 연결·작업자·SSE, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 응대 검사기의 GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 갈래 평가 10건은 기록했고, openai_api `cached_tokens`와 운영 모델 선정은 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.

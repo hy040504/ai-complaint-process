@@ -62,3 +62,22 @@ def test_env_file_reads_legacy_token(tmp_path: Path, monkeypatch: object) -> Non
     assert loaded["provider"] == "legacy"
     assert loaded["token"] == "legacy-secret"
     assert settings.llm_configured() is True
+
+
+def test_use_provider_overrides_process_env_only(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    """공급자 전환은 프로세스 환경만 바꾸고 `.env` 파일은 쓰지 않습니다."""
+    env_file = tmp_path / ".env"
+    original = "COMPLAINT_LLM_PROVIDER=codex_cli\nOPENAI_API_KEY=\n"
+    env_file.write_text(original, encoding="utf-8")
+    monkeypatch.setattr(settings, "_ENV_FILE", env_file)
+    settings._LLM_ENV_LOADED = False
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-compare-only")
+    monkeypatch.setattr(settings.shutil, "which", lambda command: command)
+
+    loaded = settings.use_provider("openai_api")
+    assert loaded["provider"] == "openai_api"
+    assert loaded["token"] == "sk-compare-only"
+    assert env_file.read_text(encoding="utf-8") == original

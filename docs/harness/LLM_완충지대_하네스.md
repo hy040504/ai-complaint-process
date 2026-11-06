@@ -4,7 +4,7 @@
 
 **기준: 2026-11-06 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
 
-> **구현:** 1차 판정·조건부 FAQ 안내는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)+[`PREFIX-01`](prompts/PREFIX-01.txt)·[`PREFIX-02`](prompts/PREFIX-02.txt)를 사용한다. 담당자 초안·특이민원 순화 프리픽스는 파일이 있으나 호출은 후속이다. 민원 CRUD의 LLM 연결·SSE·공식 이관은 미구현이다.
+> **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/응대_비교.py`가 한다. 민원 CRUD의 LLM 연결·SSE·공식 이관은 미구현이다.
 
 ---
 
