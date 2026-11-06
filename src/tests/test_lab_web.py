@@ -152,6 +152,12 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert "Codex에 보낸 데이터" in html
     assert "담당자 초안 (미게시)" in html
     assert "순화 요약 (담당자 참고)" in html
+    assert 'id="result-reason"' in html
+    js = (Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js").read_text(
+        encoding="utf-8"
+    )
+    assert "reasonNames" in js
+    assert "condition_unclear" in js
     assert "/#/citizen" not in html
     assert 'name="title"' in html
 

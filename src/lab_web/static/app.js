@@ -8,6 +8,21 @@ const outcomeNames = {
   human_handoff: "담당자가 이어서 살펴봅니다",
 };
 
+const reasonNames = {
+  ok: "검색 근거로 안내합니다",
+  insufficient_evidence: "검색 근거만으로 안내를 확정하기 어렵습니다",
+  condition_unclear: "FAQ에 질문이 요구하는 항목이 부족합니다",
+  out_of_scope: "현재 FAQ·사례 범위에서 확정하기 어렵습니다",
+  action_required: "현장 조치가 필요한 요청입니다",
+  mixed_request: "안내와 조치가 섞여 있습니다",
+  department_unverified: "부서 업무분장·관할이 확인되지 않았습니다",
+  invalid_model_output: "판정 JSON을 코드에서 검증하지 못했습니다",
+  policy_rejected: "모델이 가리킨 근거가 검색 결과와 맞지 않습니다",
+  llm_unavailable: "언어 모델을 호출하지 못했습니다",
+  search_failed: "검색에 실패했습니다",
+  faq_generation_failed: "FAQ 안내문 생성을 통과하지 못했습니다",
+};
+
 /**
  * 폼 값을 서버 계약 JSON으로 만듭니다.
  *
@@ -70,6 +85,14 @@ function showResult(payload, received) {
   document.querySelector("#result-message").textContent = received.message;
   document.querySelector("#result-outcome").textContent =
     outcomeNames[assist.outcome] || assist.outcome || "";
+  const reason = assist.reasonCode || assist.decision?.reasonCode || "";
+  document.querySelector("#result-reason").textContent = reason
+    ? reasonNames[reason] || reason
+    : "";
+  const failures = assist.policyFailures || [];
+  document.querySelector("#result-failures").textContent = failures.length
+    ? `정책 검사: ${failures.join(" ")}`
+    : "";
   document.querySelector("#result-answer").textContent = assist.answer || "";
   const draft = assist.staffDraft;
   document.querySelector("#result-draft").textContent = draft

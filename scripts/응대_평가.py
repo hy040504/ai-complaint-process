@@ -48,19 +48,24 @@ def main() -> int:
         transfer = result.get("automatic_transfer")
         expected = item["expected_outcomes"]
         forbidden = item.get("must_not") or []
+        expected_reasons = item.get("expected_reason_codes")
+        reason = result.get("reason_code")
         ok = outcome in expected and not (
             transfer is True and "automatic_transfer" in forbidden
         )
-        if "faq_answer" in forbidden and outcome == "faq_answer":
+        if outcome in forbidden:
+            ok = False
+        if expected_reasons and reason not in expected_reasons:
             ok = False
         if ok:
             passed += 1
         row = {
             "name": item["name"],
             "outcome": outcome,
-            "reason_code": result.get("reason_code"),
+            "reason_code": reason,
             "automatic_transfer": transfer,
             "expected_outcomes": expected,
+            "expected_reason_codes": expected_reasons,
             "ok": ok,
             "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
         }

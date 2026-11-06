@@ -30,9 +30,10 @@
       "name": "FAQ_성인여권",
       "query": "성인이 여권을 처음 발급받으려면 어떤 서류를 준비해야 하나요?",
       "district": null,
-      "expected_outcomes": ["faq_answer"],
-      "must_not": ["automatic_transfer"],
-      "note": "여권 서류 안내"
+      "expected_outcomes": ["human_handoff"],
+      "expected_reason_codes": ["condition_unclear", "insufficient_evidence"],
+      "must_not": ["faq_answer", "automatic_transfer"],
+      "note": "검색 1위는 성인 여권 발급 FAQ이나 본문에 필요 서류 목록이 없다. 서류를 지어 안내하지 않는다."
     },
     {
       "name": "FAQ_면접정장",

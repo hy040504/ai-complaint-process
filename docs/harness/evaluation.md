@@ -59,7 +59,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 
 2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
 
-2026-11-06 `scripts/응대_평가.py`는 같은 10개 질의의 **응대 갈래**만 초안으로 본다. `codex_cli`/`gpt-6-luna`에서 9/10이 기대 갈래와 맞았고 `automatic_transfer`는 모두 거짓이다. `FAQ_성인여권`은 `human_handoff`/`insufficient_evidence`로 기대 `faq_answer`와 달랐다. 운영 모델 선정이 아니다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json)
+2026-11-06 `scripts/응대_평가.py`는 같은 10개 질의의 **응대 갈래**만 초안으로 본다. `FAQ_성인여권`은 검색 1위 FAQ 본문에 필요 서류가 없어 `human_handoff`/`condition_unclear`가 맞다. 라벨을 고친 뒤 여권 문항을 재실행했고 초안 10/10이다. 나머지 9건은 이전 실행이다. 운영 모델 선정이 아니다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-063](../cases/사례-063-여권FAQ조건부족-검사기사유표시-2026-11-06.md)
 
 PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인한다. openai_api `cached_tokens`는 `.env`의 키가 비어 건너뛰었다. [조립 보고서](../../rag/reports/prefix-cache-assembly.json) · [비교](../../rag/reports/assist-provider-compare.json)
 
