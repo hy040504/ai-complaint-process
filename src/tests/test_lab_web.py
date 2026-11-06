@@ -1,5 +1,7 @@
 """응대 검사기 웹이 민원 JSON만 받고 업무 DB에 쓰지 않는지 확인합니다."""
 
+from pathlib import Path
+
 from flask.testing import FlaskClient
 from flask import Flask
 import pytest
@@ -119,6 +121,14 @@ def test_rejects_short_body(client: FlaskClient) -> None:
     response = client.post("/api/v1/lab/complaints", json=payload)
     assert response.status_code == 422
     assert "body" in response.json["fields"]
+
+
+def test_launcher_cmd_uses_crlf() -> None:
+    """Windows cmd.exe가 명령을 깨지 않도록 CRLF를 유지합니다."""
+    path = Path(__file__).resolve().parents[2] / "검사기-시작.cmd"
+    data = path.read_bytes()
+    assert data.count(b"\n") > 0
+    assert data.count(b"\r\n") == data.count(b"\n")
 
 
 def test_rejects_non_object(client: FlaskClient) -> None:

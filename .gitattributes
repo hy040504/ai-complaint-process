@@ -1,5 +1,8 @@
 # Bash 스크립트는 Windows 작업 트리에서도 LF를 유지한다.
 *.sh text eol=lf
 
+# cmd.exe는 LF 줄바꿈을 명령으로 오인한다.
+*.cmd text eol=crlf
+
 # 프리픽스 원문은 캐시 키로 쓰므로 LF만 둔다.
 docs/harness/prompts/*.txt text eol=lf
