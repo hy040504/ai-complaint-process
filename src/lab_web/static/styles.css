@@ -44,9 +44,19 @@ body {
   letter-spacing: 0.04em;
 }
 header,
-main {
-  width: min(720px, calc(100% - 32px));
+.page {
+  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 32px;
+}
+main {
+  min-width: 0;
 }
 header {
   display: flex;
@@ -158,6 +168,93 @@ pre {
 #result-message {
   color: #166534;
   font-weight: 600;
+}
+#run-panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+}
+.run-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.run-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+#run-clear {
+  width: auto;
+  margin: 0;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+#run-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.run-lead,
+#run-empty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+#run-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.run-item {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 500;
+}
+.run-item strong,
+.run-item span {
+  display: block;
+}
+.run-item strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.run-item span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.run-item[aria-current="true"] {
+  background: #eef4ff;
+  border-color: var(--accent);
+}
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  #run-panel {
+    position: static;
+    max-height: none;
+  }
 }
 @media (max-width: 640px) {
   .grid {

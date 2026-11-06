@@ -1,6 +1,8 @@
 """응대 검사기 웹이 민원 JSON을 검색·판정에 넘기는지 확인합니다."""
 
 from pathlib import Path
+import shutil
+import subprocess
 
 from flask.testing import FlaskClient
 from flask import Flask
@@ -153,11 +155,16 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert "담당자 초안 (미게시)" in html
     assert "순화 요약 (담당자 참고)" in html
     assert 'id="result-reason"' in html
+    assert 'id="run-panel"' in html
+    assert 'id="run-list"' in html
+    assert "테스트 기록" in html
     js = (Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js").read_text(
         encoding="utf-8"
     )
     assert "reasonNames" in js
     assert "condition_unclear" in js
+    assert "RUN_STORAGE_KEY" in js
+    assert "lab-test-runs" in js
     assert "/#/citizen" not in html
     assert 'name="title"' in html
 
@@ -219,3 +226,20 @@ def test_rejects_non_object(client: FlaskClient) -> None:
     response = client.post("/api/v1/lab/complaints", json=["민원"])
     assert response.status_code == 400
     assert response.json["code"] == "invalid_json"
+
+
+def test_run_storage_helpers() -> None:
+    """테스트 기록은 한도를 지키고 브라우저 저장소 키로 읽습니다."""
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node가 없습니다.")
+    script = Path(__file__).resolve().parent / "test_lab_runs.mjs"
+    completed = subprocess.run(
+        [node, str(script)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "ok" in completed.stdout

@@ -16,7 +16,7 @@
     <a class="skip" href="#main">본문 바로가기</a>
     <div class="demo-bar">
       <span class="demo-label">LAB</span>
-      <span>민원톡톡 · 응대 검사기 · 민원은 저장하지 않습니다</span>
+      <span>민원톡톡 · 응대 검사기 · 업무 DB에는 저장하지 않습니다</span>
     </div>
     <header>
       <div class="brand">
@@ -30,10 +30,12 @@
         </div>
       </div>
     </header>
+    <div class="page workspace">
     <main id="main">
       <p class="lead">
         제목과 상세 내용으로 저장된 안내·사례를 먼저 찾고, 그다음 판정합니다.
         발생 지역은 검색 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다.
+        보낸 결과는 오른쪽 목록에서 골라 다시 볼 수 있습니다.
       </p>
       <form id="complaint-form">
         <label for="title">제목 <em>*</em></label>
@@ -78,6 +80,7 @@
       </form>
       <section id="result" hidden>
         <h2>응대 결과</h2>
+        <p id="result-source" class="hint-block" hidden></p>
         <p id="result-message"></p>
         <p id="result-outcome"></p>
         <p id="result-reason"></p>
@@ -109,6 +112,19 @@
       </section>
       <p id="error" class="error" hidden></p>
     </main>
+    <aside id="run-panel" aria-labelledby="run-heading">
+      <div class="run-head">
+        <h2 id="run-heading">테스트 기록</h2>
+        <button type="button" id="run-clear">모두 지우기</button>
+      </div>
+      <p class="run-lead">
+        이 브라우저에만 남습니다. 민원 업무 저장과는 별개이며 다시 호출하지
+        않습니다.
+      </p>
+      <p id="run-empty">아직 보낸 검사가 없습니다.</p>
+      <ul id="run-list"></ul>
+    </aside>
+    </div>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

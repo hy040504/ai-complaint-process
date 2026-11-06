@@ -1,6 +1,10 @@
 /**
  * 응대 검사기 작성 화면입니다. 민원 필드를 JSON으로 서버에 보냅니다.
+ * 보낸 결과는 이 브라우저의 테스트 기록에만 남기고 업무 DB에는 쓰지 않습니다.
  */
+
+export const RUN_STORAGE_KEY = "lab-test-runs";
+export const MAX_RUNS = 20;
 
 const outcomeNames = {
   faq_answer: "안내를 드렸습니다",
@@ -22,6 +26,80 @@ const reasonNames = {
   search_failed: "검색에 실패했습니다",
   faq_generation_failed: "FAQ 안내문 생성을 통과하지 못했습니다",
 };
+
+/**
+ * 브라우저 저장소에서 테스트 기록을 읽습니다.
+ *
+ * @param {Storage} [storage=localStorage] 웹 저장소입니다.
+ * @returns {object[]}
+ */
+export function loadRuns(storage = localStorage) {
+  try {
+    const parsed = JSON.parse(storage.getItem(RUN_STORAGE_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 테스트 기록을 브라우저 저장소에 씁니다.
+ *
+ * @param {object[]} runs 기록 목록입니다.
+ * @param {Storage} [storage=localStorage] 웹 저장소입니다.
+ * @returns {void}
+ */
+export function saveRuns(runs, storage = localStorage) {
+  storage.setItem(RUN_STORAGE_KEY, JSON.stringify(runs.slice(0, MAX_RUNS)));
+}
+
+/**
+ * 한 번의 검사 결과를 기록 항목으로 만듭니다.
+ *
+ * @param {ReturnType<typeof readComplaint>} payload 보낸 민원입니다.
+ * @param {object} received 서버 JSON입니다.
+ * @returns {{id:string,at:string,title:string,outcome:string,reasonCode:string,payload:object,received:object}}
+ */
+export function makeRun(payload, received) {
+  const assist = received.assist || {};
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    at: new Date().toISOString(),
+    title: payload.title,
+    outcome: assist.outcome || "",
+    reasonCode: assist.reasonCode || assist.decision?.reasonCode || "",
+    payload,
+    received,
+  };
+}
+
+/**
+ * 새 기록을 맨 앞에 두고 개수 한도를 지킵니다.
+ *
+ * @param {object[]} runs 기존 목록입니다.
+ * @param {object} run 추가할 기록입니다.
+ * @returns {object[]}
+ */
+export function addRun(runs, run) {
+  return [run, ...runs.filter((item) => item.id !== run.id)].slice(0, MAX_RUNS);
+}
+
+/**
+ * 기록 시각을 짧게 표시합니다.
+ *
+ * @param {string} iso ISO 시각입니다.
+ * @returns {string}
+ */
+export function formatRunTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
 
 /**
  * 폼 값을 서버 계약 JSON으로 만듭니다.
@@ -78,9 +156,15 @@ async function loadFields() {
  *
  * @param {ReturnType<typeof readComplaint>} payload 검사기에 보낸 민원입니다.
  * @param {object} received 서버 JSON입니다. `assist.codex`는 모델 사용자 JSON입니다.
+ * @param {string} [sourceText] 기록에서 다시 볼 때 안내 문구입니다.
  * @returns {void}
  */
-function showResult(payload, received) {
+function showResult(payload, received, sourceText = "") {
+  const source = document.querySelector("#result-source");
+  if (source) {
+    source.textContent = sourceText;
+    source.hidden = !sourceText;
+  }
   const assist = received.assist || {};
   document.querySelector("#result-message").textContent = received.message;
   document.querySelector("#result-outcome").textContent =
@@ -149,7 +233,7 @@ export async function sendComplaint(payload) {
 }
 
 /**
- * 작성 폼 제출과 글자 수 표시를 연결합니다.
+ * 작성 폼 제출과 테스트 기록 목록을 연결합니다.
  *
  * @returns {void}
  */
@@ -162,6 +246,11 @@ function bind() {
   const errorBox = document.querySelector("#error");
   const titleCount = document.querySelector("#title-count");
   const bodyCount = document.querySelector("#body-count");
+  const list = document.querySelector("#run-list");
+  const empty = document.querySelector("#run-empty");
+  const clear = document.querySelector("#run-clear");
+  let runs = loadRuns();
+  let selectedId = "";
 
   const count = () => {
     titleCount.textContent = `${title.value.length}/120`;
@@ -171,16 +260,57 @@ function bind() {
   body.addEventListener("input", count);
   count();
 
+  /**
+   * 오른쪽 기록 목록을 다시 그립니다.
+   *
+   * @returns {void}
+   */
+  const renderRuns = () => {
+    list.replaceChildren();
+    empty.hidden = runs.length > 0;
+    clear.disabled = runs.length === 0;
+    for (const run of runs) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "run-item";
+      button.dataset.runId = run.id;
+      if (run.id === selectedId) button.setAttribute("aria-current", "true");
+      const heading = document.createElement("strong");
+      heading.textContent = run.title || "(제목 없음)";
+      const meta = document.createElement("span");
+      const outcome = outcomeNames[run.outcome] || run.outcome || "결과 없음";
+      meta.textContent = `${formatRunTime(run.at)} · ${outcome}`;
+      button.append(heading, meta);
+      button.addEventListener("click", () => {
+        selectedId = run.id;
+        showResult(
+          run.payload,
+          run.received,
+          "기록에서 다시 보는 결과입니다. 모델을 다시 호출하지 않았습니다.",
+        );
+        result.hidden = false;
+        renderRuns();
+      });
+      item.append(button);
+      list.append(item);
+    }
+  };
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     errorBox.hidden = true;
-    result.hidden = true;
     submit.disabled = true;
     const payload = readComplaint(form);
     try {
       const received = await sendComplaint(payload);
+      const run = makeRun(payload, received);
+      runs = addRun(runs, run);
+      saveRuns(runs);
+      selectedId = run.id;
       showResult(payload, received);
       result.hidden = false;
+      renderRuns();
       result.scrollIntoView({ block: "start" });
     } catch (error) {
       errorBox.textContent = error.message;
@@ -189,12 +319,24 @@ function bind() {
       submit.disabled = false;
     }
   });
+
+  clear.addEventListener("click", () => {
+    runs = [];
+    selectedId = "";
+    saveRuns(runs);
+    result.hidden = true;
+    renderRuns();
+  });
+
+  renderRuns();
 }
 
-loadFields()
-  .catch((error) => {
-    const errorBox = document.querySelector("#error");
-    errorBox.textContent = error.message;
-    errorBox.hidden = false;
-  })
-  .finally(bind);
+if (typeof document !== "undefined" && document.querySelector("#complaint-form")) {
+  loadFields()
+    .catch((error) => {
+      const errorBox = document.querySelector("#error");
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+    })
+    .finally(bind);
+}

@@ -1,6 +1,6 @@
 # 응대 검사기 웹
 
-`llm` 브랜치에서 시민·담당자 화면을 빼고 응대 검사기만 추출한 작은 서버입니다. 민원 JSON을 받으면 제목·상세로 검색 API를 먼저 호출하고 `src.assist`가 판정합니다. `complaint_app`에는 저장하지 않습니다.
+`llm` 브랜치에서 시민·담당자 화면을 빼고 응대 검사기만 추출한 작은 서버입니다. 민원 JSON을 받으면 제목·상세로 검색 API를 먼저 호출하고 `src.assist`가 판정합니다. `complaint_app`에는 저장하지 않습니다. 화면 오른쪽 **테스트 기록**은 이 브라우저 `localStorage`에만 남기며, 항목을 고르면 저장된 결과를 다시 보여 주고 모델을 다시 부르지 않습니다. [CASE-065](../../docs/cases/사례-065-검사기-테스트기록목록-2026-11-06.md)
 
 `search_complaint_rag`는 PostgreSQL이 제공하는 프로그램이 아닙니다. 이 저장소가 Codex에 붙인 MCP 도구이며, 내부에서 `rag serve` 검색 API만 호출합니다. 검사기 웹의 기본 경로는 그 도구를 모델이 부르기 전에 **코드가 `run_web_assist`로 같은 검색을 먼저** 돌립니다. Codex와의 MCP 핸드셰이크는 줄 단위 JSON-RPC입니다. [CASE-058](../../docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
 
