@@ -45,7 +45,7 @@ AI는 공식 접수 창구가 아니고, 배정 확정 권한도 없다. 검색 
 | FAQ (`faq`) | 안내 근거. `detail`의 대상·접수 조건·처리기간·주의사항을 보존 | 조건을 잘라 일반화하거나 사례 답변과 섞기 |
 | 공개 사례 (`routing`) | 부서 후보 근거. 제목·요지·현행 부서 상태만 판정 입력에 넣는다 | 과거 처리 답변을 현재 정책으로 안내하기 |
 | 부서 후보 | `department_current`가 있고 검토 대상이 아닌 사례만 승격 | 다른 구의 동명 과를 하나로 합치기 |
-| 임베딩 | 질문에는 `query:` 접두, 문서에는 `passage:` 접두. 기본 e5-small 384차원 | 검색 없이 기억으로 조례·부서를 채워 넣기 |
+| 임베딩 | 질문에는 `query:` 접두, 문서에는 `passage:` 접두. 기본 e5-small-ko 384차원 | 검색 없이 기억으로 조례·부서를 채워 넣기 |
 
 판정 호출의 `user` JSON에는 `query`, `district`, `faq_candidates`, `case_candidates`, `department_candidates`만 온다. 후보가 없으면 Codex는 `search_complaint_rag`로 같은 검색 API를 한 번 호출한다. FAQ 안내 호출에는 **선택된 FAQ 원문만** 온다. 사례 본문은 넣지 않는다. 순화 작업은 이 도구를 호출하지 않는다.
 

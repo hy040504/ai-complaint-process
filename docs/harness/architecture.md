@@ -19,7 +19,7 @@ flowchart TD
     G --> O[FAQ 안내 / 부서 추천 / 담당자 검토]
 ```
 
-이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 현재 프로필 차원의 `embedding`이 저장되며 검색 순위는 각각 계산한다. 기본은 `intfloat/multilingual-e5-small` 384차원이다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개까지 총 7개 테이블을 사용한다.
+이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 현재 프로필 차원의 `embedding`이 저장되며 검색 순위는 각각 계산한다. 기본은 `dragonkue/multilingual-e5-small-ko` 384차원이다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개까지 총 7개 테이블을 사용한다.
 
 ## 코드 탐색 지도
 
@@ -28,7 +28,7 @@ flowchart TD
 | [PACKET](../../PACKET/) | 원문 수집과 확인된 부서 별칭 정규화 |
 | [data.py](../../rag/data.py) | 원본 검증, FAQ/사례 검색 본문, 내부 부서 ID 생성 |
 | [config.py](../../rag/config.py) | 모델 리비전·차원·본문/토크나이저 버전·검색 설정 |
-| [models.py](../../rag/models.py) | 프로필 임베딩(기본 e5-small)과 긴 문서의 창 단위 재정렬 |
+| [models.py](../../rag/models.py) | 프로필 임베딩(기본 e5-small-ko)과 긴 문서의 창 단위 재정렬 |
 | [korean.py](../../rag/korean.py) | Kiwi 형태소와 BM25용 토큰 빈도 |
 | [complaint_rag.sql](../../rag/origin/schema/complaint_rag.sql), [store.py](../../rag/store.py) | 테이블·색인·접속·색인 호환성 확인 |
 | [ingest.py](../../rag/ingest.py) | 벡터 재사용·체크포인트·한 트랜잭션으로 데이터 반영 |
@@ -42,7 +42,7 @@ flowchart TD
 | [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
 | [웹_시작.py](../../scripts/웹_시작.py) | Windows에서 Flask 시작과 시민 화면 열기 |
 | [민원_응대.py](../../scripts/민원_응대.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
-| [문장_임베딩.py](../../scripts/문장_임베딩.py) | 한 문장의 임베딩 숫자. 검색 API·DB 없음 |
+| [문장_임베딩.py](../../scripts/문장_임베딩.py) | 한 문장 임베딩 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | [verify.py](../../rag/verify.py), [evaluate.py](../../rag/evaluate.py) | 실제 DB 대조와 API 검색 회귀 확인 |
 
 ## 적재 계약
@@ -56,7 +56,7 @@ flowchart TD
 
 ## 검색 계약
 
-- 기본 임베딩은 `intfloat/multilingual-e5-small` 384차원이다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`다.
+- 기본 임베딩은 `dragonkue/multilingual-e5-small-ko` 384차원이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 색인은 `bge-m3`다.
 - 기본 설정은 각 컬렉션에서 벡터 30건, BM25 30건, RRF `k=60`, 재정렬 최대 20건, 반환 5건이다.
 - 재정렬을 끄면 RRF 상위 `limit`건의 원문만 조회한다. 재정렬을 켜면 기존 후보 범위인 `max(limit, rerank_k)`건을 확보한다.
 - `both`도 두 컬렉션을 각각 처리한다. 두 컬렉션의 원시 점수를 합쳐 최종 의사결정을 하지 않는다.

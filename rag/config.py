@@ -23,8 +23,16 @@ RERANKER_REVISION = "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
 TOKENIZER_VERSION = "kiwi-0.24.1-content-words-v1"
 TEXT_VERSION = "parent-document-v1"
 
-# CPU에서도 돌릴 가벼운 기본값. 기존 1024차원 색인은 RAG_EMBEDDING_PROFILE=bge-m3.
+# 기본은 한국어 미세조정 e5-small. 이전 intfloat 색인은 e5-small, 1024차원은 bge-m3.
 EMBEDDING_PROFILES = {
+    "e5-small-ko": {
+        "model": "dragonkue/multilingual-e5-small-ko",
+        "revision": "bba4cb8e3299d445c04f62bf62e2b26461d03715",
+        "dimension": 384,
+        "max_seq_length": 512,
+        "query_prefix": "query: ",
+        "passage_prefix": "passage: ",
+    },
     "e5-small": {
         "model": "intfloat/multilingual-e5-small",
         "revision": "960310a7742a4e0a250dd720466bed84fee8caac",
@@ -81,12 +89,12 @@ def embedding_profile_name() -> str:
     """선택한 임베딩 프로필 이름을 반환합니다.
 
     Returns:
-        `e5-small` 또는 `bge-m3`입니다.
+        `e5-small-ko`, `e5-small`, `bge-m3` 중 하나입니다.
 
     Raises:
         ValueError: 알 수 없는 프로필 이름이면 발생합니다.
     """
-    name = _text_env("RAG_EMBEDDING_PROFILE", "e5-small").lower()
+    name = _text_env("RAG_EMBEDDING_PROFILE", "e5-small-ko").lower()
     if name not in EMBEDDING_PROFILES:
         allowed = ", ".join(sorted(EMBEDDING_PROFILES))
         raise ValueError(f"RAG_EMBEDDING_PROFILE는 {allowed} 중 하나여야 합니다.")

@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -20,14 +20,14 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
-> **다음:** 운영 DB 5,109건 재임베딩과 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
+> **다음:** 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `웹-시작.cmd` · `검색-시작.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
+| Windows `웹-시작.cmd` · `검색-시작.cmd` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 실측 평가 · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -37,7 +37,7 @@
 | 담당자 사이트 | `http://127.0.0.1:5000/#/staff` | 같은 Flask 서버 |
 | 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 민원 CRUD와 분리, 저장 없음 |
 | 민원 응대 CMD | [`민원-응대.cmd`](민원-응대.cmd) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
-| 문장 임베딩 CMD | [`문장-임베딩.cmd`](문장-임베딩.cmd) | 문장 없으면 입력 대기. 출력 후 키를 누를 때까지 창 유지 |
+| 문장 임베딩 CMD | [`문장-임베딩.cmd`](문장-임베딩.cmd) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 CMD | [`검색-시작.cmd`](검색-시작.cmd) | PostgreSQL·검색 API는 별도 창. 이미 켜져 있으면 상태만 보여주고 키 입력 후 닫힘 |
 | API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
@@ -55,7 +55,7 @@
 
 | FAQ 안내 근거 | 공개 민원 사례 | 부서 디렉터리 | 임베딩 |
 | :---: | :---: | :---: | :---: |
-| **94건** | **5,015건** | **127개** | **기본 e5-small 384차원 · 기존 dump는 bge-m3** |
+| **94건** | **5,015건** | **127개** | **기본 e5-small-ko 384차원 · 이전 색인은 e5-small · bge-m3** |
 
 ## 현재 구현 상태
 
@@ -130,7 +130,7 @@ FAQ·사례 테이블에는 현재 프로필 차원의 `embedding` 벡터가 함
 
 | 검색 단계 | 현재 설정 |
 | --- | --- |
-| 의미 검색 | 기본 `intfloat/multilingual-e5-small` 384차원, cosine/HNSW 상위 30건. 기존 색인은 `RAG_EMBEDDING_PROFILE=bge-m3` |
+| 의미 검색 | 기본 `dragonkue/multilingual-e5-small-ko` 384차원, cosine/HNSW 상위 30건. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3는 `bge-m3` |
 | 키워드 검색 | Kiwi 형태소 분석 + PostgreSQL BM25 상위 30건 |
 | 순위 결합 | RRF `k=60`, FAQ·사례 각각 계산 |
 | 재정렬 | `BAAI/bge-reranker-v2-m3`, 상위 20건 평가 후 기본 5건 반환 |
@@ -314,7 +314,7 @@ ai-complaint-process/
 ├── 웹-시작.cmd                   # Windows Flask 시작·시민 화면
 ├── 검색-시작.cmd                 # Windows PostgreSQL·검색 API 시작
 ├── 민원-응대.cmd                 # Windows 민원 → RAG+LLM 응대. 꺼진 검색 API 자동 시작
-├── 문장-임베딩.cmd               # 한 문장 벡터 숫자. DB·API 없음
+├── 문장-임베딩.cmd               # 한 문장 벡터와 pgvector 이웃. --raw 는 숫자만
 ├── .env.example                  # 응대 LLM 공급자 예시
 ├── src/
 │   ├── app.py                    # Flask 팩토리

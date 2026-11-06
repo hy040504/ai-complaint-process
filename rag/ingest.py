@@ -109,7 +109,8 @@ def ingest(
         if old_config and not compatible and not reembed:
             raise ValueError(
                 "임베딩 모델/본문 구성 변경: ingest --reembed가 필요합니다. "
-                "기존 BGE-M3 색인을 쓰려면 RAG_EMBEDDING_PROFILE=bge-m3 입니다."
+                "이전 intfloat 색인은 RAG_EMBEDDING_PROFILE=e5-small, "
+                "BGE-M3 색인은 RAG_EMBEDDING_PROFILE=bge-m3 입니다."
             )
         dimension_changed = False
         if not compatible or reembed:

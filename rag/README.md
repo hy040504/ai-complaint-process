@@ -2,7 +2,7 @@
 
 [프로젝트 소개](../README.md) · [문서 목차](../docs/README.md) · [운영 절차](../docs/harness/runbook.md) · [변경 이력](../CHANGELOG.md)
 
-두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, 기본 `intfloat/multilingual-e5-small` 벡터, Kiwi 형태소 기반 BM25, RRF, 선택적 BGE 재정렬을 사용합니다. 모델은 로컬 CPU에서 실행합니다. 기존 BGE-M3 1024차원 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지합니다.
+두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, 기본 `dragonkue/multilingual-e5-small-ko` 벡터, Kiwi 형태소 기반 BM25, RRF, 선택적 BGE 재정렬을 사용합니다. 모델은 로컬 CPU에서 실행합니다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 1024차원 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지합니다.
 
 이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
 
@@ -29,7 +29,8 @@ python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습�
 python3 -m rag assist --example faq
 # Windows: 민원-응대.cmd --example faq
 # 검색 API가 꺼져 있으면 민원-응대.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
-# 한 문장 벡터 숫자만: 문장-임베딩.cmd --raw 나무가 쓰러짐
+# 한 문장 벡터와 pgvector 이웃: 문장-임베딩.cmd 나무가 쓰러짐
+# 벡터 숫자만: 문장-임베딩.cmd --raw 나무가 쓰러짐
 ```
 
 API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓으로 접속하는 `complaints_native`입니다. 지역 필터는 `--district 흥덕구`처럼 명시하며 재정렬 비교는 `--no-rerank`를 사용합니다.
@@ -107,7 +108,7 @@ flowchart LR
 
 FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문서를 하나의 순위로 섞지 않습니다.
 
-- 벡터: 기본 `intfloat/multilingual-e5-small` 정규화 384차원, cosine 거리, HNSW 색인. 질문에는 `query: `, 문서에는 `passage: ` 접두를 붙입니다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`입니다.
+- 벡터: 기본 `dragonkue/multilingual-e5-small-ko` 정규화 384차원, cosine 거리, HNSW 색인. 질문에는 `query: `, 문서에는 `passage: ` 접두를 붙입니다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 색인은 `bge-m3`입니다.
 - BM25: Kiwi의 명사·동사·형용사·숫자·외국어 형태소를 사용합니다. 조사·어미와 일부 상용 민원 표현을 제외합니다. SQL에서 양수 IDF를 사용하는 BM25(`k1=1.5`, `b=0.75`)를 계산합니다.
 - RRF: 서로 다른 척도의 벡터/BM25 점수를 직접 더하지 않고 순위로 결합합니다.
 - 재정렬: `BAAI/bge-reranker-v2-m3`가 질문과 후보 원문을 함께 평가합니다. 긴 문서는 겹치는 창으로 모두 평가하고 가장 높은 관련성 logit을 사용합니다. 원문을 조용히 잘라 저장하지 않습니다.

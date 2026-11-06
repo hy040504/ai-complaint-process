@@ -15,7 +15,7 @@
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
 | 시민·담당자 화면 실행 | [UI 안내](../ui/README.md), Windows는 [`웹-시작.cmd`](../웹-시작.cmd) |
-| 한 문장 임베딩 숫자 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md) |
+| 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
 | Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
 | Flask 민원 웹·검색 클라이언트·LLM·응대 연결 | [서버 안내](../src/README.md), [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) |
@@ -33,7 +33,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내 시스템 접두는 `docs/harness/prompts/` PREFIX-00~02입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 e5-small이며 기존 dump는 bge-m3입니다. Windows는 `웹-시작.cmd`로 서버와 시민 화면을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 5,109건 재임베딩·실측 평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 미구현입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`/#/lab`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내 시스템 접두는 `docs/harness/prompts/` PREFIX-00~02입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. 검사기는 시민 작성 양식과 짧은 진행 안내를 쓰며 `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `웹-시작.cmd`로 서버와 시민 화면을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. 검색 예제 재평가·시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -54,6 +54,9 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-053](cases/사례-053-패치-주석-문서-최적화-2026-11-06.md) | 2026-11-06 | CASE-051·052 주석·README·이웃 조회 순서 정리 | 완료 · 이 커밋 |
+| [CASE-052](cases/사례-052-한국어-e5-small-ko-임베딩-2026-11-06.md) | 2026-11-06 | 기본 임베딩을 dragonkue multilingual-e5-small-ko로 바꾸고 5,109건 재적재 | 완료 · GitHub는 CASE-053 |
+| [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) | 2026-11-06 | 문장 임베딩 뒤에 FAQ·사례 pgvector 이웃 출력 | 완료 · GitHub는 CASE-053 |
 | [CASE-050](cases/사례-050-패치-주석-문서-최적화-2026-11-06.md) | 2026-11-06 | CASE-046~049 주석·README·검색 후보 직렬화 정리 | 완료 · 이 커밋 |
 | [CASE-049](cases/사례-049-업무테이블-version-컬럼-2026-11-06.md) | 2026-11-06 | 예전 업무 테이블에 `version` 컬럼을 채움 | 완료 · GitHub는 CASE-050 |
 | [CASE-048](cases/사례-048-Codex-RAG-검색-도구-2026-11-06.md) | 2026-11-06 | Codex `search_complaint_rag`와 PREFIX-00~04 호출 조건 | 완료 · GitHub는 CASE-050. 실호출은 후속 |
@@ -128,7 +131,7 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 | [웹 상세설계·분야별 작업계획](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) | UI·백엔드·AI·DB 그림·전체 38개 작업표, 도판 7개·CRUD·SSE·DB/API·인수 시나리오 16개 | 2026-10-27 요구 반영 설계. SSE·실제 AI 등은 미구현 |
 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) | LLM 후보·실행 조건·평가·LoRA·후속 Jev 후보 | 조사·제안; 모델 미선정·실측 전 |
 
-현재 PostgreSQL `complaints_native`에는 관계형 데이터와 5,109개 임베딩이 함께 적재되어 있습니다. 이 벡터는 2026-10-24 BGE-M3 1024차원 적재입니다. 코드 기본값은 e5-small 384차원이므로 새 프로필로 검색하려면 `--reembed`가 필요합니다. 부서 디렉터리도 존재하지만 공식 업무분장·관할 보완은 남아 있습니다. **초기에는 LLM + RAG를 연결하고 Jev는 추후 추가**합니다. 시연 웹의 청주시 공식 접수·외부 이관 연계는 별도 범위입니다.
+현재 PostgreSQL `complaints_native`에는 관계형 데이터와 5,109개 임베딩이 함께 적재되어 있습니다. 이 호스트의 벡터는 2026-11-06 `dragonkue/multilingual-e5-small-ko` 384차원 적재입니다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`입니다. 부서 디렉터리도 존재하지만 공식 업무분장·관할 보완은 남아 있습니다. **초기에는 LLM + RAG를 연결하고 Jev는 추후 추가**합니다. 시연 웹의 청주시 공식 접수·외부 이관 연계는 별도 범위입니다.
 
 ## 원래 계획서와 참고 자료
 

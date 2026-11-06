@@ -24,7 +24,7 @@
 
 FAQ의 여러 접수기관·온라인/방문 경로·층수/연면적 조건을 단일 부서명으로 축약하지 않는다. 사례의 요지가 없으면 제목으로 검색하고 `summary_missing=true`로 표시한다. 답변이 없는 사례도 삭제하지 않는다.
 
-임베딩 본문이 프로필의 `max_seq_length`를 넘으면 벡터 입력만 자른다. FAQ 원문·`payload`·BM25 토큰은 그대로 둔다. 기본 `e5-small`은 512토큰, `bge-m3`는 8192토큰이다. 재정렬은 긴 문서를 겹치는 창으로 평가한다. 프로필을 바꾸면 `python -m rag ingest --reembed`가 필요하며, 기존 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`로 복원한다.
+임베딩 본문이 프로필의 `max_seq_length`를 넘으면 벡터 입력만 자른다. FAQ 원문·`payload`·BM25 토큰은 그대로 둔다. 기본 `e5-small-ko`와 `e5-small`은 512토큰, `bge-m3`는 8192토큰이다. 재정렬은 긴 문서를 겹치는 창으로 평가한다. 프로필을 바꾸면 `python -m rag ingest --reembed`가 필요하다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`로 복원한다.
 
 ## 부서 의미와 검증 상태
 

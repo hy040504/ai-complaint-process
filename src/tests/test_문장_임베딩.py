@@ -88,3 +88,77 @@ def test_format_vector_text_includes_meta(embed_sentence: ModuleType) -> None:
     assert "문장: 시험" in text
     assert "노름: 1.00000000" in text
     assert "0.25000000" in text
+
+
+def test_shape_neighbors_keeps_faq_and_routing_apart(
+    embed_sentence: ModuleType,
+) -> None:
+    """FAQ에는 부서 필드를 넣지 않고, 근거 없는 사례는 확정 후보가 아닙니다."""
+    faq = embed_sentence.shape_neighbors(
+        "faq",
+        [{"source_id": "F1", "score": 0.8}],
+        {
+            "F1": {
+                "source_id": "F1",
+                "title": "배출",
+                "source_url": "https://example.test/faq",
+                "search_text": "대형폐기물 안내",
+            }
+        },
+    )
+    case = embed_sentence.shape_neighbors(
+        "routing",
+        [{"source_id": "C1", "score": 0.4}],
+        {
+            "C1": {
+                "source_id": "C1",
+                "title": "과거 민원",
+                "source_url": "https://example.test/case",
+                "search_text": "요지",
+                "routing_eligible": False,
+                "canonical_name": None,
+            }
+        },
+    )
+    assert "department_name" not in faq[0]
+    assert faq[0]["excerpt"] == "대형폐기물 안내"
+    assert case[0]["routing_eligible"] is False
+    report = embed_sentence.format_neighbors({"faq": faq, "routing": case})
+    assert "[FAQ]" in report
+    assert "[공개 사례]" in report
+    assert "부서 확정 근거에서 제외" in report
+    assert "0.8000" in report
+
+
+def test_format_vector_json_includes_neighbors(embed_sentence: ModuleType) -> None:
+    """이웃을 넣으면 JSON에 검색 전용 계약을 붙입니다."""
+    meta = {
+        "model": "demo",
+        "revision": "abc",
+        "dimension": 1,
+        "role": "query",
+        "prefix": "query: ",
+        "text": "시험",
+        "norm": 1.0,
+    }
+    payload = embed_sentence.format_vector(
+        [0.5],
+        raw=False,
+        as_json=True,
+        meta=meta,
+        neighbors={"faq": [], "routing": []},
+    )
+    assert '"retrieval_only": true' in payload
+    assert '"decision": "requires_gate"' in payload
+    assert '"neighbors"' in payload
+
+
+def test_parse_args_search_defaults(embed_sentence: ModuleType) -> None:
+    """기본은 pgvector 이웃 5건이고, raw는 숫자만 출력하는 선택입니다."""
+    args = embed_sentence.parse_args(["가로등"])
+    assert args.no_search is False
+    assert args.raw is False
+    assert args.limit == 5
+    raw = embed_sentence.parse_args(["--raw", "--no-search", "가로등"])
+    assert raw.raw is True
+    assert raw.no_search is True

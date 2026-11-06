@@ -2,6 +2,12 @@
 
 ## 2026-11-06
 
+- CASE-051·052 패치의 Google 형식 한국어 주석을 맞추고, pgvector 이웃 조회에 검색 엔진과 같은 HNSW `strict_order`를 쓴다. README 다음 단계에서 이미 끝난 재임베딩을 뺀다. [CASE-053](docs/cases/사례-053-패치-주석-문서-최적화-2026-11-06.md)
+
+- 검색 임베딩 기본값을 `dragonkue/multilingual-e5-small-ko`(384차원, 리비전 `bba4cb8e3299d445c04f62bf62e2b26461d03715`)로 바꾼다. 이 호스트에서 5,109건을 `--reembed`했다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`이다. [CASE-052](docs/cases/사례-052-한국어-e5-small-ko-임베딩-2026-11-06.md)
+
+- `문장-임베딩.cmd`는 벡터를 출력한 뒤 같은 벡터로 FAQ와 공개 사례의 pgvector 이웃을 따로 보여 준다. `--raw`와 `--no-search`는 벡터만 출력한다. [CASE-051](docs/cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md)
+
 - CASE-046~049의 한국어 Google 주석을 맞추고, 검색 도구는 판정 후보 딕셔너리를 그대로 쓴다. README에 Codex 검색 도구 배지·배너 칩과 업무 `version` 이행을 적었다. [CASE-050](docs/cases/사례-050-패치-주석-문서-최적화-2026-11-06.md)
 
 - 예전 `complaint_app.complaints`에 없는 `version` 컬럼을 서버 시작 때 채운다. `python -m src`도 비어 있는 `PGDATABASE`를 `complaints_native`로 둔다. [CASE-049](docs/cases/사례-049-업무테이블-version-컬럼-2026-11-06.md)
@@ -224,4 +230,4 @@
 
 ## 남은 작업
 
-운영 DB의 5,109건을 e5-small로 재임베딩하고 검색 예제 10건을 다시 평가하는 일, Luna 실측, 민원 CRUD의 LLM 연결, 시민 챗봇·담당자 SSE, 운영 인증·공식 이관이 남아 있습니다. 공식 업무분장·관할과 FAQ 현행성 보완, 한국어 판정 평가셋도 후속입니다. Jev와 LoRA는 기본 LLM + RAG 평가 이후 과제입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.
+이 호스트는 2026-11-06에 5,109건을 `dragonkue/multilingual-e5-small-ko`로 다시 임베딩했다. 검색 예제 10건 재평가, Luna 실측, 민원 CRUD의 LLM 연결, 시민 챗봇·담당자 SSE, 운영 인증·공식 이관이 남아 있습니다. 공식 업무분장·관할과 FAQ 현행성 보완, 한국어 판정 평가셋도 후속입니다. Jev와 LoRA는 기본 LLM + RAG 평가 이후 과제입니다. 우선순위와 완료 조건은 [실행 계획](plan/harness-roadmap.md)을 따릅니다.

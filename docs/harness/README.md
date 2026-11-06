@@ -6,7 +6,7 @@
 
 계획 갱신 기준일은 **2026-11-06 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
 
-현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `/#/lab`, Windows `민원-응대.cmd`)이 있다. 기본 임베딩은 CPU용 `intfloat/multilingual-e5-small`(384차원)이며 기존 BGE-M3 dump는 `RAG_EMBEDDING_PROFILE=bge-m3`다. 5,109건 재임베딩·최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
+현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `/#/lab`, Windows `민원-응대.cmd`)이 있다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 
 CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고받는 서버를 포함한다. 2026-10-31 [시민·담당자 UI](../../ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](../../src/README.md)를 구현했다. 2026-11-05 `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md). PostgreSQL `complaint_app` 업무 저장·서버 세션 역할·작성자·버전 검사와 API 기반 저장을 적용했다. 실제 민원 CRUD의 LLM 연결·SSE·운영 본인인증·공식 이관은 미구현이다. 검색 위 판정·검사기는 [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)에 있다. 기존 RAG 지식·환경은 분리한다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
@@ -38,7 +38,7 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 웹·민원 서버 설계 | [시연 웹 계획](../../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·답변 교환·저장과 AI 응대를 어떻게 연결하는가? |
 | 수동 검색 시험 | [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴) | FAQ·부서 사례와 원본 근거를 어떻게 확인하는가? |
 | 민원 문장 RAG+LLM 응대 | [`민원-응대.cmd`](../../민원-응대.cmd), [`민원_응대.py`](../../scripts/민원_응대.py) | 검색 API 위에서 검사기와 같은 연결을 어떻게 보는가? 꺼진 localhost API는 자동 시작하는가? |
-| 한 문장 임베딩 숫자 | [`문장-임베딩.cmd`](../../문장-임베딩.cmd), [`문장_임베딩.py`](../../scripts/문장_임베딩.py) | 검색 API 없이 벡터 숫자만 보는가? |
+| 한 문장 임베딩과 pgvector 이웃 | [`문장-임베딩.cmd`](../../문장-임베딩.cmd), [`문장_임베딩.py`](../../scripts/문장_임베딩.py) | 벡터 뒤에 FAQ·사례를 코사인으로 보는가? `--raw`는 숫자만인가? |
 | Windows 검색 DB·API 기동 | [`검색-시작.cmd`](../../검색-시작.cmd), [`검색_시작.py`](../../scripts/검색_시작.py) | 사용자 디렉터리 PostgreSQL과 `:8007`을 어떻게 다시 켜는가? |
 | 변경 검증 | [평가 기준](evaluation.md) | 무엇을 실행하고 결과를 어떻게 해석하는가? |
 | 서버·색인 관리 | [네이티브 운영 안내](네이티브_운영.md), [운영 절차](runbook.md) | 상태 확인·갱신·복구를 어떻게 수행하는가? |

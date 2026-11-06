@@ -13,8 +13,8 @@ from rag.config import (
 
 
 def test_default_embedding_is_cpu_e5_small() -> None:
-    """기본 프로필은 CPU용 multilingual-e5-small 384차원입니다."""
-    assert "multilingual-e5-small" in EMBEDDING_MODEL
+    """기본 프로필은 한국어 미세조정 e5-small 384차원입니다."""
+    assert EMBEDDING_MODEL == "dragonkue/multilingual-e5-small-ko"
     assert DIMENSION == 384
     assert EMBEDDING_QUERY_PREFIX == "query: "
     assert EMBEDDING_PASSAGE_PREFIX == "passage: "

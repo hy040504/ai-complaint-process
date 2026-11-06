@@ -11,7 +11,7 @@ if not exist "%PYTHON%" (
 )
 chcp 65001 >nul
 if "%~1"=="" (
-    echo 검색 API 없이 한 문장의 벡터 숫자만 출력합니다.
+    echo 한 문장을 임베딩한 뒤 pgvector로 비슷한 FAQ와 공개 사례를 찾습니다.
     set /p "SENTENCE=임베딩할 문장: "
     "%PYTHON%" "%cd%\scripts\문장_임베딩.py" "!SENTENCE!"
 ) else (

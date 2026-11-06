@@ -85,4 +85,4 @@ RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 - 과거 실행 결과에는 실행 시점을 남긴다. 작업 완료와 기능 구현·원격 업로드·운영 반영을 구별하고, 수행하지 않은 검증이나 반영을 완료로 적지 않는다.
 - `docs/cases`는 프로젝트 개발 기록이다. RAG의 민원 검색 데이터와 혼합해 적재하지 않는다.
 
-한 문장의 임베딩 숫자는 [scripts/문장_임베딩.py](scripts/문장_임베딩.py)다. 검색 API·DB·LLM을 쓰지 않는다. 외부 LLM 독립 예제는 [scripts/외부_LLM_예제.py](scripts/외부_LLM_예제.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달한다. 응대 검사기의 GPT-6 Luna 공급자 설정은 [서버 안내](src/README.md)와 `.env.example`을 따르며, 운영 모델 확정은 후속 작업이다.
+한 문장의 임베딩과 pgvector 이웃은 [scripts/문장_임베딩.py](scripts/문장_임베딩.py)다. FAQ와 공개 사례를 따로 조회하고, `--raw`는 벡터 숫자만 출력한다. 검색 API·LLM은 쓰지 않는다. 외부 LLM 독립 예제는 [scripts/외부_LLM_예제.py](scripts/외부_LLM_예제.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달한다. 응대 검사기의 GPT-6 Luna 공급자 설정은 [서버 안내](src/README.md)와 `.env.example`을 따르며, 운영 모델 확정은 후속 작업이다.
