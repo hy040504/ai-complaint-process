@@ -1,0 +1,60 @@
+{
+  "description": "초안 응대 평가셋. 검색 Hit@5와 구별한다. 운영 모델 선정이 아니다. 400문항이 아니다.",
+  "review_status": "draft",
+  "provider": "codex_cli",
+  "model": "gpt-6-luna",
+  "split": "holdout",
+  "passed": 3,
+  "total": 3,
+  "elapsed_ms": 60552.1,
+  "note": "보류 3건. 2026-11-07 codex_cli 실측. 프롬프트 조정에 쓰지 않는다. 개발셋은 assist-eval-draft.json. 400문항이 아니다.",
+  "results": [
+    {
+      "name": "보류_FAQ_청소년증",
+      "group_id": "holdout-youth-id",
+      "bundle": "faq_apply",
+      "split": "holdout",
+      "outcome": "faq_answer",
+      "reason_code": "ok",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "faq_answer",
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 11799.3
+    },
+    {
+      "name": "보류_조치_서원구가로등",
+      "group_id": "holdout-seowon-light",
+      "bundle": "action_like_faq",
+      "split": "holdout",
+      "outcome": "department_suggestion",
+      "reason_code": "action_required",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "department_suggestion",
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 28583.5
+    },
+    {
+      "name": "보류_범위밖_대전민원",
+      "group_id": "holdout-daejeon",
+      "bundle": "oos",
+      "split": "holdout",
+      "outcome": "human_handoff",
+      "reason_code": "out_of_scope",
+      "automatic_transfer": false,
+      "expected_outcomes": [
+        "human_handoff"
+      ],
+      "expected_reason_codes": null,
+      "ok": true,
+      "elapsed_ms": 20169.1
+    }
+  ]
+}

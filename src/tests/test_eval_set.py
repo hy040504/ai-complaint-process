@@ -1,11 +1,30 @@
 """초안 응대 평가셋 칸과 분할 규칙을 확인합니다."""
 
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+from types import ModuleType
+
+import pytest
+
 from src.assist.eval_set import (
     BUNDLES,
     load_eval_spec,
     select_items,
     validate_eval_spec,
 )
+
+
+@pytest.fixture(scope="module")
+def eval_runner() -> ModuleType:
+    """scripts/응대_평가.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "응대_평가.py"
+    spec = importlib.util.spec_from_file_location("assist_eval_runner", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_eval_spec_passes_schema() -> None:
@@ -63,3 +82,18 @@ def test_passport_and_injection_keep_handoff() -> None:
         "보류_조치_서원구가로등",
         "보류_범위밖_대전민원",
     }
+
+
+def test_eval_runner_output_keeps_holdout_file(eval_runner: ModuleType) -> None:
+    """보류 실행 기본 보고 경로는 개발셋 파일과 다릅니다."""
+    default = eval_runner.parse_args([])
+    holdout = eval_runner.parse_args(
+        ["--split", "holdout", "--output", "rag/reports/assist-eval-holdout.json"]
+    )
+    assert default.split == "dev"
+    assert eval_runner.resolve_report_path(default.output) == eval_runner.REPORT_PATH
+    assert holdout.split == "holdout"
+    assert (
+        eval_runner.resolve_report_path(holdout.output)
+        == eval_runner.HOLDOUT_REPORT_PATH
+    )

@@ -34,7 +34,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 검색한 뒤 판정하고, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. Codex MCP는 줄 단위 JSON-RPC이며 `assist.codex`에 사용자 JSON을 실습니다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3건 미실행)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 검색한 뒤 판정하고, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. Codex MCP는 줄 단위 JSON-RPC이며 `assist.codex`에 사용자 JSON을 실습니다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -55,10 +55,11 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
-| [CASE-067](cases/사례-067-패치-주석-문서-최적화-2026-11-07.md) | 2026-11-07 | CASE-064~066 주석·README·기록 JSON 읽기 | 완료 · 이 커밋 |
+| [CASE-068](cases/사례-068-패치-주석-문서-최적화-2026-11-07.md) | 2026-11-07 | 보류셋 실측 주석·README·보고 경로 | 완료 · 이 커밋 |
+| [CASE-067](cases/사례-067-패치-주석-문서-최적화-2026-11-07.md) | 2026-11-07 | CASE-064~066 주석·README·기록 JSON 읽기 | 완료 · GitHub는 CASE-067 |
 | [CASE-066](cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) | 2026-11-06 | 검사기 테스트 기록을 파일로 저장 | 완료 · GitHub는 CASE-066 |
 | [CASE-065](cases/사례-065-검사기-테스트기록목록-2026-11-06.md) | 2026-11-06 | 검사기 오른쪽 테스트 기록 목록 | 완료 · GitHub는 CASE-065 |
-| [CASE-064](cases/사례-064-초안응대평가셋확대-2026-11-06.md) | 2026-11-06 | 초안 응대 평가셋 29건, 개발/보류 분할, 조건 부족 안내 금지 | 완료 · GitHub는 CASE-064 |
+| [CASE-064](cases/사례-064-초안응대평가셋확대-2026-11-06.md) | 2026-11-06 | 초안 응대 평가셋 29건, 개발/보류 분할, 조건 부족 안내 금지 | 완료 · 개발 26/26 · 보류 3/3 |
 | [CASE-063](cases/사례-063-여권FAQ조건부족-검사기사유표시-2026-11-06.md) | 2026-11-06 | 여권 FAQ 조건 부족, 검사기 사유, 평가 라벨 정정 | 완료 · GitHub는 CASE-063 |
 | [CASE-062](cases/사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md) | 2026-11-06 | PREFIX 조립 적격, openai_api 비교 건너뜀, 초안 응대 | 완료 · GitHub는 CASE-062. 여권 문항은 CASE-063 |
 | [CASE-061](cases/사례-061-PREFIX-03-04-검색재평가-실측-2026-11-06.md) | 2026-11-06 | PREFIX-03/04 연결, 검색 예제 10건, codex_cli 실측 | 완료 · GitHub는 CASE-061 |

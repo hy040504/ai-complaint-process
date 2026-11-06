@@ -59,7 +59,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 
 2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
 
-2026-11-06 `scripts/응대_평가.py`는 초안 응대 평가셋의 **갈래**만 본다. 문항은 유형별 29건(개발 26·보류 3)이다. 기본 실행은 개발셋이며 보류 문항은 프롬프트 조정에 쓰지 않는다. `FAQ_성인여권`과 `FAQ_생활쓰레기시간`은 검색 Hit가 있어도 FAQ 본문에 질문 항목이 없어 `human_handoff`/`condition_unclear`가 맞다. 조건 부족 사유는 코드가 `faq_answer`를 막는다. 개발셋 26/26은 운영 모델 선정이 아니다. 400문항은 제안이다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-064](../cases/사례-064-초안응대평가셋확대-2026-11-06.md)
+2026-11-06 `scripts/응대_평가.py`는 초안 응대 평가셋의 **갈래**만 본다. 문항은 유형별 29건(개발 26·보류 3)이다. 기본 실행은 개발셋이며 보류 문항은 프롬프트 조정에 쓰지 않는다. `FAQ_성인여권`과 `FAQ_생활쓰레기시간`은 검색 Hit가 있어도 FAQ 본문에 질문 항목이 없어 `human_handoff`/`condition_unclear`가 맞다. 조건 부족 사유는 코드가 `faq_answer`를 막는다. 개발셋 26/26은 운영 모델 선정이 아니다. 2026-11-07 보류 3건은 `--split holdout --output rag/reports/assist-eval-holdout.json`으로 3/3이다. 이 결과로 PREFIX를 고치지 않는다. 400문항은 제안이다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [보류 보고서](../../rag/reports/assist-eval-holdout.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-064](../cases/사례-064-초안응대평가셋확대-2026-11-06.md)
 
 PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인한다. openai_api `cached_tokens`는 `.env`의 키가 비어 건너뛰었다. [조립 보고서](../../rag/reports/prefix-cache-assembly.json) · [비교](../../rag/reports/assist-provider-compare.json)
 

@@ -1,7 +1,8 @@
 """초안 응대 평가셋으로 현재 공급자의 갈래만 기록합니다.
 
 운영 모델 선정이 아닙니다. 검색 Hit@5와 구별합니다. 민원 CRUD는 쓰지 않습니다.
-기본은 개발셋만 돌리고 보류 문항은 건너뜁니다.
+기본은 개발셋만 돌리고 보류 문항은 건너뜁니다. 보류 결과는 `--output`으로
+개발셋 보고서와 나눠 씁니다. 보류 점수로 PREFIX를 고치지 않습니다.
 """
 
 from __future__ import annotations
@@ -23,6 +24,19 @@ from src.llm.settings import llm_settings, load_llm_env_file
 from src.rag import search_available
 
 REPORT_PATH = ROOT / "rag" / "reports" / "assist-eval-draft.json"
+HOLDOUT_REPORT_PATH = ROOT / "rag" / "reports" / "assist-eval-holdout.json"
+
+
+def resolve_report_path(path: Path) -> Path:
+    """보고 JSON 경로를 저장소 기준으로 맞춥니다.
+
+    Args:
+        path: `--output` 값입니다.
+
+    Returns:
+        절대 경로는 그대로, 상대 경로는 저장소 루트 아래입니다.
+    """
+    return path if path.is_absolute() else ROOT / path
 
 
 def score_item(item: dict[str, Any], result: dict[str, Any]) -> bool:
@@ -58,7 +72,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         argv: 명령줄 인자입니다. 생략하면 `sys.argv`입니다.
 
     Returns:
-        분할·문항 이름·이어 실행 여부입니다.
+        분할·문항 이름·이어 실행·보고 경로입니다.
     """
     parser = argparse.ArgumentParser(description="초안 응대 갈래 평가")
     parser.add_argument(
@@ -73,11 +87,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="기존 보고서에 없는 문항만 이어서 실행합니다.",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=REPORT_PATH,
+        help="보고 JSON 경로입니다. 기본은 개발셋 보고서입니다.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     """초안 평가 문항을 돌리고 JSON을 씁니다.
+
+    `--output`이 가리키는 파일을 덮어씁니다. 기본은 개발셋 보고서입니다.
 
     Args:
         argv: 명령줄 인자입니다.
@@ -93,9 +115,10 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         print("\n".join(failures), file=sys.stderr)
         return 1
+    report_path = resolve_report_path(args.output)
     previous: dict[str, Any] = {}
-    if REPORT_PATH.is_file():
-        previous = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    if report_path.is_file():
+        previous = json.loads(report_path.read_text(encoding="utf-8"))
     previous_rows = [
         row
         for row in previous.get("results") or []
@@ -104,11 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     by_name = {row["name"]: row for row in previous_rows}
     missing = set(by_name) if args.missing else None
     split_items = select_items(spec, split=args.split)
-    items = split_items
-    if args.only:
-        items = [item for item in items if item.get("name") == args.only]
-    if missing is not None:
-        items = [item for item in items if item.get("name") not in missing]
+    items = select_items(
+        spec,
+        split=args.split,
+        only=args.only,
+        missing_names=missing,
+    )
     if not items:
         print("실행할 문항이 없습니다.", flush=True)
         return 0
@@ -142,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(row, ensure_ascii=False), flush=True)
     ordered = [by_name[item["name"]] for item in split_items if item["name"] in by_name]
     passed = sum(1 for row in ordered if row.get("ok"))
-    report = {
+    report: dict[str, Any] = {
         "description": spec["description"],
         "review_status": spec.get("review_status"),
         "provider": settings.get("provider"),
@@ -153,11 +177,16 @@ def main(argv: list[str] | None = None) -> int:
         "elapsed_ms": round((time.perf_counter() - started_all) * 1000, 1),
         "results": ordered,
     }
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(
+    if args.split == "holdout":
+        report["note"] = (
+            "보류 문항. 프롬프트 조정에 쓰지 않는다. 개발셋은 assist-eval-draft.json. "
+            "400문항이 아니다."
+        )
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    print(str(REPORT_PATH), flush=True)
+    print(str(report_path), flush=True)
     print(f"{passed}/{len(ordered)}", flush=True)
     return 0
 
