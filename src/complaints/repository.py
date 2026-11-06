@@ -38,6 +38,18 @@ _SCHEMA_STATEMENTS = (
         PRIMARY KEY (owner, key)
     )
     """,
+    # 예전 테이블은 id·created_at·payload만 있다. IF NOT EXISTS는 컬럼을 더하지 않는다.
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS version integer",
+    """
+    UPDATE {schema}.complaints
+    SET version = CASE
+        WHEN COALESCE(payload->>'version', '') ~ '^[1-9][0-9]*$'
+        THEN (payload->>'version')::integer
+        ELSE 1
+    END
+    WHERE version IS NULL
+    """,
+    "ALTER TABLE {schema}.complaints ALTER COLUMN version SET NOT NULL",
 )
 
 
@@ -214,6 +226,10 @@ class PostgresRepository:
     def __init__(self, conninfo: str = "", schema: str = "complaint_app") -> None:
         """연결을 확인하고 업무 스키마·테이블을 준비합니다.
 
+        `CREATE TABLE IF NOT EXISTS`는 예전 행의 컬럼을 더하지 않습니다.
+        `version`이 없으면 payload 값 또는 1로 채운 뒤 NOT NULL과
+        `version > 0` 제약을 맞춥니다. 기존 민원 행은 지우지 않습니다.
+
         Args:
             conninfo: PostgreSQL 연결 정보입니다.
             schema: 생성·사용할 스키마 이름입니다.
@@ -249,6 +265,35 @@ class PostgresRepository:
         with self.connection() as conn:
             for statement in _SCHEMA_STATEMENTS:
                 conn.execute(sql.SQL(statement).format(schema=ident))
+            self._ensure_version_check(conn)
+
+    def _ensure_version_check(self, conn: psycopg.Connection) -> None:
+        """예전 테이블에 `version > 0` 제약이 없으면 추가합니다.
+
+        Args:
+            conn: 스키마를 준비 중인 연결입니다.
+        """
+        table = sql.SQL("{}.{}").format(
+            sql.Identifier(self.schema), sql.Identifier("complaints")
+        )
+        found = conn.execute(
+            """
+            SELECT 1
+            FROM pg_constraint
+            WHERE conrelid = %s::regclass
+              AND contype = 'c'
+              AND position('version > 0' in pg_get_constraintdef(oid)) > 0
+            """,
+            (f"{self.schema}.complaints",),
+        ).fetchone()
+        if found:
+            return
+        conn.execute(
+            sql.SQL(
+                "ALTER TABLE {} ADD CONSTRAINT complaints_version_positive "
+                "CHECK (version > 0)"
+            ).format(table)
+        )
 
     @contextmanager
     def connection(self) -> Iterator[psycopg.Connection]:

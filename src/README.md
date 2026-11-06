@@ -146,7 +146,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 `COMPLAINT_LLM_PROVIDER=openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을
 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` MCP만 붙이며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. 계층형 프리픽스 캐싱 적용은

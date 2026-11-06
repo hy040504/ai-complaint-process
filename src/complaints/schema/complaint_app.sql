@@ -12,7 +12,8 @@
 -- 실행 방법
 --   - 검색 스키마가 있으면 먼저 rag/origin/schema/complaint_rag.sql
 --   - 명령 : psql -d <DB이름> -f src/complaints/schema/complaint_app.sql
---   - IF NOT EXISTS 이므로 여러 번 실행해도 기존 행을 지우지 않는다.
+--   - IF NOT EXISTS 와 ADD COLUMN IF NOT EXISTS 라서 여러 번 실행해도 기존 행을 지우지 않는다.
+--   - version 컬럼이 없는 예전 테이블은 payload 의 version, 없으면 1로 채운다.
 --   - 서버도 시작 시 같은 DDL을 적용한다.
 -- =====================================================================
 
@@ -27,6 +28,34 @@ CREATE TABLE IF NOT EXISTS complaint_app.complaints (
 
 CREATE INDEX IF NOT EXISTS idx_app_complaints_created
     ON complaint_app.complaints (created_at DESC, id DESC);
+
+ALTER TABLE complaint_app.complaints
+    ADD COLUMN IF NOT EXISTS version integer;
+
+UPDATE complaint_app.complaints
+SET version = CASE
+    WHEN COALESCE(payload->>'version', '') ~ '^[1-9][0-9]*$'
+    THEN (payload->>'version')::integer
+    ELSE 1
+END
+WHERE version IS NULL;
+
+ALTER TABLE complaint_app.complaints
+    ALTER COLUMN version SET NOT NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'complaint_app.complaints'::regclass
+          AND contype = 'c'
+          AND position('version > 0' in pg_get_constraintdef(oid)) > 0
+    ) THEN
+        ALTER TABLE complaint_app.complaints
+            ADD CONSTRAINT complaints_version_positive CHECK (version > 0);
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS complaint_app.idempotency (
     owner         text NOT NULL,                         -- 작성자 시연 계정

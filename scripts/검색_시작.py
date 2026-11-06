@@ -79,7 +79,14 @@ def start_search_api() -> subprocess.Popen[bytes]:
 
 
 def main() -> int:
-    """PostgreSQL과 검색 API를 준비하고 상태를 출력합니다."""
+    """PostgreSQL과 검색 API를 준비하고 종료 코드를 반환합니다.
+
+    이미 열린 5432·8007은 종료하지 않습니다. 이 프로세스는 기동기이며
+    DB와 검색 API는 별도 콘솔에 둡니다.
+
+    Returns:
+        준비되면 0, 바이너리·포트 확인 실패면 1입니다.
+    """
     os.chdir(ROOT)
     if postgres_ready():
         print("PostgreSQL이 이미 127.0.0.1:5432 에서 실행 중입니다.")
@@ -96,6 +103,7 @@ def main() -> int:
 
     if port_open("127.0.0.1", 8007):
         print("검색 API가 이미 127.0.0.1:8007 에서 실행 중입니다.")
+        print("이 창은 기동기가 아닙니다. DB와 검색 API는 각자 창에서 유지됩니다.")
         return 0
 
     print("검색 API를 별도 창에서 시작합니다. 첫 실행은 모델 로드에 시간이 걸립니다.")
@@ -104,6 +112,7 @@ def main() -> int:
     except FileNotFoundError as exc:
         print(f"[오류] {exc}")
         return 1
+    print("검색 API 창을 열었습니다. 이 창을 닫아도 그 서버는 유지됩니다.")
     return 0
 
 

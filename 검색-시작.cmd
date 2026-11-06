@@ -11,5 +11,8 @@ if not exist "%PYTHON%" (
 chcp 65001 >nul
 "%PYTHON%" "%cd%\scripts\검색_시작.py"
 set "ERR=%ERRORLEVEL%"
-if not "%ERR%"=="0" pause
+echo.
+echo PostgreSQL과 검색 API는 각자 창에서 유지됩니다.
+echo 이 창은 상태만 보여 줍니다. 닫으려면 키를 누르세요.
+pause
 exit /b %ERR%

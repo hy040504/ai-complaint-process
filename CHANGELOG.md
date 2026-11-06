@@ -2,6 +2,18 @@
 
 ## 2026-11-06
 
+- CASE-046~049의 한국어 Google 주석을 맞추고, 검색 도구는 판정 후보 딕셔너리를 그대로 쓴다. README에 Codex 검색 도구 배지·배너 칩과 업무 `version` 이행을 적었다. [CASE-050](docs/cases/사례-050-패치-주석-문서-최적화-2026-11-06.md)
+
+- 예전 `complaint_app.complaints`에 없는 `version` 컬럼을 서버 시작 때 채운다. `python -m src`도 비어 있는 `PGDATABASE`를 `complaints_native`로 둔다. [CASE-049](docs/cases/사례-049-업무테이블-version-컬럼-2026-11-06.md)
+
+- Codex 실행 래퍼와 `PREFIX-00`은 도구를 전면 금지하지 않고, 개발자가 그 호출에 허용한 도구만 쓰게 한다. 허용 목록은 다음 항목의 `search_complaint_rag`이다. [CASE-047](docs/cases/사례-047-Codex-허용-도구-조건-2026-11-06.md)
+
+- Codex에 `search_complaint_rag`만 허가한다. 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받고, PREFIX-00~04에 호출 조건을 적는다. [CASE-048](docs/cases/사례-048-Codex-RAG-검색-도구-2026-11-06.md)
+
+- `검색-시작.cmd`는 상태 안내 뒤 키 입력까지 창을 유지한다. 이미 켜진 PostgreSQL·검색 API는 종료하지 않는다. `문장-임베딩.cmd`는 문장이 없으면 입력을 받는다. [CASE-046](docs/cases/사례-046-기동-CMD-창-유지-2026-11-06.md)
+
+- 루트 README 응대 검사기 절에 PREFIX 시스템 프롬프트 조립 표(호출마다 `00`+작업 블록 하나, `03`/`04` 미연결)를 넣었다.
+
 - CASE-043·044 패치의 Google 형식 한국어 주석을 맞추고, PREFIX 파일은 이름 목록으로 한 번에 읽으며, 문장 임베딩 L2는 numpy에서 먼저 계산한다. README에 PREFIX 배지·하네스 목차·배너 칩을 넣었다. [CASE-045](docs/cases/사례-045-패치-주석-문서-최적화-2026-11-06.md)
 
 - `docs/harness`를 LLM 완충지대 계약과 개발·운영 문서로 나누고, 프리픽스 캐싱용 실제 시스템 프롬프트(`PREFIX-00`~`04`)를 `docs/harness/prompts/`에 두었다. 1·2차 응대 호출은 이 파일을 읽어 조립한다. [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)

@@ -42,16 +42,17 @@ def empty_decision(reason: str) -> dict[str, Any]:
     }
 
 
-def decision_prompt(
+def decision_payload(
     query: str,
     district: str | None,
     search: dict[str, Any],
     parts: SearchParts | None = None,
-) -> str:
-    """판정 JSON만 요청하는 사용자 본문을 구성합니다.
+) -> dict[str, Any]:
+    """판정에 넘길 민원·검색 후보 딕셔너리를 만듭니다.
 
     시스템 지시와 섞지 않는 가변 접미입니다. 키 순서는
     `query` → `district` → FAQ·사례·부서 후보로 고정합니다.
+    검색 전용 계약 표식은 여기 넣지 않습니다.
 
     Args:
         query: 한국어 민원 원문입니다.
@@ -60,10 +61,10 @@ def decision_prompt(
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
 
     Returns:
-        FAQ·사례·부서 후보를 담은 JSON 문자열입니다.
+        FAQ·사례·부서 후보를 담은 딕셔너리입니다.
     """
     data = parts or search_parts(search)
-    payload = {
+    return {
         "query": query,
         "district": district,
         "faq_candidates": [compact_faq(hit) for hit in data.faqs],
@@ -82,7 +83,30 @@ def decision_prompt(
             for item in data.departments
         ],
     }
-    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def decision_prompt(
+    query: str,
+    district: str | None,
+    search: dict[str, Any],
+    parts: SearchParts | None = None,
+) -> str:
+    """판정 JSON만 요청하는 사용자 본문을 구성합니다.
+
+    Args:
+        query: 한국어 민원 원문입니다.
+        district: 명시한 관할 구입니다.
+        search: 검색 API 응답입니다.
+        parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
+
+    Returns:
+        `decision_payload`를 들여쓴 JSON 문자열입니다.
+    """
+    return json.dumps(
+        decision_payload(query, district, search, parts),
+        ensure_ascii=False,
+        indent=2,
+    )
 
 
 def validate_decision(

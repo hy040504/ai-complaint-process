@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![RagTool](https://img.shields.io/badge/Codex-search__complaint__rag-0d9488?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -20,14 +20,14 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, `/#/lab` 응대 검사기, `gpt-6-luna` API·Codex CLI 선택, Windows `웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`. 판정·FAQ 안내는 [`docs/harness/prompts/`](docs/harness/prompts/README.md) PREFIX-00~02. Codex 도구는 `search_complaint_rag` 하나이며, 예전 업무 테이블의 `version`은 서버 시작 때 채웁니다. 기본 임베딩은 CPU용 `e5-small`(384차원).<br>
 > **다음:** 운영 DB 5,109건 재임베딩과 검색 예제 재평가, PREFIX-03/04 연결, 공급자별 실측, 시민 챗봇 실연결, 담당자 SSE, 운영 인증·7테이블 정규화·공식 이관.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `/#/lab` · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | `src/assist`가 `src/rag`와 `src/llm`을 이음 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `웹-시작.cmd` · `검색-시작.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI 선택 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
+| Windows `웹-시작.cmd` · `검색-시작.cmd` · CPU용 e5-small · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. 도구는 `search_complaint_rag`만 | 5,109건 재임베딩 · 실측 평가 · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -37,8 +37,8 @@
 | 담당자 사이트 | `http://127.0.0.1:5000/#/staff` | 같은 Flask 서버 |
 | 응대 검사기 | `http://127.0.0.1:5000/#/lab` | 민원 CRUD와 분리, 저장 없음 |
 | 민원 응대 CMD | [`민원-응대.cmd`](민원-응대.cmd) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
-| 문장 임베딩 CMD | [`문장-임베딩.cmd`](문장-임베딩.cmd) | 검색 API 없이 벡터 숫자만 출력 |
-| RAG 기동 CMD | [`검색-시작.cmd`](검색-시작.cmd) | Windows PostgreSQL·검색 API `:8007` |
+| 문장 임베딩 CMD | [`문장-임베딩.cmd`](문장-임베딩.cmd) | 문장 없으면 입력 대기. 출력 후 키를 누를 때까지 창 유지 |
+| RAG 기동 CMD | [`검색-시작.cmd`](검색-시작.cmd) | PostgreSQL·검색 API는 별도 창. 이미 켜져 있으면 상태만 보여주고 키 입력 후 닫힘 |
 | API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
@@ -59,7 +59,7 @@
 
 ## 현재 구현 상태
 
-시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
+시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. `version` 칸이 없는 예전 `complaints` 테이블은 저장소 준비 때 채웁니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
 
 | 영역 | 구성·역할 | 상태 |
 | --- | --- | --- |
@@ -103,7 +103,18 @@ flowchart LR
     class H human
 ```
 
-진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. LLM은 `.env`의 `COMPLAINT_LLM_PROVIDER`로 고릅니다. 시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)입니다. [CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
+진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. LLM은 `.env`의 `COMPLAINT_LLM_PROVIDER`로 고릅니다.
+
+시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)의 PREFIX `.txt`입니다. `src/assist/prompts.py`가 읽어 조립하며, 민원·검색 후보는 `user` JSON에만 둡니다. 호출마다 **공통 헌법 `PREFIX-00`과 그 작업 블록 하나**를 붙입니다. Codex가 쓸 수 있는 도구는 `search_complaint_rag` 하나이며, 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받습니다. 후보가 이미 있으면 다시 호출하지 않고, 순화 작업은 이 도구를 쓰지 않습니다.
+
+| 호출 | 시스템 프롬프트 | 하는 일 | 지금 |
+| --- | --- | --- | --- |
+| 1차 판정 | `PREFIX-00` + `PREFIX-01` | 판정 JSON | 검사기가 사용 |
+| FAQ 안내 | `PREFIX-00` + `PREFIX-02` | 조건이 남은 한국어 평문 | `faq_answer`일 때만 두 번째 호출 |
+| 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | 파일만 · 미연결 |
+| 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 파일만 · 미연결 |
+
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](docs/cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
 
 ## 저장과 검색
 

@@ -11,7 +11,7 @@ from rag.assist import (
     run_assist,
     validate_decision,
 )
-from src.llm.complete import resolve_codex_argv
+from src.llm.complete import codex_tool_instruction, resolve_codex_argv
 
 
 def sample_search() -> dict:
@@ -256,8 +256,12 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
     monkeypatch.setenv("OPENAI_API_KEY", "must-not-reach-codex")
     captured: dict = {}
-    monkeypatch.setattr("src.llm.settings.shutil.which", lambda command: "C:/tools/codex.exe")
-    monkeypatch.setattr("src.llm.complete.shutil.which", lambda command: "C:/tools/codex.exe")
+    monkeypatch.setattr(
+        "src.llm.settings.shutil.which", lambda command: "C:/tools/codex.exe"
+    )
+    monkeypatch.setattr(
+        "src.llm.complete.shutil.which", lambda command: "C:/tools/codex.exe"
+    )
 
     def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
         captured.update({"args": args, **kwargs})
@@ -272,12 +276,25 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     assert 'model_reasoning_effort="medium"' in captured["args"]
     assert captured["args"][-1] == "-"
     assert captured["args"][0] == "C:/tools/codex.exe"
+    assert "search_complaint_rag" in captured["input"]
+    assert "src.llm.rag_mcp" in " ".join(captured["args"])
+    assert "--ignore-user-config" in captured["args"]
     assert "[시스템 지시]" in captured["input"]
     assert "사용자" in captured["input"]
     assert "OPENAI_API_KEY" not in captured["env"]
 
 
-def test_windows_codex_cmd_wrapper_runs_node_entry(tmp_path: Path, monkeypatch: object) -> None:
+def test_codex_tool_instruction_lists_only_developer_tools() -> None:
+    """허용 목록에 있는 도구 이름만 래퍼 문장에 넣습니다."""
+    text = codex_tool_instruction(("search_faq",))
+    assert "search_faq" in text
+    assert "search_complaint_rag에는" not in text
+    assert "그 밖의 도구" in text
+
+
+def test_windows_codex_cmd_wrapper_runs_node_entry(
+    tmp_path: Path, monkeypatch: object
+) -> None:
     """Windows npm `codex.cmd`는 cmd.exe 대신 node와 진입 스크립트를 씁니다."""
     npm_bin = tmp_path / "npm"
     script = npm_bin / "node_modules" / "@openai" / "codex" / "bin" / "codex.js"

@@ -35,6 +35,7 @@ def test_decision_system_starts_with_constitution() -> None:
     """판정 시스템 지시는 공통 헌법으로 시작합니다."""
     assert DECISION_SYSTEM.startswith("[시스템 헌법:")
     assert "1차 판정기" in DECISION_SYSTEM
+    assert "search_complaint_rag" in DECISION_SYSTEM
     assert DECISION_SYSTEM == join_prefix(PREFIX_00, PREFIX_01)
 
 
@@ -50,6 +51,7 @@ def test_staff_and_sanitize_prefixes_load() -> None:
     """담당자 초안·순화 프리픽스는 파일로 읽을 수 있습니다."""
     assert "답변 초안" in PREFIX_03
     assert "순화 요약" in PREFIX_04
+    assert "search_complaint_rag를 호출하지 않습니다." in PREFIX_04
     assert "자동 차단" in PREFIX_04
 
 
