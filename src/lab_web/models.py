@@ -3,7 +3,7 @@
 민원 CRUD 테이블에 쓰지 않습니다. 응대 결과는 `src.assist` 계약을 따릅니다.
 """
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic.alias_generators import to_camel
@@ -69,6 +69,24 @@ class LlmEnvelope(Model):
     query: Annotated[str, StringConstraints(min_length=1, max_length=2000)]
 
 
+class LabRunSummary(Model):
+    """테스트 기록 목록에 쓰는 짧은 칸입니다.
+
+    Attributes:
+        id: 파일 이름에 쓰는 기록 ID입니다.
+        at: 저장 시각(UTC)입니다.
+        title: 민원 제목입니다.
+        outcome: 응대 갈래입니다.
+        reason_code: 처리 사유입니다.
+    """
+
+    id: str
+    at: str
+    title: str = ""
+    outcome: str = ""
+    reason_code: str = ""
+
+
 class LabAcceptResult(Model):
     """수신 후 검색·판정까지 마친 응답입니다.
 
@@ -79,6 +97,7 @@ class LabAcceptResult(Model):
         llm: 파이프라인 진행 봉투입니다.
         assist: 세 갈래 응대와 `codex` 호출 목록입니다.
         message: 화면에 보여줄 짧은 안내입니다.
+        run: 파일로 남긴 기록 요약입니다.
     """
 
     accepted: Literal[True] = True
@@ -87,6 +106,7 @@ class LabAcceptResult(Model):
     llm: LlmEnvelope
     assist: AssistResponse
     message: str = "검색 후보를 찾은 뒤 판정했습니다."
+    run: LabRunSummary | None = None
 
 
 class LabFields(Model):
@@ -104,6 +124,30 @@ class LabHealth(Model):
     intake: Literal[True] = True
     search_available: bool = False
     llm_configured: bool = False
+
+
+class LabRunList(Model):
+    """저장된 테스트 기록 목록입니다."""
+
+    items: list[LabRunSummary] = Field(default_factory=list)
+
+
+class LabRunRecord(LabRunSummary):
+    """파일에서 다시 읽는 검사 결과입니다.
+
+    Attributes:
+        payload: 검사기에 보낸 민원입니다.
+        received: 검색·판정 응답입니다.
+    """
+
+    payload: dict[str, Any]
+    received: dict[str, Any]
+
+
+class LabClearResult(Model):
+    """기록 삭제 결과입니다."""
+
+    removed: int
 
 
 class ErrorBody(Model):

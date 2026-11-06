@@ -1,8 +1,6 @@
 """응대 검사기 웹이 민원 JSON을 검색·판정에 넘기는지 확인합니다."""
 
 from pathlib import Path
-import shutil
-import subprocess
 
 from flask.testing import FlaskClient
 from flask import Flask
@@ -10,6 +8,7 @@ import pytest
 
 from src.lab_web import create_app
 from src.lab_web.models import LabComplaint
+from src.lab_web.runs import list_runs, load_run
 from src.lab_web.service import compose_search_query, handle_complaint
 
 
@@ -56,7 +55,15 @@ def _assist_payload(query: str, district: str | None = None) -> dict:
 
 
 @pytest.fixture
-def app() -> Flask:
+def runs_dir(tmp_path: Path) -> Path:
+    """테스트용 기록 폴더입니다."""
+    path = tmp_path / "lab-runs"
+    path.mkdir()
+    return path
+
+
+@pytest.fixture
+def app(runs_dir: Path) -> Flask:
     """합성 응대로 검사기 웹을 만듭니다."""
 
     def fake_assist(query: str, district: str | None, limit: int, rerank: bool) -> dict:
@@ -64,7 +71,7 @@ def app() -> Flask:
         assert rerank is False
         return _assist_payload(query, district)
 
-    return create_app(assist_fn=fake_assist)
+    return create_app(assist_fn=fake_assist, runs_dir=runs_dir)
 
 
 @pytest.fixture
@@ -158,13 +165,13 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert 'id="run-panel"' in html
     assert 'id="run-list"' in html
     assert "테스트 기록" in html
-    js = (Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js").read_text(
-        encoding="utf-8"
-    )
+    js = (
+        Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js"
+    ).read_text(encoding="utf-8")
     assert "reasonNames" in js
     assert "condition_unclear" in js
-    assert "RUN_STORAGE_KEY" in js
-    assert "lab-test-runs" in js
+    assert "/api/v1/lab/runs" in js
+    assert ".rag-cache/lab-runs" in html
     assert "/#/citizen" not in html
     assert 'name="title"' in html
 
@@ -183,6 +190,8 @@ def test_accepts_complaint_json(client: FlaskClient) -> None:
     assert body["assist"]["outcome"] == "human_handoff"
     assert body["assist"]["retrieval"]["retrievalOnly"] is True
     assert body["assist"]["faq"][0]["title"] == "대형폐기물 배출 방법"
+    assert body["run"]["id"]
+    assert body["run"]["title"] == "대형폐기물 배출"
 
 
 def test_blank_district_becomes_null(client: FlaskClient) -> None:
@@ -228,18 +237,34 @@ def test_rejects_non_object(client: FlaskClient) -> None:
     assert response.json["code"] == "invalid_json"
 
 
-def test_run_storage_helpers() -> None:
-    """테스트 기록은 한도를 지키고 브라우저 저장소 키로 읽습니다."""
-    node = shutil.which("node")
-    if node is None:
-        pytest.skip("node가 없습니다.")
-    script = Path(__file__).resolve().parent / "test_lab_runs.mjs"
-    completed = subprocess.run(
-        [node, str(script)],
-        check=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    assert completed.returncode == 0, completed.stderr
-    assert "ok" in completed.stdout
+def test_complaint_is_saved_as_run_file(client: FlaskClient, runs_dir: Path) -> None:
+    """민원을 보내면 기록 JSON이 생기고 목록에서 다시 읽습니다."""
+    created = client.post("/api/v1/lab/complaints", json=_body())
+    assert created.status_code == 200
+    run_id = created.json["run"]["id"]
+    listed = client.get("/api/v1/lab/runs")
+    assert listed.status_code == 200
+    assert listed.json["items"][0]["id"] == run_id
+    detail = client.get(f"/api/v1/lab/runs/{run_id}")
+    assert detail.status_code == 200
+    assert detail.json["payload"]["title"] == "대형폐기물 배출"
+    assert detail.json["received"]["assist"]["outcome"] == "human_handoff"
+    saved = load_run(runs_dir, run_id)
+    assert saved is not None
+    assert (runs_dir / f"{run_id}.json").is_file()
+
+
+def test_run_id_rejects_path_escape(client: FlaskClient) -> None:
+    """기록 ID로 폴더 밖 경로는 열지 않습니다."""
+    response = client.get("/api/v1/lab/runs/..-secretxx")
+    assert response.status_code == 404
+
+
+def test_clear_runs_deletes_files(client: FlaskClient, runs_dir: Path) -> None:
+    """모두 지우기는 기록 파일만 삭제합니다."""
+    client.post("/api/v1/lab/complaints", json=_body())
+    assert list_runs(runs_dir)
+    deleted = client.delete("/api/v1/lab/runs")
+    assert deleted.status_code == 200
+    assert deleted.json["removed"] == 1
+    assert list_runs(runs_dir) == []

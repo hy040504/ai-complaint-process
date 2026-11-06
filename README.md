@@ -24,12 +24,12 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-06 · 검색 + 웹 업무 시연 + 응대 검사기**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·오른쪽 테스트 기록, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3건 미실행, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원). e5-small-ko 검색 예제 10건은 상위 5개 포함·`requires_gate`를 통과했습니다.<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·오른쪽 테스트 기록(파일), PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3건 미실행, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원). e5-small-ko 검색 예제 10건은 상위 5개 포함·`requires_gate`를 통과했습니다.<br>
 > **다음:** openai_api `cached_tokens` 실측(키 필요), 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
-| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · 오른쪽 테스트 기록 · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
+| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · 오른쪽 테스트 기록(파일) · `python -m rag assist` · `민원-응대.cmd` | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 제목·상세로 검색 후 PREFIX-00+01 판정. `assist.codex` | 시민 챗봇 실연결 · 담당자 SSE |
 | Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI. MCP는 NDJSON. PREFIX-03/04 · 조립 적격 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
 

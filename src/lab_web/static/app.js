@@ -1,10 +1,7 @@
 /**
  * 응대 검사기 작성 화면입니다. 민원 필드를 JSON으로 서버에 보냅니다.
- * 보낸 결과는 이 브라우저의 테스트 기록에만 남기고 업무 DB에는 쓰지 않습니다.
+ * 보낸 결과는 `.rag-cache/lab-runs` 파일에 남기고 업무 DB에는 쓰지 않습니다.
  */
-
-export const RUN_STORAGE_KEY = "lab-test-runs";
-export const MAX_RUNS = 20;
 
 const outcomeNames = {
   faq_answer: "안내를 드렸습니다",
@@ -26,63 +23,6 @@ const reasonNames = {
   search_failed: "검색에 실패했습니다",
   faq_generation_failed: "FAQ 안내문 생성을 통과하지 못했습니다",
 };
-
-/**
- * 브라우저 저장소에서 테스트 기록을 읽습니다.
- *
- * @param {Storage} [storage=localStorage] 웹 저장소입니다.
- * @returns {object[]}
- */
-export function loadRuns(storage = localStorage) {
-  try {
-    const parsed = JSON.parse(storage.getItem(RUN_STORAGE_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * 테스트 기록을 브라우저 저장소에 씁니다.
- *
- * @param {object[]} runs 기록 목록입니다.
- * @param {Storage} [storage=localStorage] 웹 저장소입니다.
- * @returns {void}
- */
-export function saveRuns(runs, storage = localStorage) {
-  storage.setItem(RUN_STORAGE_KEY, JSON.stringify(runs.slice(0, MAX_RUNS)));
-}
-
-/**
- * 한 번의 검사 결과를 기록 항목으로 만듭니다.
- *
- * @param {ReturnType<typeof readComplaint>} payload 보낸 민원입니다.
- * @param {object} received 서버 JSON입니다.
- * @returns {{id:string,at:string,title:string,outcome:string,reasonCode:string,payload:object,received:object}}
- */
-export function makeRun(payload, received) {
-  const assist = received.assist || {};
-  return {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-    at: new Date().toISOString(),
-    title: payload.title,
-    outcome: assist.outcome || "",
-    reasonCode: assist.reasonCode || assist.decision?.reasonCode || "",
-    payload,
-    received,
-  };
-}
-
-/**
- * 새 기록을 맨 앞에 두고 개수 한도를 지킵니다.
- *
- * @param {object[]} runs 기존 목록입니다.
- * @param {object} run 추가할 기록입니다.
- * @returns {object[]}
- */
-export function addRun(runs, run) {
-  return [run, ...runs.filter((item) => item.id !== run.id)].slice(0, MAX_RUNS);
-}
 
 /**
  * 기록 시각을 짧게 표시합니다.
@@ -233,6 +173,49 @@ export async function sendComplaint(payload) {
 }
 
 /**
+ * 파일로 남긴 테스트 기록 목록을 불러옵니다.
+ *
+ * @returns {Promise<object[]>}
+ */
+export async function fetchRuns() {
+  const response = await fetch("/api/v1/lab/runs");
+  const value = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(value?.message || "테스트 기록을 불러오지 못했습니다.");
+  }
+  return value.items || [];
+}
+
+/**
+ * 파일로 남긴 검사 결과 한 건을 불러옵니다.
+ *
+ * @param {string} runId 기록 ID입니다.
+ * @returns {Promise<object>}
+ */
+export async function fetchRun(runId) {
+  const response = await fetch(`/api/v1/lab/runs/${encodeURIComponent(runId)}`);
+  const value = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(value?.message || "테스트 기록을 찾지 못했습니다.");
+  }
+  return value;
+}
+
+/**
+ * 파일로 남긴 테스트 기록을 모두 지웁니다.
+ *
+ * @returns {Promise<number>} 삭제한 파일 수입니다.
+ */
+export async function clearSavedRuns() {
+  const response = await fetch("/api/v1/lab/runs", { method: "DELETE" });
+  const value = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(value?.message || "테스트 기록을 지우지 못했습니다.");
+  }
+  return value.removed || 0;
+}
+
+/**
  * 작성 폼 제출과 테스트 기록 목록을 연결합니다.
  *
  * @returns {void}
@@ -249,7 +232,7 @@ function bind() {
   const list = document.querySelector("#run-list");
   const empty = document.querySelector("#run-empty");
   const clear = document.querySelector("#run-clear");
-  let runs = loadRuns();
+  let runs = [];
   let selectedId = "";
 
   const count = () => {
@@ -282,15 +265,22 @@ function bind() {
       const outcome = outcomeNames[run.outcome] || run.outcome || "결과 없음";
       meta.textContent = `${formatRunTime(run.at)} · ${outcome}`;
       button.append(heading, meta);
-      button.addEventListener("click", () => {
-        selectedId = run.id;
-        showResult(
-          run.payload,
-          run.received,
-          "기록에서 다시 보는 결과입니다. 모델을 다시 호출하지 않았습니다.",
-        );
-        result.hidden = false;
-        renderRuns();
+      button.addEventListener("click", async () => {
+        errorBox.hidden = true;
+        try {
+          const record = await fetchRun(run.id);
+          selectedId = run.id;
+          showResult(
+            record.payload,
+            record.received,
+            "파일 기록에서 다시 보는 결과입니다. 모델을 다시 호출하지 않았습니다.",
+          );
+          result.hidden = false;
+          renderRuns();
+        } catch (error) {
+          errorBox.textContent = error.message;
+          errorBox.hidden = false;
+        }
       });
       item.append(button);
       list.append(item);
@@ -304,10 +294,8 @@ function bind() {
     const payload = readComplaint(form);
     try {
       const received = await sendComplaint(payload);
-      const run = makeRun(payload, received);
-      runs = addRun(runs, run);
-      saveRuns(runs);
-      selectedId = run.id;
+      selectedId = received.run?.id || "";
+      runs = await fetchRuns();
       showResult(payload, received);
       result.hidden = false;
       renderRuns();
@@ -320,15 +308,30 @@ function bind() {
     }
   });
 
-  clear.addEventListener("click", () => {
-    runs = [];
-    selectedId = "";
-    saveRuns(runs);
-    result.hidden = true;
-    renderRuns();
+  clear.addEventListener("click", async () => {
+    errorBox.hidden = true;
+    try {
+      await clearSavedRuns();
+      runs = [];
+      selectedId = "";
+      result.hidden = true;
+      renderRuns();
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+    }
   });
 
-  renderRuns();
+  fetchRuns()
+    .then((items) => {
+      runs = items;
+      renderRuns();
+    })
+    .catch((error) => {
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+      renderRuns();
+    });
 }
 
 if (typeof document !== "undefined" && document.querySelector("#complaint-form")) {
