@@ -165,12 +165,18 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert 'id="run-panel"' in html
     assert 'id="run-list"' in html
     assert "테스트 기록" in html
+    assert 'data-copy-target="codex-json"' in html
+    assert 'data-copy-target="sent-json"' in html
+    assert 'data-copy-target="received-json"' in html
+    assert html.count('class="json-copy"') == 3
     js = (
         Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js"
     ).read_text(encoding="utf-8")
     assert "reasonNames" in js
     assert "condition_unclear" in js
     assert "/api/v1/lab/runs" in js
+    assert "bindJsonCopyButtons" in js
+    assert "copyText" in js
     assert ".rag-cache/lab-runs" in html
     assert "/#/citizen" not in html
     assert 'name="title"' in html

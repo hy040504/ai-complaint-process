@@ -153,6 +153,39 @@ pre {
   padding: 12px;
   font-size: 12px;
 }
+.json-block {
+  margin-top: 8px;
+}
+.json-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+.json-head h3 {
+  margin: 0;
+}
+.json-copy {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.json-copy:hover,
+.json-copy:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.json-copy:disabled {
+  cursor: default;
+}
 .hint-block {
   color: var(--muted);
   font-size: 13px;

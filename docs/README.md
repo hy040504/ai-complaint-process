@@ -4,7 +4,7 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-07 UTC**.
+기준일: **2026-11-09 UTC**.
 
 ## 시작점
 
@@ -15,7 +15,7 @@
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
 | 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) |
-| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-066](cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-067](cases/사례-067-패치-주석-문서-최적화-2026-11-07.md) |
+| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-066](cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) |
 | 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
 | Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
@@ -55,6 +55,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-069](cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) | 2026-11-09 | 검사기 결과 JSON 칸마다 복사 단추 | 완료 |
 | [CASE-068](cases/사례-068-패치-주석-문서-최적화-2026-11-07.md) | 2026-11-07 | 보류셋 실측 주석·README·보고 경로 | 완료 · 이 커밋 |
 | [CASE-067](cases/사례-067-패치-주석-문서-최적화-2026-11-07.md) | 2026-11-07 | CASE-064~066 주석·README·기록 JSON 읽기 | 완료 · GitHub는 CASE-067 |
 | [CASE-066](cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) | 2026-11-06 | 검사기 테스트 기록을 파일로 저장 | 완료 · GitHub는 CASE-066 |

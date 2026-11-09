@@ -91,6 +91,87 @@ async function loadFields() {
   fillSelect(document.querySelector("#district"), value.districts || [], true);
 }
 
+const COPY_IDLE = "JSON 복사";
+const COPY_DONE = "복사됨";
+const COPY_FAIL = "복사 실패";
+
+/**
+ * 클립보드에 문자열을 넣습니다.
+ *
+ * 보안 문맥에서는 Clipboard API를 쓰고, 없으면 숨은 textarea로 복사합니다.
+ *
+ * @param {string} text 복사할 본문입니다.
+ * @returns {Promise<void>}
+ */
+export async function copyText(text) {
+  const value = String(text ?? "");
+  if (navigator.clipboard?.writeText) {
+    try {
+      await Promise.race([
+        navigator.clipboard.writeText(value),
+        new Promise((_, reject) => {
+          window.setTimeout(() => reject(new Error("clipboard timeout")), 1500);
+        }),
+      ]);
+      return;
+    } catch {
+      // Clipboard API가 막히면 아래 textarea 경로를 씁니다.
+    }
+  }
+  if (typeof document === "undefined") {
+    throw new Error("클립보드를 쓸 수 없습니다.");
+  }
+  const area = document.createElement("textarea");
+  area.value = value;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.left = "-9999px";
+  document.body.append(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  if (!ok) throw new Error("클립보드를 쓸 수 없습니다.");
+}
+
+/**
+ * JSON 칸의 복사 단추를 잠시 안내 문구로 바꿉니다.
+ *
+ * @param {HTMLButtonElement} button 대상 단추입니다.
+ * @param {string} label 표시 문구입니다.
+ * @returns {void}
+ */
+function flashCopyButton(button, label) {
+  window.clearTimeout(Number(button.dataset.copyTimer || 0));
+  button.textContent = label;
+  button.dataset.copyTimer = String(
+    window.setTimeout(() => {
+      button.textContent = COPY_IDLE;
+    }, 1600),
+  );
+}
+
+/**
+ * 응대 결과 JSON 칸마다 복사 단추를 연결합니다.
+ *
+ * @param {ParentNode} [root=document] 검색 범위입니다.
+ * @returns {void}
+ */
+export function bindJsonCopyButtons(root = document) {
+  root.querySelectorAll("[data-copy-target]").forEach((node) => {
+    if (!(node instanceof HTMLButtonElement)) return;
+    node.addEventListener("click", async () => {
+      const targetId = node.getAttribute("data-copy-target") || "";
+      const pre = targetId ? root.querySelector(`#${targetId}`) : null;
+      try {
+        await copyText(pre ? pre.textContent || "" : "");
+        flashCopyButton(node, COPY_DONE);
+      } catch {
+        flashCopyButton(node, COPY_FAIL);
+      }
+    });
+  });
+}
+
 /**
  * 응대 결과를 화면에 채웁니다.
  *
@@ -243,6 +324,7 @@ function bind() {
   title.addEventListener("input", count);
   body.addEventListener("input", count);
   count();
+  bindJsonCopyButtons();
 
   /**
    * 오른쪽 기록 목록을 다시 그립니다.

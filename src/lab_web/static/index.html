@@ -98,17 +98,53 @@
         <p id="result-sanitize"></p>
         <h3>참고한 자료</h3>
         <ul id="result-hits"></ul>
-        <h3>Codex에 보낸 데이터</h3>
-        <p id="codex-note" class="hint-block">
-          1차 판정 사용자 JSON입니다. 시스템 지시는 PREFIX-00+01이며 민원마다
-          바뀌지 않습니다. FAQ 안내면 PREFIX-00+02, 담당자 초안은 PREFIX-00+03,
-          순화는 PREFIX-00+04가 이어집니다.
-        </p>
-        <pre id="codex-json"></pre>
-        <h3>검사기에 보낸 JSON</h3>
-        <pre id="sent-json"></pre>
-        <h3>검사기가 받은 JSON</h3>
-        <pre id="received-json"></pre>
+        <div class="json-block">
+          <div class="json-head">
+            <h3>Codex에 보낸 데이터</h3>
+            <button
+              type="button"
+              class="json-copy"
+              data-copy-target="codex-json"
+              aria-label="Codex에 보낸 데이터 JSON 복사"
+            >
+              JSON 복사
+            </button>
+          </div>
+          <p id="codex-note" class="hint-block">
+            1차 판정 사용자 JSON입니다. 시스템 지시는 PREFIX-00+01이며 민원마다
+            바뀌지 않습니다. FAQ 안내면 PREFIX-00+02, 담당자 초안은 PREFIX-00+03,
+            순화는 PREFIX-00+04가 이어집니다.
+          </p>
+          <pre id="codex-json"></pre>
+        </div>
+        <div class="json-block">
+          <div class="json-head">
+            <h3>검사기에 보낸 JSON</h3>
+            <button
+              type="button"
+              class="json-copy"
+              data-copy-target="sent-json"
+              aria-label="검사기에 보낸 JSON 복사"
+            >
+              JSON 복사
+            </button>
+          </div>
+          <pre id="sent-json"></pre>
+        </div>
+        <div class="json-block">
+          <div class="json-head">
+            <h3>검사기가 받은 JSON</h3>
+            <button
+              type="button"
+              class="json-copy"
+              data-copy-target="received-json"
+              aria-label="검사기가 받은 JSON 복사"
+            >
+              JSON 복사
+            </button>
+          </div>
+          <pre id="received-json"></pre>
+        </div>
       </section>
       <p id="error" class="error" hidden></p>
     </main>
