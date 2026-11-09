@@ -58,8 +58,11 @@
           <div>
             <label for="district">발생 지역</label>
             <select id="district" name="district">
-              <option value="">지정하지 않음</option>
+              <option value="">지정하지 않음 (본문 자동 감지)</option>
             </select>
+            <div class="hint">
+              <span>비워두면 제목·본문에서 청주 지명을 자동 감지합니다.</span>
+            </div>
           </div>
         </div>
         <label for="body">상세 내용 <em>*</em></label>
@@ -91,6 +94,7 @@
       <section id="result" hidden>
         <h2>응대 결과</h2>
         <p id="result-source" class="hint-block" hidden></p>
+        <p id="result-district" class="district-badge" hidden></p>
         <p id="result-message"></p>
         <p id="result-outcome"></p>
         <p id="result-reason"></p>

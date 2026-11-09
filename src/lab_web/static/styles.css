@@ -374,6 +374,20 @@ pre {
   background: #eef4ff;
   border-color: var(--accent);
 }
+.district-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #eef7f6;
+  color: var(--brand);
+  border: 1px solid #c7e6e2;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0 12px;
+}
+
 @media (max-width: 900px) {
   .workspace {
     grid-template-columns: 1fr;

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_vali
 from pydantic.alias_generators import to_camel
 
 from src.complaints.models import AssistResponse
-from src.lab_web.constants import CATEGORIES, DISTRICTS, Category, District
+from src.lab_web.constants import CATEGORIES, DISTRICT_AREAS, DISTRICTS, Category, District
 
 Title = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
@@ -43,16 +43,16 @@ class LabComplaint(Model):
 
     title: Title
     category: Category
-    district: District | None = None
+    district: str | None = None
     body: Body
 
     @field_validator("district", mode="before")
     @classmethod
     def blank_district_to_none(cls, value: object) -> object:
         """빈 문자열은 지역 없음으로 둡니다."""
-        if value == "":
+        if value == "" or value is None:
             return None
-        return value
+        return str(value).strip() or None
 
 
 class LlmEnvelope(Model):
@@ -94,6 +94,8 @@ class LabAcceptResult(Model):
         accepted: 수신 성공입니다.
         complaint: 검증된 민원 내용입니다.
         search_query: 검색 API에 넣은 질의입니다.
+        effective_district: 실제 검색에 적용한 구 이름입니다.
+        district_inferred: 본문에서 구를 자동 추론했으면 True입니다.
         llm: 파이프라인 진행 봉투입니다.
         assist: 세 갈래 응대와 `codex` 호출 목록입니다.
         message: 화면에 보여줄 짧은 안내입니다.
@@ -103,6 +105,8 @@ class LabAcceptResult(Model):
     accepted: Literal[True] = True
     complaint: LabComplaint
     search_query: str
+    effective_district: str | None = None
+    district_inferred: bool = False
     llm: LlmEnvelope
     assist: AssistResponse
     message: str = "검색 후보를 찾은 뒤 판정했습니다."
@@ -114,6 +118,7 @@ class LabFields(Model):
 
     categories: tuple[Category, ...] = Field(default=CATEGORIES)
     districts: tuple[District, ...] = Field(default=DISTRICTS)
+    district_areas: dict[str, tuple[str, ...]] = Field(default=DISTRICT_AREAS)
 
 
 class LabHealth(Model):

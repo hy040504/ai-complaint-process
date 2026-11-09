@@ -11,6 +11,7 @@ from typing import Any
 
 from src.assist import iter_web_assist, run_web_assist
 from src.assist.constants import PROGRESS_LABELS
+from src.assist.district import resolve_complaint_district
 from src.complaints.models import AssistResponse
 from src.lab_web.models import LabAcceptResult, LabComplaint, LlmEnvelope
 
@@ -39,6 +40,9 @@ def accept_from_assist(
     complaint: LabComplaint,
     query: str,
     assist: AssistResponse,
+    *,
+    effective_district: str | None = None,
+    district_inferred: bool | None = None,
 ) -> LabAcceptResult:
     """검증된 응대 결과를 검사기 수신 응답으로 감쌉니다.
 
@@ -46,14 +50,26 @@ def accept_from_assist(
         complaint: 검증된 민원 내용입니다.
         query: 검색에 넣은 질의입니다.
         assist: 파이프라인 응대 결과입니다.
+        effective_district: 실제 검색에 적용한 구입니다.
+        district_inferred: 본문 지명으로 자동 감지되었는지 여부입니다.
 
     Returns:
         수신 확인과 응대 결과입니다.
     """
     failed = assist.reason_code == "search_failed"
+    final_district = (
+        effective_district if effective_district is not None else assist.district
+    )
+    final_inferred = (
+        district_inferred
+        if district_inferred is not None
+        else bool(assist.district_inferred)
+    )
     return LabAcceptResult(
         complaint=complaint,
         search_query=query,
+        effective_district=final_district,
+        district_inferred=final_inferred,
         llm=LlmEnvelope(
             status="search_failed" if failed else "completed",
             sent=True,
@@ -84,10 +100,17 @@ def handle_complaint(
         수신 확인과 응대 결과입니다.
     """
     query = compose_search_query(complaint)
+    effective_district, district_inferred = resolve_complaint_district(
+        complaint.district, query
+    )
     run = assist_fn or run_web_assist
-    raw = run(query, complaint.district, 5, False)
+    raw = run(query, effective_district, 5, False)
     return accept_from_assist(
-        complaint, query, AssistResponse.model_validate(raw)
+        complaint,
+        query,
+        AssistResponse.model_validate(raw),
+        effective_district=effective_district,
+        district_inferred=district_inferred,
     )
 
 
@@ -109,6 +132,9 @@ def iter_complaint(
         `progress` 사건 또는 `done`에 감싼 `LabAcceptResult`입니다.
     """
     query = compose_search_query(complaint)
+    effective_district, district_inferred = resolve_complaint_district(
+        complaint.district, query
+    )
     if assist_fn is not None:
         for key in ("read", "search", "review"):
             yield {
@@ -121,7 +147,7 @@ def iter_complaint(
             "result": handle_complaint(complaint, assist_fn=assist_fn),
         }
         return
-    for event in iter_web_assist(query, complaint.district, 5, False):
+    for event in iter_web_assist(query, effective_district, 5, False):
         if event.get("type") == "progress":
             yield event
             continue
@@ -130,5 +156,11 @@ def iter_complaint(
         assist = AssistResponse.model_validate(event["result"])
         yield {
             "type": "done",
-            "result": accept_from_assist(complaint, query, assist),
+            "result": accept_from_assist(
+                complaint,
+                query,
+                assist,
+                effective_district=effective_district,
+                district_inferred=district_inferred,
+            ),
         }

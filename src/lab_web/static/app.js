@@ -79,6 +79,38 @@ function fillSelect(select, values, keepEmpty = false) {
 }
 
 /**
+ * 청주시 4개 구 및 산하 읍·면·동 목록으로 발생 지역 셀렉트를 채웁니다.
+ *
+ * @param {HTMLSelectElement} select 대상 셀렉트 요소입니다.
+ * @param {string[]} districts 자치구 목록입니다.
+ * @param {Record<string, string[]>} districtAreas 구별 읍·면·동 목록입니다.
+ * @returns {void}
+ */
+export function fillDistrictSelect(select, districts = [], districtAreas = {}) {
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value="">지정하지 않음 (본문 자동 감지)</option>';
+  for (const district of districts) {
+    const group = document.createElement("optgroup");
+    group.label = district;
+    const allOption = document.createElement("option");
+    allOption.value = district;
+    allOption.textContent = `${district} (전체)`;
+    group.append(allOption);
+
+    const areas = districtAreas[district] || [];
+    for (const area of areas) {
+      const areaOption = document.createElement("option");
+      areaOption.value = `${district}:${area}`;
+      areaOption.textContent = `${district} ${area}`;
+      group.append(areaOption);
+    }
+    select.append(group);
+  }
+  if (current) select.value = current;
+}
+
+/**
  * 분야·지역 목록을 서버에서 불러옵니다.
  *
  * @returns {Promise<void>}
@@ -88,7 +120,11 @@ async function loadFields() {
   if (!response.ok) throw new Error("작성 항목을 불러오지 못했습니다.");
   const value = await response.json();
   fillSelect(document.querySelector("#category"), value.categories || []);
-  fillSelect(document.querySelector("#district"), value.districts || [], true);
+  fillDistrictSelect(
+    document.querySelector("#district"),
+    value.districts || [],
+    value.districtAreas || {},
+  );
 }
 
 const COPY_IDLE = "JSON 복사";
@@ -263,6 +299,20 @@ function showResult(payload, received, sourceText = "") {
   if (source) {
     source.textContent = sourceText;
     source.hidden = !sourceText;
+  }
+  const districtBadge = document.querySelector("#result-district");
+  if (districtBadge) {
+    const effDistrict = received.effectiveDistrict || assist.district;
+    const inferred = Boolean(received.districtInferred ?? assist.districtInferred);
+    if (effDistrict) {
+      districtBadge.textContent = inferred
+        ? `📍 발생 지역: ${effDistrict} (본문 지명 자동 감지)`
+        : `📍 발생 지역: ${effDistrict}`;
+      districtBadge.hidden = false;
+    } else {
+      districtBadge.textContent = "📍 발생 지역: 지정 없음 (전체 지역 검색)";
+      districtBadge.hidden = false;
+    }
   }
   const assist = received.assist || {};
   document.querySelector("#result-message").textContent = received.message;

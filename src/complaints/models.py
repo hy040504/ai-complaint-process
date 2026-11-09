@@ -434,6 +434,7 @@ class AssistResponse(Model):
 
     query: str
     district: str | None = None
+    district_inferred: bool = False
     outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
     reason_code: str
     answer: str | None = None

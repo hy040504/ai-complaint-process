@@ -151,6 +151,9 @@ def test_fields(client: FlaskClient) -> None:
     assert response.status_code == 200
     assert "환경·청소" in response.json["categories"]
     assert "흥덕구" in response.json["districts"]
+    assert "districtAreas" in response.json
+    assert "오송읍" in response.json["districtAreas"]["흥덕구"]
+    assert "사창동" in response.json["districtAreas"]["서원구"]
 
 
 def test_index_is_lab_form(client: FlaskClient) -> None:
@@ -164,6 +167,7 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert 'id="codex-prompts"' in html
     assert 'id="progress"' in html
     assert 'id="progress-steps"' in html
+    assert 'id="result-district"' in html
     assert "담당자 초안 (미게시)" in html
     assert "순화 요약 (담당자 참고)" in html
     assert 'id="result-reason"' in html
@@ -178,6 +182,7 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
         Path(__file__).resolve().parents[1] / "lab_web" / "static" / "app.js"
     ).read_text(encoding="utf-8")
     assert "reasonNames" in js
+    assert "fillDistrictSelect" in js
     assert "condition_unclear" in js
     assert "/api/v1/lab/runs" in js
     assert "bindJsonCopyButtons" in js
@@ -304,3 +309,36 @@ def test_clear_runs_deletes_files(client: FlaskClient, runs_dir: Path) -> None:
     assert deleted.status_code == 200
     assert deleted.json["removed"] == 1
     assert list_runs(runs_dir) == []
+
+
+def test_complaint_accepts_sub_area_and_infers_district(client: FlaskClient) -> None:
+    """세부 지역 표기 및 본문 지명 자동 추론을 검사기 API가 올바르게 처리합니다."""
+    # 1. 세부 지역 선택 표기 ('흥덕구:오송읍')
+    res1 = client.post(
+        "/api/v1/lab/complaints",
+        json={
+            "title": "도로 파손 신고",
+            "category": "도로·교통",
+            "district": "흥덕구:오송읍",
+            "body": "도로에 싱크홀이 발생하여 위험합니다.",
+        },
+    )
+    assert res1.status_code == 200
+    assert res1.json["complaint"]["district"] == "흥덕구:오송읍"
+    assert res1.json["effectiveDistrict"] == "흥덕구"
+    assert res1.json["districtInferred"] is False
+
+    # 2. 지역을 비워두고 본문에 지명 ('가경동')이 포함된 경우
+    res2 = client.post(
+        "/api/v1/lab/complaints",
+        json={
+            "title": "터미널 앞 불법주차",
+            "category": "도로·교통",
+            "district": None,
+            "body": "가경동 시외버스터미널 근처에 불법주차 차량이 많습니다.",
+        },
+    )
+    assert res2.status_code == 200
+    assert res2.json["complaint"]["district"] is None
+    assert res2.json["effectiveDistrict"] == "흥덕구"
+    assert res2.json["districtInferred"] is True
