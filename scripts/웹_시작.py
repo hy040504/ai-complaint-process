@@ -18,6 +18,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
+from 검색_시작 import ensure_backend_services
 from 콘솔_기동 import port_open as tcp_open, spawn_console
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -165,6 +166,15 @@ def main() -> int:
         print("[오류] 30초 안에 서버 준비를 확인하지 못했습니다.")
         print("서버 창의 오류를 확인한 뒤 다시 실행해 주세요.")
         return 1
+
+    print("백엔드 검색 서비스(PostgreSQL·검색 API) 상태를 점검합니다...")
+    if not ensure_backend_services(wait_seconds=60.0):
+        print(
+            "[경고] 백엔드 검색 서비스 자동 준비에 실패했습니다. "
+            "수동으로 scripts\\검색_시작.py 를 확인해 주세요."
+        )
+    else:
+        print("백엔드 검색 서비스(PostgreSQL·검색 API)가 모두 준비되었습니다.")
 
     site = _site_url(port)
     print(f"브라우저에서 {site} 을 엽니다.")

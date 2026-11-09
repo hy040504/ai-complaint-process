@@ -123,7 +123,7 @@ flowchart LR
 | 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내를 덮지 않음 |
 | 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 원문 힌트가 있을 때만. 자동 차단 아님 |
 
-[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-064](docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-066](docs/cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](docs/cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) · [CASE-070](docs/cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md) · [CASE-071](docs/cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md)
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-064](docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-066](docs/cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](docs/cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) · [CASE-070](docs/cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md) · [CASE-071](docs/cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
 
 ## 저장과 검색
 
@@ -230,7 +230,7 @@ setup.cmd --check
 ./setup.sh --check
 ```
 
-Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
+Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. 백엔드 검색 서비스(PostgreSQL·검색 API)가 꺼져 있으면 자동으로 감지하여 함께 기동합니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
 
 ```bat
 웹-시작.cmd
