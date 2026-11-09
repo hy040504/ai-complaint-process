@@ -183,6 +183,9 @@ def create_app(
         검색 질의는 제목과 상세 내용입니다. `district`는 구 필터입니다.
         민원 분야는 검색 질의에 넣지 않습니다. 민원 CRUD에는 저장하지 않습니다.
         성공하면 `.rag-cache/lab-runs` JSON에 기록을 남깁니다.
+
+        Returns:
+            수신 확인과 응대 결과 JSON 또는 오류 응답입니다.
         """
         parsed = _parse_complaint()
         if isinstance(parsed, Response):
@@ -209,6 +212,9 @@ def create_app(
 
         민원 CRUD에는 저장하지 않습니다. 성공한 `done` 결과는
         `.rag-cache/lab-runs`에도 남깁니다.
+
+        Returns:
+            진행 상태와 최종 결과를 스트리밍하는 NDJSON 응답입니다.
         """
         parsed = _parse_complaint()
         if isinstance(parsed, Response):
@@ -259,7 +265,11 @@ def create_app(
 
     @app.get("/api/v1/lab/runs")
     def get_runs() -> Response:
-        """파일로 남긴 테스트 기록 목록을 줍니다."""
+        """파일로 남긴 테스트 기록 목록을 줍니다.
+
+        Returns:
+            기록 요약 목록 JSON 응답입니다.
+        """
         items = [
             LabRunSummary.model_validate(item) for item in list_runs(_runs_dir(app))
         ]
@@ -271,6 +281,9 @@ def create_app(
 
         Args:
             run_id: 파일 이름에 쓰는 기록 ID입니다.
+
+        Returns:
+            기록 한 건의 민원과 응대 결과 JSON 또는 404/500 응답입니다.
         """
         record = load_run(_runs_dir(app), run_id)
         if record is None:
@@ -288,7 +301,11 @@ def create_app(
 
     @app.delete("/api/v1/lab/runs")
     def delete_runs() -> Response:
-        """파일로 남긴 테스트 기록을 모두 지웁니다."""
+        """파일로 남긴 테스트 기록을 모두 지웁니다.
+
+        Returns:
+            삭제한 기록 건수 JSON 응답입니다.
+        """
         removed = clear_runs(_runs_dir(app))
         return _json(LabClearResult(removed=removed))
 

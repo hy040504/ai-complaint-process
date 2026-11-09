@@ -190,7 +190,14 @@ HTML_CONTENT = """<!DOCTYPE html>
 
 
 def find_browser() -> Path:
-    """Chrome 또는 Edge 실행 파일 경로를 찾습니다."""
+    """Chrome 또는 Edge 실행 파일 경로를 찾습니다.
+
+    Returns:
+        존재하는 브라우저 실행 파일 경로입니다.
+
+    Raises:
+        FileNotFoundError: 후보 경로 중 브라우저가 하나도 없을 때 발생합니다.
+    """
     for p in CHROME_CANDIDATES:
         if p.is_file():
             return p
@@ -198,7 +205,15 @@ def find_browser() -> Path:
 
 
 def generate_pdf(output_paths: list[Path]) -> None:
-    """HTML 문서를 Chrome headless로 PDF로 변환하여 출력 경로들에 저장합니다."""
+    """HTML 문서를 Chrome headless로 PDF로 변환하여 출력 경로들에 저장합니다.
+
+    Args:
+        output_paths: 저장할 대상 PDF 파일 경로 목록입니다.
+
+    Raises:
+        FileNotFoundError: 생성된 임시 PDF 파일이 없을 때 발생합니다.
+        RuntimeError: 브라우저 PDF 변환 프로세스가 실패했을 때 발생합니다.
+    """
     browser = find_browser()
     with tempfile.TemporaryDirectory() as tmpdir:
         html_path = Path(tmpdir) / "report.html"

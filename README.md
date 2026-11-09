@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Backend](https://img.shields.io/badge/OneClick-백엔드_자동기동-0f766e?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -24,7 +24,7 @@
 
 > [!NOTE]
 > **현재 단계 · 2026-11-10 · 검색 + 웹 업무 시연 + 응대 검사기 고도화**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·테스트 기록(파일), 청주시 4개 구 및 읍·면·동 전 지역 선택 지원, 미지정 시 제목·본문 지명 자동 감지(`extract_district`) 및 검색 구 필터 연동, 결과 화면 발생 지역 배지(`📍 발생 지역: ...`), Codex CLI stdin 전문 프롬프트 표시 및 호출별 복사 단추, 민원 전송 중 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링, 검사기 결과 JSON 칸마다 복사 단추, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3/3, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·테스트 기록(파일), 청주시 4개 구 및 읍·면·동 전 지역 선택 지원, 미지정 시 제목·본문 지명 자동 감지(`extract_district`) 및 검색 구 필터 연동, 결과 화면 발생 지역 배지(`📍 발생 지역: ...`), 원클릭 자동 기동(`검사기-시작.cmd` 실행 시 stale `postmaster.pid` 락 정리 및 미기동 PostgreSQL·검색 API 순차 자동 기동 [CASE-074]), Codex CLI stdin 전문 프롬프트 표시 및 호출별 복사 단추, 민원 전송 중 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링, 검사기 결과 JSON 칸마다 복사 단추, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3/3, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
 > **다음:** openai_api `cached_tokens` 실측(키 필요), 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
@@ -38,7 +38,7 @@
 | 화면 | 주소 | 실행 |
 | --- | --- | --- |
 | 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
-| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`검사기-시작.cmd`](검사기-시작.cmd) · Linux [`start-lab.sh`](start-lab.sh) |
+| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`검사기-시작.cmd`](검사기-시작.cmd)(PostgreSQL·검색 API 원클릭 자동 기동) · Linux [`start-lab.sh`](start-lab.sh) |
 | 기존 시연 Flask | `http://127.0.0.1:5000/#/lab` | 민원 CRUD 서버의 검사기 해시. 이 브랜치 기본은 `:5010` |
 | 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
@@ -231,6 +231,27 @@ setup.cmd --check
 ```
 
 Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. 백엔드 검색 서비스(PostgreSQL·검색 API)가 꺼져 있으면 자동으로 감지하여 함께 기동합니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
+
+```mermaid
+flowchart TD
+    CMD["검사기-시작.cmd (원클릭 실행)"] --> WEB["웹 서버 기동<br/>:5010 (Flask)"]
+    WEB --> CHK{"백엔드 검색 서비스 점검<br/>(ensure_backend_services)"}
+    CHK -->|postmaster.pid 잔여| CLN["stale 락 파일 안전 삭제"]
+    CLN --> DB["PostgreSQL 시작 (:5432)"]
+    CHK -->|DB 미실행| DB
+    DB --> WAIT1["5432 포트 대기"]
+    WAIT1 --> SRCH["검색 API 시작 (:8007)"]
+    CHK -->|검색 API 미실행| SRCH
+    SRCH --> WAIT2["8007 포트 대기 (모델 로드)"]
+    CHK -->|모두 정상 구동 중| BROWSER["브라우저 자동 오픈<br/>http://127.0.0.1:5010/"]
+    WAIT2 --> BROWSER
+    classDef main fill:#ecfdf5,stroke:#0d9488,color:#134e4a
+    classDef check fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
+    classDef auto fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+    class CMD,WEB,BROWSER main
+    class CHK check
+    class CLN,DB,WAIT1,SRCH,WAIT2 auto
+```
 
 ```bat
 웹-시작.cmd

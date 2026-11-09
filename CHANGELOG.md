@@ -2,6 +2,8 @@
 
 ## 2026-11-10
 
+- CASE-074 패치의 Google 형식 한국어 docstring을 맞추고, `src/__init__.py` 지연 로딩 최적화로 RAG 환경의 Flask 종속성을 분리하며, README 원클릭 기동 순서도와 배지를 보강한다. [CASE-075](docs/cases/사례-075-패치-주석-문서-최적화-2026-11-10.md)
+
 - `검사기-시작.cmd` 실행 시 백엔드 검색 서비스(PostgreSQL·검색 API)의 동작 상태를 감지하여 비정상 종료 락 파일(postmaster.pid)을 정리하고 자동으로 함께 기동하도록 연동한다. [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
 
 - CASE-070~072 패치의 Google 형식 한국어 주석과 docstring Attributes를 맞추고, 지명 추출 조기 종료 최적화 및 README 디자인을 개편한다. [CASE-073](docs/cases/사례-073-패치-주석-문서-최적화-2026-11-10.md)
