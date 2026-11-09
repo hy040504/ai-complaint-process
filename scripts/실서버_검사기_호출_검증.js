@@ -6,8 +6,14 @@
 import fs from "fs";
 import { renderCodexPrompts } from "../src/lab_web/static/app.js";
 
-// 가상 DOM 환경
+/**
+ * 가상 DOM 엘리먼트 모킹 클래스입니다.
+ */
 class FakeElement {
+  /**
+   * @param {string} [id=""] 엘리먼트 ID입니다.
+   * @param {string} [tagName="div"] 태그 이름입니다.
+   */
   constructor(id = "", tagName = "div") {
     this.id = id;
     this.tagName = tagName;
@@ -18,22 +24,65 @@ class FakeElement {
     this.className = "";
     this.dataset = {};
   }
+
+  /**
+   * 하위 요소를 검색합니다.
+   *
+   * @returns {FakeElement|null}
+   */
   querySelector() {
     return null;
   }
+
+  /**
+   * 하위 요소 목록을 반환합니다.
+   *
+   * @returns {FakeElement[]}
+   */
   querySelectorAll() {
     return [];
   }
+
+  /**
+   * 자식 노드를 교체합니다.
+   *
+   * @param {...FakeElement} nodes 교체할 노드 목록입니다.
+   * @returns {void}
+   */
   replaceChildren(...nodes) {
     this.children = nodes;
   }
+
+  /**
+   * 자식 노드를 추가합니다.
+   *
+   * @param {...FakeElement} nodes 추가할 노드 목록입니다.
+   * @returns {void}
+   */
   append(...nodes) {
     this.children.push(...nodes);
   }
+
+  /**
+   * 단일 자식 노드를 추가합니다.
+   *
+   * @param {FakeElement} node 추가할 노드입니다.
+   * @returns {void}
+   */
   appendChild(node) {
     this.children.push(node);
   }
-  setAttribute() {}
+
+  /**
+   * 속성을 설정합니다.
+   *
+   * @param {string} name 속성 이름입니다.
+   * @param {string} value 속성 값입니다.
+   * @returns {void}
+   */
+  setAttribute(name, value) {
+    this[name] = value;
+  }
 }
 
 const elementIds = [
@@ -90,6 +139,12 @@ const showResult = new Function(
   showResultCode
 )(globalThis.document, renderCodexPrompts);
 
+/**
+ * 로컬 검사기 웹 서버(:5010)로 실제 민원 질의를 전송하고
+ * 응답 데이터 및 화면 렌더링(showResult)을 검증합니다.
+ *
+ * @returns {Promise<void>}
+ */
 async function testLiveApi() {
   console.log("=== 실서버(:5010) 연동 및 showResult 검증 시작 ===");
   const payload = {

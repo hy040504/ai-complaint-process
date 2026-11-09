@@ -1,11 +1,19 @@
 /**
- * app.js의 showResult 및 DOM 렌더링 로직에 TDZ 또는 런타임 에러가 없는지 검증합니다.
+ * Node.js 환경에서 DOM을 모킹하여 app.js의 결과 렌더링(showResult)에
+ * TDZ(Temporal Dead Zone) 또는 초기화 전 참조 에러가 없는지 검증합니다.
  */
 
+import fs from "fs";
 import { formatRunTime, fillDistrictSelect, renderCodexPrompts } from "../src/lab_web/static/app.js";
 
-// 간단한 가상 DOM 환경 구성
+/**
+ * 테스트용 가상 DOM 엘리먼트 모킹 클래스입니다.
+ */
 class FakeElement {
+  /**
+   * @param {string} [id=""] 엘리먼트 ID입니다.
+   * @param {string} [tagName="div"] 태그 이름입니다.
+   */
   constructor(id = "", tagName = "div") {
     this.id = id;
     this.tagName = tagName;
@@ -16,22 +24,66 @@ class FakeElement {
     this.className = "";
     this.dataset = {};
   }
+
+  /**
+   * 하위 요소를 검색합니다.
+   *
+   * @param {string} sel 셀렉터입니다.
+   * @returns {FakeElement|null} 찾은 가상 엘리먼트 또는 null입니다.
+   */
   querySelector(sel) {
     return elements[sel.replace("#", "")] || null;
   }
+
+  /**
+   * 하위 요소 목록을 반환합니다.
+   *
+   * @returns {FakeElement[]}
+   */
   querySelectorAll() {
     return [];
   }
+
+  /**
+   * 자식 노드를 교체합니다.
+   *
+   * @param {...FakeElement} nodes 교체할 노드 목록입니다.
+   * @returns {void}
+   */
   replaceChildren(...nodes) {
     this.children = nodes;
   }
+
+  /**
+   * 자식 노드를 추가합니다.
+   *
+   * @param {...FakeElement} nodes 추가할 노드 목록입니다.
+   * @returns {void}
+   */
   append(...nodes) {
     this.children.push(...nodes);
   }
+
+  /**
+   * 단일 자식 노드를 추가합니다.
+   *
+   * @param {FakeElement} node 추가할 노드입니다.
+   * @returns {void}
+   */
   appendChild(node) {
     this.children.push(node);
   }
-  setAttribute() {}
+
+  /**
+   * 속성을 설정합니다.
+   *
+   * @param {string} name 속성 이름입니다.
+   * @param {string} value 속성 값입니다.
+   * @returns {void}
+   */
+  setAttribute(name, value) {
+    this[name] = value;
+  }
 }
 
 const elementIds = [
@@ -135,7 +187,6 @@ const mockReceivedCases = [
 ];
 
 // app.js 파일의 showResult 함수 추출 후 실행
-import fs from "fs";
 const appJsSource = fs.readFileSync("src/lab_web/static/app.js", "utf-8");
 
 // showResult 정의부 추출하여 Function으로 평가
