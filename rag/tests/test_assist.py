@@ -1,5 +1,6 @@
 """검색 근거와 어긋난 판정은 담당자 검토로 떨어지는지 검증합니다."""
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,9 +12,11 @@ from rag.assist import (
     run_assist,
     validate_decision,
 )
+from src.assist.prompts import DECISION_SYSTEM
 from src.llm.complete import (
     codex_tool_instruction,
     complete_result,
+    format_codex_stdin,
     resolve_codex_argv,
     usage_from_openai,
 )
@@ -218,6 +221,8 @@ def test_run_assist_without_llm_keeps_retrieval() -> None:
     assert result["codex"][0]["role"] == "decision"
     assert result["codex"][0]["sent"] is False
     assert "faq_candidates" in result["codex"][0]["user"]
+    dumped = json.dumps(result["codex"][0]["user"], ensure_ascii=False, indent=2)
+    assert result["codex"][0]["prompt"] == format_codex_stdin(DECISION_SYSTEM, dumped)
 
 
 def test_run_assist_faq_path_uses_second_call() -> None:
@@ -335,6 +340,7 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     assert 'model_reasoning_effort="medium"' in captured["args"]
     assert captured["args"][-1] == "-"
     assert captured["args"][0] == "C:/tools/codex.exe"
+    assert captured["input"] == format_codex_stdin("시스템", "사용자")
     assert "search_complaint_rag" in captured["input"]
     joined = " ".join(captured["args"])
     assert "src.llm.rag_mcp" in joined

@@ -2,17 +2,23 @@
 
 정적 화면과 민원 JSON 수신 API를 제공합니다. 수신 후 `src.assist`가
 검색 API를 먼저 호출하고 판정합니다. 테스트 기록은 `.rag-cache/lab-runs`
-JSON이며 민원 CRUD 테이블에는 쓰지 않습니다.
+JSON이며 민원 CRUD 테이블에는 쓰지 않습니다. 스트림 경로는 진행 안내
+NDJSON을 먼저 보냅니다.
 """
 
+from __future__ import annotations
+
+import json
+from collections.abc import Iterator
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from pydantic import BaseModel, ValidationError
 
 from src.assist import llm_configured, search_available
 from src.lab_web.models import (
     ErrorBody,
+    LabAcceptResult,
     LabClearResult,
     LabComplaint,
     LabFields,
@@ -29,7 +35,7 @@ from src.lab_web.runs import (
     run_summary,
     save_run,
 )
-from src.lab_web.service import AssistFn, handle_complaint
+from src.lab_web.service import AssistFn, handle_complaint, iter_complaint
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -135,14 +141,8 @@ def create_app(
         """작성 양식의 분야·지역 목록을 줍니다."""
         return _json(LabFields())
 
-    @app.post("/api/v1/lab/complaints")
-    def create_complaint() -> Response:
-        """민원 JSON을 받아 검색 후 판정합니다.
-
-        검색 질의는 제목과 상세 내용입니다. `district`는 구 필터입니다.
-        민원 분야는 검색 질의에 넣지 않습니다. 민원 CRUD에는 저장하지 않습니다.
-        성공하면 `.rag-cache/lab-runs` JSON에 기록을 남깁니다.
-        """
+    def _parse_complaint() -> LabComplaint | Response:
+        """요청 JSON을 민원으로 검증합니다. 실패면 오류 응답입니다."""
         raw = request.get_json(silent=True)
         if not isinstance(raw, dict):
             return _json(
@@ -153,19 +153,14 @@ def create_app(
                 400,
             )
         try:
-            complaint = LabComplaint.model_validate(raw)
+            return LabComplaint.model_validate(raw)
         except ValidationError as error:
             return _invalid(error)
-        try:
-            result = handle_complaint(
-                complaint,
-                assist_fn=app.config.get("LAB_ASSIST_FN"),
-            )
-        except (OSError, ValueError, TypeError) as exc:
-            return _json(
-                ErrorBody(code="assist_failed", message=str(exc)[:200]),
-                503,
-            )
+
+    def _finish_run(
+        complaint: LabComplaint, result: LabAcceptResult
+    ) -> LabAcceptResult | Response:
+        """응대 결과를 기록 파일에 남기고 run 요약을 붙입니다."""
         received = result.model_dump(mode="json", by_alias=True)
         try:
             record = save_run(
@@ -179,7 +174,88 @@ def create_app(
                 503,
             )
         result.run = LabRunSummary.model_validate(run_summary(record))
-        return _json(result)
+        return result
+
+    @app.post("/api/v1/lab/complaints")
+    def create_complaint() -> Response:
+        """민원 JSON을 받아 검색 후 판정합니다.
+
+        검색 질의는 제목과 상세 내용입니다. `district`는 구 필터입니다.
+        민원 분야는 검색 질의에 넣지 않습니다. 민원 CRUD에는 저장하지 않습니다.
+        성공하면 `.rag-cache/lab-runs` JSON에 기록을 남깁니다.
+        """
+        parsed = _parse_complaint()
+        if isinstance(parsed, Response):
+            return parsed
+        complaint = parsed
+        try:
+            result = handle_complaint(
+                complaint,
+                assist_fn=app.config.get("LAB_ASSIST_FN"),
+            )
+        except (OSError, ValueError, TypeError) as exc:
+            return _json(
+                ErrorBody(code="assist_failed", message=str(exc)[:200]),
+                503,
+            )
+        finished = _finish_run(complaint, result)
+        if isinstance(finished, Response):
+            return finished
+        return _json(finished)
+
+    @app.post("/api/v1/lab/complaints/stream")
+    def create_complaint_stream() -> Response:
+        """민원 JSON을 받아 진행 안내 NDJSON 뒤에 판정 결과를 붙입니다.
+
+        민원 CRUD에는 저장하지 않습니다. 성공한 `done` 결과는
+        `.rag-cache/lab-runs`에도 남깁니다.
+        """
+        parsed = _parse_complaint()
+        if isinstance(parsed, Response):
+            return parsed
+        complaint = parsed
+        assist_fn = app.config.get("LAB_ASSIST_FN")
+
+        def generate() -> Iterator[str]:
+            try:
+                for event in iter_complaint(complaint, assist_fn=assist_fn):
+                    if event.get("type") != "done":
+                        yield json.dumps(event, ensure_ascii=False) + "\n"
+                        continue
+                    result = event["result"]
+                    if not isinstance(result, LabAcceptResult):
+                        raise TypeError("검사기 스트림 결과가 올바르지 않습니다.")
+                    finished = _finish_run(complaint, result)
+                    if isinstance(finished, Response):
+                        body = finished.get_json(silent=True) or {}
+                        yield json.dumps(
+                            {
+                                "type": "error",
+                                "message": body.get("message")
+                                or "기록을 저장하지 못했습니다.",
+                            },
+                            ensure_ascii=False,
+                        ) + "\n"
+                        return
+                    payload = finished.model_dump(mode="json", by_alias=True)
+                    yield json.dumps(
+                        {"type": "done", "result": payload},
+                        ensure_ascii=False,
+                    ) + "\n"
+            except (OSError, ValueError, TypeError) as exc:
+                yield json.dumps(
+                    {"type": "error", "message": str(exc)[:200]},
+                    ensure_ascii=False,
+                ) + "\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @app.get("/api/v1/lab/runs")
     def get_runs() -> Response:

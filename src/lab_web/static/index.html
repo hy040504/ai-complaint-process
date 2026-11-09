@@ -78,6 +78,16 @@
         </div>
         <button type="submit" id="submit">민원 보내기</button>
       </form>
+      <section id="progress" hidden role="status" aria-live="polite">
+        <div class="progress-live">
+          <span class="progress-dot" aria-hidden="true"></span>
+          <div>
+            <b id="progress-label">민원 내용을 읽고 있어요</b>
+            <p>검색과 판정이 끝날 때까지 잠시만 기다려 주세요.</p>
+          </div>
+        </div>
+        <ol id="progress-steps" class="progress-steps"></ol>
+      </section>
       <section id="result" hidden>
         <h2>응대 결과</h2>
         <p id="result-source" class="hint-block" hidden></p>
@@ -98,6 +108,18 @@
         <p id="result-sanitize"></p>
         <h3>참고한 자료</h3>
         <ul id="result-hits"></ul>
+        <div class="json-block">
+          <div class="json-head">
+            <h3>Codex에 보낸 프롬프트</h3>
+          </div>
+          <p id="codex-prompt-note" class="hint-block">
+            `codex exec -` 표준 입력 전문입니다. 실행 래퍼, PREFIX 본문,
+            사용자 JSON을 호출마다 그대로 보여 줍니다. openai_api는 같은
+            시스템·사용자 본문을 필드 둘로 보냅니다. 예전 기록에는 이 칸이
+            없을 수 있습니다.
+          </p>
+          <div id="codex-prompts"></div>
+        </div>
         <div class="json-block">
           <div class="json-head">
             <h3>Codex에 보낸 데이터</h3>

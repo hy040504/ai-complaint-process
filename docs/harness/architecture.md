@@ -86,7 +86,7 @@ flowchart TD
 
 ## LLM 응대 계층
 
-검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `src/lab_web` `:5010`도 이 계층을 쓴다. 응답의 `codex`는 모델에 넣은 사용자 JSON이다.
+검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `src/lab_web` `:5010`도 이 계층을 쓴다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문이다.
 
 1. FAQ·사례별 검색 결과를 받은 뒤 LLM이 의도·근거·처리 경로를 구조화해 제안한다. 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결한다.
 2. 코드가 출처·부서 후보·필수 조건과 출력 계약을 검사한다. FAQ 현행성 허용 목록은 아직 없다.

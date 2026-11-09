@@ -1,5 +1,6 @@
 """응대 검사기 웹이 민원 JSON을 검색·판정에 넘기는지 확인합니다."""
 
+import json
 from pathlib import Path
 
 from flask.testing import FlaskClient
@@ -159,6 +160,10 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     html = response.get_data(as_text=True)
     assert "민원 보내기" in html
     assert "Codex에 보낸 데이터" in html
+    assert "Codex에 보낸 프롬프트" in html
+    assert 'id="codex-prompts"' in html
+    assert 'id="progress"' in html
+    assert 'id="progress-steps"' in html
     assert "담당자 초안 (미게시)" in html
     assert "순화 요약 (담당자 참고)" in html
     assert 'id="result-reason"' in html
@@ -176,7 +181,12 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert "condition_unclear" in js
     assert "/api/v1/lab/runs" in js
     assert "bindJsonCopyButtons" in js
+    assert "bindPromptCopyButtons" in js
+    assert "renderCodexPrompts" in js
+    assert "streamComplaint" in js
+    assert "showProgress" in js
     assert "copyText" in js
+    assert "/api/v1/lab/complaints/stream" in js
     assert ".rag-cache/lab-runs" in html
     assert "/#/citizen" not in html
     assert 'name="title"' in html
@@ -198,6 +208,26 @@ def test_accepts_complaint_json(client: FlaskClient) -> None:
     assert body["assist"]["faq"][0]["title"] == "대형폐기물 배출 방법"
     assert body["run"]["id"]
     assert body["run"]["title"] == "대형폐기물 배출"
+
+
+def test_complaint_stream_sends_progress_then_result(
+    client: FlaskClient, runs_dir: Path
+) -> None:
+    """스트림은 진행 안내 뒤에 최종 결과를 붙이고 기록을 남깁니다."""
+    response = client.post("/api/v1/lab/complaints/stream", json=_body())
+    assert response.status_code == 200
+    assert "ndjson" in (response.mimetype or "")
+    lines = [line for line in response.get_data(as_text=True).splitlines() if line]
+    assert len(lines) >= 2
+    first = json.loads(lines[0])
+    last = json.loads(lines[-1])
+    assert first["type"] == "progress"
+    assert first["key"] == "read"
+    assert last["type"] == "done"
+    assert last["result"]["accepted"] is True
+    assert last["result"]["assist"]["outcome"] == "human_handoff"
+    assert last["result"]["run"]["id"]
+    assert list_runs(runs_dir)
 
 
 def test_blank_district_becomes_null(client: FlaskClient) -> None:

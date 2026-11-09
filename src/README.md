@@ -83,7 +83,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역 목록 |
-| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. `assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
+| 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세로 검색 후 판정. `assist.codex` 사용자 JSON·stdin 전문 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
+| 검사기 웹 `POST /api/v1/lab/complaints/stream` | 같은 판정의 진행 안내 NDJSON 뒤 결과. 기록도 남김 |
 | 검사기 웹 `GET /api/v1/lab/runs` | 테스트 기록 목록. 최신순 |
 | 검사기 웹 `GET /api/v1/lab/runs/<id>` | 기록 한 건. 모델을 다시 부르지 않음 |
 | 검사기 웹 `DELETE /api/v1/lab/runs` | 기록 JSON 모두 삭제 |

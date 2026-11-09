@@ -252,6 +252,24 @@ def codex_mcp_args(python: str, root: str) -> list[str]:
     return args
 
 
+def format_codex_stdin(system: str, user: str) -> str:
+    """Codex CLI `exec -`에 넣는 표준 입력 본문을 만듭니다.
+
+    `complete_codex_cli`가 실제로 보내는 문자열과 같습니다. 순서는
+    실행 래퍼, PREFIX 시스템 지시, 사용자 JSON입니다.
+
+    Args:
+        system: PREFIX를 조립한 시스템 지시입니다.
+        user: 들여 쓴 사용자 JSON 문자열입니다.
+
+    Returns:
+        Codex 표준 입력 전문입니다.
+    """
+    return (
+        codex_tool_instruction() + f"[시스템 지시]\n{system}\n\n[사용자 입력]\n{user}"
+    )
+
+
 def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) -> str:
     """읽기 전용 임시 작업공간에서 Codex CLI로 모델 출력을 요청합니다.
 
@@ -275,9 +293,7 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
         ValueError: 실행 파일이 없거나 종료 코드·본문이 실패한 경우 발생합니다.
     """
     command = os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")
-    prompt = (
-        codex_tool_instruction() + f"[시스템 지시]\n{system}\n\n[사용자 입력]\n{user}"
-    )
+    prompt = format_codex_stdin(system, user)
     environment = os.environ.copy()
     environment.pop("OPENAI_API_KEY", None)
     with tempfile.TemporaryDirectory(prefix="cheongju-assist-codex-") as workspace:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from src.assist.followup import (
     needs_sanitize,
     sanitize_payload,
@@ -9,6 +11,8 @@ from src.assist.followup import (
     validate_staff_draft,
 )
 from src.assist.pipeline import run_assist
+from src.assist.prompts import DECISION_SYSTEM, STAFF_DRAFT_SYSTEM
+from src.llm.complete import format_codex_stdin
 from src.rag import search_parts
 
 
@@ -128,6 +132,16 @@ def test_run_assist_staff_draft_on_handoff() -> None:
     assert result["staff_draft"]["citations"][0]["source_id"] == "faq-1"
     assert result["sanitize"] is None
     assert [item["role"] for item in result["codex"]] == ["decision", "staff_draft"]
+    decision_json = json.dumps(result["codex"][0]["user"], ensure_ascii=False, indent=2)
+    draft_json = json.dumps(result["codex"][1]["user"], ensure_ascii=False, indent=2)
+    assert result["codex"][0]["prompt"] == format_codex_stdin(
+        DECISION_SYSTEM, decision_json
+    )
+    assert result["codex"][1]["prompt"] == format_codex_stdin(
+        STAFF_DRAFT_SYSTEM, draft_json
+    )
+    assert "[시스템 지시]" in result["codex"][0]["prompt"]
+    assert "search_complaint_rag" in result["codex"][0]["prompt"]
     assert len(calls) == 2
     assert "자동 이관" in (result["answer"] or "") or "담당자" in (
         result["answer"] or ""

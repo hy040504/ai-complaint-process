@@ -22,6 +22,7 @@ Windows [`검사기-시작.cmd`](../../검사기-시작.cmd) · [`웹-시작.cmd
 | `GET /api/v1/health` | `service=lab_web`, `searchAvailable`, `llmConfigured` |
 | `GET /api/v1/lab/fields` | 민원 분야·발생 지역 목록 |
 | `POST /api/v1/lab/complaints` | 민원 JSON → 검색·판정. 성공하면 `.rag-cache/lab-runs`에 JSON을 남김 |
+| `POST /api/v1/lab/complaints/stream` | 같은 처리의 진행 안내 NDJSON 뒤 `done` 결과. 기록도 남김 |
 | `GET /api/v1/lab/runs` | 테스트 기록 목록 |
 | `GET /api/v1/lab/runs/<id>` | 기록 한 건 |
 | `DELETE /api/v1/lab/runs` | 기록 파일 모두 삭제 |
@@ -39,4 +40,4 @@ Windows [`검사기-시작.cmd`](../../검사기-시작.cmd) · [`웹-시작.cmd
 
 `district`는 생략하거나 빈 문자열이면 `null`입니다. 허용 분야는 `도로·교통`, `환경·청소`, `공원·녹지`, `생활·복지`, `주택·건축`, `기타`입니다. 허용 지역은 `상당구`, `서원구`, `흥덕구`, `청원구`입니다. 그 밖 필드는 422입니다.
 
-검색 질의(`searchQuery`)는 제목과 상세 내용만 합칩니다. `district`는 구 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다. 응답의 `assist`는 `POST /api/v1/assist`와 같은 판정 계약입니다. `assist.codex`는 Codex에 넣은 호출 목록입니다. 1차는 `PREFIX-00 + PREFIX-01`과 검색 후보 JSON이고, `faq_answer`이면 `PREFIX-00 + PREFIX-02`가 이어집니다. FAQ가 아니면 `PREFIX-00 + PREFIX-03` 담당자 초안(`staffDraft`)을 만들고, 원문에 거친 표현 힌트가 있으면 `PREFIX-00 + PREFIX-04` 순화(`sanitize`)를 붙입니다. 초안은 시민 안내를 덮지 않습니다. 결과 화면에 처리 사유를 보여 줍니다. Codex 입력·보낸 민원·받은 응답 JSON 칸마다 `JSON 복사` 단추가 있습니다. FAQ 제목이 맞아도 질문이 요구하는 항목이 본문에 없으면 안내하지 않습니다. openai_api가 사용량을 주면 `assist.codex[].usage.cachedTokens`에 실립니다. [CASE-061](../../docs/cases/사례-061-PREFIX-03-04-검색재평가-실측-2026-11-06.md) · [CASE-063](../../docs/cases/사례-063-여권FAQ조건부족-검사기사유표시-2026-11-06.md)
+검색 질의(`searchQuery`)는 제목과 상세 내용만 합칩니다. `district`는 구 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다. 응답의 `assist`는 `POST /api/v1/assist`와 같은 판정 계약입니다. `assist.codex`는 Codex에 넣은 호출 목록입니다. 1차는 `PREFIX-00 + PREFIX-01`과 검색 후보 JSON이고, `faq_answer`이면 `PREFIX-00 + PREFIX-02`가 이어집니다. FAQ가 아니면 `PREFIX-00 + PREFIX-03` 담당자 초안(`staffDraft`)을 만들고, 원문에 거친 표현 힌트가 있으면 `PREFIX-00 + PREFIX-04` 순화(`sanitize`)를 붙입니다. 초안은 시민 안내를 덮지 않습니다. 결과 화면에 처리 사유를 보여 줍니다. 민원을 보내는 동안 검색·판정·초안 단계 안내와 대기 애니메이션을 보여 주며, 기본 경로는 `/complaints/stream` NDJSON입니다. `assist.codex[].prompt`는 `codex exec -` 표준 입력 전문입니다. Codex 입력·보낸 민원·받은 응답 JSON 칸마다 `JSON 복사`가 있고, 프롬프트 칸마다 `프롬프트 복사`가 있습니다. FAQ 제목이 맞아도 질문이 요구하는 항목이 본문에 없으면 안내하지 않습니다. openai_api가 사용량을 주면 `assist.codex[].usage.cachedTokens`에 실립니다. [CASE-061](../../docs/cases/사례-061-PREFIX-03-04-검색재평가-실측-2026-11-06.md) · [CASE-063](../../docs/cases/사례-063-여권FAQ조건부족-검사기사유표시-2026-11-06.md)

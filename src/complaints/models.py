@@ -344,8 +344,9 @@ class LlmUsage(Model):
 class CodexCall(Model):
     """Codex CLI 한 호출에 넣은 시스템 표시와 사용자 JSON입니다.
 
-    시스템 지시 전문은 PREFIX 파일이고, 여기에는 민원마다 바뀌는
-    사용자 JSON만 둡니다. `user` 키는 판정 계약의 뱀형입니다.
+    `user`는 민원마다 바뀌는 사용자 JSON입니다. `prompt`는
+    `complete_codex_cli`가 `codex exec -` 표준 입력으로 넣는 전문과
+    같습니다. 예전 기록에는 `prompt`가 없을 수 있습니다.
 
     Attributes:
         role: 1차 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
@@ -353,6 +354,7 @@ class CodexCall(Model):
         user: Codex stdin 사용자 JSON입니다.
         sent: 모델에 실제로 넣었으면 True입니다.
         usage: openai_api가 준 토큰 사용량입니다. CLI면 비웁니다.
+        prompt: 래퍼·PREFIX 본문·사용자 JSON을 이은 Codex stdin입니다.
     """
 
     role: Literal["decision", "faq_answer", "staff_draft", "sanitize"]
@@ -360,6 +362,7 @@ class CodexCall(Model):
     user: dict[str, Any]
     sent: bool
     usage: LlmUsage | None = None
+    prompt: str | None = None
 
 
 class AssistDecision(Model):

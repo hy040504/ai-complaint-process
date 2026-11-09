@@ -143,9 +143,10 @@ export async function copyText(text) {
 function flashCopyButton(button, label) {
   window.clearTimeout(Number(button.dataset.copyTimer || 0));
   button.textContent = label;
+  const idle = button.dataset.copyIdle || COPY_IDLE;
   button.dataset.copyTimer = String(
     window.setTimeout(() => {
-      button.textContent = COPY_IDLE;
+      button.textContent = idle;
     }, 1600),
   );
 }
@@ -172,11 +173,88 @@ export function bindJsonCopyButtons(root = document) {
   });
 }
 
+const ROLE_PROMPT_NAMES = {
+  decision: "1차 판정",
+  faq_answer: "FAQ 안내",
+  staff_draft: "담당자 초안",
+  sanitize: "순화",
+};
+
+/**
+ * Codex CLI 표준 입력 전문을 호출마다 그립니다.
+ *
+ * @param {Array<{role?:string,system?:string,sent?:boolean,prompt?:string}>} calls
+ *   `assist.codex` 목록입니다.
+ * @returns {void}
+ */
+export function renderCodexPrompts(calls) {
+  const host = document.querySelector("#codex-prompts");
+  if (!host) return;
+  host.replaceChildren();
+  const items = (calls || []).filter(
+    (call) => typeof call?.prompt === "string" && call.prompt,
+  );
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "hint-block";
+    empty.textContent =
+      "이 기록에는 Codex stdin 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.";
+    host.append(empty);
+    return;
+  }
+  items.forEach((call, index) => {
+    const block = document.createElement("div");
+    block.className = "json-block prompt-block";
+    const head = document.createElement("div");
+    head.className = "json-head";
+    const title = document.createElement("h4");
+    const roleName = ROLE_PROMPT_NAMES[call.role] || call.role || "호출";
+    const sentLabel = call.sent ? "보냄" : "보내지 않음";
+    title.textContent = `${index + 1}. ${roleName} · ${call.system || ""} · ${sentLabel}`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "json-copy";
+    button.dataset.copyIdle = "프롬프트 복사";
+    button.dataset.copyPrompt = "1";
+    button.textContent = "프롬프트 복사";
+    button.setAttribute("aria-label", `${roleName} 프롬프트 복사`);
+    head.append(title, button);
+    const pre = document.createElement("pre");
+    pre.textContent = call.prompt;
+    block.append(head, pre);
+    host.append(block);
+  });
+}
+
+/**
+ * 프롬프트 칸의 복사 단추를 한 번 연결합니다.
+ *
+ * @param {ParentNode} [root=document] 검색 범위입니다.
+ * @returns {void}
+ */
+export function bindPromptCopyButtons(root = document) {
+  const host = root.querySelector("#codex-prompts");
+  if (!host || host.dataset.copyBound === "1") return;
+  host.dataset.copyBound = "1";
+  host.addEventListener("click", async (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target ? target.closest("[data-copy-prompt]") : null;
+    if (!(button instanceof HTMLButtonElement)) return;
+    const pre = button.closest(".prompt-block")?.querySelector("pre");
+    try {
+      await copyText(pre ? pre.textContent || "" : "");
+      flashCopyButton(button, COPY_DONE);
+    } catch {
+      flashCopyButton(button, COPY_FAIL);
+    }
+  });
+}
+
 /**
  * 응대 결과를 화면에 채웁니다.
  *
  * @param {ReturnType<typeof readComplaint>} payload 검사기에 보낸 민원입니다.
- * @param {object} received 서버 JSON입니다. `assist.codex`는 모델 사용자 JSON입니다.
+ * @param {object} received 서버 JSON입니다. `assist.codex`는 사용자 JSON과 stdin 전문입니다.
  * @param {string} [sourceText] 기록에서 다시 볼 때 안내 문구입니다.
  * @returns {void}
  */
@@ -219,6 +297,7 @@ function showResult(payload, received, sourceText = "") {
     item.textContent = "표시할 자료가 없습니다.";
     hits.append(item);
   }
+  renderCodexPrompts(assist.codex || []);
   document.querySelector("#codex-json").textContent = JSON.stringify(
     assist.codex || [],
     null,
@@ -262,6 +341,111 @@ export async function sendComplaint(payload) {
     body: JSON.stringify(payload),
   });
   return readJsonResponse(response, "서버가 민원을 받지 못했습니다.");
+}
+
+const PROGRESS_STEPS = [
+  { key: "read", label: "민원 내용을 읽고 있어요" },
+  { key: "search", label: "저장된 안내와 사례를 찾고 있어요" },
+  { key: "review", label: "찾은 자료를 살펴보고 있어요" },
+  { key: "write", label: "안내문을 준비하고 있어요" },
+  { key: "sanitize", label: "거친 표현을 정리하고 있어요" },
+  { key: "draft", label: "담당자용 초안을 준비하고 있어요" },
+];
+
+/** @type {string[]} */
+let progressSeen = [];
+
+/**
+ * 진행 칸을 열고 첫 단계로 맞춥니다.
+ *
+ * @returns {void}
+ */
+export function showProgress() {
+  const panel = document.querySelector("#progress");
+  if (!panel) return;
+  progressSeen = [];
+  panel.hidden = false;
+  setProgress("read", PROGRESS_STEPS[0].label);
+  panel.scrollIntoView({ block: "nearest" });
+}
+
+/**
+ * 진행 칸을 닫습니다.
+ *
+ * @returns {void}
+ */
+export function hideProgress() {
+  const panel = document.querySelector("#progress");
+  if (panel) panel.hidden = true;
+  progressSeen = [];
+}
+
+/**
+ * 현재 진행 단계와 목록을 갱신합니다.
+ *
+ * @param {string} key 진행 키입니다.
+ * @param {string} label 화면에 보여줄 문구입니다.
+ * @returns {void}
+ */
+export function setProgress(key, label) {
+  const labelNode = document.querySelector("#progress-label");
+  if (labelNode) labelNode.textContent = label || "";
+  if (key && !progressSeen.includes(key)) progressSeen.push(key);
+  const list = document.querySelector("#progress-steps");
+  if (!list) return;
+  list.replaceChildren();
+  for (const step of PROGRESS_STEPS) {
+    const item = document.createElement("li");
+    item.textContent = step.label;
+    if (step.key === key) item.className = "active";
+    else if (progressSeen.includes(step.key)) item.className = "done";
+    list.append(item);
+  }
+}
+
+/**
+ * 진행 안내 NDJSON을 읽어 최종 수신 결과를 돌려줍니다.
+ *
+ * @param {ReturnType<typeof readComplaint>} payload 민원 내용입니다.
+ * @param {(key:string,label:string)=>void} [onProgress] 단계 갱신 콜백입니다.
+ * @returns {Promise<object>} `done.result` 본문입니다.
+ */
+export async function streamComplaint(payload, onProgress) {
+  const response = await fetch("/api/v1/lab/complaints/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok || !response.body) {
+    const value = await response.json().catch(() => null);
+    const error = new Error(value?.message || "응대 진행 응답을 받지 못했습니다.");
+    error.status = response.status;
+    throw error;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result = null;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const event = JSON.parse(line);
+      if (event.type === "progress") {
+        onProgress?.(event.key, event.label);
+      } else if (event.type === "done") {
+        result = event.result;
+      } else if (event.type === "error") {
+        throw new Error(event.message || "응대 진행이 실패했습니다.");
+      }
+    }
+  }
+  if (!result) throw new Error("응대 결과를 받지 못했습니다.");
+  return result;
 }
 
 /**
@@ -325,6 +509,7 @@ function bind() {
   body.addEventListener("input", count);
   count();
   bindJsonCopyButtons();
+  bindPromptCopyButtons();
 
   /**
    * 오른쪽 기록 목록을 다시 그립니다.
@@ -373,10 +558,22 @@ function bind() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     errorBox.hidden = true;
-    submit.disabled = true;
+    result.hidden = true;
     const payload = readComplaint(form);
+    submit.disabled = true;
+    submit.textContent = "자료를 확인하고 있어요…";
+    form.querySelectorAll("input, select, textarea").forEach((node) => {
+      node.disabled = true;
+    });
+    showProgress();
     try {
-      const received = await sendComplaint(payload);
+      let received;
+      try {
+        received = await streamComplaint(payload, setProgress);
+      } catch {
+        received = await sendComplaint(payload);
+      }
+      hideProgress();
       selectedId = received.run?.id || "";
       runs = await fetchRuns();
       showResult(payload, received);
@@ -384,10 +581,15 @@ function bind() {
       renderRuns();
       result.scrollIntoView({ block: "start" });
     } catch (error) {
+      hideProgress();
       errorBox.textContent = error.message;
       errorBox.hidden = false;
     } finally {
       submit.disabled = false;
+      submit.textContent = "민원 보내기";
+      form.querySelectorAll("input, select, textarea").forEach((node) => {
+        node.disabled = false;
+      });
     }
   });
 

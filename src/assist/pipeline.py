@@ -5,7 +5,7 @@
 조건부 FAQ 생성을 올립니다. 시스템 지시는 `docs/harness/prompts/`의
 PREFIX 파일을 조립한 `DECISION_SYSTEM`·`ANSWER_SYSTEM`입니다.
 담당자 초안은 PREFIX-03, 순화는 PREFIX-04이며 시민 갈래를 덮지 않습니다.
-결과의 `codex`는 모델에 넣은 사용자 JSON 목록입니다.
+결과의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문 목록입니다.
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from src.assist.policy import (
     validate_decision,
 )
 from src.llm import complete_result, llm_configured, llm_settings, parse_json_object
-from src.llm.complete import CompleteUsage
+from src.llm.complete import CompleteUsage, format_codex_stdin
 from src.rag import (
     SearchParts,
     compact_faq,
@@ -121,7 +121,7 @@ def build_result(
         llm_on: 이번 호출에서 모델을 사용했는지입니다.
         raw_decision: 검사 전 모델 출력입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
-        codex: Codex에 넣은 호출 목록입니다. 없으면 빈 목록입니다.
+        codex: Codex에 넣은 호출 목록입니다. 사용자 JSON과 stdin 전문을 담습니다.
         staff_draft: PREFIX-03 담당자 초안입니다. 없으면 비웁니다.
         sanitize: PREFIX-04 순화 결과입니다. 없으면 비웁니다.
 
@@ -264,15 +264,35 @@ def iter_assist(
     def record_call(
         role: str,
         system_label: str,
+        system_text: str,
         user_obj: dict[str, Any],
         sent: bool,
+        user_json: str | None = None,
     ) -> dict[str, Any]:
-        """모델에 넣은 사용자 JSON과 사용량을 한 칸에 담습니다."""
+        """모델에 넣은 사용자 JSON과 Codex stdin 전문을 한 칸에 담습니다.
+
+        Args:
+            role: 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
+            system_label: PREFIX 조합 이름입니다.
+            system_text: 실제로 넣은 PREFIX 본문입니다.
+            user_obj: 사용자 JSON 객체입니다.
+            sent: 모델에 넣었으면 True입니다.
+            user_json: `chat`에 넣은 사용자 문자열입니다. 생략하면 다시 직렬화합니다.
+
+        Returns:
+            검사기 `assist.codex` 한 칸입니다.
+        """
+        dumped = (
+            user_json
+            if user_json is not None
+            else json.dumps(user_obj, ensure_ascii=False, indent=2)
+        )
         item: dict[str, Any] = {
             "role": role,
             "system": system_label,
             "user": user_obj,
             "sent": sent,
+            "prompt": format_codex_stdin(system_text, dumped),
         }
         if sent and usage_box[0] is not None:
             item["usage"] = usage_box[0]
@@ -303,8 +323,10 @@ def iter_assist(
         record_call(
             "decision",
             "PREFIX-00 + PREFIX-01",
+            DECISION_SYSTEM,
             user_payload,
             chat is not None,
+            decision_user,
         )
     ]
     generated: str | None = None
@@ -317,11 +339,9 @@ def iter_assist(
             if ref["corpus"] == "faq"
         ]
         faq_user = {"query": text, "faq": selected}
+        faq_json = json.dumps(faq_user, ensure_ascii=False, indent=2)
         try:
-            generated = chat(
-                ANSWER_SYSTEM,
-                json.dumps(faq_user, ensure_ascii=False, indent=2),
-            ).strip()
+            generated = chat(ANSWER_SYSTEM, faq_json).strip()
             if len(generated) < 20:
                 raise ValueError("FAQ 답변이 너무 짧습니다.")
             stages.append(stage("답변생성", started, True))
@@ -333,7 +353,14 @@ def iter_assist(
             failures.append(str(exc))
             generated = None
         codex_calls.append(
-            record_call("faq_answer", "PREFIX-00 + PREFIX-02", faq_user, True)
+            record_call(
+                "faq_answer",
+                "PREFIX-00 + PREFIX-02",
+                ANSWER_SYSTEM,
+                faq_user,
+                True,
+                faq_json,
+            )
         )
 
     sanitize: dict[str, Any] | None = None
@@ -341,14 +368,10 @@ def iter_assist(
         yield progress("sanitize")
         started = time.perf_counter()
         sanitize_user = sanitize_payload(text)
+        sanitize_json = json.dumps(sanitize_user, ensure_ascii=False, indent=2)
         try:
             sanitize = validate_sanitize(
-                parse_json_object(
-                    chat(
-                        SPECIAL_SANITIZE_SYSTEM,
-                        json.dumps(sanitize_user, ensure_ascii=False, indent=2),
-                    )
-                )
+                parse_json_object(chat(SPECIAL_SANITIZE_SYSTEM, sanitize_json))
             )
             if sanitize is None:
                 raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
@@ -358,7 +381,14 @@ def iter_assist(
             failures.append(str(exc))
             sanitize = None
         codex_calls.append(
-            record_call("sanitize", "PREFIX-00 + PREFIX-04", sanitize_user, True)
+            record_call(
+                "sanitize",
+                "PREFIX-00 + PREFIX-04",
+                SPECIAL_SANITIZE_SYSTEM,
+                sanitize_user,
+                True,
+                sanitize_json,
+            )
         )
 
     staff_draft: dict[str, Any] | None = None
@@ -366,14 +396,10 @@ def iter_assist(
         yield progress("draft")
         started = time.perf_counter()
         draft_user = staff_draft_payload(text, district, search, decision, parts)
+        draft_json = json.dumps(draft_user, ensure_ascii=False, indent=2)
         try:
             staff_draft = validate_staff_draft(
-                parse_json_object(
-                    chat(
-                        STAFF_DRAFT_SYSTEM,
-                        json.dumps(draft_user, ensure_ascii=False, indent=2),
-                    )
-                ),
+                parse_json_object(chat(STAFF_DRAFT_SYSTEM, draft_json)),
                 parts,
             )
             if staff_draft is None:
@@ -384,7 +410,14 @@ def iter_assist(
             failures.append(str(exc))
             staff_draft = None
         codex_calls.append(
-            record_call("staff_draft", "PREFIX-00 + PREFIX-03", draft_user, True)
+            record_call(
+                "staff_draft",
+                "PREFIX-00 + PREFIX-03",
+                STAFF_DRAFT_SYSTEM,
+                draft_user,
+                True,
+                draft_json,
+            )
         )
 
     yield {

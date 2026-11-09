@@ -2,6 +2,10 @@
 
 ## 2026-11-09
 
+- 응대 검사기 민원 전송에 검색·판정 단계 안내와 대기 애니메이션을 둔다. `/api/v1/lab/complaints/stream` NDJSON을 쓴다. [CASE-071](docs/cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md)
+
+- 응대 검사기에 Codex CLI 표준 입력 전문을 호출마다 보여 준다. `assist.codex[].prompt`는 래퍼·PREFIX 본문·사용자 JSON이다. [CASE-070](docs/cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md)
+
 - 응대 검사기 결과의 Codex 입력·보낸 민원·받은 응답 JSON 칸마다 복사 단추를 둔다. [CASE-069](docs/cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md)
 
 ## 2026-11-07
