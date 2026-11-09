@@ -188,7 +188,7 @@ def iter_assist(
 
     Args:
         query: 한국어 민원 원문입니다.
-        district: 명시한 관할 구입니다.
+        district: 명시한 관할 구입니다. 생략하거나 세부 지역·본문 지명이 있으면 자동 추론·정규화합니다.
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
         search_fn: 검색 함수입니다. 생략하면 검색 API를 호출합니다.
@@ -462,7 +462,7 @@ def run_assist(
 
     Args:
         query: 한국어 민원 원문입니다.
-        district: 명시한 관할 구입니다.
+        district: 명시한 관할 구입니다. 생략하거나 세부 지역·본문 지명이 있으면 자동 추론·정규화합니다.
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
         search_fn: 검색 함수입니다. 생략하면 검색 API를 호출합니다.

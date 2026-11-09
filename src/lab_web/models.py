@@ -37,7 +37,7 @@ class LabComplaint(Model):
     Attributes:
         title: 민원 제목입니다.
         category: 허용 목록의 민원 분야입니다.
-        district: 발생 지역입니다. 없으면 비웁니다.
+        district: 발생 지역입니다. 4개 구 또는 산하 세부 지역이며 없으면 비웁니다.
         body: 상세 내용입니다.
     """
 
@@ -114,7 +114,13 @@ class LabAcceptResult(Model):
 
 
 class LabFields(Model):
-    """작성 양식에 쓰는 분야·지역 목록입니다."""
+    """작성 양식에 쓰는 분야·지역 목록입니다.
+
+    Attributes:
+        categories: 허용 민원 분야 목록입니다.
+        districts: 청주시 4대 자치구 목록입니다.
+        district_areas: 각 자치구 산하 관할 읍·면·동 세부 지역 매핑입니다.
+    """
 
     categories: tuple[Category, ...] = Field(default=CATEGORIES)
     districts: tuple[District, ...] = Field(default=DISTRICTS)

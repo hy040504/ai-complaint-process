@@ -425,6 +425,9 @@ class AssistResponse(Model):
     """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다.
 
     Attributes:
+        query: 검색과 판정에 사용한 민원 원문입니다.
+        district: 검색에 적용한 관할 구입니다.
+        district_inferred: 본문 지명으로 구를 자동 감지했으면 True입니다.
         outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
         automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
         codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.

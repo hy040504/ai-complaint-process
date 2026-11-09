@@ -132,12 +132,16 @@ def extract_district(text: str) -> str | None:
     # 1. 구 이름 명시 탐색 ('상당구', '서원구', '흥덕구', '청원구')
     for match in _DISTRICT_PATTERN.finditer(text):
         found_districts.add(match.group(1))
+        if len(found_districts) > 1:
+            return None
 
     # 2. 읍·면·동 지명 탐색
     for match in _AREA_PATTERN.finditer(text):
         area_name = match.group(1)
         if area_name in _AREA_TO_DISTRICT:
             found_districts.add(_AREA_TO_DISTRICT[area_name])
+            if len(found_districts) > 1:
+                return None
 
     # 3. 오직 하나의 구만 발견된 경우에만 확정 반환
     if len(found_districts) == 1:

@@ -24,8 +24,9 @@ py -3.12 -m venv .venv-web
 
 | 주소 | 제공 내용 |
 | --- | --- |
-| http://127.0.0.1:5010/ | 추출한 응대 검사기 웹. 민원 JSON 수신. 오른쪽 테스트 기록 |
+| http://127.0.0.1:5010/ | 추출한 응대 검사기 웹. 민원 JSON 수신. 청주 전 지역 선택 및 본문 지명 자동 감지, 진행 단계 버퍼링, Codex 전문 표시, 오른쪽 테스트 기록 |
 | http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정. 기록은 `.rag-cache/lab-runs` |
+| http://127.0.0.1:5010/api/v1/lab/complaints/stream | `POST` 같은 처리의 진행 안내 NDJSON 뒤 `done` 결과 스트리밍 |
 | http://127.0.0.1:5010/api/v1/lab/runs | `GET` 기록 목록 · `DELETE` 모두 삭제 |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
@@ -54,7 +55,7 @@ flowchart LR
     L --> M[OpenAI API 또는 Codex CLI]
 ```
 
-읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 응답의 `codex`는 모델에 넣은 사용자 JSON이다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
+읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 발생 지역은 청주시 4개 구 및 읍·면·동 전 지역을 지원하며 미지정 시 `src/assist/district.py`가 본문 지명을 자동 추론한다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문이다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
