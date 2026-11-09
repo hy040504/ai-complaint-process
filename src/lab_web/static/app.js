@@ -295,6 +295,7 @@ export function bindPromptCopyButtons(root = document) {
  * @returns {void}
  */
 function showResult(payload, received, sourceText = "") {
+  const assist = received.assist || {};
   const source = document.querySelector("#result-source");
   if (source) {
     source.textContent = sourceText;
@@ -314,7 +315,6 @@ function showResult(payload, received, sourceText = "") {
       districtBadge.hidden = false;
     }
   }
-  const assist = received.assist || {};
   document.querySelector("#result-message").textContent = received.message;
   document.querySelector("#result-outcome").textContent =
     outcomeNames[assist.outcome] || assist.outcome || "";

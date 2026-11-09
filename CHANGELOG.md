@@ -2,6 +2,8 @@
 
 ## 2026-11-10
 
+- 응대 검사기 웹(`src/lab_web/static/app.js`)의 결과 렌더링 시 `assist` 변수 초기화 전 참조(TDZ) 오류를 수정하고, 가상 DOM 및 실서버 호출 검증 스크립트를 추가한다. [CASE-076](docs/cases/사례-076-검사기-화면-assist-초기화전참조-수정-2026-11-10.md)
+
 - CASE-074 패치의 Google 형식 한국어 docstring을 맞추고, `src/__init__.py` 지연 로딩 최적화로 RAG 환경의 Flask 종속성을 분리하며, README 원클릭 기동 순서도와 배지를 보강한다. [CASE-075](docs/cases/사례-075-패치-주석-문서-최적화-2026-11-10.md)
 
 - `검사기-시작.cmd` 실행 시 백엔드 검색 서비스(PostgreSQL·검색 API)의 동작 상태를 감지하여 비정상 종료 락 파일(postmaster.pid)을 정리하고 자동으로 함께 기동하도록 연동한다. [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
