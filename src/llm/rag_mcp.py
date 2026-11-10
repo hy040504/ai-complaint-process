@@ -1,8 +1,9 @@
-"""`search_complaint_rag` 하나만 제공하는 MCP stdio 서버입니다.
+"""민원 검색(`search_complaint_rag`) 및 장소 추적(`lookup_navermap_place`)을 제공하는 MCP stdio 서버입니다.
 
 Codex 자식 프로세스로 실행합니다. 표준 입력은 MCP 규격의 줄 단위
 JSON-RPC와 예전 Content-Length 프레임을 모두 받습니다. 응답은 받은
-형식과 같게 씁니다. 민원 문장은 검색 API로만 넘깁니다.
+형식과 같게 씁니다. 민원 문장은 검색 API로, 장소명은 네이버 지도 웹
+인스턴트 검색으로 넘깁니다.
 """
 
 from __future__ import annotations
@@ -11,13 +12,18 @@ import json
 import sys
 from typing import Any
 
+from src.llm.place_tool import (
+    PLACE_TOOL_NAME,
+    PLACE_TOOL_USAGE,
+    lookup_navermap_place,
+)
 from src.llm.rag_tool import RAG_TOOL_NAME, RAG_TOOL_USAGE, search_complaint_rag
 
 PROTOCOL = "2024-11-05"
 
 
-def tool_spec() -> dict[str, Any]:
-    """Codex에 공개할 도구 스키마를 만듭니다.
+def rag_tool_spec() -> dict[str, Any]:
+    """Codex에 공개할 민원 RAG 검색 도구 스키마를 만듭니다.
 
     Returns:
         MCP `tools/list`에 넣을 도구 정의입니다.
@@ -39,6 +45,39 @@ def tool_spec() -> dict[str, Any]:
         },
         "annotations": {"readOnlyHint": True},
     }
+
+
+def place_tool_spec() -> dict[str, Any]:
+    """Codex에 공개할 네이버 지도 장소 주소 추적 도구 스키마를 만듭니다.
+
+    Returns:
+        MCP `tools/list`에 넣을 도구 정의입니다.
+    """
+    return {
+        "name": PLACE_TOOL_NAME,
+        "description": PLACE_TOOL_USAGE,
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "장소 검색어(건물명, 학교명, 시장명, 공원명 등)",
+                },
+                "coords": {
+                    "type": "string",
+                    "description": "중심 좌표(위도,경도). 없으면 청주시청 기본값",
+                },
+            },
+            "required": ["query"],
+        },
+        "annotations": {"readOnlyHint": True},
+    }
+
+
+def tool_spec() -> dict[str, Any]:
+    """이전 버전과의 호환성을 위한 기본 RAG 검색 도구 스키마입니다."""
+    return rag_tool_spec()
 
 
 def dispatch(message: dict[str, Any]) -> dict[str, Any] | None:
@@ -70,7 +109,7 @@ def dispatch(message: dict[str, Any]) -> dict[str, Any] | None:
         return {
             "jsonrpc": "2.0",
             "id": request_id,
-            "result": {"tools": [tool_spec()]},
+            "result": {"tools": [rag_tool_spec(), place_tool_spec()]},
         }
     if method == "tools/call":
         return _call_tool(request_id, message.get("params") or {})
@@ -84,7 +123,7 @@ def dispatch(message: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _call_tool(request_id: Any, params: dict[str, Any]) -> dict[str, Any]:
-    """허용된 도구 호출만 검색 API로 넘깁니다.
+    """허용된 도구 호출만 해당 처리 함수로 넘깁니다.
 
     Args:
         request_id: JSON-RPC id입니다.
@@ -95,31 +134,60 @@ def _call_tool(request_id: Any, params: dict[str, Any]) -> dict[str, Any]:
     """
     name = params.get("name")
     arguments = params.get("arguments") or {}
-    if name != RAG_TOOL_NAME or not isinstance(arguments, dict):
-        return _tool_error(request_id, "허용되지 않은 도구입니다.")
-    query = arguments.get("query")
-    if not isinstance(query, str):
-        return _tool_error(request_id, "query는 문자열이어야 합니다.")
-    district = arguments.get("district")
-    if district is not None and not isinstance(district, str):
-        return _tool_error(request_id, "district는 문자열이거나 생략해야 합니다.")
-    try:
-        payload = search_complaint_rag(query, district)
-    except (ValueError, OSError, TimeoutError) as exc:
-        return _tool_error(request_id, str(exc))
-    return {
-        "jsonrpc": "2.0",
-        "id": request_id,
-        "result": {
-            "content": [
-                {
-                    "type": "text",
-                    "text": json.dumps(payload, ensure_ascii=False),
-                }
-            ],
-            "isError": False,
-        },
-    }
+    if not isinstance(arguments, dict):
+        return _tool_error(request_id, "도구 인자는 객체여야 합니다.")
+
+    if name == RAG_TOOL_NAME:
+        query = arguments.get("query")
+        if not isinstance(query, str):
+            return _tool_error(request_id, "query는 문자열이어야 합니다.")
+        district = arguments.get("district")
+        if district is not None and not isinstance(district, str):
+            return _tool_error(request_id, "district는 문자열이거나 생략해야 합니다.")
+        try:
+            payload = search_complaint_rag(query, district)
+        except (ValueError, OSError, TimeoutError) as exc:
+            return _tool_error(request_id, str(exc))
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(payload, ensure_ascii=False),
+                    }
+                ],
+                "isError": False,
+            },
+        }
+
+    if name == PLACE_TOOL_NAME:
+        query = arguments.get("query")
+        if not isinstance(query, str):
+            return _tool_error(request_id, "query는 문자열이어야 합니다.")
+        coords = arguments.get("coords")
+        if coords is not None and not isinstance(coords, str):
+            return _tool_error(request_id, "coords는 문자열이거나 생략해야 합니다.")
+        try:
+            payload = lookup_navermap_place(query, coords)
+        except (ValueError, OSError, TimeoutError) as exc:
+            return _tool_error(request_id, str(exc))
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(payload, ensure_ascii=False),
+                    }
+                ],
+                "isError": False,
+            },
+        }
+
+    return _tool_error(request_id, "허용되지 않은 도구입니다.")
 
 
 def _tool_error(request_id: Any, message: str) -> dict[str, Any]:

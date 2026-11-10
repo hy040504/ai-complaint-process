@@ -51,6 +51,7 @@ flowchart LR
     W --> APPDB[(PostgreSQL complaint_app)]
     R --> S[rag/ 검색 API :8007]
     MCP --> S
+    MCP --> N[네이버 지도 웹 검색<br/>lookup_navermap_place]
     S --> PG[(PostgreSQL complaint_rag)]
     L --> M[OpenAI API 또는 Codex CLI]
 ```
@@ -61,7 +62,7 @@ flowchart LR
 | --- | --- |
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
-| `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출 |
+| `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
 | `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. 테스트 기록은 `.rag-cache/lab-runs`. MCP 핸드셰이크는 NDJSON |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
@@ -160,7 +161,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 `COMPLAINT_LLM_PROVIDER=openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을
 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` MCP만 붙이며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 두 방식 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. PREFIX 조립 적격은

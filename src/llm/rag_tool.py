@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from src.assist.policy import decision_payload
 from src.rag.client import require_search_contract, search_via_api
 
 RAG_TOOL_NAME = "search_complaint_rag"
@@ -53,6 +52,8 @@ def search_complaint_rag(
         )
     fetch = search_fn or search_via_api
     search = require_search_contract(fetch(text, area, limit=5, rerank=False))
+    from src.assist.policy import decision_payload
+
     payload = decision_payload(text, area, search)
     payload["retrieval_only"] = True
     payload["decision"] = "requires_gate"

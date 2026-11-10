@@ -37,8 +37,13 @@ from src.assist.policy import (
     public_hit,
     validate_decision,
 )
-from src.llm import complete_result, llm_configured, llm_settings, parse_json_object
-from src.llm.complete import CompleteUsage, format_codex_stdin
+from src.llm.complete import (
+    CompleteUsage,
+    complete_result,
+    format_codex_stdin,
+    parse_json_object,
+)
+from src.llm.settings import llm_configured, llm_settings
 from src.rag import (
     SearchParts,
     compact_faq,

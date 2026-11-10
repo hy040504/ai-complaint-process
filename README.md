@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Backend](https://img.shields.io/badge/OneClick-백엔드_자동기동-0f766e?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![PlaceMCP](https://img.shields.io/badge/MCP-NaverMap_Place-03c75a?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Backend](https://img.shields.io/badge/OneClick-백엔드_자동기동-0f766e?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -23,15 +23,15 @@
 > 추출한 작성 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)다. `POST /api/v1/lab/complaints`는 제목·상세로 검색 API를 먼저 호출하고 판정한다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
-> **현재 단계 · 2026-11-10 · 검색 + 웹 업무 시연 + 응대 검사기 고도화**<br>
-> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·테스트 기록(파일), 청주시 4개 구 및 읍·면·동 전 지역 선택 지원, 미지정 시 제목·본문 지명 자동 감지(`extract_district`) 및 검색 구 필터 연동, 결과 화면 발생 지역 배지(`📍 발생 지역: ...`), 원클릭 자동 기동(`검사기-시작.cmd` 실행 시 stale `postmaster.pid` 락 정리 및 미기동 PostgreSQL·검색 API 순차 자동 기동 [CASE-074]), Codex CLI stdin 전문 프롬프트 표시 및 호출별 복사 단추, 민원 전송 중 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링, 검사기 결과 JSON 칸마다 복사 단추, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3/3, 400문항 아님), Codex MCP 줄 단위 JSON-RPC, `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
+> **현재 단계 · 2026-11-10 · 검색 + 웹 업무 시연 + 응대 검사기 고도화 · 장소 추적 MCP**<br>
+> **구현:** 시민·담당자 화면, Flask API·Swagger, PostgreSQL `complaint_app` 업무 저장, 검색 원본 `rag/origin`, 검사기 웹 [`src/lab_web`](src/lab_web/README.md) `:5010` 검색·판정·테스트 기록(파일), 청주시 4개 구 및 읍·면·동 전 지역 선택 지원, 미지정 시 제목·본문 지명 자동 감지(`extract_district`) 및 검색 구 필터 연동, 결과 화면 발생 지역 배지(`📍 발생 지역: ...`), 원클릭 자동 기동(`검사기-시작.cmd` 실행 시 stale `postmaster.pid` 락 정리 및 미기동 PostgreSQL·검색 API 순차 자동 기동 [CASE-074]), Codex CLI stdin 전문 프롬프트 표시 및 호출별 복사 단추, 민원 전송 중 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링, 검사기 결과 JSON 칸마다 복사 단추, PREFIX-00~04 호출(03은 FAQ가 아닐 때, 04는 원문 힌트), FAQ 본문에 없는 항목은 안내하지 않음, PREFIX 조립 적격 검사, 초안 응대 평가셋 29건(개발 26/26, 보류 3/3, 400문항 아님), Codex MCP 줄 단위 JSON-RPC(민원 검색 `search_complaint_rag` 및 네이버 지도 비로그인 장소 주소 추적 `lookup_navermap_place` [CASE-078]), `assist.codex` 사용자 JSON 표시, `gpt-6-luna` API·Codex CLI 선택, Windows `setup.cmd`·`검사기-시작.cmd`·`웹-시작.cmd`·`검색-시작.cmd`·`민원-응대.cmd`·`문장-임베딩.cmd`, Linux `setup.sh`·`start-lab.sh`·`start-web.sh`·`start-search.sh`·`embed-sentence.sh`·`ask-assist.sh`. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원).<br>
 > **다음:** openai_api `cached_tokens` 실측(키 필요), 민원 CRUD LLM. 시민 챗봇·담당자 SSE·공식 이관은 `main` 후속.
 
 | 지금 됨 | 응대 검사기 | 아직 |
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · 청주 전 지역 선택 및 본문 지명 자동 감지 · 실시간 진행 스트리밍 버퍼링 | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 제목·상세로 검색 후 PREFIX-00+01 판정 · Codex stdin 전문 표시 및 JSON/프롬프트 복사 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI · MCP NDJSON · 오른쪽 파일 기록 · 초안 평가 개발 26/26 · 보류 3/3 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI · MCP NDJSON(검색·장소추적) · 오른쪽 파일 기록 · 초안 평가 개발 26/26 · 보류 3/3 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -101,6 +101,7 @@ flowchart LR
     D -->|"effective_district"| S["검색 API :8007<br/>(FAQ + 구 필터 사례)"]
     S -->|"NDJSON 진행 스트림"| P["진행 버퍼링 UI<br/>(read→search→review→draft)"]
     S --> C["Codex 판정<br/>PREFIX-00+01"]
+    C <-->|"MCP 도구"| M["MCP stdio 서버<br/>• search_complaint_rag<br/>• lookup_navermap_place"]
     C --> V["코드 정책 검증"]
     V -->|faq_answer| F["안내 문장<br/>(PREFIX-02)"]
     V -->|department_suggestion| B["부서 추천<br/>(PREFIX-03 초안)"]
@@ -108,13 +109,15 @@ flowchart LR
     V --> O["Codex stdin 전문<br/>(format_codex_stdin)"]
     classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
     classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+    classDef tool fill:#f0fdf4,stroke:#16a34a,color:#14532d
     class W,D,S,P,C,V,F,B,O ready
     class H human
+    class M tool
 ```
 
 진행 문구는 `민원 내용을 읽고 있어요` → `저장된 안내와 사례를 찾고 있어요` → `찾은 자료를 살펴보고 있어요` → (FAQ 안내일 때만) `안내문을 준비하고 있어요` → (원문 힌트) `거친 표현을 정리하고 있어요` → (FAQ가 아니면) `담당자용 초안을 준비하고 있어요`입니다. 검색 파이프라인·판정 JSON·정책 검사 이름은 화면에 올리지 않습니다. LLM은 `.env`의 `COMPLAINT_LLM_PROVIDER`로 고릅니다.
 
-시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)의 PREFIX `.txt`입니다. `src/assist/prompts.py`가 읽어 조립하며, 민원·검색 후보는 `user` JSON에만 둡니다. 호출마다 **공통 헌법 `PREFIX-00`과 그 작업 블록 하나**를 붙입니다. Codex가 쓸 수 있는 도구는 `search_complaint_rag` 하나이며, 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받습니다. 후보가 이미 있으면 다시 호출하지 않고, 순화 작업은 이 도구를 쓰지 않습니다. MCP stdio는 줄 단위 JSON-RPC입니다.
+시스템 접두는 [`docs/harness/prompts/`](docs/harness/prompts/README.md)의 PREFIX `.txt`입니다. `src/assist/prompts.py`가 읽어 조립하며, 민원·검색 후보는 `user` JSON에만 둡니다. 호출마다 **공통 헌법 `PREFIX-00`과 그 작업 블록 하나**를 붙입니다. Codex 및 LLM 에이전트가 활용할 수 있는 MCP 도구는 민원 문장을 검색 API로 넘겨 `retrieval_only` 후보를 받는 **`search_complaint_rag`**와, 본문 내 장소명(건물·학교·시장·공원 등)으로 비로그인 네이버 지도를 검색해 청주시 구·동 주소를 특정하는 **`lookup_navermap_place`**가 등록되어 있습니다. 후보가 이미 있으면 검색 도구를 다시 호출하지 않고, 순화 작업은 이 도구를 쓰지 않습니다. MCP stdio는 줄 단위 JSON-RPC입니다.
 
 | 호출 | 시스템 프롬프트 | 하는 일 | 지금 |
 | --- | --- | --- | --- |
@@ -123,7 +126,7 @@ flowchart LR
 | 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내를 덮지 않음 |
 | 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 원문 힌트가 있을 때만. 자동 차단 아님 |
 
-[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-064](docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-066](docs/cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](docs/cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) · [CASE-070](docs/cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md) · [CASE-071](docs/cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-064](docs/cases/사례-064-초안응대평가셋확대-2026-11-06.md) · [CASE-066](docs/cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](docs/cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) · [CASE-070](docs/cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md) · [CASE-071](docs/cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md) · [CASE-078](docs/cases/사례-078-네이버지도-비로그인-장소추적-MCP-도구-2026-11-10.md)
 
 ## 저장과 검색
 

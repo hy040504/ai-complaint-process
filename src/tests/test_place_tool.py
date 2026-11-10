@@ -1,0 +1,138 @@
+"""네이버 지도 장소 주소 추적 도구 단위 테스트입니다.
+
+비로그인 상태의 네이버 지도 인스턴트 검색을 이용한 주소 및 청주시 구/동
+추출 동작, 모의 응답 정제, 예외 처리를 검증합니다.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from src.llm.place_tool import (
+    PLACE_TOOL_NAME,
+    extract_cheongju_district,
+    extract_cheongju_dong,
+    lookup_navermap_place,
+)
+
+
+def test_extract_cheongju_district() -> None:
+    """청주시 4개 구(상당구, 서원구, 흥덕구, 청원구) 이름을 올바르게 추출합니다."""
+    assert extract_cheongju_district("충청북도 청주시 서원구 사창동 351") == "서원구"
+    assert extract_cheongju_district("충북 청주시 상당구 상당로 143") == "상당구"
+    assert extract_cheongju_district("청주시 흥덕구 복대동 288-1") == "흥덕구"
+    assert extract_cheongju_district("청원구 오창읍 양청리 820") == "청원구"
+    # 청주시 구가 아닌 경우
+    assert extract_cheongju_district("서울특별시 종로구 세종대로 209") is None
+    assert extract_cheongju_district("경기도 수원시 팔달구 매산로") is None
+    assert extract_cheongju_district("") is None
+    assert extract_cheongju_district(None) is None
+
+
+def test_extract_cheongju_dong() -> None:
+    """주소에서 동, 읍, 면, 가 단위를 올바르게 추출합니다."""
+    assert extract_cheongju_dong("충청북도 청주시 서원구 사창동 351") == "사창동"
+    assert extract_cheongju_dong("청원구 오창읍 양청리") == "오창읍"
+    assert extract_cheongju_dong("상당구 남일면 효촌리") == "남일면"
+    assert extract_cheongju_dong("상당구 북문로1가 12") == "북문로1가"
+    assert extract_cheongju_dong("1순환로709번길 44") is None
+    assert extract_cheongju_dong("") is None
+    assert extract_cheongju_dong(None) is None
+
+
+def test_lookup_navermap_place_rejects_empty_query() -> None:
+    """빈 검색어는 ValueError를 일으킵니다."""
+    with pytest.raises(ValueError, match="비어"):
+        lookup_navermap_place("   ")
+
+
+def test_lookup_navermap_place_with_mock_results() -> None:
+    """모의 검색 응답을 받아 청주시 장소를 최우선으로 정제합니다."""
+    called_count = 0
+
+    def mock_fetch(query: str, coords: str) -> dict:
+        nonlocal called_count
+        called_count += 1
+        return {
+            "place": [
+                {
+                    "title": "<b>창신초등학교</b>",
+                    "roadAddress": "충청북도 청주시 서원구 1순환로709번길 44",
+                    "jibunAddress": "충청북도 청주시 서원구 사창동 351",
+                    "x": "127.4643881",
+                    "y": "36.629467",
+                    "ctg": "초등학교",
+                },
+                {
+                    "title": "창신초등학교",
+                    "roadAddress": "서울특별시 종로구 지봉로 73",
+                    "jibunAddress": "서울특별시 종로구 창신동 128-32",
+                    "x": "127.0145551",
+                    "y": "37.5760844",
+                    "ctg": "초등학교",
+                },
+            ]
+        }
+
+    res = lookup_navermap_place("창신초", fetch_fn=mock_fetch)
+    assert called_count == 1
+    assert res["found"] is True
+    assert res["total"] == 2
+
+    # 청주시 장소가 primary_place로 선정되었는지 검증
+    primary = res["primary_place"]
+    assert primary is not None
+    assert primary["title"] == "창신초등학교"  # HTML 태그 제거 확인
+    assert primary["gu"] == "서원구"
+    assert primary["dong"] == "사창동"
+    assert primary["road_address"] == "충청북도 청주시 서원구 1순환로709번길 44"
+    assert primary["is_cheongju"] is True
+
+
+def test_lookup_navermap_place_handles_fetch_exception() -> None:
+    """네트워크나 원격 API 오류 발생 시 예외를 던지지 않고 안전한 에러 객체를 반환합니다."""
+
+    def failing_fetch(_query: str, coords: str = "") -> dict:
+        raise OSError("네트워크 연결 실패")
+
+    res = lookup_navermap_place("없는장소", fetch_fn=failing_fetch)
+    assert res["found"] is False
+    assert res["total"] == 0
+    assert res["primary_place"] is None
+    assert "error" in res
+    assert "네트워크 연결 실패" in res["error"]
+
+
+def test_lookup_navermap_place_cache_hit() -> None:
+    """동일한 장소를 반복 검색할 때 모의 호출 없이 캐시를 반환합니다."""
+    called_count = 0
+
+    def mock_fetch(query: str, coords: str = "") -> dict:
+        nonlocal called_count
+        called_count += 1
+        return {
+            "place": [
+                {
+                    "title": "청주시청",
+                    "roadAddress": "충청북도 청주시 상당구 상당로 143",
+                    "jibunAddress": "충청북도 청주시 상당구 북문로3가 89-1",
+                    "x": "127.4890319",
+                    "y": "36.6424341",
+                    "ctg": "시청",
+                }
+            ]
+        }
+
+    first = lookup_navermap_place("청주시청테스트", fetch_fn=mock_fetch)
+    assert called_count == 1
+    assert first["found"] is True
+    assert first["primary_place"]["gu"] == "상당구"
+
+    # 기본 캐시 검증을 위해 fetch_fn 없이 다시 호출하기 전 임의 캐시에 주입 확인
+    from src.llm.place_tool import _PLACE_CACHE
+
+    cache_key = "청주시청테스트|36.6424341,127.4890319"
+    _PLACE_CACHE[cache_key] = first
+    cached = lookup_navermap_place("청주시청테스트")
+    assert cached["primary_place"]["gu"] == "상당구"
+

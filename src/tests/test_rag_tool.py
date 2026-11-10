@@ -73,11 +73,12 @@ def test_search_complaint_rag_returns_gate_contract() -> None:
     assert payload["case_candidates"] == []
 
 
-def test_mcp_lists_only_the_search_tool() -> None:
-    """MCP 목록에는 검색 도구만 있고 다른 메서드는 거절합니다."""
+def test_mcp_lists_registered_tools() -> None:
+    """MCP 목록에는 RAG 검색 도구와 네이버 지도 장소 도구가 노출됩니다."""
     listed = dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     names = [item["name"] for item in listed["result"]["tools"]]
-    assert names == ["search_complaint_rag"]
+    assert "search_complaint_rag" in names
+    assert "lookup_navermap_place" in names
     denied = dispatch(
         {
             "jsonrpc": "2.0",
@@ -88,6 +89,26 @@ def test_mcp_lists_only_the_search_tool() -> None:
     )
     assert denied["result"]["isError"] is True
     assert dispatch({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
+
+
+def test_mcp_calls_lookup_navermap_place() -> None:
+    """MCP tools/call로 lookup_navermap_place를 호출하여 결과를 받습니다."""
+    called = dispatch(
+        {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "lookup_navermap_place",
+                "arguments": {"query": "창신초등학교"},
+            },
+        }
+    )
+    assert called is not None
+    assert called["id"] == 10
+    assert called["result"]["isError"] is False
+    body = called["result"]["content"][0]["text"]
+    assert "창신초등학교" in body
 
 
 def test_mcp_frame_roundtrip() -> None:
