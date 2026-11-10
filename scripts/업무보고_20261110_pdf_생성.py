@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -20,7 +19,11 @@ CHROME_CANDIDATES = (
     Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
 )
 
-UI_CHANGE_PDF_PATH = Path(r"C:\Users\user\Documents\카카오톡 받은 파일\UI_변경_2026-11-10.pdf")
+UI_CHANGE_PDF_CANDIDATES = (
+    Path(r"C:\Users\user\Documents\카카오톡 받은 파일\UI_변경_2026-11-10.pdf"),
+    Path(r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\UI_변경_2026-11-10.pdf"),
+    Path(__file__).resolve().parent.parent / "docs" / "UI_변경_2026-11-10.pdf",
+)
 
 OUTPUT_PDF_PATH_1 = Path(r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261110.pdf")
 OUTPUT_PDF_PATH_2 = Path(r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\업무보고_20261110.pdf")
@@ -246,8 +249,28 @@ def render_html_to_pdf(html_text: str, output_pdf: Path) -> None:
             temp_html.unlink()
 
 
+def find_ui_change_pdf() -> Path:
+    """기민 님의 UI 변경 보고서 PDF 경로를 탐색합니다.
+
+    Returns:
+        존재하는 UI 변경 보고서 PDF 경로입니다.
+
+    Raises:
+        FileNotFoundError: 후보 경로 중 존재하는 파일이 없을 때 발생합니다.
+    """
+    for candidate in UI_CHANGE_PDF_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError("UI 변경 보고서 PDF를 찾을 수 없습니다.")
+
+
 def generate_report_pdf() -> None:
-    """1페이지 업무보고와 6페이지 UI 변경 보고서를 병합하여 최종 보고서 PDF를 생성합니다."""
+    """1페이지 업무보고와 6페이지 UI 변경 보고서를 병합하여 최종 보고서 PDF를 생성합니다.
+
+    Raises:
+        FileNotFoundError: 브라우저 실행 파일 또는 원본 UI 변경 PDF가 없는 경우 발생합니다.
+        subprocess.CalledProcessError: 헤드리스 브라우저 PDF 출력 프로세스 실패 시 발생합니다.
+    """
     print("1. 1페이지 업무보고 HTML 렌더링 중...")
     page1_html = build_page1_html()
 
@@ -256,13 +279,13 @@ def generate_report_pdf() -> None:
     print(f"   -> 1페이지 임시 PDF 생성 완료: {temp_page1_pdf} ({temp_page1_pdf.stat().st_size} bytes)")
 
     print("2. UI 변경 보고서 PDF 확인 중...")
-    if not UI_CHANGE_PDF_PATH.exists():
-        raise FileNotFoundError(f"UI 변경 PDF를 찾을 수 없습니다: {UI_CHANGE_PDF_PATH}")
+    ui_pdf_path = find_ui_change_pdf()
+    print(f"   -> UI 변경 보고서 경로: {ui_pdf_path}")
 
     reader_page1 = pypdf.PdfReader(str(temp_page1_pdf))
     print(f"   -> 1페이지 PDF 페이지 수: {len(reader_page1.pages)}")
 
-    reader_ui = pypdf.PdfReader(str(UI_CHANGE_PDF_PATH))
+    reader_ui = pypdf.PdfReader(str(ui_pdf_path))
     print(f"   -> UI 변경 보고서 페이지 수: {len(reader_ui.pages)}")
 
     print("3. PDF 병합 중 (1페이지 + UI 변경 6페이지 = 총 7페이지)...")

@@ -9,8 +9,6 @@
 from __future__ import annotations
 
 import base64
-import os
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
