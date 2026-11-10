@@ -508,6 +508,7 @@ function db(){
 }
 function dbReset(){var d=seedDb();dbSave(d);return d}
 function stats(){
+  if(window.ui04Stats)return window.ui04Stats();
   var d=db(),t=ymd(new Date()),y=new Date();y.setDate(y.getDate()-1);var ys=ymd(y),a=0,b=0;
   if(!d)return {a:0,b:0};
   d.complaints.forEach(function(c){var k=ymd(new Date(c.created_at));if(k===t)a++;else if(k===ys)b++});
@@ -946,6 +947,8 @@ function route(method,url,body,hdr){
   return res;
 }
 function api(method,path,body,hdr){
+  /* 서버 연결 훅: 어댑터(/design/ui04-adapter.js)가 있으면 실제 서버를 부르고, 없으면 아래 가짜 서버를 씁니다. */
+  if(window.ui04Bridge)return window.ui04Bridge(method,path,body,hdr);
   return Promise.all([loadData('faq'),loadData('cases')]).then(function(){
     return new Promise(function(done){
       setTimeout(function(){

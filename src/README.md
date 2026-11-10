@@ -30,6 +30,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd)를 �
 | http://127.0.0.1:5000/#/citizen | 시민 사이트 |
 | http://127.0.0.1:5000/#/staff | 담당자 사이트 |
 | http://127.0.0.1:5000/#/lab | RAG·LLM 응대 검사기 · 민원 CRUD와 분리 |
+| http://127.0.0.1:5000/design/ui04 | ui04 목업 화면. 가짜 서버 호출을 `/api/v1` 어댑터(`ui/adapters/ui04-adapter.js`)로 바꿔 서버 데이터를 씀. 서버에 없는 기능은 안내 메시지로 막음 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
 | http://127.0.0.1:5000/api/v1/health | 상태·저장 방식·실제 AI 연결 여부 |

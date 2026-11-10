@@ -270,7 +270,7 @@ function listRows(rows, staff = false) {
   return rows
     .map(
       (c) =>
-        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? "김담당" : "담당자 미지정") : origin(c.published)}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td><a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></td></tr>`,
+        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? "김담당" : "담당자 미지정") : `<span class="origin-badge ${c.published?.origin || ""}">${origin(c.published)}</span>`}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td><a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></td></tr>`,
     )
     .join("");
 }
@@ -308,6 +308,7 @@ function board(staff = false) {
   );
   rows = rows.slice((page - 1) * 8, page * 8);
   return `<div class="page-content">${pageHeading(staff ? "COMPLAINT MANAGEMENT" : "CITIZEN VOICE", mine ? "내 민원" : staff ? "민원 관리" : "민원 게시판", mine ? "내가 남긴 목소리와 답변을 한곳에서 확인하세요." : staff ? "접수된 민원을 확인하고 담당자 검토와 답변을 이어가세요." : "우리 동네의 목소리를 살펴보고, 여러분의 의견도 들려주세요.", staff ? "" : link(`${icon("plus", 17)} 민원 작성`, "/citizen/write", "btn primary"))}
+  ${!staff ? `<nav class="scope-tabs" aria-label="민원 범위">${link("공개 민원", "/citizen/board", mine ? "" : "active")}${link("내 민원", "/citizen/mine", mine ? "active" : "")}</nav>` : ""}
   ${!staff ? `<div class="info-banner">${icon("shield", 19)}<span>개인정보 없는 합성 시연 데이터입니다. 비공개 민원은 내 글만 표시됩니다.</span></div>` : ""}<section class="panel list-panel"><div class="list-tabs">${(staff
     ? [
         ["", "전체 민원"],
@@ -355,7 +356,7 @@ function writeForm() {
     /* 손상된 임시 입력 대신 빈 양식을 제공합니다. */
   }
   const value = item || draft;
-  return `<div class="page-content narrow">${pageHeading("YOUR VOICE MATTERS", item ? "민원 수정" : "작은 목소리도 소중히 듣겠습니다", "일상에서 느낀 불편이나 궁금한 점을 편하게 남겨주세요.")}<div class="form-steps"><span class="active"><b>1</b> 민원 내용 작성</span><i></i><span><b>2</b> 담당자 검토</span><i></i><span><b>3</b> 답변 확인</span></div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 서비스</b>입니다. 실제 개인정보를 입력하지 마세요. 청주시 공식 접수로 연결되지 않습니다.</span></div><form id="complaint-form" class="panel complaint-form" data-id="${item?.id || ""}" data-version="${item?.version || ""}"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="title">제목 <em>*</em></label><input id="title" name="title" required maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(value.title || "")}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="title-count">${(value.title || "").length}/120</span></div><div class="form-grid"><div><label for="category">민원 분야 <em>*</em></label><select id="category" name="category" required>${categories.map((c) => `<option ${c === (value.category || route.params.get("category")) ? "selected" : ""}>${c}</option>`).join("")}</select></div><div><label for="district">발생 지역 <em>*</em></label><select id="district" name="district" required><option value="">지역을 선택해 주세요</option>${districts.map((d) => `<option ${d === value.district ? "selected" : ""}>${d}</option>`).join("")}</select></div></div><label for="body">상세 내용 <em>*</em></label><textarea id="body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(value.body || "")}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 첨부파일은 후속 지원 예정입니다.</span><span id="body-count">${(value.body || "").length}/2,000</span></div><label>공개 범위</label><div class="radio-cards"><label><input type="radio" name="visibility" value="private" ${value.visibility !== "public" ? "checked" : ""}><span><b>${icon("shield", 16)} 비공개</b><small>나와 담당자만 확인할 수 있어요.</small></span></label><label><input type="radio" name="visibility" value="public" ${value.visibility === "public" ? "checked" : ""}><span><b>${icon("user", 16)} 공개</b><small>다른 시민도 내용을 볼 수 있어요.</small></span></label></div><div class="consent"><label><input type="checkbox" name="consent" required> 시연용 데이터 저장 및 공식 민원 미접수 안내를 확인했습니다. <em>*</em></label></div><div class="form-footer">${link("취소", "/citizen/mine", "btn")}${button("임시 저장", "", 'type="button" data-action="save-form"')}${button(`${item ? "수정 내용 저장" : "민원 등록하기"} ${icon("arrow", 17)}`, "primary", 'type="submit"')}</div></form></div>`;
+  return `<div class="page-content narrow">${pageHeading("YOUR VOICE MATTERS", item ? "민원 수정" : "작은 목소리도 소중히 듣겠습니다", "일상에서 느낀 불편이나 궁금한 점을 편하게 남겨주세요.")}<div class="form-steps"><span class="active"><b>1</b> 민원 내용 작성</span><i></i><span><b>2</b> 담당자 검토</span><i></i><span><b>3</b> 답변 확인</span></div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 서비스</b>입니다. <b>주민등록번호·전화번호·계좌번호</b>는 제목과 내용에 쓰지 마세요. 청주시 공식 접수로 연결되지 않습니다.</span></div><form id="complaint-form" class="panel complaint-form" data-id="${item?.id || ""}" data-version="${item?.version || ""}"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="title">제목 <em>*</em></label><input id="title" name="title" required minlength="2" maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(value.title || "")}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="title-count">${(value.title || "").length}/120</span></div><div class="form-grid"><div><label for="category">민원 분야 <em>*</em></label><select id="category" name="category" required>${categories.map((c) => `<option ${c === (value.category || route.params.get("category")) ? "selected" : ""}>${c}</option>`).join("")}</select></div><div><label for="district">관할 구 <em>*</em></label><select id="district" name="district" required><option value="">지역을 선택해 주세요</option>${districts.map((d) => `<option ${d === value.district ? "selected" : ""}>${d}</option>`).join("")}</select></div></div><label for="body">상세 내용 <em>*</em></label><textarea id="body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(value.body || "")}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 첨부파일은 후속 지원 예정입니다.</span><span id="body-count">${(value.body || "").length}/2,000</span></div><label>공개 범위</label><div class="radio-cards"><label><input type="radio" name="visibility" value="private" ${value.visibility !== "public" ? "checked" : ""}><span><b>${icon("shield", 16)} 비공개</b><small>나와 담당자만 확인할 수 있어요.</small></span></label><label><input type="radio" name="visibility" value="public" ${value.visibility === "public" ? "checked" : ""}><span><b>${icon("user", 16)} 공개</b><small>다른 시민도 내용을 볼 수 있어요.</small></span></label></div><div class="consent"><label><input type="checkbox" name="consent" required> 시연용 데이터 저장 및 공식 민원 미접수 안내를 확인했습니다. <em>*</em></label></div><div class="form-footer">${link("취소", "/citizen/mine", "btn")}${button("임시 저장", "", 'type="button" data-action="save-form"')}${button(`${item ? "수정 내용 저장" : "민원 등록하기"} ${icon("arrow", 17)}`, "primary", 'type="submit"')}</div></form></div>`;
 }
 /**
  * missing 화면 동작을 구성합니다.
@@ -380,11 +381,11 @@ function detail() {
   );
   if (!c) return missing();
   const owner = c.owner === "citizen-demo";
-  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a><div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div>${route.staff ? staffReviewInfo(c) : ""}<section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button data-action="withdraw" data-id="${c.id}">민원 철회</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section><section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div><div class="prose">${esc(c.published.text)}</div>${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="2000" required placeholder="추가로 전하고 싶은 내용을 남겨주세요." rows="3"></textarea><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<section class="panel history-panel"><h2>처리 이력</h2><ol class="timeline">${c.history
+  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a><div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div>${route.staff ? staffReviewInfo(c) : ""}<section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button data-action="withdraw" data-id="${c.id}">민원 철회</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? "" : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}${route.staff ? '<section class="panel history-panel"><h2>처리 이력</h2>' : '<details class="panel history-panel"><summary><h2>처리 이력 보기</h2></summary>'}<ol class="timeline">${c.history
     .slice()
     .reverse()
     .map((h) => `<li><b>${esc(h.text)}</b><time>${date(h.date)}</time></li>`)
-    .join("")}</ol></section></aside></div></div>`;
+    .join("")}</ol>${route.staff ? "</section>" : "</details>"}</aside></div></div>`;
 }
 /**
  * citizenProgress 화면 동작을 구성합니다.
@@ -392,6 +393,64 @@ function detail() {
  * @param {object} c 서버에서 조회한 민원입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
+/**
+ * 시민 상세 맨 위에 처리 결론·지금 상태·다음 단계를 보여 줍니다.
+ *
+ * 부서 정보는 데이터 모델에 없으므로 표시하지 않습니다.
+ *
+ * @param {object} c 서버에서 조회한 민원입니다.
+ * @returns {string} 결론 상자 HTML입니다.
+ */
+function nextStepBox(c) {
+  const [conclusion, now, next] = {
+    submitted: [
+      "접수 대기",
+      "담당자가 아직 내용을 확인하기 전이에요",
+      "담당자가 검토한 뒤 결과를 안내드려요",
+    ],
+    under_review: [
+      "담당자 검토 중",
+      "담당자가 내용과 필요한 조치를 살펴보고 있어요",
+      "검토가 끝나면 답변이 게시돼요",
+    ],
+    answered: [
+      "답변이 게시되었어요",
+      "담당자 답변을 아래에서 확인할 수 있어요",
+      "더 궁금하면 추가 문의를 남겨 주세요",
+    ],
+    closed: [
+      "처리가 끝난 민원이에요",
+      "처리 종료 상태입니다",
+      "새로운 문의는 새 민원으로 접수해 주세요",
+    ],
+  }[c.status] || ["처리 상태 확인 중", "", ""];
+  return `<section class="panel next-step-box" aria-label="처리 요약"><span class="badge ${c.status}"><i></i>${statusNames[c.status] || ""}</span><p class="next-step-conclusion">${conclusion}</p><dl><div><dt>지금 상태</dt><dd>${now}</dd></div><div><dt>다음 단계</dt><dd>${next}</dd></div></dl></section>`;
+}
+/**
+ * 시민에게 보여 줄 답변을 첫 문장과 나머지로 나눕니다. 나머지는 접어 둡니다.
+ *
+ * @param {string} text 게시된 답변 원문입니다.
+ * @returns {string} 답변 HTML입니다.
+ */
+function foldAnswer(text) {
+  const source = String(text).trim();
+  // 한글·영문 뒤의 마침표와 뒤따르는 공백에서만 나눕니다. "2026. 10. 28."처럼 숫자 뒤의 마침표는 나누지 않습니다.
+  // 홀수 번째 조각은 나눈 공백입니다.
+  const tokens = source.split(/((?<=[가-힣A-Za-z]\.)\s+)/);
+  const greeting = /^안녕하(세요|십니까)[.!]?$/;
+  const idx = tokens.findIndex(
+    (t, i) => i % 2 === 0 && t && !greeting.test(t.trim()),
+  );
+  if (idx < 0 || tokens.length === 1)
+    return `<div class="prose">${esc(source)}</div>`;
+  // 결론 문장을 맨 위에 두고, 나머지(인사말 포함)는 원래 순서대로 접습니다.
+  const lead = tokens[idx];
+  const before = tokens.slice(0, idx).join("").trim();
+  const after = tokens.slice(idx + 2).join("").trim();
+  const rest = [before, after].filter(Boolean).join("\n");
+  if (!rest) return `<div class="prose">${esc(source)}</div>`;
+  return `<div class="prose answer-lead">${esc(lead.trim())}</div><details class="answer-more"><summary>자세한 안내 보기</summary><div class="prose answer-rest">${esc(rest)}</div></details>`;
+}
 function citizenProgress(c) {
   const step =
     c.status === "submitted" ? 0 : c.status === "under_review" ? 1 : 2;
@@ -474,7 +533,7 @@ function guide() {
       "file",
       "01",
       "민원을 작성해 주세요",
-      "제목과 상세 내용, 발생 지역을 작성해 주세요. 공개 범위는 비공개가 기본이며, 개인정보는 입력하지 마세요.",
+      "제목과 상세 내용, 관할 구를 작성해 주세요. 공개 범위는 비공개가 기본이며, 개인정보는 입력하지 마세요.",
     ],
     [
       "shield",
@@ -1023,6 +1082,8 @@ document.addEventListener("input", (event) => {
     $("#title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "body")
     $("#body-count").textContent = event.target.value.length + "/2,000";
+  if (event.target.id === "followup")
+    $("#followup-count").textContent = event.target.value.length + "/500";
   if (event.target.id === "lab-title")
     $("#lab-title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "lab-body")
