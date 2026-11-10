@@ -757,17 +757,23 @@ body[data-site="staff"] .role-switch a.selected {
   font-weight: 550;
   min-width: 55px;
 }
+/* 처리 상태 색: 시민 화면과 같은 명세 색을 쓴다 */
+.staff-workspace .badge.withdrawn {
+  background: #fff;
+  color: #5e665f;
+  box-shadow: inset 0 0 0 1px #cfd6cc;
+}
 .staff-workspace .badge.submitted {
-  background: #fff3df;
-  color: #ba8c46;
+  background: #eef0ee;
+  color: #6b756c;
 }
 .staff-workspace .badge.under_review {
-  background: #eaf1ff;
-  color: #5880cb;
+  background: #fff6d8;
+  color: #8a6510;
 }
 .staff-workspace .badge.answered {
-  background: #e8f6ef;
-  color: #5e9f7c;
+  background: #e4f4e7;
+  color: #2f7d46;
 }
 .staff-workspace .badge.closed {
   background: #f0f2f7;
@@ -1165,6 +1171,22 @@ body[data-site="staff"] .role-switch a.selected {
   background: #fcf7e8;
   color: #b39a55;
   font-size: 9px;
+}
+/* 답변 배지: AI 검토(초록), AI 수정(노랑), 담당자 답변(검정) */
+.staff-workspace .origin-badge.ai {
+  border-color: #c6e5cd;
+  background: #e4f4e7;
+  color: #2f7d46;
+}
+.staff-workspace .origin-badge.ai_edited {
+  border-color: #f1dc9b;
+  background: #fff3cc;
+  color: #7a5a06;
+}
+.staff-workspace .origin-badge.staff {
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
 }
 .staff-workspace .answer-disclosure {
   background: #fcf8ec;
