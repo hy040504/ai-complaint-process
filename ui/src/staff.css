@@ -2373,3 +2373,66 @@ body[data-site="staff"] #toast {
     scroll-behavior: auto !important;
   }
 }
+
+/* 2026-11-11 · 담당자 편집기 보조 표시: 경과일, 저장 상태, 글자 수, 문구, 단축키 */
+.staff-row-age {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.staff-workspace .draft-state {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.staff-workspace .draft-state.dirty {
+  color: var(--review);
+  font-weight: 700;
+}
+.staff-workspace .field-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.staff-workspace .char-count {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.staff-workspace .phrase-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+.staff-workspace .phrase-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.staff-workspace .phrase-chip:hover,
+.staff-workspace .phrase-chip:focus-visible {
+  border-color: var(--teal);
+  color: var(--teal-dark);
+}
+.staff-workspace .shortcut-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.staff-workspace .empty-line {
+  color: var(--muted);
+  list-style: none;
+}
+.staff-workspace .history-panel summary {
+  cursor: pointer;
+  list-style-position: inside;
+}

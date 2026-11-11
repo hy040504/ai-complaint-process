@@ -5,6 +5,7 @@ import {
   staffQueue,
   staffProcess,
   staffReviewInfo,
+  daysSince,
 } from "./staff.js";
 import {
   citizenShell,
@@ -38,6 +39,14 @@ import {
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
 const $ = (s, parent = document) => parent.querySelector(s);
+/** 담당자 답변 편집기에서 커서 위치에 넣는 자주 쓰는 문구입니다. */
+const PHRASES = [
+  "안녕하십니까. 접수하신 민원의 검토 결과를 안내드립니다.",
+  "불편을 드려 죄송합니다.",
+  "확인 과정에서 추가 조사가 필요하여 담당 부서에 전달하였습니다.",
+  "추가 문의가 있으시면 민원 상세 화면의 추가 문의로 남겨 주세요.",
+  "감사합니다.",
+];
 /** 화면에 필요한 값을 변환합니다. */
 const esc = (value) =>
   String(value ?? "").replace(
@@ -381,11 +390,11 @@ function detail() {
   );
   if (!c) return missing();
   const owner = c.owner === "citizen-demo";
-  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button data-action="withdraw" data-id="${c.id}">민원 철회</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}${route.staff ? '<section class="panel history-panel"><h2>처리 이력</h2>' : '<details class="panel history-panel"><summary><h2>처리 이력 보기</h2></summary>'}<ol class="timeline">${c.history
+  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button data-action="withdraw" data-id="${c.id}">민원 철회</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
     .slice()
     .reverse()
     .map((h) => `<li><b>${esc(h.text)}</b><time>${date(h.date)}</time></li>`)
-    .join("")}</ol>${route.staff ? "</section>" : "</details>"}</aside></div></div>`;
+    .join("") || '<li class="empty-line">아직 처리 이력이 없습니다.</li>'}</ol></details></aside></div></div>`;
 }
 /**
  * citizenProgress 화면 동작을 구성합니다.
@@ -492,7 +501,7 @@ function citizenProgress(c) {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function editor(c) {
-  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>초안 v${c.draftVersion}</span></div><div class="assign-row"><span>담당자</span><b>${c.assigned ? "김담당" : "미지정"}</b>${button(c.assigned ? "담당 해제" : "내가 담당", "", 'data-action="assign" data-id="' + c.id + '"')}</div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div></form><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${button(`${icon("refresh", 15)} AI 시연 재실행`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div><div class="evidence-note">${icon("help", 17)}<span>검색·LLM 미연동 상태입니다. 공식 FAQ 근거와 부서 후보는 생성하지 않습니다.</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
+  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>접수 ${daysSince(c.date)}일째</span><span id="draft-state" class="draft-state" role="status" aria-live="polite">서버 저장본</span></div><div class="assign-row"><span>담당자</span><b>${c.assigned ? "김담당" : "미지정"}</b>${button(c.assigned ? "담당 해제" : "내가 담당", "", 'data-action="assign" data-id="' + c.id + '"')}</div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><div class="phrase-bar" aria-label="자주 쓰는 문구">${PHRASES.map((p) => `<button type="button" class="phrase-chip" data-action="insert-phrase" data-phrase="${esc(p)}">${esc(p.slice(0, 14))}…</button>`).join("")}</div><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><div class="field-foot"><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><span class="char-count" id="answer-count">${c.draft.length}/4,000</span></div><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><span class="char-count" id="reason-count">0/200</span><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div><p class="shortcut-hint">Ctrl+S(또는 ⌘S)로 초안을 저장합니다.</p></form><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${button(`${icon("refresh", 15)} AI 시연 재실행`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div><div class="evidence-note">${icon("help", 17)}<span>검색·LLM 미연동 상태입니다. 공식 FAQ 근거와 부서 후보는 생성하지 않습니다.</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
 }
 /**
  * dashboard 화면 동작을 구성합니다.
@@ -924,6 +933,18 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "insert-phrase") {
+    const field = $("#answer");
+    if (!field) return;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+    const before = field.value.slice(0, start);
+    const sep = before && !before.endsWith("\n") ? "\n" : "";
+    field.setRangeText(sep + target.dataset.phrase, start, end, "end");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.focus();
+    return;
+  }
   if (action === "compare") {
     openModal(
       "AI 원문과 답변 이력",
@@ -1096,6 +1117,17 @@ document.addEventListener("submit", async (event) => {
 document.addEventListener("input", (event) => {
   if (event.target.closest("#complaint-form"))
     delete $("#complaint-form").dataset.key;
+  if (event.target.id === "answer") {
+    $("#answer-count").textContent =
+      event.target.value.length.toLocaleString("ko-KR") + "/4,000";
+    const state = $("#draft-state");
+    if (state) {
+      state.textContent = "작성 중 · 저장 안 됨";
+      state.classList.add("dirty");
+    }
+  }
+  if (event.target.id === "reason")
+    $("#reason-count").textContent = event.target.value.length + "/200";
   if (event.target.id === "title")
     $("#title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "body")
@@ -1171,6 +1203,15 @@ modal.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  // 담당자 답변 편집기에서 Ctrl+S(⌘S)는 브라우저 저장 대신 초안 저장으로 처리합니다.
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    const form = $("#answer-form");
+    if (form) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+    return;
+  }
   if (!document.body.classList.contains("staff-menu-open")) return;
   if (event.key === "Escape") {
     document.querySelector(".staff-drawer-close")?.click();
