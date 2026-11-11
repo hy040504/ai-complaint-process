@@ -918,8 +918,62 @@ body[data-site="staff"] .role-switch a.selected {
   line-height: 2;
   color: #7184a3;
 }
+/* 답변 편집기가 있는 오른쪽 열은 화면을 내려도 위에 고정한다 */
 .staff-workspace .detail-grid > aside {
   display: block;
+  position: sticky;
+  top: 16px;
+  align-self: start;
+}
+/* 이전·다음 민원 이동 줄 */
+.staff-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -4px 0 14px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.staff-pager a {
+  color: #2f6fed;
+}
+.staff-pager span {
+  color: #6f7f99;
+}
+.staff-pager .disabled {
+  color: #b8c3d4;
+}
+/* 목록의 "내가 담당" 버튼: 링크 행 바깥의 형제 요소로 두고 행 오른쪽에 겹쳐 놓는다 */
+.staff-queue-item {
+  position: relative;
+}
+.staff-queue-item > .staff-queue-row {
+  padding-right: 170px;
+}
+.staff-queue-item:last-child > .staff-queue-row {
+  border-bottom: 0;
+}
+.staff-assign-btn {
+  position: absolute;
+  right: 17px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #c9d6ea;
+  border-radius: 6px;
+  background: #fff;
+  color: #2f6fed;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.staff-assign-btn:hover {
+  background: #edf3ff;
+}
+.staff-assign-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 .staff-process {
   margin-bottom: 19px;
@@ -1458,6 +1512,9 @@ body[data-site="staff"] #toast {
   }
   .staff-workspace .detail-grid .panel {
     padding: 18px;
+  }
+  .staff-workspace .detail-grid > aside {
+    position: static;
   }
   .staff-workspace .detail-grid .staff-reference-card {
     padding: 0;

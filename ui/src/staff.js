@@ -190,12 +190,13 @@ function metrics(rows) {
  */
 function queueRows(rows) {
   return rows
-    .map((c) =>
-      a(
+    .map(
+      (c) =>
+        `<div class="staff-queue-item">${a(
         `<span class="staff-row-code" title="${e(c.id)}">#${e(c.id.split("-").at(-1))}</span><div class="staff-row-content"><div class="staff-row-heading"><h2>${e(c.title)}</h2>${c.messages.length ? `<span class="staff-tag amber">추가 문의 ${c.messages.length}</span>` : ""}${c.visibility === "private" ? `<span class="staff-row-private">${icon("shield", 12)} 비공개</span>` : ""}</div><p class="staff-row-excerpt">원문: ${e(c.body.replace(/\s+/g, " ").slice(0, 82))}${c.body.length > 82 ? "…" : ""}</p><div class="staff-row-meta"><span class="staff-tag navy">${e(c.category)}</span><span>${icon("pin", 11)} ${e(c.district)}</span><span class="staff-tag ${c.assigned ? "gray" : "amber"}">${c.assigned ? "김담당" : "담당자 미지정"}</span>${unpublished(c) ? '<span class="staff-tag gold">검토 전 초안</span>' : ""}${c.job.status === "failed" ? '<span class="staff-tag red">AI 시연 실패</span>' : ""}${c.job.status === "running" ? '<span class="staff-tag blue">단계 시연 중</span>' : ""}${c.published ? '<span class="staff-published-mark">' + icon("check", 11) + " 답변 게시됨</span>" : ""}</div></div><div class="staff-row-state"><span class="badge ${c.status}">${statusNames[c.status]}</span><time>${day(c.date)} 등록</time></div><span class="staff-row-open">${icon("chevron", 16)}</span>`,
         `/staff/detail/${c.id}`,
         "staff-queue-row",
-      ),
+      )}<button class="staff-assign-btn" type="button" data-action="assign" data-id="${e(c.id)}">${c.assigned ? "담당 해제" : "내가 담당"}</button></div>`,
     )
     .join("");
 }
