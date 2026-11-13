@@ -2,7 +2,7 @@
 
 [하네스 안내](README.md) · [실제 프리픽스](prompts/README.md) · [입출력 계약](AI_정보전달과_응답_하네스.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [판정 정책](decision-policy.md)
 
-**기준: 2026-11-06 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
+**기준: 2026-11-13 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
 
 > **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/응대_비교.py`가 한다. 민원 CRUD의 LLM 연결·SSE·공식 이관은 미구현이다.
 
@@ -47,7 +47,7 @@ AI는 공식 접수 창구가 아니고, 배정 확정 권한도 없다. 검색 
 | 부서 후보 | `department_current`가 있고 검토 대상이 아닌 사례만 승격 | 다른 구의 동명 과를 하나로 합치기 |
 | 임베딩 | 질문에는 `query:` 접두, 문서에는 `passage:` 접두. 기본 e5-small-ko 384차원 | 검색 없이 기억으로 조례·부서를 채워 넣기 |
 
-판정 호출의 `user` JSON에는 `query`, `district`, `faq_candidates`, `case_candidates`, `department_candidates`만 온다. 후보가 없으면 Codex는 `search_complaint_rag`로 같은 검색 API를 호출할 수 있으며, 본문에 언급된 장소명(학교, 건물, 시장 등)의 주소와 청주시 관할 구를 확인하기 위해 `lookup_navermap_place` 도구를 호출할 수 있다. FAQ 안내 호출에는 **선택된 FAQ 원문만** 온다. 사례 본문은 넣지 않는다. 순화 작업은 이 도구를 호출하지 않는다.
+판정 호출의 `user` JSON에는 `query`, `district`, `faq_candidates`, `case_candidates`, `department_candidates`와 (장소가 추적된 경우) `inferred_place`가 온다. 후보가 없으면 Codex는 `search_complaint_rag`로 같은 검색 API를 호출할 수 있으며, 본문에 언급된 장소명(학교, 건물, 시장 등)의 주소와 청주시 관할 구를 확인하는 `lookup_navermap_place` 도구는 도구가 제공될 때 추가로 호출할 수 있다. FAQ 안내 호출에는 **선택된 FAQ 원문만** 온다. 사례 본문은 넣지 않는다. 순화 작업은 이 도구를 호출하지 않는다.
 
 문서 키는 `(corpus, source_id)`다. `evidence_refs`에 입력에 없는 ID를 쓰면 코드가 제거하고 안내를 강등한다.
 

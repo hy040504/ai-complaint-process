@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from typing import Any, Callable
 
 from src.assist.constants import PROGRESS_LABELS
-from src.assist.district import extract_place_info, resolve_complaint_district
+from src.assist.district import resolve_district_and_place
 from src.assist.prompts import (
     ANSWER_SYSTEM,
     DECISION_SYSTEM,
@@ -43,7 +43,12 @@ from src.llm.complete import (
     format_codex_stdin,
     parse_json_object,
 )
-from src.llm.settings import llm_configured, llm_settings
+from src.llm.settings import (
+    check_provider_availability,
+    llm_configured,
+    llm_settings,
+    settings_for_provider,
+)
 from src.rag import (
     SearchParts,
     compact_faq,
@@ -73,18 +78,60 @@ def stage(name: str, started: float, ok: bool = True) -> dict[str, Any]:
     }
 
 
-def llm_enabled(llm_fn: object) -> bool:
+def llm_enabled(llm_fn: object, provider: str | None = None) -> bool:
     """이번 호출이 언어 모델을 사용하는지 반환합니다.
 
     Args:
         llm_fn: 환경 설정 사용 표시, 직접 함수, 또는 비활성화 `None`입니다.
+        provider: 검사기에서 고른 공급자입니다. 환경 설정을 쓸 때만 봅니다.
 
     Returns:
         모델을 호출할 수 있으면 True입니다.
     """
     if llm_fn is USE_ENV_LLM:
+        if provider:
+            return check_provider_availability(provider)[0]
         return llm_configured()
     return callable(llm_fn)
+
+
+def resolve_chat(
+    llm_fn: object,
+    provider: str | None,
+    usage_box: list[CompleteUsage | None],
+) -> Callable[[str, str], str] | None:
+    """이번 응대에 쓸 `(system, user) → 텍스트` 함수를 하나로 정합니다.
+
+    직접 넘긴 `llm_fn`(테스트 주입)이 가장 우선합니다. 환경 설정을 쓸 때는
+    검사기에서 고른 `provider`를, 없으면 `.env` 기본 공급자를 씁니다.
+    호출할 수 없는 공급자면 None을 돌려 모델 없이 판정합니다.
+
+    Args:
+        llm_fn: 환경 설정 사용 표시, 직접 함수, 또는 비활성화 `None`입니다.
+        provider: `exaone_api`·`openai_api`·`codex_cli` 중 하나이거나 None입니다.
+        usage_box: 마지막 호출의 토큰 사용량을 담을 한 칸 목록입니다.
+
+    Returns:
+        완성 함수 또는 모델을 쓰지 않을 때 None입니다.
+    """
+    if llm_fn is not USE_ENV_LLM:
+        return llm_fn if callable(llm_fn) else None
+    if provider:
+        if not check_provider_availability(provider)[0]:
+            return None
+        bound = settings_for_provider(provider)
+    elif llm_configured():
+        bound = llm_settings()
+    else:
+        return None
+
+    def chat(system: str, user: str) -> str:
+        """설정을 고정한 채 한 번 완성하고 사용량을 기록합니다."""
+        result = complete_result(system, user, settings=bound)
+        usage_box[0] = result.usage
+        return result.text
+
+    return chat
 
 
 def progress(key: str) -> dict[str, str]:
@@ -209,9 +256,10 @@ def iter_assist(
     """
     stages: list[dict[str, Any]] = []
     text = (query or "").strip()
-    effective_district, district_inferred = resolve_complaint_district(district, text)
-    inferred_place = extract_place_info(text) if text else None
-    llm_on = llm_enabled(llm_fn)
+    effective_district, district_inferred, inferred_place = resolve_district_and_place(
+        district, text
+    )
+    llm_on = llm_enabled(llm_fn, provider)
     yield progress("read")
     if not text or len(text) > 2000:
         decision = empty_decision("invalid_model_output")
@@ -265,36 +313,7 @@ def iter_assist(
     user_payload = decision_payload(text, effective_district, search, parts, inferred_place=inferred_place)
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
     usage_box: list[CompleteUsage | None] = [None]
-    chat: Callable[[str, str], str] | None
-    if provider:
-        from src.llm.settings import settings_for_provider
-
-        bound = settings_for_provider(provider)
-        if bound.get("token") or bound.get("provider") == "codex_cli":
-            def chat_provider(system: str, user: str) -> str:
-                result = complete_result(system, user, settings=bound)
-                usage_box[0] = result.usage
-                return result.text
-
-            chat = chat_provider
-            llm_on = True
-        else:
-            chat = None
-            llm_on = False
-    elif llm_fn is USE_ENV_LLM:
-        if llm_on:
-            bound = llm_settings()
-
-            def chat_env(system: str, user: str) -> str:
-                result = complete_result(system, user, settings=bound)
-                usage_box[0] = result.usage
-                return result.text
-
-            chat = chat_env
-        else:
-            chat = None
-    else:
-        chat = llm_fn if callable(llm_fn) else None
+    chat: Callable[[str, str], str] | None = resolve_chat(llm_fn, provider, usage_box)
 
     def record_call(
         role: str,

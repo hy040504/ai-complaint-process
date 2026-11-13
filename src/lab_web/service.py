@@ -92,22 +92,24 @@ def handle_complaint(
     """검색 API를 먼저 돌린 뒤 판정 결과를 붙입니다.
 
     Args:
-        complaint: 검증된 민원 내용입니다.
+        complaint: 검증된 민원 내용입니다. `provider`가 있으면 그 공급자로 판정합니다.
         assist_fn: `(query, district, limit, rerank)` 응대 함수입니다.
-            생략하면 `run_web_assist`를 씁니다.
+            생략하면 `run_web_assist`를 씁니다. 테스트 주입 함수에는 공급자를 넘기지 않습니다.
 
     Returns:
         수신 확인과 응대 결과입니다.
     """
     query = compose_search_query(complaint)
+    if assist_fn is None:
+        raw = run_web_assist(
+            query, complaint.district, 5, False, provider=complaint.provider
+        )
+        return accept_from_assist(complaint, query, AssistResponse.model_validate(raw))
+
     effective_district, district_inferred = resolve_complaint_district(
         complaint.district, query
     )
-    run = assist_fn or run_web_assist
-    if assist_fn is None:
-        raw = run_web_assist(query, effective_district, 5, False, provider=complaint.provider)
-    else:
-        raw = assist_fn(query, effective_district, 5, False)
+    raw = assist_fn(query, effective_district, 5, False)
     return accept_from_assist(
         complaint,
         query,
@@ -135,23 +137,30 @@ def iter_complaint(
         `progress` 사건 또는 `done`에 감싼 `LabAcceptResult`입니다.
     """
     query = compose_search_query(complaint)
-    effective_district, district_inferred = resolve_complaint_district(
-        complaint.district, query
-    )
     if assist_fn is not None:
+        effective_district, district_inferred = resolve_complaint_district(
+            complaint.district, query
+        )
         for key in ("read", "search", "review"):
             yield {
                 "type": "progress",
                 "key": key,
                 "label": PROGRESS_LABELS[key],
             }
+        raw = assist_fn(query, effective_district, 5, False)
         yield {
             "type": "done",
-            "result": handle_complaint(complaint, assist_fn=assist_fn),
+            "result": accept_from_assist(
+                complaint,
+                query,
+                AssistResponse.model_validate(raw),
+                effective_district=effective_district,
+                district_inferred=district_inferred,
+            ),
         }
         return
     for event in iter_web_assist(
-        query, effective_district, 5, False, provider=complaint.provider
+        query, complaint.district, 5, False, provider=complaint.provider
     ):
         if event.get("type") == "progress":
             yield event
@@ -161,11 +170,5 @@ def iter_complaint(
         assist = AssistResponse.model_validate(event["result"])
         yield {
             "type": "done",
-            "result": accept_from_assist(
-                complaint,
-                query,
-                assist,
-                effective_district=effective_district,
-                district_inferred=district_inferred,
-            ),
+            "result": accept_from_assist(complaint, query, assist),
         }

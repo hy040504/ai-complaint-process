@@ -374,6 +374,7 @@ pre {
   background: #eef4ff;
   border-color: var(--accent);
 }
+/* ── 결과 배지: 발생 지역 · 장소 추적 · LLM 엔진 ── */
 .result-badges {
   display: flex;
   flex-wrap: wrap;
@@ -384,42 +385,35 @@ pre {
 .result-badges p {
   margin: 0;
 }
-.district-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #eef7f6;
-  color: var(--brand);
-  border: 1px solid #c7e6e2;
-  border-radius: 9999px;
-  font-size: 13px;
-  font-weight: 600;
-}
-.place-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-  border-radius: 9999px;
-  font-size: 13px;
-  font-weight: 600;
-}
+.district-badge,
+.place-badge,
 .llm-engine-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #ddd6fe;
+  border: 1px solid;
   border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
 }
+.district-badge {
+  background: #eef7f6;
+  color: var(--brand);
+  border-color: #c7e6e2;
+}
+.place-badge {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.llm-engine-badge {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+/* ── LLM 엔진 선택 단추 ── */
 .llm-select-container {
   margin: 12px 0 16px;
 }
@@ -445,12 +439,15 @@ pre {
   border-radius: 10px;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
-  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .llm-choice-btn:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
+}
+.llm-choice-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .llm-choice-btn.active {
   background: #f0fdf4;
@@ -499,8 +496,10 @@ pre {
   color: #b91c1c;
   border: 1px solid #fca5a5;
 }
-.llm-choice-btn:disabled,
-.llm-choice-btn.is-disabled {
+
+/* 키·실행 파일이 없는 엔진. 클릭 안내를 위해 disabled 대신 aria-disabled를 씁니다. */
+.llm-choice-btn.is-disabled,
+.llm-choice-btn.is-disabled:hover {
   opacity: 0.52;
   cursor: not-allowed;
   background: #f1f5f9;
@@ -508,11 +507,6 @@ pre {
   border-style: dashed;
   box-shadow: none;
   filter: grayscale(0.5);
-}
-.llm-choice-btn:disabled:hover,
-.llm-choice-btn.is-disabled:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
 }
 .llm-choice-btn.is-disabled small {
   color: #dc2626;
@@ -525,6 +519,12 @@ pre {
 }
 .llm-choice-btn.shake {
   animation: llm-shake 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .llm-choice-btn.shake {
+    animation: none;
+    outline: 2px solid #dc2626;
+  }
 }
 
 @media (max-width: 900px) {

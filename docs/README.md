@@ -4,7 +4,7 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-09 UTC**.
+기준일: **2026-11-13 UTC**.
 
 ## 시작점
 
@@ -15,12 +15,12 @@
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
 | 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) |
-| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-066](cases/사례-066-검사기-테스트기록-파일저장-2026-11-06.md) · [CASE-069](cases/사례-069-검사기-응답JSON-복사단추-2026-11-09.md) · [CASE-070](cases/사례-070-검사기-Codex프롬프트전문-2026-11-09.md) · [CASE-071](cases/사례-071-검사기-진행단계-버퍼링-2026-11-09.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-073](cases/사례-073-패치-주석-문서-최적화-2026-11-10.md) |
+| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) |
 | 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
 | Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
 | Flask 민원 웹·검색 클라이언트·LLM·응대 연결 | [서버 안내](../src/README.md), [CASE-026](cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) |
-| 응대 검사기 LLM 공급자 선택 | [서버 안내](../src/README.md), `.env.example`, [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) |
+| 응대 검사기 LLM 공급자 선택 (K-EXAONE·Luna·Codex) | [서버 안내](../src/README.md), `.env.example`, [CASE-023](cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md), [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md), [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) |
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
 | 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |
 | 버그·개선·결정의 경위와 미해결 과제 확인·기록 | [프로젝트 사례 색인](cases/README.md), [사례 작성 양식](cases/사례_작성_양식.md) |
@@ -34,7 +34,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 검색한 뒤 판정하고, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. Codex MCP는 줄 단위 JSON-RPC이며 `assist.codex`에 사용자 JSON을 실습니다. `gpt-6-luna`는 OpenAI API 또는 Codex CLI로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 지명·장소(`resolve_district_and_place`·`lookup_navermap_place`)를 추적하고 검색한 뒤 선택한 공급자로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. 검사기 UI는 `.env` API 키·실행 파일 상태에 따라 미설정 공급자를 비활성화·흔들림 안내합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`와 `lookup_navermap_place` 도구를 제공하고 `assist.codex`에 사용자 JSON을 실습니다. LLM은 `K-EXAONE 2.5`(`exaone_api`, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`), `gpt-6-luna`(`openai_api`), 또는 `codex_cli`로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -55,6 +55,9 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) | 2026-11-13 | 패치 점검(주소 키/잠금 복원 경쟁 버그 수정)·장소추적 재귀/중복 조회 최적화·문서/README 디자인 개선 | 완료 |
+| [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) | 2026-11-13 | LG K-EXAONE 2.5 `max_tokens` 16384 상향 및 `EXAONE_REASONING_EFFORT` 연동·방어 파싱 | 완료 |
+| [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) | 2026-11-13 | 검사기 UI 키/실행파일 미설정 공급자 비활성화 및 흔들림 안내 효과 | 완료 |
 | [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) | 2026-11-13 | LG AI연구원 K-EXAONE 2.5 API 공급자(`exaone_api`) 추가 및 EXAONE Tabular 연동 구상 문서화 | 완료 |
 | [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) | 2026-11-13 | 서원대학교 후문 등 시설명 민원 장소 추적 및 네이버 지도 MCP 연동을 통한 위치·부서 인식 개선 | 완료 |
 | [CASE-082](cases/사례-082-패치-주석-문서-최적화-2026-11-11.md) | 2026-11-11 | 패치 주석 정비·README 기준일 및 업무보고서 링크 최신화·문서 최적화 | 완료 |

@@ -17,6 +17,8 @@ Title = Annotated[
 Body = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=10, max_length=2000)
 ]
+Provider = Literal["exaone_api", "codex_cli", "openai_api"]
+"""검사기에서 고를 수 있는 LLM 공급자입니다. `src.llm.settings.LAB_PROVIDERS`와 맞춥니다."""
 
 
 class Model(BaseModel):
@@ -39,13 +41,14 @@ class LabComplaint(Model):
         category: 허용 목록의 민원 분야입니다.
         district: 발생 지역입니다. 4개 구 또는 산하 세부 지역이며 없으면 비웁니다.
         body: 상세 내용입니다.
+        provider: 검사기에서 고른 LLM 공급자입니다. 비우면 `.env` 기본 설정을 씁니다.
     """
 
     title: Title
     category: Category
     district: str | None = None
     body: Body
-    provider: str | None = None
+    provider: Provider | None = None
 
     @field_validator("district", mode="before")
     @classmethod
@@ -58,8 +61,8 @@ class LabComplaint(Model):
     @field_validator("provider", mode="before")
     @classmethod
     def blank_provider_to_none(cls, value: object) -> object:
-        """빈 문자열은 공급자 미지정으로 둡니다."""
-        if value == "" or value is None:
+        """빈 문자열은 공급자 미지정으로 두고, 나머지는 소문자로 맞춥니다."""
+        if value is None:
             return None
         return str(value).strip().lower() or None
 

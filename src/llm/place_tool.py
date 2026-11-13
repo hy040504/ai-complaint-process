@@ -47,12 +47,16 @@ _STOP_SUFFIXES: tuple[str, ...] = (
 _STOP_WORDS: frozenset[str] = frozenset({
     "청주", "청주시", "충북", "충청북도",
     "시내", "도로", "도로에", "골목", "차도", "인도", "보도", "보도블럭", "횡단보도",
-    "신호등", "가로등", "가로수", "포트홀", "싱크홀",
-    "나무가", "나무", "쓰러짐", "파손", "고장", "수리", "공사", "발생", "소음", "악취", "냄새",
-    "쓰레기", "폐기물", "불법주정차", "주정차", "단속", "신고", "요청", "문의", "부탁드립니다",
-    "주세요", "있어요", "때문에", "어디", "공무원", "불친절", "안내", "답변", "처리", "확인", "점검",
-    "문제", "민원", "상태", "상황", "현장", "조치", "건의", "불편", "사항",
+    "신호등", "가로등", "가로등이", "가로수", "포트홀", "싱크홀",
+    "나무가", "나무", "쓰러짐", "파손", "고장", "고장났어요", "수리", "공사", "발생", "소음", "악취", "냄새",
+    "쓰레기", "폐기물", "불법주정차", "불법주차", "주정차", "단속", "신고", "요청", "문의", "부탁드립니다",
+    "주세요", "알려주세요", "해결해주세요", "있어요", "있나요", "없나요", "안됩니다", "때문에", "어디",
+    "공무원", "불친절", "안내", "답변", "처리", "확인", "점검", "안녕하세요", "감사합니다",
+    "문제", "민원", "상태", "상황", "현장", "조치", "건의", "불편", "불편합니다", "사항", "위험해요",
 })
+
+# 긴 문장 보완 검색 시 과도한 외부 HTTP 호출을 막기 위한 후보 상한입니다.
+_MAX_FALLBACK_CANDIDATES = 5
 
 
 def is_place_relevant(title: str, query: str) -> bool:
@@ -220,6 +224,7 @@ def lookup_navermap_place(
     coords: str | None = None,
     *,
     fetch_fn: Callable[..., dict[str, Any]] | None = None,
+    _allow_fallback: bool = True,
 ) -> dict[str, Any]:
     """장소명으로 네이버 지도를 검색하고 청주시 주소 및 구/동 정보를 반환합니다.
 
@@ -227,6 +232,7 @@ def lookup_navermap_place(
         query: 장소 검색어(예: 건물명, 학교명, 시장명 등)입니다.
         coords: 검색 중심 좌표입니다. 생략 시 청주시청 좌표를 사용합니다.
         fetch_fn: HTTP 호출을 대신할 검색 함수입니다. 테스트 시 주입합니다.
+        _allow_fallback: 내부 재귀 호출 시 후보 분해 재검색을 막기 위한 플래그입니다.
 
     Returns:
         검색 결과 요약, 청주시 최우선 장소(primary_place), 전체 장소 목록을 담은 객체입니다.
@@ -302,13 +308,18 @@ def lookup_navermap_place(
     # 청주시 장소가 있으면 청주시 최상위 결과를 primary_place로 선정
     primary = cheongju_places[0] if cheongju_places else (places[0] if places else None)
 
-    # 청주시 장소를 찾지 못했거나 결과가 없으면 장소 후보 키워드로 fallback 검색을 시도합니다.
-    if primary is None or not primary.get("is_cheongju"):
-        candidates = extract_place_candidates(text)
+    # 청주시 장소를 찾지 못했거나 결과가 없으면 장소 후보 키워드로 1회만 보완 검색합니다.
+    if _allow_fallback and (primary is None or not primary.get("is_cheongju")):
+        candidates = extract_place_candidates(text)[:_MAX_FALLBACK_CANDIDATES]
         for cand in candidates:
             if cand == text:
                 continue
-            cand_res = lookup_navermap_place(cand, coords=center_coords, fetch_fn=fetcher)
+            cand_res = lookup_navermap_place(
+                cand,
+                coords=center_coords,
+                fetch_fn=fetcher,
+                _allow_fallback=False,
+            )
             cand_primary = cand_res.get("primary_place")
             if cand_primary and cand_primary.get("is_cheongju"):
                 primary = cand_primary
@@ -324,7 +335,7 @@ def lookup_navermap_place(
         "places": places,
     }
 
-    if fetch_fn is None:
+    if fetch_fn is None and (_allow_fallback or (primary is not None and primary.get("is_cheongju"))):
         if len(_PLACE_CACHE) >= _MAX_CACHE_SIZE:
             # 캐시가 가득 차면 가장 오래된 항목 절반을 정리하여 메모리 및 성능 균형 유지
             old_keys = list(_PLACE_CACHE.keys())[: _MAX_CACHE_SIZE // 2]

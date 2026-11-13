@@ -4,7 +4,10 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const project = new URL("../", import.meta.url);
-const files = [new URL("server.mjs", project)];
+const files = [
+  new URL("server.mjs", project),
+  new URL("../src/lab_web/static/app.js", project),
+];
 for (const directory of ["src/", "scripts/", "tests/"]) {
   for (const item of await readdir(new URL(directory, project), {
     withFileTypes: true,

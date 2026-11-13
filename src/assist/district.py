@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import re
-from typing import Final
+from typing import Any, Final
 
 # 청주시 4대 자치구 명칭입니다.
 DISTRICTS: Final[tuple[str, ...]] = ("상당구", "서원구", "흥덕구", "청원구")
@@ -111,6 +111,65 @@ def normalize_district(raw: str | None) -> str | None:
     return extract_district(val)
 
 
+def _find_regex_district(text: str) -> tuple[str | None, bool]:
+    """정규표현식으로 본문에서 청주시 관할 구와 다중 구 충돌 여부를 판별합니다.
+
+    Args:
+        text: 민원 제목과 상세 본문을 합친 문자열입니다.
+
+    Returns:
+        `(단일 구 이름 또는 None, 2개 이상 구 충돌 여부)` 튜플입니다.
+    """
+    if not text:
+        return None, False
+
+    found_districts: set[str] = set()
+
+    # 1. 구 이름 명시 탐색 ('상당구', '서원구', '흥덕구', '청원구')
+    for match in _DISTRICT_PATTERN.finditer(text):
+        found_districts.add(match.group(1))
+        if len(found_districts) > 1:
+            return None, True
+
+    # 2. 읍·면·동 지명 탐색
+    for match in _AREA_PATTERN.finditer(text):
+        area_name = match.group(1)
+        if area_name in _AREA_TO_DISTRICT:
+            found_districts.add(_AREA_TO_DISTRICT[area_name])
+            if len(found_districts) > 1:
+                return None, True
+
+    if len(found_districts) == 1:
+        return next(iter(found_districts)), False
+    return None, False
+
+
+def _lookup_cheongju_place(text: str) -> dict[str, Any] | None:
+    """네이버 지도 장소 검색으로 청주시 최우선 장소 정보를 조회합니다.
+
+    외부 네트워크 오류가 발생해도 민원 처리 흐름을 중단하지 않도록 예외를 삼키고
+    `None`을 반환합니다.
+
+    Args:
+        text: 장소 추론 대상 민원 문자열입니다.
+
+    Returns:
+        청주시 관할로 판별된 `primary_place` 딕셔너리 또는 `None`입니다.
+    """
+    if not text or not text.strip():
+        return None
+    try:
+        from src.llm.place_tool import lookup_navermap_place
+
+        res = lookup_navermap_place(text)
+        primary = res.get("primary_place")
+        if isinstance(primary, dict) and primary.get("is_cheongju"):
+            return primary
+    except Exception:
+        pass
+    return None
+
+
 def extract_district(text: str) -> str | None:
     """민원 제목 또는 본문에서 청주시 관할 구를 단일하게 추론합니다.
 
@@ -127,39 +186,16 @@ def extract_district(text: str) -> str | None:
     if not text:
         return None
 
-    found_districts: set[str] = set()
+    regex_district, conflicted = _find_regex_district(text)
+    if conflicted:
+        return None
+    if regex_district:
+        return regex_district
 
-    # 1. 구 이름 명시 탐색 ('상당구', '서원구', '흥덕구', '청원구')
-    for match in _DISTRICT_PATTERN.finditer(text):
-        found_districts.add(match.group(1))
-        if len(found_districts) > 1:
-            return None
-
-    # 2. 읍·면·동 지명 탐색
-    for match in _AREA_PATTERN.finditer(text):
-        area_name = match.group(1)
-        if area_name in _AREA_TO_DISTRICT:
-            found_districts.add(_AREA_TO_DISTRICT[area_name])
-            if len(found_districts) > 1:
-                return None
-
-    # 3. 오직 하나의 구만 발견된 경우에만 확정 반환
-    if len(found_districts) == 1:
-        return next(iter(found_districts))
-
-    # 4. 정규식으로 감지되지 않은 경우 네이버 지도 장소 검색을 통한 2차 지명 추론을 시도합니다.
-    if not found_districts:
-        try:
-            from src.llm.place_tool import lookup_navermap_place
-
-            res = lookup_navermap_place(text)
-            primary = res.get("primary_place")
-            if primary and primary.get("is_cheongju") and primary.get("gu"):
-                return primary["gu"]
-        except Exception:
-            pass
-
-    return None
+    # 정규식으로 감지되지 않은 경우 네이버 지도 장소 검색을 통한 2차 지명 추론을 시도합니다.
+    primary = _lookup_cheongju_place(text)
+    gu = primary.get("gu") if primary else None
+    return gu if isinstance(gu, str) and gu else None
 
 
 def extract_place_info(text: str) -> dict[str, Any] | None:
@@ -171,18 +207,7 @@ def extract_place_info(text: str) -> dict[str, Any] | None:
     Returns:
         청주시 장소 정보 딕셔너리 또는 None입니다.
     """
-    if not text:
-        return None
-    try:
-        from src.llm.place_tool import lookup_navermap_place
-
-        res = lookup_navermap_place(text)
-        primary = res.get("primary_place")
-        if primary and primary.get("is_cheongju"):
-            return primary
-    except Exception:
-        pass
-    return None
+    return _lookup_cheongju_place(text)
 
 
 def resolve_complaint_district(
@@ -206,3 +231,36 @@ def resolve_complaint_district(
         return inferred, True
 
     return None, False
+
+
+def resolve_district_and_place(
+    explicit_district: str | None, text: str
+) -> tuple[str | None, bool, dict[str, Any] | None]:
+    """관할 구 결정과 장소 추적을 한 번에 수행해 중복 지도 조회를 방지합니다.
+
+    명시적 구 선택과 정규식 매칭 모두에서 구가 정해지지 않았을 때도 네이버 지도
+    검색을 1회만 호출하여 추론된 구와 `inferred_place`를 함께 반환합니다.
+
+    Args:
+        explicit_district: 화면 입력 또는 요청 JSON에서 전달된 지역 값입니다.
+        text: 민원 제목과 상세 본문을 결합한 문자열입니다.
+
+    Returns:
+        `(적용할 구 이름, 본문에서 자동 추론되었는지 여부, 청주시 장소 정보)` 튜플입니다.
+    """
+    place = _lookup_cheongju_place(text)
+    normalized = normalize_district(explicit_district)
+    if normalized:
+        return normalized, False, place
+
+    regex_district, conflicted = _find_regex_district(text)
+    if conflicted:
+        return None, False, place
+    if regex_district:
+        return regex_district, True, place
+
+    inferred_gu = place.get("gu") if place else None
+    if isinstance(inferred_gu, str) and inferred_gu:
+        return inferred_gu, True, place
+
+    return None, False, place

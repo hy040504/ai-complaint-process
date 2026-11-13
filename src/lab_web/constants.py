@@ -6,7 +6,7 @@
 
 from typing import Final, Literal
 
-from src.assist.district import DISTRICT_AREAS
+from src.assist.district import DISTRICT_AREAS as DISTRICT_AREAS
 
 Category = Literal[
     "도로·교통", "환경·청소", "공원·녹지", "생활·복지", "주택·건축", "기타"

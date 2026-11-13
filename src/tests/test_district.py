@@ -108,3 +108,48 @@ def test_resolve_complaint_district():
     )
     assert district is None
     assert inferred is False
+
+
+def test_resolve_district_and_place_single_lookup(monkeypatch) -> None:
+    """관할 구와 장소 추적을 함께 풀 때 네이버 지도 검색을 1회만 호출하는지 확인합니다."""
+    from src.assist.district import resolve_district_and_place
+    import src.llm.place_tool as place_tool
+
+    calls: list[str] = []
+
+    def fake_lookup(query: str, coords: str | None = None, **kwargs):
+        calls.append(query)
+        return {
+            "query": query,
+            "found": True,
+            "total": 1,
+            "primary_place": {
+                "title": "창신초등학교",
+                "road_address": "충청북도 청주시 서원구 구룡산로 330",
+                "jibun_address": "충청북도 청주시 서원구 사직동 622",
+                "gu": "서원구",
+                "dong": "사직동",
+                "is_cheongju": True,
+            },
+            "places": [],
+        }
+
+    monkeypatch.setattr(place_tool, "lookup_navermap_place", fake_lookup)
+
+    district, inferred, place = resolve_district_and_place(
+        None, "창신초등학교 앞 보도블럭이 파손됐어요"
+    )
+    assert district == "서원구"
+    assert inferred is True
+    assert place is not None and place["title"] == "창신초등학교"
+    assert len(calls) == 1
+
+    # 명시적 구가 있어도 장소 배지는 유지하되 district_inferred는 False입니다.
+    district2, inferred2, place2 = resolve_district_and_place(
+        "흥덕구", "창신초등학교 근처 문의"
+    )
+    assert district2 == "흥덕구"
+    assert inferred2 is False
+    assert place2 is not None and place2["title"] == "창신초등학교"
+    assert len(calls) == 2
+

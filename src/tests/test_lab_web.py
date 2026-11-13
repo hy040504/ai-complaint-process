@@ -362,3 +362,26 @@ def test_complaint_accepts_provider(client: FlaskClient) -> None:
     assert res.status_code == 200
     assert res.json["complaint"]["provider"] == "exaone_api"
 
+
+def test_fields_and_index_expose_providers_and_badges(client: FlaskClient) -> None:
+    """허용 목록 응답에 공급자 가용 상태가 포함되고 첫 화면에 엔진 선택·추적 배지가 있습니다."""
+    fields = client.get("/api/v1/lab/fields")
+    assert fields.status_code == 200
+    providers = fields.json["providers"]
+    assert set(providers) >= {"exaone_api", "openai_api", "codex_cli"}
+    for info in providers.values():
+        assert isinstance(info["available"], bool)
+        assert isinstance(info["reason"], str)
+
+    html = client.get("/").get_data(as_text=True)
+    for token in (
+        'data-provider="exaone_api"',
+        'data-provider="openai_api"',
+        'data-provider="codex_cli"',
+        'id="result-district"',
+        'id="result-place"',
+        'id="result-llm"',
+    ):
+        assert token in html
+
+

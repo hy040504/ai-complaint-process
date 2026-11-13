@@ -193,3 +193,23 @@ def test_lookup_navermap_place_fallback_candidates() -> None:
     assert res["primary_place"]["dong"] == "모충동"
 
 
+def test_lookup_navermap_place_bounds_fallback_recursion() -> None:
+    """보완 검색은 1단계 후보 최대 상한까지만 수행하고 재귀 폭발하지 않아야 합니다."""
+    called_queries: list[str] = []
+
+    def empty_fetch(query: str, coords: str = "") -> dict:
+        called_queries.append(query)
+        return {"place": []}
+
+    res = lookup_navermap_place(
+        "가나다라 마바사아 자차카타 파하가나 교차로 정문 입구",
+        fetch_fn=empty_fetch,
+    )
+    assert res["found"] is False
+    assert res["primary_place"] is None
+    # 최초 원문 1회 + 1단계 보완 후보 최대 5회 = 최대 6회 이내여야 합니다.
+    assert len(called_queries) <= 6
+    assert called_queries[0] == "가나다라 마바사아 자차카타 파하가나 교차로 정문 입구"
+
+
+

@@ -170,3 +170,34 @@ def test_provider_availability_map(monkeypatch: object) -> None:
     assert avail["codex_cli"]["available"] is False
     assert "Codex CLI" in avail["codex_cli"]["reason"]
 
+
+def test_pipeline_resolve_chat_with_exaone_provider(monkeypatch: object) -> None:
+    """`exaone_api` 공급자 키 유무에 따라 파이프라인 활성 여부와 chat 선택이 동작합니다."""
+    from src.assist import pipeline
+
+    # llm_fn=None이면 환경 키가 있어도 LLM을 비활성화합니다.
+    monkeypatch.setenv("EXAONE_API_KEY", "exaone-test-token")
+    assert pipeline.llm_enabled(None, "exaone_api") is False
+    assert pipeline.resolve_chat(None, "exaone_api", [None]) is None
+
+    # USE_ENV_LLM일 때 EXAONE_API_KEY 유무에 따라 활성 여부와 chat 생성을 결정합니다.
+    monkeypatch.delenv("EXAONE_API_KEY", raising=False)
+    monkeypatch.setattr(settings, "load_llm_env_file", lambda: {})
+    assert pipeline.llm_enabled(pipeline.USE_ENV_LLM, "exaone_api") is False
+    assert pipeline.resolve_chat(pipeline.USE_ENV_LLM, "exaone_api", [None]) is None
+
+    monkeypatch.setenv("EXAONE_API_KEY", "exaone-test-token")
+    assert pipeline.llm_enabled(pipeline.USE_ENV_LLM, "exaone_api") is True
+    chat = pipeline.resolve_chat(pipeline.USE_ENV_LLM, "exaone_api", [None])
+    assert callable(chat)
+
+
+def test_strip_code_fence_handles_json_and_plain_text() -> None:
+    """코드 울타리 제거 도우미가 마크다운 JSON 울타리만 안전하게 벗겨 냅니다."""
+    from src.llm import complete
+
+    assert complete.strip_code_fence('```json\n{"ok": true}\n```') == '{"ok": true}'
+    assert complete.strip_code_fence('```\n{"ok": true}\n```') == '{"ok": true}'
+    assert complete.strip_code_fence('{"ok": true}') == '{"ok": true}'
+
+

@@ -16,7 +16,6 @@ from flask import Flask, Response, jsonify, request, send_from_directory, stream
 from pydantic import BaseModel, ValidationError
 
 from src.assist import llm_configured, search_available
-from src.llm.settings import provider_availability_map
 from src.lab_web.models import (
     ErrorBody,
     LabAcceptResult,
@@ -38,6 +37,7 @@ from src.lab_web.runs import (
     save_run,
 )
 from src.lab_web.service import AssistFn, handle_complaint, iter_complaint
+from src.llm.settings import provider_availability_map
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -46,6 +46,7 @@ _FIELD_LABELS = {
     "category": "민원 분야",
     "district": "발생 지역",
     "body": "상세 내용",
+    "provider": "LLM 엔진",
 }
 
 
@@ -140,11 +141,14 @@ def create_app(
 
     @app.get("/api/v1/lab/fields")
     def fields() -> Response:
-        """작성 양식의 분야·지역 및 LLM 공급자 설정 상태를 줍니다."""
-        avail = provider_availability_map()
+        """작성 양식의 분야·지역과 LLM 공급자별 사용 가능 상태를 줍니다.
+
+        공급자 상태는 키·실행 파일 존재만 반영합니다. 화면은 이 값으로
+        키가 없는 엔진 단추를 잠급니다.
+        """
         providers = {
-            k: ProviderStatus(available=v["available"], reason=v["reason"])
-            for k, v in avail.items()
+            name: ProviderStatus.model_validate(status)
+            for name, status in provider_availability_map().items()
         }
         return _json(LabFields(providers=providers))
 

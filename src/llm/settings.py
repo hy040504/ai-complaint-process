@@ -33,10 +33,18 @@ DEFAULT_REASONING_EFFORT = "medium"
 
 EXAONE_COMPLETIONS_URL = "https://api.exaone.ai/v1/chat/completions"
 DEFAULT_EXAONE_MODEL = "k-exaone_v2.5"
+# 공식 기본 추론 강도입니다. low·high·max만 허용합니다.
 DEFAULT_EXAONE_REASONING_EFFORT = "max"
+EXAONE_REASONING_EFFORTS = frozenset({"low", "high", "max"})
+# max_tokens에는 내부 추론 토큰이 함께 계산되므로 판정 JSON보다 넉넉히 둡니다.
 DEFAULT_EXAONE_MAX_TOKENS = 16384
+# 공식 권장 1.0보다 낮춰 판정 JSON 형식을 안정적으로 유지합니다.
 DEFAULT_EXAONE_TEMPERATURE = 0.7
 DEFAULT_EXAONE_TOP_P = 0.95
+
+LAB_PROVIDERS: tuple[str, ...] = ("", "exaone_api", "codex_cli", "openai_api")
+"""검사기 선택 단추 순서입니다. 빈 문자열은 `.env` 기본 설정입니다."""
+_PROVIDER_KEY_ENV = {"exaone_api": "EXAONE_API_KEY", "openai_api": "OPENAI_API_KEY"}
 
 
 def optional_env(name: str) -> str | None:
@@ -58,10 +66,11 @@ def optional_env(name: str) -> str | None:
 def load_llm_env_file() -> None:
     """저장소 루트 `.env`의 LLM 설정만 프로세스 환경에 한 번 보완합니다.
 
-    `COMPLAINT_LLM_PROVIDER`로 `openai_api`(Responses API 키) 또는
-    `codex_cli`(로그인된 Codex 실행 파일)를 고릅니다. 이미 있는 운영체제
-    환경변수는 덮어쓰지 않습니다. 지원하는 LLM 키 외의 값은 읽지 않습니다.
-    파일이 없으면 아무 작업도 하지 않습니다.
+    `COMPLAINT_LLM_PROVIDER`로 `openai_api`(Responses API 키),
+    `exaone_api`(EXAONE API 키) 또는 `codex_cli`(로그인된 Codex 실행 파일)를
+    고릅니다. 이미 있는 운영체제 환경변수는 덮어쓰지 않습니다. 지원하는 LLM
+    키 외의 값은 읽지 않으며, 값 뒤의 `#` 주석은 지우지 않으므로 주석은 별도
+    줄에 둡니다. 파일이 없으면 아무 작업도 하지 않습니다.
     """
     global _LLM_ENV_LOADED
     if _LLM_ENV_LOADED:
@@ -114,6 +123,11 @@ def luna_settings(
 def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
     """지정한 공급자 이름을 기준으로 사용할 설정을 구성합니다.
 
+    `exaone_api`는 `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·
+    `EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 읽습니다. 추론 강도는
+    `EXAONE_REASONING_EFFORT`가 우선이고, 비어 있으면 공통
+    `COMPLAINT_LLM_REASONING_EFFORT`를 씁니다.
+
     Args:
         provider: 'exaone_api', 'openai_api', 'codex_cli', 'legacy' 중 하나이거나 None입니다.
 
@@ -148,9 +162,7 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
                 or DEFAULT_EXAONE_REASONING_EFFORT
             ),
             "max_tokens": (
-                optional_env("EXAONE_MAX_TOKENS")
-                or optional_env("COMPLAINT_LLM_MAX_TOKENS")
-                or str(DEFAULT_EXAONE_MAX_TOKENS)
+                optional_env("EXAONE_MAX_TOKENS") or str(DEFAULT_EXAONE_MAX_TOKENS)
             ),
             "temperature": (
                 optional_env("EXAONE_TEMPERATURE") or str(DEFAULT_EXAONE_TEMPERATURE)
@@ -243,51 +255,55 @@ def llm_configured() -> bool:
     """
     settings = llm_settings()
     if settings["provider"] == "codex_cli":
-        return (
-            shutil.which(os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")) is not None
-        )
+        return codex_available()
     return bool(settings["token"])
 
 
-def check_provider_availability(provider: str | None = None) -> tuple[bool, str]:
-    """공급자의 실행 가능 여부와 미설정 시 사유를 반환합니다.
-
-    Args:
-        provider: 'exaone_api', 'openai_api', 'codex_cli' 또는 None(기본 설정)입니다.
+def codex_available() -> bool:
+    """`COMPLAINT_CODEX_COMMAND`(기본 `codex`) 실행 파일이 PATH에 있는지 봅니다.
 
     Returns:
-        (사용가능여부, 상태안내문구) 튜플입니다.
+        실행 파일을 찾으면 True입니다.
     """
+    return shutil.which(os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")) is not None
+
+
+def check_provider_availability(provider: str | None = None) -> tuple[bool, str]:
+    """공급자를 지금 호출할 수 있는지와 불가 사유를 반환합니다.
+
+    키·실행 파일의 존재만 봅니다. 키가 유효한지, 요청 한도가 남았는지는
+    실제 호출 전까지 알 수 없습니다.
+
+    Args:
+        provider: `exaone_api`·`openai_api`·`codex_cli` 또는 빈 값(`.env` 기본 설정)입니다.
+
+    Returns:
+        `(사용 가능 여부, 불가 사유)`입니다. 사용 가능하면 사유는 빈 문자열입니다.
+    """
+    load_llm_env_file()
     prov = (provider or "").strip().lower()
     if not prov:
-        cfg = llm_configured()
-        return (cfg, "" if cfg else ".env에 활성화된 기본 LLM 설정이 없습니다.")
-    if prov == "exaone_api":
-        has_key = bool(optional_env("EXAONE_API_KEY"))
-        return (has_key, "" if has_key else ".env에 EXAONE_API_KEY가 설정되지 않았습니다.")
-    if prov == "openai_api":
-        has_key = bool(optional_env("OPENAI_API_KEY"))
-        return (has_key, "" if has_key else ".env에 OPENAI_API_KEY가 설정되지 않았습니다.")
+        ok = llm_configured()
+        return ok, "" if ok else ".env에 호출 가능한 기본 LLM 설정이 없습니다."
+    if prov in _PROVIDER_KEY_ENV:
+        key = _PROVIDER_KEY_ENV[prov]
+        ok = bool(optional_env(key))
+        return ok, "" if ok else f".env에 {key}가 설정되지 않았습니다."
     if prov == "codex_cli":
-        has_cli = (
-            shutil.which(os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")) is not None
-        )
-        return (has_cli, "" if has_cli else "Codex CLI가 설치되지 않았거나 PATH에 없습니다.")
-    return (False, f"지원하지 않는 공급자입니다: {prov}")
+        ok = codex_available()
+        return ok, "" if ok else "Codex CLI가 설치되지 않았거나 PATH에 없습니다."
+    return False, f"지원하지 않는 공급자입니다: {prov}"
 
 
 def provider_availability_map() -> dict[str, dict[str, Any]]:
-    """모든 LLM 공급자의 사용 가능 여부 맵을 반환합니다.
+    """검사기에서 고를 수 있는 공급자 전체의 사용 가능 상태를 돌려줍니다.
 
     Returns:
-        공급자 식별자를 키로 하는 상태 딕셔너리입니다.
+        `LAB_PROVIDERS` 순서의 `{공급자: {"available": bool, "reason": str}}`입니다.
+        빈 문자열 키는 `.env` 기본 설정입니다.
     """
-    providers = ["", "exaone_api", "codex_cli", "openai_api"]
     result: dict[str, dict[str, Any]] = {}
-    for p in providers:
-        ok, reason = check_provider_availability(p)
-        result[p] = {
-            "available": ok,
-            "reason": reason,
-        }
+    for prov in LAB_PROVIDERS:
+        ok, reason = check_provider_availability(prov)
+        result[prov] = {"available": ok, "reason": reason}
     return result

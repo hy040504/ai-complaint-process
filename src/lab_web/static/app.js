@@ -41,10 +41,82 @@ export function formatRunTime(iso) {
   }).format(date);
 }
 
+/** 마지막으로 고른 LLM 엔진을 남기는 `localStorage` 키입니다. */
 const LLM_STORAGE_KEY = "cheongju_lab_llm_provider";
 
+/** 결과 화면의 `🤖 LLM 엔진` 배지 문구입니다. 빈 키는 `.env` 기본 설정입니다. */
+const PROVIDER_LABELS = {
+  "": "기본 설정 (.env)",
+  exaone_api: "K-EXAONE 2.5 (무료 API)",
+  codex_cli: "Codex CLI (GPT-6 Luna)",
+  openai_api: "GPT-6 Luna (OpenAI API)",
+};
+
+/** 잠긴 단추에 보일 배지·설명 문구입니다. Codex는 키가 아니라 실행 파일이 필요합니다. */
+const LOCKED_TEXT = {
+  codex_cli: { badge: "미설치", desc: "Codex CLI 없음 (PATH)" },
+  default: { badge: "키 미설정", desc: "API 키 미설정 (.env)" },
+};
+
 /**
- * LLM 엔진 선택 버튼 그룹을 초기화하고 이전 선택을 복원합니다.
+ * 브라우저 저장소를 읽습니다. 사생활 보호 모드처럼 막혀 있으면 빈 값입니다.
+ *
+ * @returns {string} 저장된 공급자 이름입니다.
+ */
+function readSavedProvider() {
+  try {
+    return localStorage.getItem(LLM_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * 고른 공급자를 브라우저 저장소에 남깁니다. 저장이 막혀도 선택은 유지합니다.
+ *
+ * @param {string} provider 공급자 이름입니다.
+ * @returns {void}
+ */
+function saveProvider(provider) {
+  try {
+    localStorage.setItem(LLM_STORAGE_KEY, provider);
+  } catch {
+    // 저장소가 막힌 환경에서는 이번 화면에서만 선택을 유지합니다.
+  }
+}
+
+/**
+ * 단추가 잠겼는지 봅니다. 클릭 안내를 위해 `disabled` 대신 `aria-disabled`를 씁니다.
+ *
+ * @param {HTMLElement} button 엔진 단추입니다.
+ * @returns {boolean} 잠겼으면 true입니다.
+ */
+function isLocked(button) {
+  return button.getAttribute("aria-disabled") === "true";
+}
+
+/**
+ * 한 단추를 활성으로 표시하고 숨은 입력에 공급자를 넣습니다.
+ *
+ * @param {NodeListOf<HTMLElement>} buttons 엔진 단추 목록입니다.
+ * @param {HTMLElement} button 고를 단추입니다.
+ * @param {HTMLInputElement} hiddenInput 폼의 `provider` 입력입니다.
+ * @returns {void}
+ */
+function activateProvider(buttons, button, hiddenInput) {
+  buttons.forEach((item) => {
+    const on = item === button;
+    item.classList.toggle("active", on);
+    item.setAttribute("aria-pressed", String(on));
+  });
+  hiddenInput.value = button.dataset.provider || "";
+}
+
+/**
+ * LLM 엔진 선택 단추를 연결하고 이전 선택을 복원합니다.
+ *
+ * 잠긴 단추를 누르면 고르지 않고 흔들림으로 알립니다. 여러 번 불러도
+ * 클릭 처리기는 한 번만 붙습니다.
  *
  * @param {ParentNode} [root=document] 검색 범위입니다.
  * @returns {void}
@@ -54,47 +126,40 @@ export function initLlmSelector(root = document) {
   const hiddenInput = root.querySelector("#provider");
   if (!buttons.length || !hiddenInput) return;
 
-  const saved = localStorage.getItem(LLM_STORAGE_KEY) || "";
-  let matched = false;
+  const saved = readSavedProvider();
+  const buttonList = Array.from(buttons);
+  const restored =
+    buttonList.find((btn) => (btn.dataset.provider || "") === saved && !isLocked(btn)) ||
+    buttonList.find((btn) => !isLocked(btn)) ||
+    buttons[0];
+  activateProvider(buttons, restored, hiddenInput);
 
   buttons.forEach((btn) => {
-    const prov = btn.dataset.provider || "";
-    if (prov === saved && !btn.disabled) {
-      buttons.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      hiddenInput.value = prov;
-      matched = true;
-    }
-
-    if (!btn.dataset.bound) {
-      btn.dataset.bound = "true";
-      btn.addEventListener("click", () => {
-        if (btn.disabled || btn.classList.contains("is-disabled")) {
-          btn.classList.remove("shake");
-          void btn.offsetWidth;
-          btn.classList.add("shake");
-          return;
-        }
-        buttons.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        const chosen = btn.dataset.provider || "";
-        hiddenInput.value = chosen;
-        localStorage.setItem(LLM_STORAGE_KEY, chosen);
-      });
-    }
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "true";
+    btn.addEventListener("click", () => {
+      if (isLocked(btn)) {
+        btn.classList.remove("shake");
+        void btn.offsetWidth; // 다시 누를 때도 애니메이션을 처음부터 재생합니다.
+        btn.classList.add("shake");
+        return;
+      }
+      activateProvider(buttons, btn, hiddenInput);
+      saveProvider(btn.dataset.provider || "");
+    });
   });
-
-  if (!matched && buttons[0] && !buttons[0].disabled) {
-    buttons[0].classList.add("active");
-    hiddenInput.value = buttons[0].dataset.provider || "";
-  }
 }
 
 /**
- * 서버의 공급자 가용성 정보를 반영해 비활성화 및 UI 효과를 적용합니다.
+ * 서버가 알려 준 공급자 상태로 키·실행 파일이 없는 단추를 잠급니다.
+ *
+ * 잠긴 단추는 흐리게 보이고 배지·설명·툴팁이 불가 사유로 바뀝니다. 현재
+ * 선택이 잠기면 처음 사용할 수 있는 단추로 옮기되, 저장된 선호는 지우지
+ * 않아 키를 넣은 뒤 다시 열면 복원됩니다.
  *
  * @param {ParentNode} [root=document] 검색 범위입니다.
- * @param {Record<string, {available: boolean, reason?: string}>} [providerStatus={}] 공급자 상태입니다.
+ * @param {Record<string, {available: boolean, reason?: string}>} [providerStatus={}]
+ *   `/api/v1/lab/fields`의 `providers`입니다. 없는 공급자는 사용 가능으로 봅니다.
  * @returns {void}
  */
 export function updateLlmAvailability(root = document, providerStatus = {}) {
@@ -102,67 +167,45 @@ export function updateLlmAvailability(root = document, providerStatus = {}) {
   const hiddenInput = root.querySelector("#provider");
   if (!buttons.length || !hiddenInput) return;
 
-  let activeBtn = null;
-
   buttons.forEach((btn) => {
     const prov = btn.dataset.provider || "";
     const status = providerStatus[prov];
-    const isAvail = status ? Boolean(status.available) : true;
+    const locked = Boolean(status) && !status.available;
     const badge = btn.querySelector(".btn-badge");
     const desc = btn.querySelector("small");
-
-    if (!btn.dataset.origTitle) {
-      btn.dataset.origTitle = btn.title || "";
+    // 처음 한 번 원래 문구를 보관해 두고, 다시 사용 가능해지면 되돌립니다.
+    btn.dataset.origTitle ??= btn.title || "";
+    if (badge) {
+      badge.dataset.origClass ??= badge.className;
+      badge.dataset.origText ??= badge.textContent;
     }
+    if (desc) desc.dataset.origText ??= desc.textContent;
 
-    if (status && !isAvail) {
-      btn.disabled = true;
-      btn.classList.add("is-disabled");
-      btn.classList.remove("active");
+    btn.classList.toggle("is-disabled", locked);
+    if (locked) {
+      const text = LOCKED_TEXT[prov] || LOCKED_TEXT.default;
       btn.setAttribute("aria-disabled", "true");
-      const reasonMsg = status.reason || "현재 환경에서 사용할 수 없습니다.";
-      btn.title = `[선택 불가] ${reasonMsg}`;
-
+      btn.title = `[선택 불가] ${status.reason || "현재 환경에서 사용할 수 없습니다."}`;
       if (badge) {
-        if (!badge.dataset.origClass) badge.dataset.origClass = badge.className;
-        if (!badge.dataset.origText) badge.dataset.origText = badge.textContent;
         badge.className = "btn-badge badge-disabled";
-        badge.textContent = "키 미설정";
+        badge.textContent = text.badge;
       }
-      if (desc) {
-        if (!desc.dataset.origText) desc.dataset.origText = desc.textContent;
-        desc.textContent = "API 키 미설정 (.env)";
-      }
+      if (desc) desc.textContent = text.desc;
     } else {
-      btn.disabled = false;
-      btn.classList.remove("is-disabled");
       btn.removeAttribute("aria-disabled");
-      if (btn.dataset.origTitle) btn.title = btn.dataset.origTitle;
-      if (badge && badge.dataset.origClass) {
+      btn.title = btn.dataset.origTitle;
+      if (badge) {
         badge.className = badge.dataset.origClass;
         badge.textContent = badge.dataset.origText;
       }
-      if (desc && desc.dataset.origText) {
-        desc.textContent = desc.dataset.origText;
-      }
-    }
-
-    if (btn.classList.contains("active") && !btn.disabled) {
-      activeBtn = btn;
+      if (desc) desc.textContent = desc.dataset.origText;
     }
   });
 
-  if (!activeBtn) {
-    const firstAvail = Array.from(buttons).find(
-      (b) => !b.disabled && !b.classList.contains("is-disabled"),
-    );
-    if (firstAvail) {
-      buttons.forEach((b) => b.classList.remove("active"));
-      firstAvail.classList.add("active");
-      const chosen = firstAvail.dataset.provider || "";
-      hiddenInput.value = chosen;
-      localStorage.setItem(LLM_STORAGE_KEY, chosen);
-    }
+  const current = Array.from(buttons).find((btn) => btn.classList.contains("active"));
+  if (!current || isLocked(current)) {
+    const usable = Array.from(buttons).find((btn) => !isLocked(btn));
+    if (usable) activateProvider(buttons, usable, hiddenInput);
   }
 }
 
@@ -449,7 +492,13 @@ function showResult(payload, received, sourceText = "") {
   if (placeBadge) {
     const place = assist.inferredPlace || received.inferredPlace;
     if (place && place.title) {
-      const addr = place.roadAddress || place.address || "";
+      const addr =
+        place.roadAddress ||
+        place.road_address ||
+        place.jibunAddress ||
+        place.jibun_address ||
+        place.address ||
+        "";
       placeBadge.textContent = addr
         ? `🗺️ 장소 추적: ${place.title} (${addr})`
         : `🗺️ 장소 추적: ${place.title}`;
@@ -460,14 +509,8 @@ function showResult(payload, received, sourceText = "") {
   }
   const llmBadge = document.querySelector("#result-llm");
   if (llmBadge) {
-    const p = payload.provider || received.complaint?.provider || "";
-    const providerLabels = {
-      exaone_api: "🤖 LLM 엔진: K-EXAONE 2.5 (무료 API)",
-      codex_cli: "🤖 LLM 엔진: Codex CLI (GPT-6 Luna)",
-      openai_api: "🤖 LLM 엔진: GPT-6 Luna (OpenAI API)",
-    };
-    llmBadge.textContent =
-      providerLabels[p] || "🤖 LLM 엔진: 기본 설정 (.env 환경설정)";
+    const provider = payload.provider || received.complaint?.provider || "";
+    llmBadge.textContent = `🤖 LLM 엔진: ${PROVIDER_LABELS[provider] || provider}`;
     llmBadge.hidden = false;
   }
   document.querySelector("#result-message").textContent = received.message;

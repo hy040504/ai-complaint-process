@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- 최근 LLM·MCP·검사기 UI 패치 전반(CASE-083~086)의 주석·docstring·버그·성능·문서를 점검·정비한다. `resolve_district_and_place` 통합 및 `_allow_fallback` 가드로 네이버 지도 중복·재귀 조회를 제거하고, `showResult` 주소 키(`road_address`/`jibun_address`) 누락과 비활성화 단추 비동기 `localStorage` 복원 경쟁 버그를 수정한다. OpenAI `usage_from_openai`의 `reasoning_tokens` 생략 호환과 `mypy` 타입 검사를 정비하고, `PREFIX-01`·`README.md` 디자인·`docs/README.md`·`src/README.md`·`src/lab_web/README.md`를 최신화한다. [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
+
 - K-EXAONE 2.5 API의 추론 토큰 특성을 감안하여 `max_tokens`를 기본 16,384로 상향하고, `.env`에 `EXAONE_REASONING_EFFORT`(`low`, `high`, `max`) 및 `EXAONE_MAX_TOKENS`, `EXAONE_TEMPERATURE`, `EXAONE_TOP_P` 설정 키를 새로 연결한다. 마크다운 코드블록 방어 파싱과 `reasoning_tokens` 사용량 집계를 지원한다. [CASE-086](docs/cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md)
 
 - 응대 검사기 웹 UI에서 `.env`에 키가 설정되지 않은 API 기반 LLM(K-EXAONE 2.5, GPT-6 Luna 등)은 선택되지 않도록 비활성화하고 '키 미설정' 배지, 안내 툴팁 및 클릭 시 흔들림 애니메이션 피드백을 제공한다. `src/llm/settings.py`에 공급자별 가용성 판별 로직을 추가하고 `/api/v1/lab/fields` 계약을 확장하여 화면 초기화 시점에 실시간 상태를 동기화하며, 비활성 항목 선택 시 사용 가능한 기본 엔진으로 자동 fallback 전환한다. [CASE-085](docs/cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md)

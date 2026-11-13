@@ -1,7 +1,9 @@
 """선택한 LLM 공급자로 한 번의 텍스트 완성을 요청합니다.
 
-`codex_cli`는 검색 도구 MCP만 붙입니다. MCP Python은 `-u`로 띄워
-줄 단위 JSON-RPC 핸드셰이크가 버퍼에 묶이지 않게 합니다.
+`openai_api`는 Responses API, `exaone_api`는 OpenAI 호환 Chat Completions,
+`codex_cli`는 로그인된 Codex 실행 파일을 씁니다. `codex_cli`에는 검색
+(`search_complaint_rag`)·장소 추적(`lookup_navermap_place`) MCP만 붙입니다.
+MCP Python은 `-u`로 띄워 줄 단위 JSON-RPC 핸드셰이크가 버퍼에 묶이지 않게 합니다.
 """
 
 from __future__ import annotations
@@ -14,11 +16,18 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, NamedTuple, TypedDict
+from typing import Any, NamedTuple, NotRequired, TypedDict
 
 from src.llm.place_tool import PLACE_TOOL_NAME, PLACE_TOOL_USAGE
 from src.llm.rag_tool import RAG_TOOL_NAME, RAG_TOOL_USAGE
-from src.llm.settings import llm_settings
+from src.llm.settings import (
+    DEFAULT_EXAONE_MAX_TOKENS,
+    DEFAULT_EXAONE_REASONING_EFFORT,
+    DEFAULT_EXAONE_TEMPERATURE,
+    DEFAULT_EXAONE_TOP_P,
+    EXAONE_REASONING_EFFORTS,
+    llm_settings,
+)
 from src.rag.http import http_json
 
 
@@ -33,7 +42,7 @@ class CompleteUsage(TypedDict):
     input_tokens: int | None
     output_tokens: int | None
     cached_tokens: int | None
-    reasoning_tokens: int | None
+    reasoning_tokens: NotRequired[int | None]
 
 
 class CompleteResult(NamedTuple):
@@ -73,12 +82,14 @@ def usage_from_openai(body: Any) -> CompleteUsage | None:
         comp_details = raw.get("completion_tokens_details")
         if isinstance(comp_details, dict):
             reasoning_tokens = _as_int(comp_details.get("reasoning_tokens"))
-    return CompleteUsage(
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        cached_tokens=cached,
-        reasoning_tokens=reasoning_tokens,
-    )
+    usage: CompleteUsage = {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cached_tokens": cached,
+    }
+    if reasoning_tokens is not None:
+        usage["reasoning_tokens"] = reasoning_tokens
+    return usage
 
 
 _WIN_CODEX_WRAPPERS = {".cmd", ".bat", ".ps1"}
@@ -221,29 +232,15 @@ def complete_exaone_result(
     if not url or not model:
         raise ValueError("EXAONE API 주소 또는 모델명이 설정되지 않았습니다.")
 
-    max_tokens_val = 16384
-    raw_max_tokens = settings.get("max_tokens")
-    if raw_max_tokens:
-        try:
-            max_tokens_val = int(raw_max_tokens)
-        except (ValueError, TypeError):
-            max_tokens_val = 16384
-
-    temp_val = 0.7
-    raw_temp = settings.get("temperature")
-    if raw_temp:
-        try:
-            temp_val = float(raw_temp)
-        except (ValueError, TypeError):
-            temp_val = 0.7
-
-    top_p_val = 0.95
-    raw_top_p = settings.get("top_p")
-    if raw_top_p:
-        try:
-            top_p_val = float(raw_top_p)
-        except (ValueError, TypeError):
-            top_p_val = 0.95
+    max_tokens = _setting_number(settings, "max_tokens", int, DEFAULT_EXAONE_MAX_TOKENS)
+    temperature = _setting_number(
+        settings, "temperature", float, DEFAULT_EXAONE_TEMPERATURE
+    )
+    top_p = _setting_number(settings, "top_p", float, DEFAULT_EXAONE_TOP_P)
+    effort = str(settings.get("reasoning_effort") or "").strip().lower()
+    if effort not in EXAONE_REASONING_EFFORTS:
+        # 공통 값 `medium`처럼 EXAONE이 모르는 강도는 공식 기본값으로 바꿉니다.
+        effort = DEFAULT_EXAONE_REASONING_EFFORT
 
     payload: dict[str, Any] = {
         "model": model,
@@ -251,14 +248,12 @@ def complete_exaone_result(
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "temperature": temp_val,
-        "top_p": top_p_val,
-        "max_tokens": max_tokens_val,
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_tokens": max_tokens,
+        "reasoning_effort": effort,
         "stream": False,
     }
-    effort = (settings.get("reasoning_effort") or "max").strip().lower()
-    if effort in {"low", "high", "max"}:
-        payload["reasoning_effort"] = effort
 
     headers = {
         "Authorization": "Bearer " + token,
@@ -267,27 +262,60 @@ def complete_exaone_result(
     }
     body = http_json(str(url), payload, headers=headers)
     try:
-        choice = body["choices"][0]
-        content = choice["message"]["content"]
+        content = body["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise ValueError("EXAONE API 응답에 메시지 본문이 없습니다.") from exc
     if not isinstance(content, str) or not content.strip():
         raise ValueError("EXAONE API 응답 본문이 비어 있습니다.")
+    # 추론 과정 `reasoning_content`는 판정 근거로 쓰지 않고 버립니다.
+    return CompleteResult(strip_code_fence(content), usage_from_openai(body))
 
-    text = content.strip()
-    if text.startswith("```"):
-        match = _JSON_BLOCK.search(text)
-        if match:
-            text = match.group(1).strip()
-        else:
-            lines = text.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
 
-    return CompleteResult(text, usage_from_openai(body))
+def _setting_number(
+    settings: dict[str, str | None],
+    key: str,
+    cast: type[int] | type[float],
+    default: int | float,
+) -> Any:
+    """설정 문자열을 숫자로 바꾸고, 비었거나 잘못되면 기본값을 씁니다.
+
+    Args:
+        settings: 공급자 설정입니다.
+        key: 읽을 칸 이름입니다.
+        cast: `int` 또는 `float`입니다.
+        default: 값이 없거나 변환에 실패했을 때 쓸 값입니다.
+
+    Returns:
+        변환한 숫자 또는 기본값입니다.
+    """
+    raw = settings.get(key)
+    if raw is None or raw == "":
+        return default
+    try:
+        return cast(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def strip_code_fence(text: str) -> str:
+    """모델이 본문을 ```json 코드 블록으로 감쌌으면 안쪽만 꺼냅니다.
+
+    Args:
+        text: 모델 출력입니다.
+
+    Returns:
+        코드 울타리를 걷어 낸 본문입니다. 울타리가 없으면 공백만 정리합니다.
+    """
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+    match = _JSON_BLOCK.search(stripped)
+    if match:
+        return match.group(1).strip()
+    lines = stripped.splitlines()[1:]
+    if lines and lines[-1].startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
 
 
 def resolve_codex_argv(command: str) -> list[str]:
