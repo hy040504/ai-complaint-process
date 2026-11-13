@@ -147,6 +147,41 @@ def extract_district(text: str) -> str | None:
     if len(found_districts) == 1:
         return next(iter(found_districts))
 
+    # 4. 정규식으로 감지되지 않은 경우 네이버 지도 장소 검색을 통한 2차 지명 추론을 시도합니다.
+    if not found_districts:
+        try:
+            from src.llm.place_tool import lookup_navermap_place
+
+            res = lookup_navermap_place(text)
+            primary = res.get("primary_place")
+            if primary and primary.get("is_cheongju") and primary.get("gu"):
+                return primary["gu"]
+        except Exception:
+            pass
+
+    return None
+
+
+def extract_place_info(text: str) -> dict[str, Any] | None:
+    """민원 본문에서 네이버 지도를 활용해 장소 정보(명칭, 주소, 구, 동)를 조회합니다.
+
+    Args:
+        text: 민원 제목과 상세 본문을 결합한 문자열입니다.
+
+    Returns:
+        청주시 장소 정보 딕셔너리 또는 None입니다.
+    """
+    if not text:
+        return None
+    try:
+        from src.llm.place_tool import lookup_navermap_place
+
+        res = lookup_navermap_place(text)
+        primary = res.get("primary_place")
+        if primary and primary.get("is_cheongju"):
+            return primary
+    except Exception:
+        pass
     return None
 
 

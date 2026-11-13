@@ -105,6 +105,7 @@ def staff_draft_payload(
     search: dict[str, Any],
     decision: dict[str, Any],
     parts: SearchParts | None = None,
+    inferred_place: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """담당자 초안 호출의 사용자 JSON을 만듭니다.
 
@@ -116,12 +117,13 @@ def staff_draft_payload(
         search: 검색 API 응답입니다.
         decision: 코드 검증을 거친 판정입니다.
         parts: 이미 구한 검색 조각입니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다.
 
     Returns:
         판정 갈래와 검색 후보를 담은 딕셔너리입니다.
     """
-    payload = decision_payload(query, district, search, parts)
-    return {
+    payload = decision_payload(query, district, search, parts, inferred_place=inferred_place)
+    result = {
         "query": payload["query"],
         "district": payload["district"],
         "outcome": decision.get("outcome"),
@@ -130,6 +132,9 @@ def staff_draft_payload(
         "case_candidates": payload["case_candidates"],
         "department_candidates": payload["department_candidates"],
     }
+    if inferred_place:
+        result["inferred_place"] = inferred_place
+    return result
 
 
 def validate_staff_draft(

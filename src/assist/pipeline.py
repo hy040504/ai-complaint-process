@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from typing import Any, Callable
 
 from src.assist.constants import PROGRESS_LABELS
-from src.assist.district import resolve_complaint_district
+from src.assist.district import extract_place_info, resolve_complaint_district
 from src.assist.prompts import (
     ANSWER_SYSTEM,
     DECISION_SYSTEM,
@@ -114,6 +114,7 @@ def build_result(
     staff_draft: dict[str, Any] | None = None,
     sanitize: dict[str, Any] | None = None,
     district_inferred: bool = False,
+    inferred_place: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """세 갈래 응대와 근거·단계를 한 객체로 묶습니다.
 
@@ -132,6 +133,7 @@ def build_result(
         staff_draft: PREFIX-03 담당자 초안입니다. 없으면 비웁니다.
         sanitize: PREFIX-04 순화 결과입니다. 없으면 비웁니다.
         district_inferred: 본문 지명으로 구를 자동 추론했으면 True입니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다. 없으면 None입니다.
 
     Returns:
         API·CLI가 공유하는 응대 결과입니다.
@@ -144,6 +146,7 @@ def build_result(
         "query": query,
         "district": district,
         "district_inferred": district_inferred,
+        "inferred_place": inferred_place,
         "outcome": decision["outcome"],
         "reason_code": decision["reason_code"],
         "answer": answer,
@@ -205,6 +208,7 @@ def iter_assist(
     stages: list[dict[str, Any]] = []
     text = (query or "").strip()
     effective_district, district_inferred = resolve_complaint_district(district, text)
+    inferred_place = extract_place_info(text) if text else None
     llm_on = llm_enabled(llm_fn)
     yield progress("read")
     if not text or len(text) > 2000:
@@ -222,6 +226,7 @@ def iter_assist(
                 stages=stages,
                 llm_on=llm_on,
                 district_inferred=district_inferred,
+                inferred_place=inferred_place,
             ),
         }
         return
@@ -248,13 +253,14 @@ def iter_assist(
                 stages=stages,
                 llm_on=False,
                 district_inferred=district_inferred,
+                inferred_place=inferred_place,
             ),
         }
         return
 
     yield progress("review")
     parts = search_parts(search)
-    user_payload = decision_payload(text, effective_district, search, parts)
+    user_payload = decision_payload(text, effective_district, search, parts, inferred_place=inferred_place)
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
     usage_box: list[CompleteUsage | None] = [None]
     chat: Callable[[str, str], str] | None
@@ -407,7 +413,9 @@ def iter_assist(
     if chat is not None and decision["outcome"] != "faq_answer":
         yield progress("draft")
         started = time.perf_counter()
-        draft_user = staff_draft_payload(text, effective_district, search, decision, parts)
+        draft_user = staff_draft_payload(
+            text, effective_district, search, decision, parts, inferred_place=inferred_place
+        )
         draft_json = json.dumps(draft_user, ensure_ascii=False, indent=2)
         try:
             staff_draft = validate_staff_draft(
@@ -449,6 +457,7 @@ def iter_assist(
             staff_draft=staff_draft,
             sanitize=sanitize,
             district_inferred=district_inferred,
+            inferred_place=inferred_place,
         ),
     }
 

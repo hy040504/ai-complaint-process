@@ -35,6 +35,91 @@ _TAG_RE = re.compile(r"<[^>]+>")
 _GU_RE = re.compile(r"(상당구|서원구|흥덕구|청원구)")
 _DONG_RE = re.compile(r"([가-힣\d]+(?:동|읍|면|가))\b")
 
+_STOP_SUFFIXES: tuple[str, ...] = (
+    "근처에서", "근처에", "근처", "부근에서", "부근에", "부근",
+    "주변에서", "주변에", "주변", "인근에서", "인근에", "인근",
+    "앞에서", "앞에", "에서", "으로", "에는", "에", "이", "가",
+    "을", "를", "은", "는", "도", "쪽", "방면",
+    "했습니다", "났습니다", "있습니다", "합니다", "됩니다", "입니다",
+    "해주세요", "바랍니다", "드립니다", "이에요", "예요", "하네요",
+)
+
+_STOP_WORDS: frozenset[str] = frozenset({
+    "청주", "청주시", "충북", "충청북도",
+    "시내", "도로", "도로에", "골목", "차도", "인도", "보도", "보도블럭", "횡단보도",
+    "신호등", "가로등", "가로수", "포트홀", "싱크홀",
+    "나무가", "나무", "쓰러짐", "파손", "고장", "수리", "공사", "발생", "소음", "악취", "냄새",
+    "쓰레기", "폐기물", "불법주정차", "주정차", "단속", "신고", "요청", "문의", "부탁드립니다",
+    "주세요", "있어요", "때문에", "어디", "공무원", "불친절", "안내", "답변", "처리", "확인", "점검",
+    "문제", "민원", "상태", "상황", "현장", "조치", "건의", "불편", "사항",
+})
+
+
+def is_place_relevant(title: str, query: str) -> bool:
+    """검색 결과의 장소 제목이 검색어 키워드와 실제 일치하는지 검증합니다.
+
+    청주시에 위치한 무관한 식당이나 일반 상점이 우연히 검색되는 문제를
+    방지하기 위해, 장소 제목에 검색어의 핵심 키워드가 포함되어 있는지 확인합니다.
+
+    Args:
+        title: 네이버 지도 장소 제목입니다.
+        query: 검색에 사용한 키워드입니다.
+
+    Returns:
+        핵심 키워드가 장소 제목에 유의미하게 포함되어 있으면 True입니다.
+    """
+    if not title or not query:
+        return False
+    norm_title = re.sub(r"[\s\-_()\[\]]", "", title.lower())
+    words = [
+        w for w in re.sub(r"[\(\)\[\]\{\}<>\"'·~!,?]", " ", query).split()
+        if len(w) >= 2 and w not in _STOP_WORDS
+    ]
+    if not words:
+        return False
+    return any(w.lower() in norm_title or norm_title in w.lower() for w in words)
+
+
+def extract_place_candidates(text: str) -> list[str]:
+    """긴 문장이나 복합 민원에서 장소명 후보 키워드 목록을 추출합니다.
+
+    '청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐' 같은 문장에서
+    조사, 서술어, 지역 접두어를 정제하여 ['서원대학교 후문', '서원대학교', ...]
+    같은 검색 가능한 장소 후보를 생성합니다.
+
+    Args:
+        text: 민원 문장 또는 검색어입니다.
+
+    Returns:
+        우선순위가 높은 장소명 후보 문자열 목록입니다.
+    """
+    cleaned = re.sub(r"[\(\)\[\]\{\}<>\"'·~!,?]", " ", text)
+    words = cleaned.split()
+
+    refined_words: list[str] = []
+    for w in words:
+        if w in _STOP_WORDS or w in _STOP_SUFFIXES:
+            continue
+        cur = w
+        for suf in _STOP_SUFFIXES:
+            if cur.endswith(suf) and len(cur) > len(suf):
+                cur = cur[: -len(suf)]
+                break
+        if cur and cur not in _STOP_WORDS and cur not in _STOP_SUFFIXES and len(cur) >= 2:
+            refined_words.append(cur)
+
+    candidates: list[str] = []
+    # 2단어 조합 우선 (예: '서원대학교 후문', '육거리시장 입구')
+    for i in range(len(refined_words) - 1):
+        combo = f"{refined_words[i]} {refined_words[i+1]}"
+        if combo not in candidates:
+            candidates.append(combo)
+    # 1단어 단독 (예: '서원대학교', '창신초등학교')
+    for w in refined_words:
+        if w not in candidates:
+            candidates.append(w)
+    return candidates
+
 
 def extract_cheongju_district(address: str | None) -> str | None:
     """주소 문자열에서 청주시 4개 구 이름을 추출합니다.
@@ -182,6 +267,8 @@ def lookup_navermap_place(
         if not isinstance(item, dict):
             continue
         title = _clean_text(item.get("title"))
+        if not is_place_relevant(title, text):
+            continue
         road_addr = _clean_text(item.get("roadAddress")) or None
         jibun_addr = _clean_text(item.get("jibunAddress")) or None
         ctg = _clean_text(item.get("ctg")) or None
@@ -212,6 +299,19 @@ def lookup_navermap_place(
 
     # 청주시 장소가 있으면 청주시 최상위 결과를 primary_place로 선정
     primary = cheongju_places[0] if cheongju_places else (places[0] if places else None)
+
+    # 청주시 장소를 찾지 못했거나 결과가 없으면 장소 후보 키워드로 fallback 검색을 시도합니다.
+    if primary is None or not primary.get("is_cheongju"):
+        candidates = extract_place_candidates(text)
+        for cand in candidates:
+            if cand == text:
+                continue
+            cand_res = lookup_navermap_place(cand, coords=center_coords, fetch_fn=fetcher)
+            cand_primary = cand_res.get("primary_place")
+            if cand_primary and cand_primary.get("is_cheongju"):
+                primary = cand_primary
+                places = cand_res.get("places", [])
+                break
 
     result = {
         "query": text,

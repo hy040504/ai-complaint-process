@@ -136,3 +136,60 @@ def test_lookup_navermap_place_cache_hit() -> None:
     cached = lookup_navermap_place("청주시청테스트")
     assert cached["primary_place"]["gu"] == "상당구"
 
+
+def test_extract_place_candidates() -> None:
+    """긴 민원 문장에서 불용어와 조사를 제거하고 검색 가능한 장소 후보를 추출합니다."""
+    from src.llm.place_tool import extract_place_candidates
+
+    text = "청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐"
+    candidates = extract_place_candidates(text)
+    assert "서원대학교 후문" in candidates
+    assert "서원대학교" in candidates
+    assert "나무가" not in candidates
+    assert "쓰러짐" not in candidates
+
+    # 지명 후보가 없는 일반 민원 문장은 빈 목록 반환
+    plain_text = "시내 도로에 신호등이 고장 났습니다"
+    assert extract_place_candidates(plain_text) == []
+
+
+def test_is_place_relevant() -> None:
+    """검색 결과의 제목과 검색 키워드의 관련성 검증 동작을 확인합니다."""
+    from src.llm.place_tool import is_place_relevant
+
+    assert is_place_relevant("서원대학교후문", "서원대학교 후문") is True
+    assert is_place_relevant("모모랩 청주시내성안길본점", "시내 도로에 신호등이 고장 났습니다") is False
+    assert is_place_relevant("창신초등학교", "창신초") is True
+    assert is_place_relevant("", "서원대학교") is False
+
+
+def test_lookup_navermap_place_fallback_candidates() -> None:
+    """문장형 검색 시 1차 결과가 없으면 후보 키워드로 fallback 검색하여 청주시 장소를 반환합니다."""
+    def mock_fetch(query: str, coords: str = "") -> dict:
+        # 문장 전체 검색 시에는 일치 장소 없음
+        if "나무가" in query or len(query.split()) > 3:
+            return {"place": []}
+        # 정제된 후보 키워드로 검색 시 서원대학교 후문 반환
+        if "서원대학교" in query:
+            return {
+                "place": [
+                    {
+                        "title": "서원대학교후문",
+                        "roadAddress": "충청북도 청주시 서원구 무심서로 377-3",
+                        "jibunAddress": "충청북도 청주시 서원구 모충동 243-18",
+                        "x": "127.4818259",
+                        "y": "36.6232074",
+                        "ctg": "방면정보",
+                    }
+                ]
+            }
+        return {"place": []}
+
+    res = lookup_navermap_place("청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐", fetch_fn=mock_fetch)
+    assert res["found"] is True
+    assert res["primary_place"] is not None
+    assert res["primary_place"]["title"] == "서원대학교후문"
+    assert res["primary_place"]["gu"] == "서원구"
+    assert res["primary_place"]["dong"] == "모충동"
+
+

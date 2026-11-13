@@ -47,6 +47,7 @@ def decision_payload(
     district: str | None,
     search: dict[str, Any],
     parts: SearchParts | None = None,
+    inferred_place: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """판정에 넘길 민원·검색 후보 딕셔너리를 만듭니다.
 
@@ -59,12 +60,13 @@ def decision_payload(
         district: 명시한 관할 구입니다.
         search: 검색 API 응답입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다.
 
     Returns:
         FAQ·사례·부서 후보를 담은 딕셔너리입니다.
     """
     data = parts or search_parts(search)
-    return {
+    payload: dict[str, Any] = {
         "query": query,
         "district": district,
         "faq_candidates": [compact_faq(hit) for hit in data.faqs],
@@ -83,6 +85,9 @@ def decision_payload(
             for item in data.departments
         ],
     }
+    if inferred_place:
+        payload["inferred_place"] = inferred_place
+    return payload
 
 
 def decision_prompt(
