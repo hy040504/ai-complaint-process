@@ -13,6 +13,7 @@ _LLM_ENV_KEYS = frozenset(
         "COMPLAINT_LLM_REASONING_EFFORT",
         "COMPLAINT_CODEX_COMMAND",
         "OPENAI_API_KEY",
+        "EXAONE_API_KEY",
         "COMPLAINT_LLM_URL",
         "COMPLAINT_LLM_TOKEN",
         "PUBLIC_LLM_TOKEN",
@@ -24,6 +25,9 @@ _LLM_ENV_LOADED = False
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 DEFAULT_LUNA_MODEL = "gpt-6-luna"
 DEFAULT_REASONING_EFFORT = "medium"
+
+EXAONE_COMPLETIONS_URL = "https://api.exaone.ai/v1/chat/completions"
+DEFAULT_EXAONE_MODEL = "k-exaone_v2.5"
 
 
 def optional_env(name: str) -> str | None:
@@ -114,6 +118,23 @@ def llm_settings() -> dict[str, str | None]:
             token=optional_env("OPENAI_API_KEY"),
             auth="bearer",
         )
+    if provider == "exaone_api":
+        configured_model = optional_env("COMPLAINT_LLM_MODEL")
+        model = (
+            DEFAULT_EXAONE_MODEL
+            if not configured_model or configured_model == DEFAULT_LUNA_MODEL
+            else configured_model
+        )
+        return {
+            "provider": provider,
+            "url": os.environ.get("COMPLAINT_LLM_URL") or EXAONE_COMPLETIONS_URL,
+            "model": model,
+            "token": optional_env("EXAONE_API_KEY"),
+            "auth": "bearer",
+            "reasoning_effort": (
+                optional_env("COMPLAINT_LLM_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT
+            ),
+        }
     if provider == "codex_cli":
         return luna_settings(provider, url=None, token=None, auth="codex")
     if provider != "legacy":
@@ -181,8 +202,9 @@ def use_provider(provider: str) -> dict[str, str | None]:
 def llm_configured() -> bool:
     """응대에 사용할 LLM 공급자가 호출 가능한지 반환합니다.
 
-    `openai_api`는 비어 있지 않은 `OPENAI_API_KEY`, `codex_cli`는 PATH의
-    Codex 실행 파일, `legacy`는 기존 호환 토큰이 있을 때 True입니다.
+    `openai_api`는 비어 있지 않은 `OPENAI_API_KEY`, `exaone_api`는
+    `EXAONE_API_KEY`, `codex_cli`는 PATH의 Codex 실행 파일, `legacy`는
+    기존 호환 토큰이 있을 때 True입니다.
 
     Returns:
         선택한 공급자를 지금 호출할 수 있으면 True입니다.

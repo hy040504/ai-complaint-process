@@ -47,10 +47,10 @@ def _as_int(value: Any) -> int | None:
 
 
 def usage_from_openai(body: Any) -> CompleteUsage | None:
-    """Responses API 본문에서 입력·출력·캐시 토큰을 꺼냅니다.
+    """Responses API 또는 Chat Completions 본문에서 입력·출력·캐시 토큰을 꺼냅니다.
 
     Args:
-        body: Responses API JSON입니다.
+        body: API 응답 JSON입니다.
 
     Returns:
         사용량 칸이 있으면 딕셔너리, 없으면 None입니다.
@@ -64,9 +64,11 @@ def usage_from_openai(body: Any) -> CompleteUsage | None:
     cached: int | None = None
     if isinstance(details, dict):
         cached = _as_int(details.get("cached_tokens"))
+    input_tokens = _as_int(raw.get("input_tokens")) or _as_int(raw.get("prompt_tokens"))
+    output_tokens = _as_int(raw.get("output_tokens")) or _as_int(raw.get("completion_tokens"))
     return CompleteUsage(
-        input_tokens=_as_int(raw.get("input_tokens")),
-        output_tokens=_as_int(raw.get("output_tokens")),
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
         cached_tokens=cached,
     )
 
@@ -159,6 +161,85 @@ def complete_openai_result(
         },
     )
     return CompleteResult(response_output_text(body), usage_from_openai(body))
+
+
+def complete_exaone_response(
+    settings: dict[str, str | None], system: str, user: str
+) -> str:
+    """LG AI연구원 EXAONE API로 K-EXAONE-2.5 출력을 요청합니다.
+
+    Args:
+        settings: `llm_settings()`가 만든 공급자 설정입니다.
+        system: 시스템 지시입니다.
+        user: 사용자 본문입니다.
+
+    Returns:
+        모델이 반환한 텍스트입니다.
+
+    Raises:
+        ValueError: API 키가 없거나 응답에 텍스트가 없는 경우 발생합니다.
+    """
+    return complete_exaone_result(settings, system, user).text
+
+
+def complete_exaone_result(
+    settings: dict[str, str | None], system: str, user: str
+) -> CompleteResult:
+    """LG AI연구원 EXAONE API 본문과 토큰 사용량을 함께 반환합니다.
+
+    OpenAI 호환 Chat Completions 규격을 사용하며, reasoning_effort 옵션과
+    사고 과정 분리 반환을 지원합니다.
+
+    Args:
+        settings: `llm_settings()`가 만든 공급자 설정입니다.
+        system: 시스템 지시입니다.
+        user: 사용자 본문입니다.
+
+    Returns:
+        모델 텍스트와 토큰 사용량(`usage`)입니다.
+
+    Raises:
+        ValueError: EXAONE API 키가 없거나 응답에 텍스트가 없는 경우 발생합니다.
+    """
+    token = settings["token"]
+    url = settings["url"]
+    model = settings["model"]
+    if not token:
+        raise ValueError(
+            "EXAONE API 키가 설정되지 않았습니다. .env의 EXAONE_API_KEY 또는 "
+            "운영체제 환경변수를 설정해 주세요."
+        )
+    if not url or not model:
+        raise ValueError("EXAONE API 주소 또는 모델명이 설정되지 않았습니다.")
+
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "temperature": 0.1,
+        "max_tokens": 2048,
+        "stream": False,
+    }
+    effort = settings.get("reasoning_effort")
+    if effort in {"low", "high", "max"}:
+        payload["reasoning_effort"] = effort
+
+    headers = {
+        "Authorization": "Bearer " + token,
+        "User-Agent": "cheongju-assist/0.1",
+        "Content-Type": "application/json",
+    }
+    body = http_json(str(url), payload, headers=headers)
+    try:
+        content = body["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError("EXAONE API 응답에 메시지 본문이 없습니다.") from exc
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("EXAONE API 응답 본문이 비어 있습니다.")
+
+    return CompleteResult(content.strip(), usage_from_openai(body))
 
 
 def resolve_codex_argv(command: str) -> list[str]:
@@ -365,6 +446,8 @@ def complete_result(
         settings = llm_settings()
     if settings["provider"] == "openai_api":
         return complete_openai_result(settings, system, user)
+    if settings["provider"] == "exaone_api":
+        return complete_exaone_result(settings, system, user)
     if settings["provider"] == "codex_cli":
         return CompleteResult(complete_codex_cli(settings, system, user), None)
     if not settings["token"] or not settings["url"] or not settings["model"]:

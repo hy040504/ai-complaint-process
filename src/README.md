@@ -53,7 +53,7 @@ flowchart LR
     MCP --> S
     MCP --> N[네이버 지도 웹 검색<br/>lookup_navermap_place]
     S --> PG[(PostgreSQL complaint_rag)]
-    L --> M[OpenAI API 또는 Codex CLI]
+    L --> M[OpenAI API, EXAONE API 또는 Codex CLI]
 ```
 
 읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 발생 지역은 청주시 4개 구 및 읍·면·동 전 지역을 지원하며 미지정 시 `src/assist/district.py`가 본문 지명을 자동 추론한다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문이다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
@@ -62,7 +62,7 @@ flowchart LR
 | --- | --- |
 | `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
-| `llm/` | `openai_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
+| `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
 | `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. 테스트 기록은 `.rag-cache/lab-runs`. MCP 핸드셰이크는 NDJSON |
 | `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |

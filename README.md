@@ -4,7 +4,7 @@
 
 # AI 민원 처리 시스템
 
-![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![PlaceMCP](https://img.shields.io/badge/MCP-NaverMap_Place-03c75a?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Backend](https://img.shields.io/badge/OneClick-백엔드_자동기동-0f766e?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Report](https://img.shields.io/badge/Report-11%2F11_4Pages-b91c1c?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
+![Flask](https://img.shields.io/badge/Web-Flask-2f6fed?style=flat-square) ![Lab](https://img.shields.io/badge/Lab-5010-b45309?style=flat-square) ![District](https://img.shields.io/badge/District-청주전지역_·_지명자동추출-0f766e?style=flat-square) ![PlaceMCP](https://img.shields.io/badge/MCP-NaverMap_Place-03c75a?style=flat-square) ![Stream](https://img.shields.io/badge/Stream-진행단계_버퍼링-0d9488?style=flat-square) ![Backend](https://img.shields.io/badge/OneClick-백엔드_자동기동-0f766e?style=flat-square) ![Prompts](https://img.shields.io/badge/Codex_Stdin-전문_표시-6d28d9?style=flat-square) ![Runs](https://img.shields.io/badge/Lab_runs-JSON_file-b45309?style=flat-square) ![Report](https://img.shields.io/badge/Report-11%2F11_4Pages-b91c1c?style=flat-square) ![Eval](https://img.shields.io/badge/Eval-초안_29-0f766e?style=flat-square) ![Holdout](https://img.shields.io/badge/Holdout-3%2F3-0f766e?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-NDJSON-0d9488?style=flat-square) ![OpenAPI](https://img.shields.io/badge/API-Swagger-85a329?style=flat-square) ![PDF](https://img.shields.io/badge/Swagger-PDF-b91c1c?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/Demo_PostgreSQL-complaint__app-4169e1?style=flat-square) ![Origin](https://img.shields.io/badge/Origin-rag/origin-0f766e?style=flat-square) ![Luna](https://img.shields.io/badge/LLM-GPT--6_Luna-6d28d9?style=flat-square) ![EXAONE](https://img.shields.io/badge/LLM-K--EXAONE_2.5-e11d48?style=flat-square) ![Assist](https://img.shields.io/badge/Assist-RAG_+_LLM-0f766e?style=flat-square) ![Prefix](https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square) ![Embed](https://img.shields.io/badge/Embed-e5--small--ko_384-0284c7?style=flat-square) ![CMD](https://img.shields.io/badge/CMD-민원응대-334155?style=flat-square) ![RAG](https://img.shields.io/badge/CMD-검색시작-1e3a5f?style=flat-square) ![EmbedCMD](https://img.shields.io/badge/CMD-문장임베딩-0f766e?style=flat-square)
 
 **반복 문의에는 공식 근거를, 현장 조치에는 담당 부서 연결을.**
 
@@ -31,7 +31,7 @@
 | --- | --- | --- |
 | 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | `:5010` `src/lab_web` · 청주 전 지역 선택 및 본문 지명 자동 감지 · 실시간 진행 스트리밍 버퍼링 | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 제목·상세로 검색 후 PREFIX-00+01 판정 · Codex stdin 전문 표시 및 JSON/프롬프트 복사 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna` API 또는 Codex CLI · MCP NDJSON(검색·장소추적) · 오른쪽 파일 기록 · 초안 평가 개발 26/26 · 보류 3/3 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · CPU용 e5-small-ko · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | `gpt-6-luna`(API/Codex) 또는 `k-exaone_v2.5`(무료 API) · MCP NDJSON(검색·장소추적) · 오른쪽 파일 기록 · 초안 평가 개발 26/26 · 보류 3/3 | openai_api `cached_tokens`(키 필요) · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -200,6 +200,16 @@ flowchart TD
 ```
 
 Jev는 범위와 검색 근거를 먼저 살피는 보조 판정 단계입니다. 부서 배정이나 민원 접수를 자동 확정하지 않으며, 실제 이관 기능은 별도 개발이 필요합니다.
+
+### EXAONE Tabular 모델의 후속 추가 위치 (구상)
+
+LG AI연구원의 **`EXAONE Tabular`** 모델은 자연어 생성이 아닌 수치·표(Table) 데이터 특화 예측 모델(TabArena 1위)입니다. 본 프로젝트의 PostgreSQL `complaint_app` 및 이관 이력 메타데이터가 축적되면 다음과 같은 위치와 역할로 추가하기에 적합합니다:
+
+- **예정 위치:** `src/complaints/analytics/` 또는 `src/assist/tabular.py`
+- **구상 기능:**
+  1. **민원 예상 처리 소요 기간 예측 (회귀)**: 민원 접수 요일, 시간대, 소관 부서 코드, 카테고리를 바탕으로 처리 완료 소요일(D+N) 정량 산출
+  2. **부서 핑퐁(재이송) 위험도 사전 판별 (분류)**: 과거 5,000건의 부서 이송 이력을 바탕으로 특정 과 배정 시 타 부서로 재이송될 확률 예측
+  3. **긴급도 및 현장 출동 우선순위 스코어링 (분류)**: 계절·시간대·지역·반복 접수 지표를 결합하여 담당자 대시보드 처리 우선순위(상/중/하) 수치 부여
 
 ## 확정한 방향과 남은 데이터 검증
 
