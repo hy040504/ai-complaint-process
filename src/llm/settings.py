@@ -102,23 +102,25 @@ def luna_settings(
     }
 
 
-def llm_settings() -> dict[str, str | None]:
-    """호출에 사용할 외부 LLM 공급자·주소·모델·인증 방식을 읽습니다.
+def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
+    """지정한 공급자 이름을 기준으로 사용할 설정을 구성합니다.
+
+    Args:
+        provider: 'exaone_api', 'openai_api', 'codex_cli', 'legacy' 중 하나이거나 None입니다.
 
     Returns:
-        provider·url·model·token·auth·reasoning_effort를 담은 설정입니다.
-        인증값이 없거나 공급자를 모를 때 token은 None입니다.
+        해당 공급자의 설정 딕셔너리입니다. 생략 시 프로세스 기본값을 읽습니다.
     """
     load_llm_env_file()
-    provider = (os.environ.get("COMPLAINT_LLM_PROVIDER") or "legacy").strip().lower()
-    if provider == "openai_api":
+    prov = (provider or os.environ.get("COMPLAINT_LLM_PROVIDER") or "legacy").strip().lower()
+    if prov == "openai_api":
         return luna_settings(
-            provider,
+            prov,
             url=OPENAI_RESPONSES_URL,
             token=optional_env("OPENAI_API_KEY"),
             auth="bearer",
         )
-    if provider == "exaone_api":
+    if prov == "exaone_api":
         configured_model = optional_env("COMPLAINT_LLM_MODEL")
         model = (
             DEFAULT_EXAONE_MODEL
@@ -126,7 +128,7 @@ def llm_settings() -> dict[str, str | None]:
             else configured_model
         )
         return {
-            "provider": provider,
+            "provider": prov,
             "url": os.environ.get("COMPLAINT_LLM_URL") or EXAONE_COMPLETIONS_URL,
             "model": model,
             "token": optional_env("EXAONE_API_KEY"),
@@ -135,11 +137,11 @@ def llm_settings() -> dict[str, str | None]:
                 optional_env("COMPLAINT_LLM_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT
             ),
         }
-    if provider == "codex_cli":
-        return luna_settings(provider, url=None, token=None, auth="codex")
-    if provider != "legacy":
+    if prov == "codex_cli":
+        return luna_settings(prov, url=None, token=None, auth="codex")
+    if prov != "legacy":
         return {
-            "provider": provider,
+            "provider": prov,
             "url": None,
             "model": None,
             "token": None,
@@ -151,7 +153,7 @@ def llm_settings() -> dict[str, str | None]:
     xai = optional_env("XAI_API_KEY")
     if public:
         return {
-            "provider": provider,
+            "provider": prov,
             "url": os.environ.get(
                 "COMPLAINT_LLM_URL",
                 "https://llm.mib.dpdns.org/v1/chat/completions",
@@ -166,7 +168,7 @@ def llm_settings() -> dict[str, str | None]:
         }
     if xai:
         return {
-            "provider": provider,
+            "provider": prov,
             "url": os.environ.get(
                 "COMPLAINT_LLM_URL", "https://api.x.ai/v1/chat/completions"
             ),
@@ -176,13 +178,23 @@ def llm_settings() -> dict[str, str | None]:
             "reasoning_effort": None,
         }
     return {
-        "provider": provider,
+        "provider": prov,
         "url": os.environ.get("COMPLAINT_LLM_URL"),
         "model": os.environ.get("COMPLAINT_LLM_MODEL"),
         "token": None,
         "auth": "token",
         "reasoning_effort": None,
     }
+
+
+def llm_settings() -> dict[str, str | None]:
+    """호출에 사용할 외부 LLM 공급자·주소·모델·인증 방식을 읽습니다.
+
+    Returns:
+        provider·url·model·token·auth·reasoning_effort를 담은 설정입니다.
+        인증값이 없거나 공급자를 모를 때 token은 None입니다.
+    """
+    return settings_for_provider(None)
 
 
 def use_provider(provider: str) -> dict[str, str | None]:

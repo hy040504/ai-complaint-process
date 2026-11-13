@@ -45,6 +45,7 @@ class LabComplaint(Model):
     category: Category
     district: str | None = None
     body: Body
+    provider: str | None = None
 
     @field_validator("district", mode="before")
     @classmethod
@@ -53,6 +54,14 @@ class LabComplaint(Model):
         if value == "" or value is None:
             return None
         return str(value).strip() or None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def blank_provider_to_none(cls, value: object) -> object:
+        """빈 문자열은 공급자 미지정으로 둡니다."""
+        if value == "" or value is None:
+            return None
+        return str(value).strip().lower() or None
 
 
 class LlmEnvelope(Model):

@@ -104,7 +104,10 @@ def handle_complaint(
         complaint.district, query
     )
     run = assist_fn or run_web_assist
-    raw = run(query, effective_district, 5, False)
+    if assist_fn is None:
+        raw = run_web_assist(query, effective_district, 5, False, provider=complaint.provider)
+    else:
+        raw = assist_fn(query, effective_district, 5, False)
     return accept_from_assist(
         complaint,
         query,
@@ -147,7 +150,9 @@ def iter_complaint(
             "result": handle_complaint(complaint, assist_fn=assist_fn),
         }
         return
-    for event in iter_web_assist(query, effective_district, 5, False):
+    for event in iter_web_assist(
+        query, effective_district, 5, False, provider=complaint.provider
+    ):
         if event.get("type") == "progress":
             yield event
             continue

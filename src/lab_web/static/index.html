@@ -65,6 +65,55 @@
             </div>
           </div>
         </div>
+        <div class="llm-select-container">
+          <label class="group-label">판정 LLM 엔진 선택</label>
+          <div class="llm-btn-group" role="radiogroup" aria-label="LLM 엔진 선택">
+            <button
+              type="button"
+              class="llm-choice-btn active"
+              data-provider=""
+              title="환경변수(.env)에 설정된 기본 공급자를 사용합니다."
+            >
+              <span class="btn-badge badge-default">DEFAULT</span>
+              <strong>기본 설정</strong>
+              <small>.env 지정 엔진</small>
+            </button>
+            <button
+              type="button"
+              class="llm-choice-btn"
+              data-provider="exaone_api"
+              title="LG AI연구원의 한국어 특화 국산 파운데이션 모델 (무료 API)"
+            >
+              <span class="btn-badge badge-exaone">FREE</span>
+              <strong>K-EXAONE 2.5</strong>
+              <small>LG AI 무료 API</small>
+            </button>
+            <button
+              type="button"
+              class="llm-choice-btn"
+              data-provider="codex_cli"
+              title="로컬 로그인된 Codex CLI (MCP 검색·장소 도구 연동)"
+            >
+              <span class="btn-badge badge-codex">LOCAL</span>
+              <strong>Codex CLI</strong>
+              <small>GPT-6 Luna (MCP)</small>
+            </button>
+            <button
+              type="button"
+              class="llm-choice-btn"
+              data-provider="openai_api"
+              title="OpenAI Responses API 직접 호출"
+            >
+              <span class="btn-badge badge-openai">API</span>
+              <strong>GPT-6 Luna</strong>
+              <small>OpenAI API</small>
+            </button>
+          </div>
+          <input type="hidden" id="provider" name="provider" value="" />
+          <div class="hint">
+            <span>원하는 LLM 엔진 버튼을 눌러 공급자별 판정·초안 결과를 비교할 수 있습니다.</span>
+          </div>
+        </div>
         <label for="body">상세 내용 <em>*</em></label>
         <textarea
           id="body"
@@ -94,7 +143,11 @@
       <section id="result" hidden>
         <h2>응대 결과</h2>
         <p id="result-source" class="hint-block" hidden></p>
-        <p id="result-district" class="district-badge" hidden></p>
+        <div class="result-badges">
+          <p id="result-district" class="district-badge" hidden></p>
+          <p id="result-place" class="place-badge" hidden></p>
+          <p id="result-llm" class="llm-engine-badge" hidden></p>
+        </div>
         <p id="result-message"></p>
         <p id="result-outcome"></p>
         <p id="result-reason"></p>

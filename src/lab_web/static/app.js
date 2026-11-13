@@ -41,20 +41,62 @@ export function formatRunTime(iso) {
   }).format(date);
 }
 
+const LLM_STORAGE_KEY = "cheongju_lab_llm_provider";
+
+/**
+ * LLM 엔진 선택 버튼 그룹을 초기화하고 이전 선택을 복원합니다.
+ *
+ * @param {ParentNode} [root=document] 검색 범위입니다.
+ * @returns {void}
+ */
+export function initLlmSelector(root = document) {
+  const buttons = root.querySelectorAll(".llm-choice-btn");
+  const hiddenInput = root.querySelector("#provider");
+  if (!buttons.length || !hiddenInput) return;
+
+  const saved = localStorage.getItem(LLM_STORAGE_KEY) || "";
+  let matched = false;
+
+  buttons.forEach((btn) => {
+    const prov = btn.dataset.provider || "";
+    if (prov === saved) {
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      hiddenInput.value = prov;
+      matched = true;
+    }
+
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const chosen = btn.dataset.provider || "";
+      hiddenInput.value = chosen;
+      localStorage.setItem(LLM_STORAGE_KEY, chosen);
+    });
+  });
+
+  if (!matched && buttons[0]) {
+    buttons[0].classList.add("active");
+    hiddenInput.value = buttons[0].dataset.provider || "";
+  }
+}
+
 /**
  * 폼 값을 서버 계약 JSON으로 만듭니다.
  *
  * @param {HTMLFormElement} form 작성 폼입니다.
- * @returns {{title:string,category:string,district:string|null,body:string}}
+ * @returns {{title:string,category:string,district:string|null,body:string,provider:string|null}}
  */
 export function readComplaint(form) {
   const data = new FormData(form);
   const district = String(data.get("district") || "").trim();
+  const provider = String(data.get("provider") || "").trim();
   return {
     title: String(data.get("title") || "").trim(),
     category: String(data.get("category") || "").trim(),
     district: district || null,
     body: String(data.get("body") || "").trim(),
+    provider: provider || null,
   };
 }
 
@@ -315,6 +357,31 @@ function showResult(payload, received, sourceText = "") {
       districtBadge.hidden = false;
     }
   }
+  const placeBadge = document.querySelector("#result-place");
+  if (placeBadge) {
+    const place = assist.inferredPlace || received.inferredPlace;
+    if (place && place.title) {
+      const addr = place.roadAddress || place.address || "";
+      placeBadge.textContent = addr
+        ? `🗺️ 장소 추적: ${place.title} (${addr})`
+        : `🗺️ 장소 추적: ${place.title}`;
+      placeBadge.hidden = false;
+    } else {
+      placeBadge.hidden = true;
+    }
+  }
+  const llmBadge = document.querySelector("#result-llm");
+  if (llmBadge) {
+    const p = payload.provider || received.complaint?.provider || "";
+    const providerLabels = {
+      exaone_api: "🤖 LLM 엔진: K-EXAONE 2.5 (무료 API)",
+      codex_cli: "🤖 LLM 엔진: Codex CLI (GPT-6 Luna)",
+      openai_api: "🤖 LLM 엔진: GPT-6 Luna (OpenAI API)",
+    };
+    llmBadge.textContent =
+      providerLabels[p] || "🤖 LLM 엔진: 기본 설정 (.env 환경설정)";
+    llmBadge.hidden = false;
+  }
   document.querySelector("#result-message").textContent = received.message;
   document.querySelector("#result-outcome").textContent =
     outcomeNames[assist.outcome] || assist.outcome || "";
@@ -558,6 +625,7 @@ function bind() {
   title.addEventListener("input", count);
   body.addEventListener("input", count);
   count();
+  initLlmSelector();
   bindJsonCopyButtons();
   bindPromptCopyButtons();
 

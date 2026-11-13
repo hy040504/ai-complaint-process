@@ -11,7 +11,7 @@
 | 사건·작업 기준일 / 기록일 / 최종 갱신일 | 2026-11-13 UTC / 2026-11-13 UTC / 2026-11-13 UTC |
 | 목적·영향 범위 | 무료 국산 LLM 공급자(K-EXAONE 2.5) 추가, `.env` 키 연동, EXAONE Tabular 후속 확장 경로 수립 |
 | 기준 환경 | Windows 10, Python 3.12, Node 22, EXAONE API Platform (`docs.exaone.ai`) |
-| 구현·적용 범위 | `src/llm/settings.py`, `src/llm/complete.py`, `.env.example`, `.env`, `README.md`, `src/README.md`, `src/tests/test_llm_env.py` |
+| 구현·적용 범위 | `src/llm/settings.py`, `src/llm/complete.py`, `src/assist/`, `src/lab_web/`, `src/complaints/models.py`, `.env.example`, `.env`, `README.md`, `src/README.md`, `src/tests/` |
 | 관련 사례·기준 문서 | [CASE-023](사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md), [CASE-062](사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md), [CASE-083](사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) |
 
 ## 2. 배경과 요구사항
@@ -42,14 +42,24 @@
 4. **`EXAONE Tabular` 모델의 후속 추가 위치 문서화 (`README.md`, `src/README.md`):**
    - 메인 README에 `K-EXAONE 2.5` 배지 추가.
    - 정형 데이터 전문 예측 모델인 `EXAONE Tabular`는 텍스트 생성이 아닌 수치/범주형 예측을 담당하므로, 추후 **`src/complaints/analytics/`** (또는 `src/assist/tabular.py`) 경로에 추가하여 (1) 민원 처리 예상 소요일(회귀) 예측, (2) 부서 핑퐁(재이송) 위험도 사전 판별, (3) 긴급도 스코어링의 보조 엔진으로 결합하기에 적합함을 구상 항목으로 명시.
-5. **단위 테스트 추가 (`src/tests/test_llm_env.py`):**
+5. **응대 검사기 웹 UI 엔진 선택 및 장소 추적 배지 연동 (`src/lab_web/`):**
+   - 검사기 상단에 LLM 공급자 선택 버튼 그룹(기본 설정, K-EXAONE 2.5, Codex CLI, GPT-6 Luna API) 배치.
+   - `localStorage`(`cheongju_lab_llm_provider`)를 통해 마지막 선택 엔진 유지.
+   - 폼 전송 시 `provider`가 `/api/v1/lab/complaints` 및 `/stream` 파이프라인으로 전달되어 해당 공급자 모델로 판정/초안 수행.
+   - 결과 화면에 선택된 LLM 엔진 배지(`🤖 LLM 엔진: ...`) 및 네이버 지도 장소 추적 배지(`🗺️ 장소 추적: ...`) 렌더링.
+   - `AssistResponse` 모델에 `inferred_place` 스키마 필드 반영.
+   - 시스템 프롬프트(PREFIX-00, PREFIX-01, PREFIX-03)에 `lookup_navermap_place` 및 장소 추론 결과 활용 지침 명시.
+6. **단위 테스트 추가 및 검증 (`src/tests/`):**
    - `.env`에서 `exaone_api` 선택 및 기본 설정 파싱 검증 (`test_env_file_selects_exaone_api`).
    - 모의 HTTP 응답을 통한 `complete_exaone_result` 호출 및 토큰 사용량 집계 검증 (`test_complete_exaone_result_with_mock`).
+   - 검사기 웹의 `provider` 수신 및 유지 검증 (`test_complaint_accepts_provider`).
 
 ## 4. 검증 결과
 
 - **단위 테스트 실행:**
   - `pytest src/tests/test_llm_env.py -q` ➡️ **6 passed** (신규 테스트 2건 포함)
-  - `pytest src/tests -q` ➡️ **126 passed, 2 skipped** (100% 통과)
+  - `pytest src/tests -q` ➡️ **127 passed, 2 skipped** (100% 통과)
+  - `pytest rag/tests -q -p no:cacheprovider` ➡️ **48 passed, 3 skipped** (100% 통과)
 - **프론트엔드 검사:**
-  - `check-syntax` 14건 통과, `node test` 6건 통과.
+  - `npm --prefix ui run check` ➡️ **JavaScript 문법 검사 14개 통과**
+  - `npm --prefix ui test` ➡️ **단위 테스트 6개 통과**

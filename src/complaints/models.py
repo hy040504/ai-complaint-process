@@ -428,6 +428,7 @@ class AssistResponse(Model):
         query: 검색과 판정에 사용한 민원 원문입니다.
         district: 검색에 적용한 관할 구입니다.
         district_inferred: 본문 지명으로 구를 자동 감지했으면 True입니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다. 없으면 None입니다.
         outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
         automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
         codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.
@@ -438,6 +439,7 @@ class AssistResponse(Model):
     query: str
     district: str | None = None
     district_inferred: bool = False
+    inferred_place: dict[str, Any] | None = None
     outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
     reason_code: str
     answer: str | None = None

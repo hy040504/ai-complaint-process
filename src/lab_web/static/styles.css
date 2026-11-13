@@ -374,6 +374,16 @@ pre {
   background: #eef4ff;
   border-color: var(--accent);
 }
+.result-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0 12px;
+}
+.result-badges p {
+  margin: 0;
+}
 .district-badge {
   display: inline-flex;
   align-items: center;
@@ -385,7 +395,104 @@ pre {
   border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
-  margin: 6px 0 12px;
+}
+.place-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.llm-engine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.llm-select-container {
+  margin: 12px 0 16px;
+}
+.group-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.llm-btn-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+.llm-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.llm-choice-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.llm-choice-btn.active {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px #16a34a;
+}
+.llm-choice-btn strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.llm-choice-btn small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.btn-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.badge-default {
+  background: #e2e8f0;
+  color: #475569;
+}
+.badge-exaone {
+  background: #dcfce7;
+  color: #15803d;
+}
+.badge-codex {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.badge-openai {
+  background: #e0f2fe;
+  color: #0369a1;
 }
 
 @media (max-width: 900px) {

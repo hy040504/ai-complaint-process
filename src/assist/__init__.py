@@ -29,6 +29,7 @@ def run_web_assist(
     district: str | None,
     limit: int,
     rerank: bool,
+    provider: str | None = None,
 ) -> dict[str, Any]:
     """웹 검사기가 사용하는 응대 파이프라인을 실행합니다.
 
@@ -37,11 +38,12 @@ def run_web_assist(
         district: 명시한 관할 구입니다.
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
+        provider: 선택한 LLM 공급자입니다.
 
     Returns:
         `run_assist`의 결과 딕셔너리입니다.
     """
-    return run_assist(query, district, limit=limit, rerank=rerank)
+    return run_assist(query, district, limit=limit, rerank=rerank, provider=provider)
 
 
 def iter_web_assist(
@@ -49,6 +51,7 @@ def iter_web_assist(
     district: str | None,
     limit: int,
     rerank: bool,
+    provider: str | None = None,
 ) -> Iterator[dict[str, Any]]:
     """웹 검사기가 진행 안내와 최종 결과를 순서대로 받습니다.
 
@@ -57,11 +60,12 @@ def iter_web_assist(
         district: 명시한 관할 구입니다.
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
+        provider: 선택한 LLM 공급자입니다.
 
     Yields:
         짧은 진행 안내 또는 최종 응대 결과입니다.
     """
-    yield from iter_assist(query, district, limit=limit, rerank=rerank)
+    yield from iter_assist(query, district, limit=limit, rerank=rerank, provider=provider)
 
 
 __all__ = [

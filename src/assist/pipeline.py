@@ -191,6 +191,7 @@ def iter_assist(
     rerank: bool = True,
     search_fn: Callable[..., dict[str, Any]] | None = None,
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
+    provider: str | None = None,
 ) -> Iterator[dict[str, Any]]:
     """검색 다음에 LLM 판정을 이어 진행 안내와 최종 결과를 넘깁니다.
 
@@ -201,6 +202,7 @@ def iter_assist(
         rerank: 재정렬 여부입니다.
         search_fn: 검색 함수입니다. 생략하면 검색 API를 호출합니다.
         llm_fn: (system, user) → 텍스트 함수입니다. 생략하면 환경 설정의 LLM을 쓰고, None이면 호출하지 않습니다.
+        provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
 
     Yields:
         `progress` 사건 또는 최종 `done` 결과입니다.
@@ -264,7 +266,22 @@ def iter_assist(
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
     usage_box: list[CompleteUsage | None] = [None]
     chat: Callable[[str, str], str] | None
-    if llm_fn is USE_ENV_LLM:
+    if provider:
+        from src.llm.settings import settings_for_provider
+
+        bound = settings_for_provider(provider)
+        if bound.get("token") or bound.get("provider") == "codex_cli":
+            def chat_provider(system: str, user: str) -> str:
+                result = complete_result(system, user, settings=bound)
+                usage_box[0] = result.usage
+                return result.text
+
+            chat = chat_provider
+            llm_on = True
+        else:
+            chat = None
+            llm_on = False
+    elif llm_fn is USE_ENV_LLM:
         if llm_on:
             bound = llm_settings()
 
@@ -471,6 +488,7 @@ def run_assist(
     search_fn: Callable[..., dict[str, Any]] | None = None,
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
     on_progress: Callable[[str, str], None] | None = None,
+    provider: str | None = None,
 ) -> dict[str, Any]:
     """검색 → 판정 → 정책 검사 → 조건부 FAQ·순화·담당자 초안 순서로 응대 결과를 만듭니다.
 
@@ -482,6 +500,7 @@ def run_assist(
         search_fn: 검색 함수입니다. 생략하면 검색 API를 호출합니다.
         llm_fn: (system, user) → 텍스트 함수입니다. 생략하면 환경 설정의 LLM을 쓰고, None이면 호출하지 않습니다.
         on_progress: 짧은 진행 안내를 받을 콜백입니다. `(key, label)`입니다.
+        provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
 
     Returns:
         세 갈래 결과·근거·정책 실패·단계를 담은 딕셔너리입니다.
@@ -494,6 +513,7 @@ def run_assist(
         rerank=rerank,
         search_fn=search_fn,
         llm_fn=llm_fn,
+        provider=provider,
     ):
         if event["type"] == "progress":
             if on_progress:

@@ -342,3 +342,20 @@ def test_complaint_accepts_sub_area_and_infers_district(client: FlaskClient) -> 
     assert res2.json["complaint"]["district"] is None
     assert res2.json["effectiveDistrict"] == "흥덕구"
     assert res2.json["districtInferred"] is True
+
+
+def test_complaint_accepts_provider(client: FlaskClient) -> None:
+    """LLM 공급자 지정을 검사기 API가 올바르게 수신하고 유지합니다."""
+    res = client.post(
+        "/api/v1/lab/complaints",
+        json={
+            "title": "청주 서원대 편의점 근처 나무 쓰러짐",
+            "category": "공원·녹지",
+            "district": "서원구",
+            "body": "서원대학교 후문 편의점 근처에서 가로수가 쓰러져 보행로를 막고 있습니다.",
+            "provider": "exaone_api",
+        },
+    )
+    assert res.status_code == 200
+    assert res.json["complaint"]["provider"] == "exaone_api"
+
