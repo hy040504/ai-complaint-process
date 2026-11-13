@@ -11,6 +11,7 @@ from src.complaints.http import actor, reply
 from src.complaints.errors import AppError
 from src.assist import (
     assist_examples,
+    draft_answer,
     iter_web_assist,
     llm_configured,
     run_web_assist,
@@ -447,5 +448,52 @@ def create_api(service: ComplaintService) -> APIBlueprint:
             취소 상태를 저장한 민원입니다.
         """
         return operate(path, body, "cancel")
+
+    @api.post(
+        "/complaints/<complaint_id>/ai-draft",
+        tags=[complaints],
+        responses={200: ComplaintResponse},
+    )
+    def ai_draft(path: ComplaintPath, body: VersionInput) -> Response:
+        """담당자 요청으로 LLM이 답변 초안을 만들어 편집본에 저장합니다. 게시하지 않습니다.
+
+        LLM 호출은 저장 트랜잭션 밖에서 수행합니다. 호출 중 민원이 바뀌면 버전 검사로 저장을 거부합니다.
+
+        Args:
+            path: 민원 식별자입니다.
+            body: 담당자가 조회한 기대 버전입니다.
+
+        Returns:
+            초안이 편집본으로 저장된 민원입니다.
+
+        Raises:
+            AppError: 담당자가 아니거나 버전이 다르거나 LLM을 쓸 수 없을 때 발생합니다.
+        """
+        user = actor()
+        current = service.get(user, path.complaint_id)
+        if user.role != "staff":
+            raise AppError(403, "staff_required", "담당자만 수행할 수 있는 작업입니다.")
+        if current.version != body.version:
+            raise AppError(
+                409,
+                "version_conflict",
+                "민원이 바뀌었습니다. 새로고침 후 다시 시도해 주세요.",
+            )
+        if not llm_configured():
+            raise AppError(
+                503,
+                "llm_unavailable",
+                "LLM 공급자가 설정되지 않아 초안을 만들 수 없습니다.",
+            )
+        try:
+            text = draft_answer(
+                current.title, current.body, current.district, current.category
+            )
+        except (ValueError, OSError) as error:
+            raise AppError(
+                502, "llm_failed", f"초안 생성에 실패했습니다: {error}"
+            ) from error
+        saved = service.save_ai_draft(user, path.complaint_id, body.version, text)
+        return reply(service.project(user, saved))
 
     return api

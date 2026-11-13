@@ -9,6 +9,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from src.assist.constants import EXAMPLES
+from src.assist.draft import draft_answer
 from src.assist.pipeline import iter_assist, render_assist, run_assist
 from src.assist.policy import validate_decision
 from src.llm import complete_chat, llm_configured, parse_json_object
@@ -71,6 +72,7 @@ def iter_web_assist(
 __all__ = [
     "EXAMPLES",
     "assist_examples",
+    "draft_answer",
     "complete_chat",
     "iter_assist",
     "iter_web_assist",

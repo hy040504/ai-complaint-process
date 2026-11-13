@@ -97,6 +97,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `PUT /complaints/{complaint_id}/draft` | 담당자 초안·편집 이력 저장 |
 | `POST /complaints/{complaint_id}/publish` | 담당자 답변 게시·기원 판별 |
 | `POST /complaints/{complaint_id}/retract` | 담당자 게시본 철회·이력 보존 |
+| `POST /complaints/{complaint_id}/ai-draft` | 담당자 요청으로 EXAONE이 답변 초안을 만들어 편집본에 저장(게시 안 함, 원문은 `aiOriginal` 보존) |
 | `POST /complaints/{complaint_id}/jobs` | 담당자 서버 단계 시연 시작 |
 | `POST /complaints/{complaint_id}/jobs/cancel` | 담당자 단계 시연 취소 |
 

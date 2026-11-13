@@ -468,6 +468,48 @@ class ComplaintService:
             apply,
         )
 
+    def save_ai_draft(
+        self, actor: Actor, complaint_id: str, version: int, text: str
+    ) -> Complaint:
+        """LLM이 만든 초안을 담당자 편집본으로 저장합니다. 게시하지 않습니다.
+
+        원문은 `ai_original`에 보존해 이후 게시 때 AI 원문인지 편집본인지 구별합니다.
+        이전 편집본은 버전 이력에 남아 되돌릴 수 있습니다.
+
+        Args:
+            actor: 요청한 담당자입니다.
+            complaint_id: 대상 민원 식별자입니다.
+            version: 클라이언트가 조회한 민원 버전입니다.
+            text: 모델이 생성한 초안 본문입니다.
+
+        Returns:
+            저장 후 민원입니다.
+        """
+
+        def apply(row: Complaint) -> None:
+            """초안 본문을 편집본과 AI 원문에 저장하고 이력을 남깁니다.
+
+            Args:
+                row: 현재 버전의 민원입니다.
+            """
+            row.ai_original = text
+            row.ai_candidate = ""
+            row.draft = text
+            row.draft_version += 1
+            row.versions.append(
+                AnswerVersion(
+                    version=row.draft_version,
+                    text=text,
+                    reason="AI 초안 생성",
+                    kind="AI 초안",
+                )
+            )
+            row.history.append(
+                History(text="AI 초안 생성 · 담당자 검토 전 미게시", public=False)
+            )
+
+        return self.change(actor, complaint_id, version, True, apply)
+
     def advance_jobs(self) -> None:
         """경과 시간에 따른 시연 단계를 DB에 반영하며 실제 AI 결과를 만들지 않습니다."""
         stages = [
