@@ -93,7 +93,7 @@ flowchart TD
 3. FAQ 안내가 허용된 경우에만 같은 LLM을 다시 호출해 답변을 생성한다. 답변과 근거를 검사하고 실패하면 담당자 검토로 보낸다.
 4. 부서 후보·담당자 검토 안내는 템플릿이다. 검사기는 파이프라인 전체가 아니라 짧은 진행 안내만 보여 준다.
 
-`COMPLAINT_LLM_PROVIDER`로 `openai_api`(Responses API, `gpt-6-luna`·`medium`) 또는 `codex_cli`(읽기 전용 임시 작업공간)를 고른다. 기존 호환 토큰은 `legacy`다. 판정과 생성은 같은 모델 설정을 재사용하되 프롬프트·입출력·평가를 구분한다. 고정 시스템 지시와 가변 user JSON을 섞지 않는다. 계층형 `PREFIX-00`~`PREFIX-04` 적용과 프리픽스 캐시 실측은 후속이다. [AI 입출력 하네스](AI_정보전달과_응답_하네스.md) · [프리픽스 캐싱 지침](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](../cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-042](../cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
+`COMPLAINT_LLM_PROVIDER` 또는 검사기 UI 엔진 버튼으로 `exaone_api`(Chat Completions, `k-exaone_v2.5`, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`), `openai_api`(Responses API, `gpt-6-luna`·`medium`), 또는 `codex_cli`(읽기 전용 임시 작업공간, `search_complaint_rag` + `lookup_navermap_place` MCP)를 고른다. 기존 호환 토큰은 `legacy`다. HTTP 429 응답 시 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도하고, 판정 API 실패 시 후속 초안·순화 연쇄 호출을 막는다. 판정과 생성은 같은 모델 설정을 재사용하되 프롬프트·입출력·평가를 구분한다. 고정 시스템 지시와 가변 user JSON을 섞지 않는다. 계층형 `PREFIX-00`~`PREFIX-04` 조립 적격 검증은 구현했으며 `openai_api` 프리픽스 캐시 실측은 키 확보 후속이다. [AI 입출력 하네스](AI_정보전달과_응답_하네스.md) · [프리픽스 캐싱 지침](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](../cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-042](../cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md) · [CASE-088](../cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
 
 LLM 호출은 검색 API 프로세스와 분리한다. Jev는 이후 판정 어댑터의 대체 또는 추가 검토 모듈로 비교하며 초기 실행 의존성에 넣지 않는다.
 

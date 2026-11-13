@@ -118,6 +118,7 @@ def test_resolve_district_and_place_single_lookup(monkeypatch) -> None:
     calls: list[str] = []
 
     def fake_lookup(query: str, coords: str | None = None, **kwargs):
+        """테스트용 고정 네이버 지도 조회 응답을 반환합니다."""
         calls.append(query)
         return {
             "query": query,

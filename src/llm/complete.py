@@ -53,8 +53,32 @@ class CompleteResult(NamedTuple):
 
 
 def _as_int(value: Any) -> int | None:
-    """JSON 숫자 칸을 int로 읽습니다."""
-    return value if isinstance(value, int) else None
+    """JSON 숫자 칸을 bool이 아닌 정수(int)로 안전하게 읽습니다.
+
+    Args:
+        value: JSON 응답에서 꺼낸 원시 값입니다.
+
+    Returns:
+        정수 값이면 그대로 반환하고, bool이거나 정수가 아니면 None입니다.
+    """
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _first_int(mapping: dict[str, Any], *keys: str) -> int | None:
+    """여러 후보 키 중 첫 번째 유효한 정수 값을 반환합니다(`0` 보존).
+
+    Args:
+        mapping: 토큰 사용량 딕셔너리입니다.
+        *keys: 우선순위 순서대로 조회할 키 이름들입니다.
+
+    Returns:
+        발견된 첫 번째 정수 값 또는 None입니다.
+    """
+    for key in keys:
+        parsed = _as_int(mapping.get(key))
+        if parsed is not None:
+            return parsed
+    return None
 
 
 def usage_from_openai(body: Any) -> CompleteUsage | None:
@@ -75,8 +99,8 @@ def usage_from_openai(body: Any) -> CompleteUsage | None:
     cached: int | None = None
     if isinstance(details, dict):
         cached = _as_int(details.get("cached_tokens"))
-    input_tokens = _as_int(raw.get("input_tokens")) or _as_int(raw.get("prompt_tokens"))
-    output_tokens = _as_int(raw.get("output_tokens")) or _as_int(raw.get("completion_tokens"))
+    input_tokens = _first_int(raw, "input_tokens", "prompt_tokens")
+    output_tokens = _first_int(raw, "output_tokens", "completion_tokens")
     reasoning_tokens = _as_int(raw.get("reasoning_tokens"))
     if reasoning_tokens is None:
         comp_details = raw.get("completion_tokens_details")

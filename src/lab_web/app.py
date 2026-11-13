@@ -171,7 +171,15 @@ def create_app(
     def _finish_run(
         complaint: LabComplaint, result: LabAcceptResult
     ) -> LabAcceptResult | Response:
-        """응대 결과를 기록 파일에 남기고 run 요약을 붙입니다."""
+        """응대 결과를 기록 파일에 남기고 run 요약을 붙입니다.
+
+        Args:
+            complaint: 검증을 통과한 민원 입력 모델입니다.
+            result: 검색·판정 결과가 채워진 수신 응답 모델입니다.
+
+        Returns:
+            기록 요약이 첨부된 응답 모델, 저장 실패 시 503 오류 응답입니다.
+        """
         received = result.model_dump(mode="json", by_alias=True)
         try:
             record = save_run(
@@ -234,6 +242,11 @@ def create_app(
         assist_fn = app.config.get("LAB_ASSIST_FN")
 
         def generate() -> Iterator[str]:
+            """진행 단계, 최종 결과, 또는 오류를 NDJSON 줄 단위로 내보냅니다.
+
+            Yields:
+                개행 문자로 끝나는 직렬화된 JSON 이벤트 문자열입니다.
+            """
             try:
                 for event in iter_complaint(complaint, assist_fn=assist_fn):
                     if event.get("type") != "done":

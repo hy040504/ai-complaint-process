@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- 최근 패치([CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md)~[CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)) 전반의 한국어 docstring/JSDoc 누락(`pipeline.py`·`app.py`·`complete.py`·`lab.test.mjs`)과 `test_place_tool.py` 미사용 import를 보완하고, `src/lab_web/models.py` 중복 검증기(`blank_optional_to_none`) 통합 및 `src/llm/complete.py` `_as_int`/`_first_int`의 `bool` 배제·`0` 토큰 보존을 적용한다. 하네스 문서 4종(`AI_안전_보안_가드레일.md`·`AI_정보전달과_응답_하네스.md`·`architecture.md`·`시스템_프롬프트와_프리픽스_캐싱_지침.md`)과 `README.md` 상단 배지·빠른 탐색·Mermaid·환경변수 표·검증 근거를 최신화한다. [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md)
+
 - 전체 연동 점검 중 확인된 EXAONE HTTP 429(동시 요청 600·초당 한도 1) 연쇄 실패와 스트림·환경변수 누락을 보완한다. `src/rag/http.py`에 `retry-after-ms`/`retry-after`와 지수 백오프(최대 2회, 일일 한도 소진 시 즉시 중단)·`TimeoutError` 한국어 안내를 추가하고, `src/assist/pipeline.py`는 판정 API/CLI 실패 시 `llm_unavailable`로 조기 종료해 후속 `sanitize`/`staff_draft` 중복 429를 막는다. `EXAONE_URL`·`EXAONE_MODEL` 격리 로딩 및 `app.js`/`ui/src/lab.js`의 개행 없는 NDJSON EOF 플러시·422/오류 후 중복 재시도 차단을 반영하고 `:5010` 검사기 웹을 최신 코드로 재기동한다. [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
 
 - 최근 LLM·MCP·검사기 UI 패치 전반(CASE-083~086)의 주석·docstring·버그·성능·문서를 점검·정비한다. `resolve_district_and_place` 통합 및 `_allow_fallback` 가드로 네이버 지도 중복·재귀 조회를 제거하고, `showResult` 주소 키(`road_address`/`jibun_address`) 누락과 비활성화 단추 비동기 `localStorage` 복원 경쟁 버그를 수정한다. OpenAI `usage_from_openai`의 `reasoning_tokens` 생략 호환과 `mypy` 타입 검사를 정비하고, `PREFIX-01`·`README.md` 디자인·`docs/README.md`·`src/README.md`·`src/lab_web/README.md`를 최신화한다. [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)

@@ -5,7 +5,14 @@
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    ValidationInfo,
+    field_validator,
+)
 from pydantic.alias_generators import to_camel
 
 from src.complaints.models import AssistResponse
@@ -50,21 +57,26 @@ class LabComplaint(Model):
     body: Body
     provider: Provider | None = None
 
-    @field_validator("district", mode="before")
+    @field_validator("district", "provider", mode="before")
     @classmethod
-    def blank_district_to_none(cls, value: object) -> object:
-        """빈 문자열은 지역 없음으로 둡니다."""
-        if value == "" or value is None:
-            return None
-        return str(value).strip() or None
+    def blank_optional_to_none(
+        cls, value: object, info: ValidationInfo
+    ) -> object:
+        """빈 문자열·공백 입력은 None으로 정규화하고 공급자 ID는 소문자로 맞춥니다.
 
-    @field_validator("provider", mode="before")
-    @classmethod
-    def blank_provider_to_none(cls, value: object) -> object:
-        """빈 문자열은 공급자 미지정으로 두고, 나머지는 소문자로 맞춥니다."""
-        if value is None:
+        Args:
+            value: 검증 전 원시 입력 값입니다.
+            info: 현재 검증 중인 필드 이름(`district` 또는 `provider`) 정보입니다.
+
+        Returns:
+            비어 있지 않으면 정제한 문자열, 비어 있으면 None입니다.
+        """
+        if value is None or value == "":
             return None
-        return str(value).strip().lower() or None
+        cleaned = str(value).strip()
+        if not cleaned:
+            return None
+        return cleaned.lower() if info.field_name == "provider" else cleaned
 
 
 class LlmEnvelope(Model):

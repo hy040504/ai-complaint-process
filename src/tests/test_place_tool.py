@@ -17,7 +17,8 @@ from src.llm.place_tool import (
 
 
 def test_extract_cheongju_district() -> None:
-    """청주시 4개 구(상당구, 서원구, 흥덕구, 청원구) 이름을 올바르게 추출합니다."""
+    """장소 추적 도구 상수와 청주시 4개 구 이름을 올바르게 검증합니다."""
+    assert PLACE_TOOL_NAME == "lookup_navermap_place"
     assert extract_cheongju_district("충청북도 청주시 서원구 사창동 351") == "서원구"
     assert extract_cheongju_district("충북 청주시 상당구 상당로 143") == "상당구"
     assert extract_cheongju_district("청주시 흥덕구 복대동 288-1") == "흥덕구"

@@ -154,6 +154,15 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
     assert result.usage["input_tokens"] == 120
     assert result.usage["output_tokens"] == 45
     assert result.usage.get("reasoning_tokens") == 30
+    zero_usage = complete.usage_from_openai(
+        {"usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0}}
+    )
+    assert zero_usage == {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": None,
+        "reasoning_tokens": 0,
+    }
 
 
 def test_provider_availability_map(monkeypatch: object) -> None:

@@ -126,7 +126,15 @@ def resolve_chat(
         return None
 
     def chat(system: str, user: str) -> str:
-        """설정을 고정한 채 한 번 완성하고 사용량을 기록합니다."""
+        """설정을 고정한 채 모델 호출을 1회 실행하고 토큰 사용량을 기록합니다.
+
+        Args:
+            system: 조립된 시스템 프롬프트입니다.
+            user: 직렬화된 사용자 민원·검색 후보 JSON입니다.
+
+        Returns:
+            모델이 반환한 응답 문자열입니다.
+        """
         result = complete_result(system, user, settings=bound)
         usage_box[0] = result.usage
         return result.text

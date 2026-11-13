@@ -8,6 +8,13 @@ import {
   updateLlmAvailability,
 } from "../../src/lab_web/static/app.js";
 
+/**
+ * 테스트용 가짜 LLM 엔진 선택 버튼을 만듭니다.
+ *
+ * @param {string} provider 공급자 식별자입니다.
+ * @param {boolean} [active=false] 초기 활성 상태입니다.
+ * @returns {object} 클릭·속성 모의 버튼 객체입니다.
+ */
 function makeFakeButton(provider, active = false) {
   const classes = new Set(active ? ["llm-choice-btn", "active"] : ["llm-choice-btn"]);
   const attrs = { "aria-pressed": String(active) };
@@ -38,6 +45,11 @@ function makeFakeButton(provider, active = false) {
   };
 }
 
+/**
+ * 테스트용 가짜 LLM 선택 루트 컨테이너를 만듭니다.
+ *
+ * @returns {object} 버튼 목록과 hidden 입력을 포함한 모의 DOM 루트입니다.
+ */
 function makeFakeRoot() {
   const buttons = [
     makeFakeButton("", true),
@@ -108,6 +120,13 @@ test("검사기 LLM 버튼 잠금 시 aria-disabled·shake와 자동 복원 방�
   }
 });
 
+/**
+ * NDJSON 청크 배열을 스트리밍하는 모의 fetch 응답을 만듭니다.
+ *
+ * @param {string[]} chunks 순차 전달할 문자열 청크 배열입니다.
+ * @param {{ok?:boolean,status?:number}} [options] 응답 상태 옵션입니다.
+ * @returns {object} `getReader()`를 제공하는 모의 Response 객체입니다.
+ */
 function fakeNdjsonResponse(chunks, { ok = true, status = 200 } = {}) {
   const encoder = new TextEncoder();
   let idx = 0;
