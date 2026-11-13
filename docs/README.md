@@ -13,8 +13,8 @@
 | 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
-| 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
-| 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) |
+| 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
+| 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054(환경)](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) · [CASE-054(업무DB)](cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md) |
 | 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) |
 | 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | FAQ·사례 원문 | `rag/origin/자주_묻는_민원.json`, `rag/origin/공개_민원_사례.json` | Git에 포함. 94건·5,015건 |
 | 검색 테이블 정의 | `rag/origin/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
-| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql` | Git에 포함. jsonb `complaints`·`idempotency`. 7테이블 정규화는 후속 |
+| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/02_complaint_app.sql` | Git에 포함. jsonb `complaints`(생성 칼럼 5개·CHECK 3종)·`idempotency`. [실행 설계](harness/업무DB_실행설계.md). 7테이블 정규화는 후속 |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
 | 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/검색덤프_내보내기.sh` |
 | 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
@@ -55,6 +55,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-092](cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) | 2026-11-13 | `origin/main` 비응대 기능(UI02~04·편집기, `db/`, 생성 칼럼 5개·CHECK 3종·`seed-public-demo`, `업무DB_실행설계.md`) 선택 병합 (`:5010`·LLM 로직 보존) | 완료 |
 | [CASE-091](cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) | 2026-11-13 | 패치 후속 `legacy` 배지·`.env 기본` 엔진명 표시·`applyLlmSection()` 중복 제거·문서 동기화 및 전체 테스트/실서버 최종 검증 | 완료 |
 | [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) | 2026-11-13 | 검사기 데이터(JSON) 영역 위·프롬프트 영역 아래 배치 및 엑사온 API·Codex CLI·GPT API 동적 표시(`llmProvider`·`resolvedProvider`) | 완료 |
 | [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) | 2026-11-13 | 패치 주석·JSDoc·`models.py`/`complete.py` 최적화, 하네스 4종 동기화 및 README 디자인·검증 근거 최신화 | 완료 |

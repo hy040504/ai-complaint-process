@@ -62,6 +62,7 @@ def seed_demo(repository: ComplaintRepository) -> int:
             body="화면과 API 검증을 위해 만든 합성 민원입니다. 해당 지역의 생활 불편 사항에 대한 확인과 검토를 요청합니다. 개인정보와 실제 RAG 원문을 사용하지 않았습니다.",
             owner="citizen-demo" if mine else f"sample-{index}",
             visibility="private" if mine else "public",
+            is_synthetic=True,
             district=districts[index % 4],
             category=categories[index % 6],
             date=utcnow() - timedelta(hours=index * 4),

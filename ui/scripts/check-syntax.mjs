@@ -8,7 +8,7 @@ const files = [
   new URL("server.mjs", project),
   new URL("../src/lab_web/static/app.js", project),
 ];
-for (const directory of ["src/", "scripts/", "tests/"]) {
+for (const directory of ["src/", "adapters/", "scripts/", "tests/"]) {
   for (const item of await readdir(new URL(directory, project), {
     withFileTypes: true,
   })) {

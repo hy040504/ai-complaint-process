@@ -39,12 +39,12 @@
 
 > [!IMPORTANT]
 > **브랜치 `llm` · GitHub 기본 브랜치 · 응대 검사기 웹 (`http://127.0.0.1:5010/`)**<br>
-> 민원을 입력하면 제목·상세에서 청주시 지명·장소(`resolve_district_and_place` · 네이버 지도 MCP)를 1회 추적하고, 검색 API(`:8007`) 호출 뒤 선택한 엔진(`K-EXAONE 2.5` · `GPT-6 Luna` · `Codex CLI`)으로 판정합니다. 결과 화면에서는 실제 사용한 엔진 배지와 함께 **보낸 데이터(JSON)**를 위쪽에, **보낸 프롬프트 전문**을 아래쪽에 구분해 표시합니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [`src/lab_web`](src/lab_web/README.md)
+> 민원을 입력하면 제목·상세에서 청주시 지명·장소(`resolve_district_and_place` · 네이버 지도 MCP)를 1회 추적하고, 검색 API(`:8007`) 호출 뒤 선택한 엔진(`K-EXAONE 2.5` · `GPT-6 Luna` · `Codex CLI`)으로 판정합니다. 결과 화면에서는 실제 사용한 엔진 배지와 함께 **보낸 데이터(JSON)**를 위쪽에, **보낸 프롬프트 전문**을 아래쪽에 구분해 표시합니다. 또한 `origin/main`의 비응대 기능(시민 UI02~04·담당자 편집기, `db/` 업무 DB 실행 설계·생성 칼럼·`CHECK`·`seed-public-demo`)도 선택 병합했습니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
 > **현재 구현 요약 (`2026-11-13` 기준)**
 >
-> - **웹 · 업무 DB (`:5000`):** 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` 저장, 검색 원본 `rag/origin` 5,109건(`dragonkue/multilingual-e5-small-ko` 384차원)
+> - **웹 · 업무 DB (`:5000`):** 시민 UI02~04(`/design/ui04`)·`#/citizen` 기본·`#/staff` 편집기(`PHRASES`·`Ctrl+S`), Flask·Swagger, PostgreSQL `complaint_app` 저장(생성 칼럼 5개·`CHECK` 3종·`isSynthetic`·`seed-public-demo`·`db/`), 검색 원본 `rag/origin` 5,109건(`dragonkue/multilingual-e5-small-ko` 384차원)
 > - **응대 검사기 (`:5010`):** 엔진 선택 단추(`.env 기본`에 해석된 기본 엔진 표시 + `.env` 키/실행파일 미설정 잠금 `aria-disabled`·흔들림 피드백), 지명·장소 1회 추적(`📍 발생 지역` · `🗺️ 장소 추적` · `🤖 LLM 엔진`), 엔진별 보낸 데이터(JSON) 상단·보낸 프롬프트 전문 하단(`assist.llmProvider`·`assist.llmModel`), NDJSON 진행 스트리밍(`decode` 플러시·422/오류 재시도 차단), 테스트 기록(`.rag-cache/lab-runs`), 원클릭 자동 기동([`검사기-시작.cmd`](검사기-시작.cmd))
 > - **LLM · 429 안정화 · MCP:** `K-EXAONE 2.5` (`EXAONE_URL`/`EXAONE_MODEL` 격리, `EXAONE_REASONING_EFFORT`, `EXAONE_MAX_TOKENS` 16384), `http_json` 429(`retry-after-ms`/`retry-after` 백오프 2회·일일 한도 즉시 중단) 및 판정 API 실패 시 연쇄 호출 차단, `Codex CLI` MCP (`search_complaint_rag` · `lookup_navermap_place`), `PREFIX-00~04`
 > - **후속 확장:** `openai_api` `cached_tokens` 실측(키 필요), 민원 CRUD LLM 연동, 시민 챗봇·담당자 SSE, [`EXAONE Tabular`](#exaone-tabular-모델의-후속-추가-위치-구상) 예측 모델, 공식 행정 이관
@@ -61,7 +61,7 @@
 | --- | --- | --- |
 | 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
 | 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`검사기-시작.cmd`](검사기-시작.cmd)(PostgreSQL·검색 API 원클릭 자동 기동) · Linux [`start-lab.sh`](start-lab.sh) |
-| 기존 시연 Flask | `http://127.0.0.1:5000/#/lab` | 민원 CRUD 서버의 검사기 해시. 이 브랜치 기본은 `:5010` |
+| 기존 시연 Flask | `http://127.0.0.1:5000/#/citizen` (및 `/#/staff`, `/#/lab`, `/design/ui04`) | 민원 CRUD·UI04 목업 어댑터 서버. 이 브랜치 기본 검사기는 `:5010` |
 | 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
@@ -378,7 +378,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 ## 검증 근거
 
-2026-11-13 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **140개가 모두 통과**했고, 핵심·수정 백엔드 **11개 모듈**(`src/assist/`, `src/complaints/models.py`, `src/llm/`, `src/rag/http.py`, `src/lab_web/`) `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(DB 격리 3개 건너뜀)와 `python -m rag.verify` 무결성 대조(`passed: true`, FAQ 94·사례 5,015·부서 127)가 통과했고, 프론트엔드 `npm --prefix ui run check` **JavaScript 15개 문법 검사**와 `npm --prefix ui test` **12개 단위 테스트**가 모두 통과했습니다. 재기동한 `:5010` 서버 실응답(`GET /`, `/styles.css`, `/app.js`, `/api/v1/health`, `/api/v1/lab/fields`, `/api/v1/lab/runs`, `POST 422`)도 확인했습니다. [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
+2026-11-13 `origin/main` 비응대 기능 병합(`CASE-092`) 이후 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **147개가 모두 통과**(`test_demo_data.py` 4건·`test_postgres_schema.py` 3건 포함)했고, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(DB 격리 3개 건너뜀)와 `python -m rag.verify` 무결성 대조(`passed: true`, FAQ 94·사례 5,015·부서 127)가 통과했고, 프론트엔드 `npm --prefix ui run check` **JavaScript 16개 문법 검사**(`ui04-adapter.js` 포함)와 `npm --prefix ui test` **12개 단위 테스트**가 모두 통과했습니다. Flask 인메모리 테스트 클라이언트로 `seed-public-demo`·`/`·`/design/ui04`·`/design/ui04-adapter.js` `200` 응답 및 `:5010` 실서버 `/api/v1/health` `200` 응답도 확인했습니다. [CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) · [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
 
 2026-11-06 Windows / Python 3.12.10 `.venv-web`에서 `pytest src/tests rag/tests/test_assist.py` **71개가 통과**했고 PostgreSQL 왕복 1개는 `RUN_PG_TESTS`가 없어 건너뛰었습니다. RAG `.venv`에서 경로·검색·임베딩 설정 테스트 **16개가 통과**했습니다. [CASE-045](docs/cases/사례-045-패치-주석-문서-최적화-2026-11-06.md) · [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md) · [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
 
@@ -434,7 +434,7 @@ ai-complaint-process/
 ├── docs/                         # 목차·사례·하네스·배너
 │   └── harness/prompts/          # PREFIX-00~04 시스템 접두 원문
 ├── rag/                          # 검색 엔진·색인·CLI. 원본은 origin/
-├── db/                           # 이전 경로 안내. 검색 원본은 rag/origin/
+├── db/                           # 업무 DB 실행 SQL·샘플 적재기·공개 시연 JSON. 정식 검색 색인은 rag/origin/
 ├── plan/                         # 원본 계획서·MVP 실행 계획
 └── PACKET/                       # 수집기·부서 정규화
 ```

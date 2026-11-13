@@ -13,6 +13,9 @@ py -3.12 -m venv .venv-web
 # 선택 사항: 비어 있는 업무 DB에 개인정보 없는 합성 민원 24건 생성
 .\.venv-web\Scripts\python.exe -m flask --app src:create_app seed-demo
 
+# 선택 사항: db/ 공개 민원 사례·FAQ 기반 마스킹 시연 민원 56건 생성
+.\.venv-web\Scripts\python.exe -m flask --app src:create_app seed-public-demo
+
 .\.venv-web\Scripts\python.exe -m src
 ```
 
@@ -28,6 +31,8 @@ py -3.12 -m venv .venv-web
 | http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정. 기록은 `.rag-cache/lab-runs` |
 | http://127.0.0.1:5010/api/v1/lab/complaints/stream | `POST` 같은 처리의 진행 안내 NDJSON 뒤 `done` 결과 스트리밍 |
 | http://127.0.0.1:5010/api/v1/lab/runs | `GET` 기록 목록 · `DELETE` 모두 삭제 |
+| http://127.0.0.1:5000/#/citizen | 시민·담당자 민원 웹 기본 화면 (`#/staff`, `#/lab` 전환 지원) |
+| http://127.0.0.1:5000/design/ui04 | `ui/minwon-toktok-ui04.html` 목업 + `ui04-adapter.js` 연동 |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |
 | http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
@@ -60,13 +65,15 @@ flowchart LR
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
-| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger. `pages.py`는 시민·담당자 화면 |
+| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger, `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 시민·담당자·`/design/ui04` 화면 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON·프롬프트 전문, `llmProvider`·`llmModel`에 실제 사용 엔진 기록. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
 | `lab_web/` | 추출 검사기 웹 `:5010`. 제목·상세 검색 후 판정. 테스트 기록은 `.rag-cache/lab-runs`. MCP 핸드셰이크는 NDJSON |
-| `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면 등록 |
+| `app.py` | 설정 → 저장소 → 서비스 → 공통 처리·API·화면·CLI(`seed-demo`, `seed-public-demo`) 등록 |
 | `tests/test_api.py` | 격리 DB의 API·권한·게시·경쟁·영속화·OpenAPI 회귀 |
+| `tests/test_demo_data.py` | 공개 데이터 마스킹과 56건 시연 생성 중복 방지 회귀 |
+| `tests/test_postgres_schema.py` | PostgreSQL 생성 칼럼 5개·CHECK 3종·`DEMO-PUB-` 백필 검증 |
 | `tests/test_assist_api.py` | 검사기 세션 생략·응답 계약·health 플래그 |
 | `tests/test_backend_split.py` | 패키지 분리와 연결 계층 단위 시험 |
 
@@ -129,7 +136,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 ## 데이터·게시·작업 경계
 
-- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. 변경·버전 검사와 등록 중복 방지는 트랜잭션 안에서 수행한다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](complaints/schema/complaint_app.sql)
+- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. `complaints`는 목록·필터용 `STORED` 생성 칼럼 5개(`status`·`owner`·`visibility`·`district`·`is_synthetic`), 복합 인덱스 2개, `CHECK` 제약(`_VALUE_CHECKS`)과 `DEMO-PUB-` 시연 백필을 초기화 때 맞춘다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](complaints/schema/complaint_app.sql) · [업무 DB 실행 설계](../docs/harness/업무DB_실행설계.md) · [CASE-092](../docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)
 - 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
@@ -179,6 +186,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 npm --prefix ui run check
 npm --prefix ui test
 ```
+
+2026-11-13 Windows / Python 3.12 `.venv-web`에서 `main` 비응대 기능(`UI02~04`, `db/`, 생성 칼럼·CHECK, `demo_data`) 병합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **147개 통과**, 핵심 패키지 30개 파일 `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **16개 통과**·`npm --prefix ui test` **12개 통과**를 확인했다. [CASE-092](../docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)
 
 2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest rag/tests/test_assist.py src/tests` 41개, `mypy --config-file src/mypy.ini`, `black --check src rag/assist.py`를 통과했다. 백엔드 패키지 분리와 검색 조각 재사용 시험을 포함한다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-028](../docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 

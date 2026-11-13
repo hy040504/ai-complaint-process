@@ -129,6 +129,8 @@ class PublicComplaint(Model):
     date: datetime = Field(default_factory=utcnow)
     version: int = 1
     context_version: int = 1
+    # 공개 사례 등에서 만든 시연용 민원인지 표시합니다. 실제 접수와 구별합니다.
+    is_synthetic: bool = False
     published: Answer | None = None
     messages: list[Message] = Field(default_factory=list)
     history: list[History] = Field(default_factory=list)

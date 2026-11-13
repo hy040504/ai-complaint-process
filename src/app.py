@@ -10,7 +10,8 @@ from flask_openapi3.openapi import OpenAPI
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from src.complaints.api import create_api
-from src.complaints.config import Settings
+from src.complaints.config import ROOT, Settings
+from src.complaints.demo_data import seed_public_demo
 from src.complaints.http import register_http, validation_error
 from src.complaints.models import ErrorResponse
 from src.complaints.pages import web
@@ -77,5 +78,12 @@ def create_app(
     def seed_command() -> None:
         """사용자가 요청했을 때만 비어 있는 업무 DB에 합성 자료를 넣습니다."""
         click.echo(f"합성 시연 민원 {seed_demo(repository)}건 생성")
+
+    @app.cli.command("seed-public-demo")
+    def seed_public_command() -> None:
+        """공개 사례·자주 묻는 민원 JSON을 개인정보 마스킹 후 시연 민원으로 넣습니다."""
+        click.echo(
+            f"공개 데이터 기반 시연 민원 {seed_public_demo(repository, ROOT / 'db')}건 생성"
+        )
 
     return app

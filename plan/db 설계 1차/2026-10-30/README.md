@@ -1,5 +1,8 @@
 # DB 스키마 설명
 
+> **2026-11-06 기준 주의:** 이 폴더는 2026-10-30 설계 복사본이다. 현재 실행 구조는 [업무 DB 실행 설계](../../../docs/harness/업무DB_실행설계.md)를 따른다. 실행용 SQL은 `src/complaints/schema/complaint_app.sql`이며, 아래 `02_complaint_app_초안_미채택.sql`은 미채택 초안이다. `01_complaint_rag.sql`은 검색 스키마의 설계 초안이고, 실제 검색 스키마는 `rag/origin/schema/complaint_rag.sql`이다. 아래 PDF는 2026-10-30 기준이며 수정하지 않았다. 상위 폴더의 `DB설계.pptx`·`AI민원처리시스템_수정1.pptx`도 2026-10-30 기준이며 현재 구조와 다르다.
+
+
 2026-11-05 이후 실행용 파일은 `rag/origin/schema/complaint_rag.sql`, `src/complaints/schema/complaint_app.sql`이다. 이 폴더는 2026-10-30 설계 복사본이다.
 
 ## 파일 구성
@@ -9,7 +12,7 @@
   - 3쪽부터 22쪽 : 한국어 이름
   - 23쪽부터 42쪽 : 영어 원문 이름
 - `01_complaint_rag.sql` : 검색용 스키마
-- `02_complaint_app.sql` : 민원 게시판용 스키마
+- `02_complaint_app_초안_미채택.sql` : 민원 게시판용 스키마 (2026-11-06 미채택)
 - 읽는 순서 : `README.md` → PDF의 관계 쪽 → SQL
 
 ## 1. 한눈에 보기

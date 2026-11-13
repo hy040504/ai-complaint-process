@@ -50,6 +50,34 @@ _SCHEMA_STATEMENTS = (
     WHERE version IS NULL
     """,
     "ALTER TABLE {schema}.complaints ALTER COLUMN version SET NOT NULL",
+    # 목록·필터용 칼럼은 payload에서 자동 계산한다. 원본은 payload 하나다.
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS status text GENERATED ALWAYS AS (payload->>'status') STORED",
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS owner text GENERATED ALWAYS AS (payload->>'owner') STORED",
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS visibility text GENERATED ALWAYS AS (payload->>'visibility') STORED",
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS district text GENERATED ALWAYS AS (payload->>'district') STORED",
+    "ALTER TABLE {schema}.complaints ADD COLUMN IF NOT EXISTS is_synthetic boolean GENERATED ALWAYS AS (COALESCE((payload->>'isSynthetic')::boolean, false)) STORED",
+    "CREATE INDEX IF NOT EXISTS complaints_status_created ON {schema}.complaints (status, created_at)",
+    "CREATE INDEX IF NOT EXISTS complaints_owner_created ON {schema}.complaints (owner, created_at)",
+    # 예전 시연 데이터에는 isSynthetic 키가 없으므로 공개 시연 ID(DEMO-PUB-)만 한 번 채운다.
+    """
+    UPDATE {schema}.complaints
+    SET payload = payload || jsonb_build_object('isSynthetic', true)
+    WHERE left(id, 9) = 'DEMO-PUB-' AND NOT (payload ? 'isSynthetic')
+    """,
+)
+
+
+# 상태·공개 범위·지역을 DB도 검사한다. 값 목록은 src/complaints/models.py와 맞춘다.
+_VALUE_CHECKS: tuple[tuple[str, str], ...] = (
+    (
+        "complaints_status_valid",
+        "status IN ('submitted', 'under_review', 'answered', 'closed', 'withdrawn')",
+    ),
+    ("complaints_visibility_valid", "visibility IN ('private', 'public')"),
+    (
+        "complaints_district_valid",
+        "district IN ('상당구', '서원구', '흥덕구', '청원구', '모름')",
+    ),
 )
 
 
@@ -228,7 +256,8 @@ class PostgresRepository:
 
         `CREATE TABLE IF NOT EXISTS`는 예전 행의 컬럼을 더하지 않습니다.
         `version`이 없으면 payload 값 또는 1로 채운 뒤 NOT NULL과
-        `version > 0` 제약을 맞춥니다. 기존 민원 행은 지우지 않습니다.
+        `version > 0` 제약을 맞추고, 상태·공개 범위·지역 값의 CHECK 제약도
+        추가합니다. 기존 민원 행은 지우지 않습니다.
 
         Args:
             conninfo: PostgreSQL 연결 정보입니다.
@@ -266,6 +295,7 @@ class PostgresRepository:
             for statement in _SCHEMA_STATEMENTS:
                 conn.execute(sql.SQL(statement).format(schema=ident))
             self._ensure_version_check(conn)
+            self._ensure_value_checks(conn)
 
     def _ensure_version_check(self, conn: psycopg.Connection) -> None:
         """예전 테이블에 `version > 0` 제약이 없으면 추가합니다.
@@ -294,6 +324,31 @@ class PostgresRepository:
                 "CHECK (version > 0)"
             ).format(table)
         )
+
+    def _ensure_value_checks(self, conn: psycopg.Connection) -> None:
+        """상태·공개 범위·지역 값을 DB가 검사하도록 CHECK 조건을 한 번만 추가합니다.
+
+        이미 같은 이름의 조건이 있으면 건너뜁니다. 칼럼이 NULL인 예전 행은
+        CHECK가 통과시키므로 기존 데이터를 지우거나 바꾸지 않습니다.
+
+        Args:
+            conn: 스키마를 준비 중인 연결입니다.
+        """
+        table = sql.SQL("{}.{}").format(
+            sql.Identifier(self.schema), sql.Identifier("complaints")
+        )
+        for name, expression in _VALUE_CHECKS:
+            found = conn.execute(
+                "SELECT 1 FROM pg_constraint WHERE conrelid = %s::regclass AND conname = %s",
+                (f"{self.schema}.complaints", name),
+            ).fetchone()
+            if found:
+                continue
+            conn.execute(
+                sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} CHECK ({})").format(
+                    table, sql.Identifier(name), sql.SQL(expression)
+                )
+            )
 
     @contextmanager
     def connection(self) -> Iterator[psycopg.Connection]:

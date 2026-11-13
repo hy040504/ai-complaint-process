@@ -1,0 +1,250 @@
+[
+  {
+    "id": 1,
+    "job_id": 2,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.88,
+    "department_id": null,
+    "department_name": "흥덕구 건설과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "591712",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=591712",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "578461",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=578461",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n말씀하신 ○○로 도로 패임은 도로 보수를 맡는 흥덕구 건설과에서 확인합니다. 하수관 공사 뒤 포장이 내려앉은 경우에는 현장을 확인한 뒤 다시 포장하는 방법으로 처리합니다.\n\n현장 확인 일정과 보수 계획은 담당자가 확인하여 다시 안내드리겠습니다.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 1,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-29T14:07:05+09:00"
+  },
+  {
+    "id": 2,
+    "job_id": 3,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.91,
+    "department_id": null,
+    "department_name": "공원산림본부 공원관리과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "571286",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=571286",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "623532",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=623532",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n○○공원 산책길의 낮은 나무 가지는 공원 관리를 맡는 공원관리과에서 확인합니다. 통행에 방해가 되는 가지는 현장을 확인한 뒤 가지치기로 정리합니다.\n\n작업 날짜는 담당자가 확인하여 다시 안내드리겠습니다.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 2,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-28T10:31:55+09:00"
+  },
+  {
+    "id": 3,
+    "job_id": 4,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.84,
+    "department_id": null,
+    "department_name": "흥덕구 환경위생과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "635914",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=635914",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "626097",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=626097",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n○○아파트 뒷길의 쓰레기 무단투기는 흥덕구 환경위생과에서 확인합니다. 투기 장소에는 경고 안내판 설치와 수거를 하고, 반복되는 곳은 단속 대상으로 검토합니다.\n\n단속에 도움이 되도록 투기 장소와 시간대를 알 수 있는 자료가 있으면 알려 주세요.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 4,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-28T16:41:45+09:00"
+  },
+  {
+    "id": 4,
+    "job_id": 5,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.79,
+    "department_id": null,
+    "department_name": "상수도사업본부 시설과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "636016",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=636016",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "586907",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=586907",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n갑작스러운 단수로 불편을 드려 죄송합니다. 단수는 상수도 시설을 관리하는 시설과에서 확인합니다. 계획된 작업이면 미리 알리는 것이 원칙이지만 이번에는 안내가 부족했던 것으로 보입니다.\n\n담당자가 단수 원인과 안내 과정을 확인하여 다시 안내드리겠습니다.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 6,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-26T09:22:05+09:00"
+  },
+  {
+    "id": 5,
+    "job_id": 7,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.72,
+    "department_id": null,
+    "department_name": "흥덕구 환경위생과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "620061",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=620061",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "579629",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=579629",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n공장에서 나는 소음은 흥덕구 환경위생과에서 확인합니다. 소음 측정이 필요하면 측정 날짜를 잡고 기준을 넘으면 개선을 요청합니다.\n\n측정 일정은 담당자가 확인하여 다시 안내드리겠습니다.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 10,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-29T17:12:00+09:00"
+  },
+  {
+    "id": 6,
+    "job_id": 9,
+    "attempt": 2,
+    "outcome": "faq_answer",
+    "confidence": 0.9,
+    "department_id": null,
+    "department_name": null,
+    "evidence": [
+      {
+        "corpus": "faq",
+        "source_id": "1302560",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7403&mode=view&no=1302560",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "628348",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=628348",
+        "content_hash": null
+      }
+    ],
+    "draft_body": null,
+    "guide_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n죽은 동물을 발견하셨을 때는 장소에 따라 아래와 같이 신고해 주세요.\n- 일반도로의 동물 사체: 청주365민원콜센터(043-201-0001)로 전화해 주세요.\n- 개인 사유지의 동물 사체: 종량제봉투에 담아 배출해 주세요.\n- 고속도로의 동물 사체: 한국도로공사콜센터(1588-2504)로 전화해 주세요.\n\n산책길 옆 공공장소의 경우 담당 부서를 다시 확인한 뒤 안내드리겠습니다.",
+    "automatic_transfer": false,
+    "adopted_version_id": 11,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-29T13:31:45+09:00"
+  },
+  {
+    "id": 7,
+    "job_id": 10,
+    "attempt": 1,
+    "outcome": "department_suggestion",
+    "confidence": 0.83,
+    "department_id": null,
+    "department_name": "환경관리본부 기후대기과",
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "623948",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=623948",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "630531",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=630531",
+        "content_hash": null
+      }
+    ],
+    "draft_body": "안녕하세요, 청주시 AI 민원 도우미입니다.\n\n오토바이 소음은 환경관리본부 기후대기과에서 확인합니다. 소음이 큰 이륜차는 관계 기관과 함께 단속하는 방법이 있습니다.\n\n담당자가 소관을 확인하여 다시 안내드리겠습니다.\n\n추가로 궁금한 점이 있으시면 말씀해 주세요.",
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": 12,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-27T13:46:50+09:00"
+  },
+  {
+    "id": 8,
+    "job_id": 11,
+    "attempt": 1,
+    "outcome": "human_handoff",
+    "confidence": 0.46,
+    "department_id": null,
+    "department_name": null,
+    "evidence": [
+      {
+        "corpus": "routing",
+        "source_id": "636134",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=636134",
+        "content_hash": null
+      },
+      {
+        "corpus": "routing",
+        "source_id": "578137",
+        "source_url": "https://toktalk.cheongju.go.kr/home/sub.do?menukey=7401&mode=view&no=578137",
+        "content_hash": null
+      }
+    ],
+    "draft_body": null,
+    "guide_body": null,
+    "automatic_transfer": false,
+    "adopted_version_id": null,
+    "model_version": "sample",
+    "policy_version": "sample",
+    "prompt_version": "sample",
+    "created_at": "2026-10-27T09:31:30+09:00"
+  }
+]

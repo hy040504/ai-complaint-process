@@ -441,6 +441,16 @@ body[data-theme="dark"][data-site="citizen"] .citizen-shell .origin-badge {
   border-color: #675638;
   color: #edd589;
 }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .origin-badge.ai {
+  background: #173a27;
+  border-color: #2b5a40;
+  color: #9fdcb4;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .origin-badge.staff {
+  background: #e8ecef;
+  border-color: #e8ecef;
+  color: #111111;
+}
 body[data-theme="dark"][data-site="citizen"] .citizen-shell .answer-disclosure {
   background: #332d20;
   color: #ddc78f;
@@ -866,18 +876,18 @@ body[data-theme="dark"][data-site="staff"] .staff-tag.gray {
   color: #ccd5e2;
 }
 body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.submitted {
-  background: #40351f;
-  color: #f1d596;
+  background: #33363a;
+  color: #c8cec9;
 }
 body[data-theme="dark"][data-site="staff"]
   .staff-workspace
   .badge.under_review {
-  background: #22395e;
-  color: #c1d6ff;
+  background: #4a3b12;
+  color: #f1d27a;
 }
 body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.answered {
-  background: #1e3c32;
-  color: #a4d7b9;
+  background: #173a27;
+  color: #9fdcb4;
 }
 body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.closed {
   background: #303a4b;

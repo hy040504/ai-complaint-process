@@ -757,17 +757,23 @@ body[data-site="staff"] .role-switch a.selected {
   font-weight: 550;
   min-width: 55px;
 }
+/* 처리 상태 색: 시민 화면과 같은 명세 색을 쓴다 */
+.staff-workspace .badge.withdrawn {
+  background: #fff;
+  color: #5e665f;
+  box-shadow: inset 0 0 0 1px #cfd6cc;
+}
 .staff-workspace .badge.submitted {
-  background: #fff3df;
-  color: #ba8c46;
+  background: #eef0ee;
+  color: #6b756c;
 }
 .staff-workspace .badge.under_review {
-  background: #eaf1ff;
-  color: #5880cb;
+  background: #fff6d8;
+  color: #8a6510;
 }
 .staff-workspace .badge.answered {
-  background: #e8f6ef;
-  color: #5e9f7c;
+  background: #e4f4e7;
+  color: #2f7d46;
 }
 .staff-workspace .badge.closed {
   background: #f0f2f7;
@@ -912,8 +918,62 @@ body[data-site="staff"] .role-switch a.selected {
   line-height: 2;
   color: #7184a3;
 }
+/* 답변 편집기가 있는 오른쪽 열은 화면을 내려도 위에 고정한다 */
 .staff-workspace .detail-grid > aside {
   display: block;
+  position: sticky;
+  top: 16px;
+  align-self: start;
+}
+/* 이전·다음 민원 이동 줄 */
+.staff-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -4px 0 14px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.staff-pager a {
+  color: #2f6fed;
+}
+.staff-pager span {
+  color: #6f7f99;
+}
+.staff-pager .disabled {
+  color: #b8c3d4;
+}
+/* 목록의 "내가 담당" 버튼: 링크 행 바깥의 형제 요소로 두고 행 오른쪽에 겹쳐 놓는다 */
+.staff-queue-item {
+  position: relative;
+}
+.staff-queue-item > .staff-queue-row {
+  padding-right: 170px;
+}
+.staff-queue-item:last-child > .staff-queue-row {
+  border-bottom: 0;
+}
+.staff-assign-btn {
+  position: absolute;
+  right: 17px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #c9d6ea;
+  border-radius: 6px;
+  background: #fff;
+  color: #2f6fed;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.staff-assign-btn:hover {
+  background: #edf3ff;
+}
+.staff-assign-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 .staff-process {
   margin-bottom: 19px;
@@ -1165,6 +1225,22 @@ body[data-site="staff"] .role-switch a.selected {
   background: #fcf7e8;
   color: #b39a55;
   font-size: 9px;
+}
+/* 답변 배지: AI 검토(초록), AI 수정(노랑), 담당자 답변(검정) */
+.staff-workspace .origin-badge.ai {
+  border-color: #c6e5cd;
+  background: #e4f4e7;
+  color: #2f7d46;
+}
+.staff-workspace .origin-badge.ai_edited {
+  border-color: #f1dc9b;
+  background: #fff3cc;
+  color: #7a5a06;
+}
+.staff-workspace .origin-badge.staff {
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
 }
 .staff-workspace .answer-disclosure {
   background: #fcf8ec;
@@ -1436,6 +1512,9 @@ body[data-site="staff"] #toast {
   }
   .staff-workspace .detail-grid .panel {
     padding: 18px;
+  }
+  .staff-workspace .detail-grid > aside {
+    position: static;
   }
   .staff-workspace .detail-grid .staff-reference-card {
     padding: 0;
@@ -2293,4 +2372,67 @@ body[data-site="staff"] #toast {
     animation: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* 2026-11-11 · 담당자 편집기 보조 표시: 경과일, 저장 상태, 글자 수, 문구, 단축키 */
+.staff-row-age {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.staff-workspace .draft-state {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.staff-workspace .draft-state.dirty {
+  color: var(--review);
+  font-weight: 700;
+}
+.staff-workspace .field-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.staff-workspace .char-count {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.staff-workspace .phrase-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+.staff-workspace .phrase-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.staff-workspace .phrase-chip:hover,
+.staff-workspace .phrase-chip:focus-visible {
+  border-color: var(--teal);
+  color: var(--teal-dark);
+}
+.staff-workspace .shortcut-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.staff-workspace .empty-line {
+  color: var(--muted);
+  list-style: none;
+}
+.staff-workspace .history-panel summary {
+  cursor: pointer;
+  list-style-position: inside;
 }
