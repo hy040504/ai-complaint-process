@@ -28,12 +28,14 @@ import {
   categories,
 } from "./store.js";
 import {
+  labEngine,
   labExamples,
   labPage,
   labQuery,
   labShell,
   loadLabExamples,
   runLabAssist,
+  setLabEngine,
 } from "./lab.js";
 
 const app = document.querySelector("#app");
@@ -751,6 +753,12 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "lab-engine") {
+    if (target.disabled) return;
+    setLabEngine(target.dataset.provider || "");
+    render();
+    return;
+  }
   if (action === "lab-example") {
     const sample = labExamples.find((item) => item.id === id);
     if (!sample) return;
@@ -770,6 +778,7 @@ document.addEventListener("click", async (event) => {
       }),
       district: sample.district || null,
       limit: 5,
+      provider: labEngine() || null,
     });
     return;
   }
@@ -1003,6 +1012,7 @@ document.addEventListener("submit", async (event) => {
       query: labQuery(values),
       district: values.district || null,
       limit: 5,
+      provider: labEngine() || null,
     });
     return;
   }

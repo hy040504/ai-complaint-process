@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import io
 
-from src.llm.rag_mcp import dispatch, read_message, write_message
+from src.llm.rag_mcp import (
+    dispatch,
+    read_message,
+    read_stdio_message,
+    write_message,
+    write_stdio_message,
+)
 from src.llm.rag_tool import search_complaint_rag
 
 
@@ -67,11 +73,12 @@ def test_search_complaint_rag_returns_gate_contract() -> None:
     assert payload["case_candidates"] == []
 
 
-def test_mcp_lists_only_the_search_tool() -> None:
-    """MCP 목록에는 검색 도구만 있고 다른 메서드는 거절합니다."""
+def test_mcp_lists_registered_tools() -> None:
+    """MCP 목록에는 RAG 검색 도구와 네이버 지도 장소 도구가 노출됩니다."""
     listed = dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     names = [item["name"] for item in listed["result"]["tools"]]
-    assert names == ["search_complaint_rag"]
+    assert "search_complaint_rag" in names
+    assert "lookup_navermap_place" in names
     denied = dispatch(
         {
             "jsonrpc": "2.0",
@@ -82,6 +89,26 @@ def test_mcp_lists_only_the_search_tool() -> None:
     )
     assert denied["result"]["isError"] is True
     assert dispatch({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
+
+
+def test_mcp_calls_lookup_navermap_place() -> None:
+    """MCP tools/call로 lookup_navermap_place를 호출하여 결과를 받습니다."""
+    called = dispatch(
+        {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "lookup_navermap_place",
+                "arguments": {"query": "창신초등학교"},
+            },
+        }
+    )
+    assert called is not None
+    assert called["id"] == 10
+    assert called["result"]["isError"] is False
+    body = called["result"]["content"][0]["text"]
+    assert "창신초등학교" in body
 
 
 def test_mcp_frame_roundtrip() -> None:
@@ -98,3 +125,37 @@ def test_mcp_frame_roundtrip() -> None:
     assert response is not None
     assert response["id"] == 7
     assert response["result"]["serverInfo"]["name"] == "complaint-rag"
+
+
+def test_mcp_ndjson_initialize_roundtrip() -> None:
+    """Codex stdio처럼 줄 단위 JSON-RPC로 초기화에 응답합니다."""
+    incoming = io.BytesIO(
+        b'{"jsonrpc":"2.0","id":1,"method":"initialize","params":'
+        b'{"protocolVersion":"2025-06-18"}}\n'
+    )
+    message, framing = read_stdio_message(incoming)
+    assert framing == "ndjson"
+    assert message is not None
+    response = dispatch(message)
+    assert response is not None
+    assert response["result"]["protocolVersion"] == "2025-06-18"
+    outgoing = io.BytesIO()
+    write_stdio_message(outgoing, response, framing)
+    body = outgoing.getvalue()
+    assert body.startswith(b"{")
+    assert b"Content-Length" not in body
+    assert body.endswith(b"\n")
+    listed = dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+    assert listed is not None
+    assert listed["result"]["tools"][0]["name"] == "search_complaint_rag"
+
+
+def test_mcp_ndjson_accepts_utf8_bom() -> None:
+    """UTF-8 BOM이 있어도 줄 단위 JSON으로 읽습니다."""
+    incoming = io.BytesIO(
+        b'\xef\xbb\xbf{"jsonrpc":"2.0","id":3,"method":"initialize","params":{}}\n'
+    )
+    message, framing = read_stdio_message(incoming)
+    assert framing == "ndjson"
+    assert message is not None
+    assert message["id"] == 3

@@ -104,11 +104,13 @@ body[data-theme="dark"][data-site="citizen"] .citizen-header {
   background: #141f33;
   border-color: #2f3d55;
 }
-body[data-theme="dark"][data-site="citizen"] .citizen-city-logo {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 3px 6px;
-  box-sizing: content-box;
+body[data-theme="dark"][data-site="citizen"] .citizen-city-logo,
+body[data-theme="dark"][data-site="lab"] .citizen-city-logo {
+  background-image: url("data:image/png;base64,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");
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 body[data-theme="dark"][data-site="citizen"] .citizen-slogan {
   color: #e8eef9;
@@ -400,7 +402,7 @@ body[data-theme="dark"][data-site="citizen"] .citizen-intro {
   background: #101827;
 }
 body[data-theme="dark"][data-site="citizen"] .citizen-intro .citizen-city-logo {
-  background-color: #fff;
+  background-color: transparent;
 }
 body[data-theme="dark"][data-site="citizen"] .citizen-intro > b {
   color: #edf2fb;
@@ -1255,4 +1257,183 @@ body[data-theme="dark"][data-site="staff"] .staff-footer b {
   body[data-theme="dark"][data-site="staff"] .staff-menu-backdrop {
     background: #050b19ab;
   }
+}
+
+/* 시민 민원 목록(공개 민원·나의 민원)의 글씨를 다크모드에서 흰색으로 씁니다. */
+body[data-theme="dark"][data-site="citizen"] .citizen-shell table th {
+  background: #1b2942;
+  color: #ffffff;
+  border-color: #34445d;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell td {
+  color: #ffffff;
+  border-color: #2b3a52;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .row-title,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .row-title:hover {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .row-sub,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .row-sub > span,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .date-cell,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .id-cell,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .table-meta,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .pagination {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .list-tabs button {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .list-tabs button.active {
+  color: #9bbcff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .private-mark {
+  color: #ffffff;
+}
+
+/* 응대 검사기(/#/lab)도 다크모드 전체에 같은 색을 적용합니다. 글씨는 흰색 계열입니다. */
+body[data-theme="dark"][data-site="lab"] {
+  background: #101827;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell {
+  background: linear-gradient(180deg, #121d30 0, #101827 270px, #0f1725 100%);
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-header {
+  background: #141f33;
+  border-color: #2f3d55;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-slogan,
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-slogan small,
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-desktop-nav a,
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-header-actions .icon-btn,
+body[data-theme="dark"][data-site="lab"] .lab-shell h1,
+body[data-theme="dark"][data-site="lab"] .lab-shell h2,
+body[data-theme="dark"][data-site="lab"] .lab-shell h3,
+body[data-theme="dark"][data-site="lab"] .lab-shell p,
+body[data-theme="dark"][data-site="lab"] .lab-shell label,
+body[data-theme="dark"][data-site="lab"] .lab-shell .muted,
+body[data-theme="dark"][data-site="lab"] .lab-shell .field-hint,
+body[data-theme="dark"][data-site="lab"] .lab-shell .eyebrow,
+body[data-theme="dark"][data-site="lab"] .lab-shell .section-title,
+body[data-theme="dark"][data-site="lab"] .lab-shell .form-steps,
+body[data-theme="dark"][data-site="lab"] .lab-shell .form-steps > span,
+body[data-theme="dark"][data-site="lab"] .lab-shell .form-steps b,
+body[data-theme="dark"][data-site="lab"] .lab-shell .mini-chip,
+body[data-theme="dark"][data-site="lab"] .lab-shell footer,
+body[data-theme="dark"][data-site="lab"] .lab-shell footer b,
+body[data-theme="dark"][data-site="lab"] .lab-shell .info-banner {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .panel,
+body[data-theme="dark"][data-site="lab"] .lab-shell .answer-panel,
+body[data-theme="dark"][data-site="lab"] .lab-shell .complaint-form {
+  background: #19263b;
+  border-color: #36445c;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .info-banner {
+  background: #20324e;
+  border-color: #354a6c;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .form-steps b {
+  background: #293953;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .lab-example {
+  background: #1a2a42;
+  border-color: #3a4d6c;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .lab-example b,
+body[data-theme="dark"][data-site="lab"] .lab-shell .lab-example span {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell :is(input, textarea, select) {
+  background: #131f33;
+  border-color: #394964;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell :is(input, textarea, select)::placeholder {
+  color: #a7b5cc;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .btn:not(.primary) {
+  background: #263854;
+  color: #ffffff;
+  border-color: #405573;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .lab-evidence,
+body[data-theme="dark"][data-site="lab"] .lab-shell .lab-dept-list {
+  color: #ffffff;
+}
+
+/* 시민 민원 상세(나의 민원·게시판 목록에서 연 화면)의 글씨를 다크모드에서 흰색으로 씁니다. */
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .next-step-box,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .next-step-box :is(p, dt, dd, b),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .detail-body,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .detail-body :is(p, b, small, em, div, h2, h3, dt, dd, li),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .answer-panel,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .answer-panel :is(p, b, small, em, div, h2, h3, li),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .followup,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .followup :is(p, b, small, em, div, h2, h3, label),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .history-panel,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .history-panel :is(p, b, small, em, div, h2, h3, li),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .prose,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .prose :is(p, li, strong),
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .detail-note,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .answer-person,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .timeline,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .waiting-answer,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .empty-line,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .field-hint,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .detail-heading :is(p, small) {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .next-step-box dt,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .next-step-box dd {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .followup textarea,
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .followup textarea::placeholder {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .followup textarea::placeholder {
+  color: #c3cfe2;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .btn:not(.primary):not(.danger) {
+  background: #263854;
+  color: #ffffff;
+  border-color: #405573;
+}
+/* 상태 배지·출처 표시·작성자 아바타는 밝은 배경이라 원래의 어두운 글씨 색을 유지합니다. */
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge { color: #3a4a3d; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.answered { color: #2f7d46; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.under_review { color: #8a6510; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.submitted { color: #6b756c; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.withdrawn { color: #5e665f; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.closed { color: #8a938b; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .badge.job-failed { color: #b76b65; }
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .avatar { color: #3d5a3a; }
+/* 상세 상단 히어로(어두운 배경)의 상태 배지 글씨는 밝게 둡니다. */
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .detail-heading .badge {
+  color: #e4f4e7;
+}
+
+/* 시민 게시판·나의 민원의 공개 민원 / 내 민원 탭 글씨는 흰색, 선택된 탭은 파란색을 유지합니다. */
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .scope-tabs a {
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="citizen"] .citizen-shell .scope-tabs a.active {
+  color: #9bbcff;
+}
+
+/* 응대 검사기: 다크모드에서 원래 파란색이던 요소(톡톡 강조, 현재 단계, 필수 표시 *)는 파란색을 유지합니다. */
+body[data-theme="dark"][data-site="lab"] .lab-shell .citizen-slogan > span {
+  color: #5b9bff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell .form-steps > span.active {
+  color: #9bbcff;
+}
+body[data-theme="dark"][data-site="lab"] .lab-shell em {
+  color: #7fb0ff;
 }

@@ -47,6 +47,7 @@ def decision_payload(
     district: str | None,
     search: dict[str, Any],
     parts: SearchParts | None = None,
+    inferred_place: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """판정에 넘길 민원·검색 후보 딕셔너리를 만듭니다.
 
@@ -59,12 +60,13 @@ def decision_payload(
         district: 명시한 관할 구입니다.
         search: 검색 API 응답입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다.
 
     Returns:
         FAQ·사례·부서 후보를 담은 딕셔너리입니다.
     """
     data = parts or search_parts(search)
-    return {
+    payload: dict[str, Any] = {
         "query": query,
         "district": district,
         "faq_candidates": [compact_faq(hit) for hit in data.faqs],
@@ -83,6 +85,9 @@ def decision_payload(
             for item in data.departments
         ],
     }
+    if inferred_place:
+        payload["inferred_place"] = inferred_place
+    return payload
 
 
 def decision_prompt(
@@ -115,6 +120,9 @@ def validate_decision(
     parts: SearchParts | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """모델 판정을 검색 근거·부서 후보와 대조합니다.
+
+    `faq_answer`와 `condition_unclear`가 같이 오면 안내를 막고
+    `human_handoff`로 고칩니다.
 
     Args:
         raw: 모델이 반환한 객체입니다.
@@ -181,6 +189,9 @@ def validate_decision(
             outcome = "human_handoff"
             reason = "policy_rejected"
             failures.append("FAQ 안내는 information 의도에만 허용합니다.")
+        elif reason == "condition_unclear":
+            outcome = "human_handoff"
+            failures.append("조건이 부족하면 FAQ 자동 안내를 허용하지 않습니다.")
         elif not any(ref["corpus"] == "faq" for ref in refs):
             outcome = "human_handoff"
             reason = "insufficient_evidence"

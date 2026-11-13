@@ -16,7 +16,10 @@ from src.assist import (
     run_web_assist,
     search_available,
 )
+from src.llm.settings import provider_availability_map
 from src.complaints.models import (
+    AssistProviderList,
+    AssistProviderStatus,
     Actor,
     AnswerInput,
     AssignmentInput,
@@ -103,6 +106,25 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         """검사기에 고정한 예시 질문을 반환합니다."""
         return reply(AssistExampleList.model_validate({"examples": assist_examples()}))
 
+    @api.get(
+        "/assist/providers",
+        tags=[assist],
+        responses={200: AssistProviderList},
+    )
+    def assist_provider_list() -> Response:
+        """검사기에서 고를 LLM 공급자의 사용 가능 상태를 반환합니다. 키 값은 주지 않습니다."""
+        return reply(
+            AssistProviderList.model_validate(
+                {
+                    "providers": {
+                        name: AssistProviderStatus.model_validate(status)
+                        for name, status in provider_availability_map().items()
+                        if name
+                    }
+                }
+            )
+        )
+
     @api.post("/assist", tags=[assist], responses={200: AssistResponse})
     def create_assist(body: AssistInput) -> Response:
         """검색 후 판정·정책 검사를 실행하고 세 갈래 결과를 반환합니다.
@@ -115,7 +137,9 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         """
         return reply(
             AssistResponse.model_validate(
-                run_web_assist(body.query, body.district, body.limit, body.rerank)
+                run_web_assist(
+                    body.query, body.district, body.limit, body.rerank, body.provider
+                )
             )
         )
 
@@ -132,7 +156,7 @@ def create_api(service: ComplaintService) -> APIBlueprint:
 
         def generate() -> Iterator[str]:
             for event in iter_web_assist(
-                body.query, body.district, body.limit, body.rerank
+                body.query, body.district, body.limit, body.rerank, body.provider
             ):
                 if event.get("type") == "done":
                     payload = AssistResponse.model_validate(event["result"]).model_dump(

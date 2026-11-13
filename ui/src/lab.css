@@ -115,8 +115,61 @@ body[data-site="lab"] .lab-evidence li {
 body[data-site="lab"] #lab-result-panel {
   scroll-margin-top: 24px;
   display: grid;
-  gap: 16px;
-  margin-top: 18px;
+  gap: 24px;
+  margin-top: 28px;
+}
+/* 여백 여유: 패널 안쪽 간격, 항목 간격, 줄 간격을 넓혀 밀집감을 줄입니다. */
+body[data-site="lab"] .lab-shell .panel {
+  padding: 28px 32px;
+}
+body[data-site="lab"] .lab-shell .section-title {
+  margin-bottom: 20px;
+}
+body[data-site="lab"] .lab-examples-panel {
+  margin-bottom: 24px;
+}
+body[data-site="lab"] .lab-examples {
+  gap: 12px;
+  margin-top: 4px;
+}
+body[data-site="lab"] .lab-example {
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 14px;
+}
+body[data-site="lab"] .lab-example span {
+  line-height: 1.8;
+}
+body[data-site="lab"] .lab-live {
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+body[data-site="lab"] .lab-live p {
+  line-height: 1.7;
+}
+body[data-site="lab"] .lab-reply .prose {
+  font-size: 15px;
+  line-height: 1.9;
+  margin-top: 4px;
+}
+body[data-site="lab"] .lab-process-note b {
+  margin-bottom: 12px;
+}
+body[data-site="lab"] .lab-process-note p {
+  line-height: 1.95;
+  margin: 0 0 8px;
+}
+body[data-site="lab"] .lab-process-note p.muted {
+  margin-top: 12px;
+}
+body[data-site="lab"] .lab-dept-list,
+body[data-site="lab"] .lab-evidence {
+  margin-top: 16px;
+  padding-left: 22px;
+  line-height: 1.95;
+}
+body[data-site="lab"] .lab-evidence li + li {
+  margin-top: 6px;
 }
 @media (min-width: 720px) {
   body[data-site="lab"] .lab-examples {
@@ -162,4 +215,58 @@ body[data-theme="dark"][data-site="lab"] .lab-process-note p,
 body[data-theme="dark"][data-site="lab"] .lab-dept-list,
 body[data-theme="dark"][data-site="lab"] .lab-evidence {
   color: #c5d2e6;
+}
+
+/* 라이트모드: 현재 단계의 파란 원 안 번호만 흰색으로 씁니다. 나머지 단계 번호는 그대로 둡니다. */
+body[data-theme="light"][data-site="lab"] .lab-shell .form-steps > .active b,
+body[data-site="lab"] .lab-shell .form-steps > .active b {
+  color: #ffffff;
+  background: #2f6fed;
+}
+
+/* LLM 엔진 선택: 키가 없는 엔진은 잠그고, 고른 엔진은 파란 테두리로 표시합니다. */
+body[data-site="lab"] .lab-engine {
+  margin: 28px 0 24px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+body[data-site="lab"] .lab-engine legend {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding: 0;
+}
+body[data-site="lab"] .lab-engine-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+body[data-site="lab"] .lab-engine-option {
+  font: inherit;
+  font-size: 13px;
+  padding: 9px 14px;
+  border: 1px solid #d5deec;
+  border-radius: 10px;
+  background: #fff;
+  color: #2f3d57;
+  cursor: pointer;
+}
+body[data-site="lab"] .lab-engine-option.selected {
+  border-color: #2f6fed;
+  background: #edf3ff;
+  color: #1f4fb8;
+  font-weight: 700;
+}
+body[data-site="lab"] .lab-engine-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+body[data-site="lab"] .lab-engine .field-hint {
+  margin-top: 10px;
+}
+body[data-site="lab"] .lab-engine-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
 }

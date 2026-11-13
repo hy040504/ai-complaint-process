@@ -64,6 +64,16 @@ export let labResult = null;
 export let labLive = null;
 export let labPending = false;
 export let labError = "";
+/** 검사기에서 고를 수 있는 LLM 공급자별 사용 가능 상태입니다. 서버 `/assist/providers`에서 읽습니다. */
+export let labProviders = null;
+const ENGINE_KEY = "cheongju_lab_llm_provider";
+const ENGINE_ORDER = ["codex_cli", "exaone_api", "openai_api"];
+const ENGINE_LABELS = {
+  "": "기본 설정(.env)",
+  exaone_api: "K-EXAONE 2.5 (무료 API)",
+  codex_cli: "Codex CLI",
+  openai_api: "OpenAI API",
+};
 
 /**
  * 화면 안 이동 링크를 만듭니다.
@@ -109,9 +119,84 @@ export function labShell(content) {
  * @returns {Promise<void>} 비동기 작업의 완료 결과입니다.
  */
 export async function loadLabExamples() {
-  if (labExamples.length) return;
-  const value = await api("/assist/examples");
-  labExamples = value.examples || [];
+  if (!labExamples.length) {
+    const value = await api("/assist/examples");
+    labExamples = value.examples || [];
+  }
+  if (!labProviders) {
+    try {
+      const value = await api("/assist/providers");
+      labProviders = value.providers || {};
+    } catch {
+      labProviders = {};
+    }
+  }
+}
+
+/**
+ * 엔진 선택 상태를 서버 목록과 맞춰 고릅니다. 저장값이 쓸 수 없으면 사용 가능한 첫 엔진을 씁니다.
+ *
+ * @returns {string} 요청에 넣을 공급자 이름입니다. 기본 설정이면 빈 문자열입니다.
+ */
+export function labEngine() {
+  const status = labProviders || {};
+  let saved = "";
+  try {
+    saved = localStorage.getItem(ENGINE_KEY) || "";
+  } catch {
+    saved = "";
+  }
+  if (saved && status[saved]?.available) return saved;
+  if (!saved && status[""]?.available) return "";
+  return ENGINE_ORDER.find((name) => status[name]?.available) || "";
+}
+
+/**
+ * 사용자가 고른 엔진을 브라우저에 기억합니다. 저장하지 못해도 이번 요청에는 그대로 씁니다.
+ *
+ * @param {string} name 공급자 이름입니다. 기본 설정은 빈 문자열입니다.
+ * @returns {void} 반환값 없이 저장만 합니다.
+ */
+export function setLabEngine(name) {
+  try {
+    localStorage.setItem(ENGINE_KEY, name);
+  } catch {
+    /* 저장소를 쓸 수 없어도 선택은 현재 화면과 다음 요청에 적용합니다. */
+  }
+}
+
+/**
+ * 엔진 선택 단추 줄을 만듭니다. 키가 없는 엔진은 잠그고 사유를 툴팁으로 보여 줍니다.
+ *
+ * @returns {string} HTML입니다.
+ */
+function engineSelector() {
+  const status = labProviders || {};
+  const current = labEngine();
+  const names = ["", ...ENGINE_ORDER].filter(
+    (name) => name !== "" || status[""]?.available,
+  );
+  const buttons = names
+    .map((name) => {
+      const info = status[name] || { available: false, reason: "" };
+      const selected = name === current;
+      const reason = info.available ? "" : info.reason || "사용할 수 없습니다.";
+      return `<button type="button" class="lab-engine-option${selected ? " selected" : ""}" data-action="lab-engine" data-provider="${name}" aria-pressed="${selected}" ${info.available ? "" : "disabled"} title="${esc(reason)}">${esc(ENGINE_LABELS[name])}</button>`;
+    })
+    .join("");
+  return `<fieldset class="lab-engine"><legend>LLM 엔진</legend><div class="lab-engine-options">${buttons}</div><p class="field-hint">키가 없는 엔진은 잠겨 있습니다. 어느 엔진을 쓰든 검색 근거 기반 안내 구조는 같습니다.</p></fieldset>`;
+}
+
+/**
+ * 결과에 쓴 엔진을 한 줄로 설명합니다.
+ *
+ * @param {object} result 응대 결과입니다.
+ * @returns {string} 화면 문구입니다.
+ */
+function engineNote(result) {
+  if (!result.llmConfigured) return "LLM 없이 검색 근거만으로 판단했습니다.";
+  const name = result.llmProvider || "";
+  return `${ENGINE_LABELS[name] || ENGINE_LABELS[""]}으로 판정했습니다. 최종 안내는 담당자가 확인합니다.`;
 }
 
 /**
@@ -241,13 +326,13 @@ export function labPage(form = {}) {
     )
     .join(
       "",
-    )}</select></div></div><label for="lab-body">상세 내용 <em>*</em></label><textarea id="lab-body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(body)}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 첨부파일은 후속 지원 예정입니다.</span><span id="lab-body-count">${body.length}/2,000</span></div><div class="form-footer">${buttonWait()}</div></form><div id="lab-result-panel">${livePanel()}${
+    )}</select></div></div><label for="lab-body">상세 내용 <em>*</em></label><textarea id="lab-body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(body)}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 첨부파일은 후속 지원 예정입니다.</span><span id="lab-body-count">${body.length}/2,000</span></div>${engineSelector()}<div class="form-footer">${buttonWait()}</div></form><div id="lab-result-panel">${livePanel()}${
     labError
       ? `<div class="panel empty"><h2>실행에 실패했습니다</h2><p>${esc(labError)}</p></div>`
       : ""
   }${
     result
-      ? `<article class="panel answer-panel lab-reply"><div class="section-title"><h2>${icon("chat", 20)} 안내 결과</h2><span class="badge ${outcomeTone[result.outcome] || ""}">${esc(outcomeNames[result.outcome] || result.outcome)}</span></div><div class="prose">${esc(result.answer || "안내 문장이 없습니다.").replace(/\n/g, "<br>")}</div></article><section class="panel lab-process-note"><div class="section-title"><h2>${icon("shield", 18)} 이렇게 처리했습니다</h2></div><b>${esc(note.title)}</b><p>${esc(note.detail)}</p><p class="muted">${esc(note.next)}</p>${
+      ? `<article class="panel answer-panel lab-reply"><div class="section-title"><h2>${icon("chat", 20)} 안내 결과</h2><span class="badge ${outcomeTone[result.outcome] || ""}">${esc(outcomeNames[result.outcome] || result.outcome)}</span></div><div class="prose">${esc(result.answer || "안내 문장이 없습니다.").replace(/\n/g, "<br>")}</div><p class="muted lab-engine-note">${esc(engineNote(result))}</p></article><section class="panel lab-process-note"><div class="section-title"><h2>${icon("shield", 18)} 이렇게 처리했습니다</h2></div><b>${esc(note.title)}</b><p>${esc(note.detail)}</p><p class="muted">${esc(note.next)}</p>${
         result.departments?.length
           ? `<ul class="lab-dept-list">${result.departments
               .map(

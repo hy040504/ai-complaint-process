@@ -275,6 +275,9 @@ class Health(Model):
     assist_llm: bool = False
 
 
+AssistProvider = Literal["exaone_api", "codex_cli", "openai_api"]
+
+
 class AssistInput(Model):
     """응대 검사기의 민원 입력입니다. 민원 CRUD와 구별합니다."""
 
@@ -284,6 +287,20 @@ class AssistInput(Model):
     district: Literal["상당구", "서원구", "흥덕구", "청원구"] | None = None
     limit: int = Field(default=5, ge=1, le=10)
     rerank: bool = True
+    provider: AssistProvider | None = None
+
+
+class AssistProviderStatus(Model):
+    """검사기에서 고를 수 있는 LLM 공급자의 사용 가능 상태입니다."""
+
+    available: bool
+    reason: str
+
+
+class AssistProviderList(Model):
+    """LLM 공급자별 사용 가능 상태 목록입니다. 키 값은 포함하지 않습니다."""
+
+    providers: dict[str, AssistProviderStatus]
 
 
 class AssistExample(Model):
@@ -335,6 +352,39 @@ class AssistEvidenceRef(Model):
     source_id: str
 
 
+class LlmUsage(Model):
+    """한 호출의 토큰 사용량입니다. Codex CLI는 비웁니다."""
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_tokens: int | None = None
+    reasoning_tokens: int | None = None
+
+
+class CodexCall(Model):
+    """Codex CLI 한 호출에 넣은 시스템 표시와 사용자 JSON입니다.
+
+    `user`는 민원마다 바뀌는 사용자 JSON입니다. `prompt`는
+    `complete_codex_cli`가 `codex exec -` 표준 입력으로 넣는 전문과
+    같습니다. 예전 기록에는 `prompt`가 없을 수 있습니다.
+
+    Attributes:
+        role: 1차 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
+        system: PREFIX 조합 이름입니다.
+        user: Codex stdin 사용자 JSON입니다.
+        sent: 모델에 실제로 넣었으면 True입니다.
+        usage: openai_api가 준 토큰 사용량입니다. CLI면 비웁니다.
+        prompt: 래퍼·PREFIX 본문·사용자 JSON을 이은 Codex stdin입니다.
+    """
+
+    role: Literal["decision", "faq_answer", "staff_draft", "sanitize"]
+    system: str
+    user: dict[str, Any]
+    sent: bool
+    usage: LlmUsage | None = None
+    prompt: str | None = None
+
+
 class AssistDecision(Model):
     """코드 검증을 거친 판정입니다."""
 
@@ -355,6 +405,33 @@ class AssistStage(Model):
     ok: bool
 
 
+class StaffSummaryCard(Model):
+    """담당자가 볼 민원 요약 카드입니다."""
+
+    core_summary: str
+    citizen_request: str
+    location_or_target: str
+    missing_info: list[str]
+
+
+class StaffDraft(Model):
+    """PREFIX-03 담당자 초안입니다. 시민에게 게시하지 않습니다."""
+
+    summary_card: StaffSummaryCard
+    draft_answer: str
+    citations: list[AssistEvidenceRef]
+    requires_field_check: bool
+
+
+class SanitizeResult(Model):
+    """PREFIX-04 순화 결과입니다. 접수 거부·자동 차단이 아닙니다."""
+
+    sanitized_summary: str
+    legitimate_requests: list[str]
+    risk_signals: list[str]
+    human_protection_review_needed: bool
+
+
 class AssistRetrieval(Model):
     """원본 검색 계약을 검사기에 그대로 전달합니다."""
 
@@ -365,10 +442,24 @@ class AssistRetrieval(Model):
 
 
 class AssistResponse(Model):
-    """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다."""
+    """검색 근거와 검증된 세 갈래 응대입니다. 민원 게시·이관이 아닙니다.
+
+    Attributes:
+        query: 검색과 판정에 사용한 민원 원문입니다.
+        district: 검색에 적용한 관할 구입니다.
+        district_inferred: 본문 지명으로 구를 자동 감지했으면 True입니다.
+        inferred_place: 네이버 지도로 추론된 장소 객체입니다. 없으면 None입니다.
+        outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
+        automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
+        codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.
+        staff_draft: 담당자 초안입니다. FAQ 안내이거나 검증 실패면 비웁니다.
+        sanitize: 순화 요약입니다. 원문 힌트가 없으면 비웁니다.
+    """
 
     query: str
     district: str | None = None
+    district_inferred: bool = False
+    inferred_place: dict[str, Any] | None = None
     outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
     reason_code: str
     answer: str | None = None
@@ -381,7 +472,11 @@ class AssistResponse(Model):
     policy_failures: list[str]
     stages: list[AssistStage]
     llm_configured: bool
+    llm_provider: AssistProvider | None = None
     retrieval: AssistRetrieval
+    codex: list[CodexCall] = Field(default_factory=list)
+    staff_draft: StaffDraft | None = None
+    sanitize: SanitizeResult | None = None
 
 
 class ComplaintResponse(RootModel[PublicComplaint | Complaint]):

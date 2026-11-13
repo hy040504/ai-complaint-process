@@ -81,7 +81,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
 | `GET /assist/examples` | 검사기 고정 예시. 세션 불필요 |
-| `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음 |
+| `GET /assist/providers` | LLM 공급자별 사용 가능 여부와 사유. 키 값은 주지 않음. 세션 불필요 |
+| `POST /assist` | 검색+판정+정책 검사. 본문 `provider`(선택)로 LLM 엔진을 고름. 세션 불필요. 민원 저장 없음 |
 | `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷 |

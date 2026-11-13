@@ -109,7 +109,11 @@ def test_assist_stream_sends_progress_then_result(
     """흐름 응답은 짧은 진행 안내 뒤에 최종 결과를 붙입니다."""
 
     def fake_iter(
-        query: str, district: str | None, limit: int, rerank: bool
+        query: str,
+        district: str | None,
+        limit: int,
+        rerank: bool,
+        provider: str | None = None,
     ) -> Iterator[dict]:
         yield {
             "type": "progress",

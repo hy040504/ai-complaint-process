@@ -79,6 +79,7 @@ def protect_api() -> None:
         "/api/v1/session",
         "/api/v1/assist",
         "/api/v1/assist/examples",
+        "/api/v1/assist/providers",
         "/api/v1/assist/stream",
     ):
         actor()
