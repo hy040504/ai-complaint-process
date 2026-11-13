@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- **패치 후속 최적화·문서·검증 최종 점검 ([CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md)):** `styles.css`에 `.llm-engine-badge[data-provider="legacy"]` 스타일을 추가하고, `app.js`에서 `applyLlmSection()` 헬퍼로 `showResult()`의 데이터/프롬프트 섹션 갱신 중복을 제거했으며 `updateLlmAvailability()`가 `.env 기본` 버튼 `<small>`에 해석된 기본 엔진명을 표시하도록 개선했습니다(`ui/tests/lab.test.mjs` 단위 테스트 추가). `README.md`·`src/README.md`·`src/lab_web/README.md`·`docs/README.md`를 `CASE-089`~`091` 기준으로 동기화·디자인 정돈하고, 전체 테스트(`src/tests` 140통과, `ui` 12통과, `mypy` 11파일, `rag/tests` 48통과/3건너뜀, `rag.verify`, `:5010` 실응답)를 검증했습니다.
+
 - 응대 검사기(`src/lab_web`) 결과 화면에서 `보낸 데이터(JSON)` 영역(`#llm-data-block`)을 위, `보낸 프롬프트` 영역(`#llm-prompt-block`)을 아래로 재배치하고, 실제로 사용한 LLM(`assist.llmProvider`·`resolvedProvider`)에 따라 **엑사온 API (K-EXAONE 2.5)**·**Codex CLI**·**GPT API (GPT-6 Luna)** 이름과 엔진 배지 칩·안내 문구를 두 섹션 모두에 동적 표시한다. `.env` 기본 설정 사용 시에도 해석된 공급자·모델명을 백엔드(`src/assist/pipeline.py`, `src/complaints/models.py`, `src/llm/settings.py`)가 함께 기록한다. [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md)
 
 - 최근 패치([CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md)~[CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)) 전반의 한국어 docstring/JSDoc 누락(`pipeline.py`·`app.py`·`complete.py`·`lab.test.mjs`)과 `test_place_tool.py` 미사용 import를 보완하고, `src/lab_web/models.py` 중복 검증기(`blank_optional_to_none`) 통합 및 `src/llm/complete.py` `_as_int`/`_first_int`의 `bool` 배제·`0` 토큰 보존을 적용한다. 하네스 문서 4종(`AI_안전_보안_가드레일.md`·`AI_정보전달과_응답_하네스.md`·`architecture.md`·`시스템_프롬프트와_프리픽스_캐싱_지침.md`)과 `README.md` 상단 배지·빠른 탐색·Mermaid·환경변수 표·검증 근거를 최신화한다. [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md)

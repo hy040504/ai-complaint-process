@@ -34,7 +34,7 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 지명·장소(`resolve_district_and_place`·`lookup_navermap_place`)를 추적하고 검색한 뒤 선택한 공급자로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. 검사기 UI는 `.env` API 키·실행 파일 상태에 따라 미설정 공급자를 비활성화·흔들림 안내합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`와 `lookup_navermap_place` 도구를 제공하고 `assist.codex`에 사용자 JSON을 실습니다. LLM은 `K-EXAONE 2.5`(`exaone_api`, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`), `gpt-6-luna`(`openai_api`), 또는 `codex_cli`로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 지명·장소(`resolve_district_and_place`·`lookup_navermap_place`)를 추적하고 검색한 뒤 선택한 공급자로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. 검사기 UI는 `.env` API 키·실행 파일 상태에 따라 미설정 공급자를 비활성화·흔들림 안내합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`와 `lookup_navermap_place` 도구를 제공하고 `assist.codex`에 사용자 JSON과 프롬프트 정보를, `assist.llmProvider`·`assist.llmModel`에 실제 실행한 LLM 엔진·모델 정보를 실습니다. 응대 검사기 화면에서는 보낸 데이터(JSON)를 상단, 보낸 프롬프트를 하단에 사용한 엔진별로 구분해 표시하며, `.env 기본` 단추에도 해석된 기본 엔진명을 함께 보여 줍니다. LLM은 `K-EXAONE 2.5`(`exaone_api`, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`), `gpt-6-luna`(`openai_api`), 또는 `codex_cli`로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -55,6 +55,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-091](cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) | 2026-11-13 | 패치 후속 `legacy` 배지·`.env 기본` 엔진명 표시·`applyLlmSection()` 중복 제거·문서 동기화 및 전체 테스트/실서버 최종 검증 | 완료 |
 | [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) | 2026-11-13 | 검사기 데이터(JSON) 영역 위·프롬프트 영역 아래 배치 및 엑사온 API·Codex CLI·GPT API 동적 표시(`llmProvider`·`resolvedProvider`) | 완료 |
 | [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) | 2026-11-13 | 패치 주석·JSDoc·`models.py`/`complete.py` 최적화, 하네스 4종 동기화 및 README 디자인·검증 근거 최신화 | 완료 |
 | [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) | 2026-11-13 | 전체 연동 점검: HTTP 429(`retry-after`·백오프) 재시도, API 실패 연쇄 호출 차단, `EXAONE_URL`/`EXAONE_MODEL` 격리, 스트림 버퍼·422 보완 | 완료 |

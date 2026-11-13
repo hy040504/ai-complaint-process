@@ -227,7 +227,7 @@ export function initLlmSelector(root = document) {
  * 않아 키를 넣은 뒤 다시 열면 복원됩니다.
  *
  * @param {ParentNode} [root=document] 검색 범위입니다.
- * @param {Record<string, {available: boolean, reason?: string}>} [providerStatus={}]
+ * @param {Record<string, {available: boolean, reason?: string, resolvedProvider?: (string|null)}>} [providerStatus={}]
  *   `/api/v1/lab/fields`의 `providers`입니다. 없는 공급자는 사용 가능으로 봅니다.
  * @returns {void}
  */
@@ -267,7 +267,15 @@ export function updateLlmAvailability(root = document, providerStatus = {}) {
         badge.className = badge.dataset.origClass;
         badge.textContent = badge.dataset.origText;
       }
-      if (desc) desc.textContent = desc.dataset.origText;
+      if (desc) {
+        const resolvedShort =
+          !prov && status?.resolvedProvider
+            ? LLM_DISPLAY_META[status.resolvedProvider]?.shortName
+            : "";
+        desc.textContent = resolvedShort
+          ? `.env 기본: ${resolvedShort}`
+          : desc.dataset.origText;
+      }
     }
   });
 
@@ -546,6 +554,31 @@ function applyEngineChip(chipNode, meta) {
 }
 
 /**
+ * LLM 입력 데이터/프롬프트 섹션의 제목, 엔진 칩, 안내 문구를 일괄 갱신합니다.
+ *
+ * @param {ParentNode} root - 탐색 기준 루트 노드입니다.
+ * @param {{
+ *   titleSel: string,
+ *   chipSel: string,
+ *   noteSel: string,
+ *   title: string,
+ *   note: string,
+ *   llmMeta: ReturnType<typeof resolveLlmSectionMeta>,
+ * }} opts - 섹션 선택자와 표시 문구 설정입니다.
+ * @returns {void}
+ */
+function applyLlmSection(
+  root,
+  { titleSel, chipSel, noteSel, title, note, llmMeta },
+) {
+  const titleNode = root.querySelector(titleSel);
+  if (titleNode) titleNode.textContent = title;
+  applyEngineChip(root.querySelector(chipSel), llmMeta);
+  const noteNode = root.querySelector(noteSel);
+  if (noteNode) noteNode.textContent = note;
+}
+
+/**
  * LLM에 전달한 호출별 프롬프트 전문을 호출마다 그립니다.
  *
  * @param {Array<{role?:string,system?:string,sent?:boolean,prompt?:string}>} calls
@@ -711,24 +744,30 @@ export function showResult(payload, received, sourceText = "", root = document) 
     item.textContent = "표시할 자료가 없습니다.";
     hits.append(item);
   }
-  const dataTitle = root.querySelector("#codex-data-title");
-  if (dataTitle) dataTitle.textContent = llmMeta.dataTitle;
-  applyEngineChip(root.querySelector("#codex-data-engine"), llmMeta);
+  applyLlmSection(root, {
+    titleSel: "#codex-data-title",
+    chipSel: "#codex-data-engine",
+    noteSel: "#codex-note",
+    title: llmMeta.dataTitle,
+    note: llmMeta.dataNote,
+    llmMeta,
+  });
   const copyDataBtn = root.querySelector("#codex-json-copy");
   if (copyDataBtn) copyDataBtn.setAttribute("aria-label", llmMeta.copyAriaLabel);
-  const dataNote = root.querySelector("#codex-note");
-  if (dataNote) dataNote.textContent = llmMeta.dataNote;
   root.querySelector("#codex-json").textContent = JSON.stringify(
     assist.codex || [],
     null,
     2,
   );
 
-  const promptTitle = root.querySelector("#codex-prompt-title");
-  if (promptTitle) promptTitle.textContent = llmMeta.promptTitle;
-  applyEngineChip(root.querySelector("#codex-prompt-engine"), llmMeta);
-  const promptNote = root.querySelector("#codex-prompt-note");
-  if (promptNote) promptNote.textContent = llmMeta.promptNote;
+  applyLlmSection(root, {
+    titleSel: "#codex-prompt-title",
+    chipSel: "#codex-prompt-engine",
+    noteSel: "#codex-prompt-note",
+    title: llmMeta.promptTitle,
+    note: llmMeta.promptNote,
+    llmMeta,
+  });
   renderCodexPrompts(assist.codex || [], {
     emptyNote: llmMeta.emptyPromptNote,
     shortName: llmMeta.shortName,

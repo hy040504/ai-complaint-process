@@ -122,6 +122,32 @@ test("검사기 LLM 버튼 잠금 시 aria-disabled·shake와 자동 복원 방�
   }
 });
 
+test("updateLlmAvailability는 기본 선택 버튼에 해석된 .env 기본 엔진을 표시하고 복원한다", () => {
+  const root = makeFakeRoot();
+  const defaultDesc = root.buttons[0].querySelector("small");
+
+  updateLlmAvailability(root, {
+    "": { available: true, reason: "", resolvedProvider: "exaone_api" },
+  });
+  assert.equal(defaultDesc?.textContent, ".env 기본: 엑사온 API");
+
+  // resolvedProvider가 없으면 원래 설명 문구로 되돌려야 합니다.
+  updateLlmAvailability(root, {
+    "": { available: true, reason: "" },
+  });
+  assert.equal(defaultDesc?.textContent, "원래 설명");
+
+  // 기본 버튼이 잠겼다가 다시 열려도 새 resolvedProvider가 반영되어야 합니다.
+  updateLlmAvailability(root, {
+    "": { available: false, reason: "사용 불가", resolvedProvider: "openai_api" },
+  });
+  assert.equal(root.buttons[0].getAttribute("aria-disabled"), "true");
+  updateLlmAvailability(root, {
+    "": { available: true, reason: "", resolvedProvider: "openai_api" },
+  });
+  assert.equal(defaultDesc?.textContent, ".env 기본: GPT API");
+});
+
 /**
  * NDJSON 청크 배열을 스트리밍하는 모의 fetch 응답을 만듭니다.
  *

@@ -17,6 +17,7 @@
 <p>
   <a href="#k-exaone-25-api-및-추론-파라미터-설정-env"><img src="https://img.shields.io/badge/LLM-K--EXAONE_2.5_API-e11d48?style=flat-square" alt="K-EXAONE" /></a>
   <a href="src/README.md"><img src="https://img.shields.io/badge/LLM-GPT--6_Luna_%C2%B7_Codex-6d28d9?style=flat-square" alt="Luna" /></a>
+  <a href="#응대-검사기"><img src="https://img.shields.io/badge/Trace-Data_%E2%86%91_%C2%B7_Prompt_%E2%86%93-4f46e5?style=flat-square" alt="Engine Trace" /></a>
   <a href="docs/harness/prompts/README.md"><img src="https://img.shields.io/badge/Prompt-PREFIX--00~04-7c3aed?style=flat-square" alt="Prompt" /></a>
   <a href="#저장과-검색"><img src="https://img.shields.io/badge/Embed-e5--small--ko_384d-0284c7?style=flat-square" alt="Embed" /></a>
   <a href="#exaone-tabular-모델의-후속-추가-위치-구상"><img src="https://img.shields.io/badge/Roadmap-EXAONE_Tabular-475569?style=flat-square" alt="Tabular" /></a>
@@ -38,21 +39,21 @@
 
 > [!IMPORTANT]
 > **브랜치 `llm` · GitHub 기본 브랜치 · 응대 검사기 웹 (`http://127.0.0.1:5010/`)**<br>
-> 민원을 입력하면 제목·상세에서 청주시 지명·장소(`resolve_district_and_place` · 네이버 지도 MCP)를 1회 추적하고, 검색 API(`:8007`) 호출 뒤 선택한 엔진(`K-EXAONE 2.5` · `GPT-6 Luna` · `Codex CLI`)으로 판정합니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [`src/lab_web`](src/lab_web/README.md)
+> 민원을 입력하면 제목·상세에서 청주시 지명·장소(`resolve_district_and_place` · 네이버 지도 MCP)를 1회 추적하고, 검색 API(`:8007`) 호출 뒤 선택한 엔진(`K-EXAONE 2.5` · `GPT-6 Luna` · `Codex CLI`)으로 판정합니다. 결과 화면에서는 실제 사용한 엔진 배지와 함께 **보낸 데이터(JSON)**를 위쪽에, **보낸 프롬프트 전문**을 아래쪽에 구분해 표시합니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
 > **현재 구현 요약 (`2026-11-13` 기준)**
 >
 > - **웹 · 업무 DB (`:5000`):** 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` 저장, 검색 원본 `rag/origin` 5,109건(`dragonkue/multilingual-e5-small-ko` 384차원)
-> - **응대 검사기 (`:5010`):** 엔진 선택 단추 + `.env` 키/실행파일 미설정 잠금(`aria-disabled`·흔들림 피드백), 지명·장소 1회 추적(`📍 발생 지역` · `🗺️ 장소 추적` · `🤖 판정 엔진`), NDJSON 진행 스트리밍(`decode` 플러시·422/오류 재시도 차단), 테스트 기록(`.rag-cache/lab-runs`), 원클릭 자동 기동([`검사기-시작.cmd`](검사기-시작.cmd))
+> - **응대 검사기 (`:5010`):** 엔진 선택 단추(`.env 기본`에 해석된 기본 엔진 표시 + `.env` 키/실행파일 미설정 잠금 `aria-disabled`·흔들림 피드백), 지명·장소 1회 추적(`📍 발생 지역` · `🗺️ 장소 추적` · `🤖 LLM 엔진`), 엔진별 보낸 데이터(JSON) 상단·보낸 프롬프트 전문 하단(`assist.llmProvider`·`assist.llmModel`), NDJSON 진행 스트리밍(`decode` 플러시·422/오류 재시도 차단), 테스트 기록(`.rag-cache/lab-runs`), 원클릭 자동 기동([`검사기-시작.cmd`](검사기-시작.cmd))
 > - **LLM · 429 안정화 · MCP:** `K-EXAONE 2.5` (`EXAONE_URL`/`EXAONE_MODEL` 격리, `EXAONE_REASONING_EFFORT`, `EXAONE_MAX_TOKENS` 16384), `http_json` 429(`retry-after-ms`/`retry-after` 백오프 2회·일일 한도 즉시 중단) 및 판정 API 실패 시 연쇄 호출 차단, `Codex CLI` MCP (`search_complaint_rag` · `lookup_navermap_place`), `PREFIX-00~04`
 > - **후속 확장:** `openai_api` `cached_tokens` 실측(키 필요), 민원 CRUD LLM 연동, 시민 챗봇·담당자 SSE, [`EXAONE Tabular`](#exaone-tabular-모델의-후속-추가-위치-구상) 예측 모델, 공식 행정 이관
 
 | 지금 됨 | 응대 검사기 (`:5010`) | 아직 (후속) |
 | --- | --- | --- |
-| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | 엔진 선택(`K-EXAONE 2.5`·`GPT-6 Luna`·`Codex CLI`) 및 키 미설정 자동 잠금 | 민원 CRUD의 LLM 연결 |
+| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | 엔진 선택(`K-EXAONE 2.5`·`GPT-6 Luna`·`Codex CLI`) · `.env` 기본 표시 · 키 미설정 자동 잠금 | 민원 CRUD의 LLM 연결 |
 | FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 지명·네이버 지도 1회 통합 추적 → 검색 → PREFIX-00~04 판정 및 결과 배지 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | MCP NDJSON(검색·장소추적) · `assist.codex` 전문 · `.rag-cache/lab-runs` 파일 기록 | `openai_api` `cached_tokens` · `EXAONE Tabular` · 공식 이관 |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | MCP NDJSON(검색·장소추적) · 엔진별 데이터 ↑·프롬프트 ↓ (`assist.codex`·`llmProvider`) · `.rag-cache/lab-runs` | `openai_api` `cached_tokens` · `EXAONE Tabular` · 공식 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -115,7 +116,7 @@
 
 ## 응대 검사기
 
-`llm` 브랜치의 기본 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)입니다. 상단 단추에서 `.env` 기본 · `K-EXAONE 2.5`(무료 API) · `GPT-6 Luna`(API) · `Codex CLI` 엔진을 고를 수 있으며, API 키나 실행 파일이 없는 엔진은 `키 미설정` 배지와 함께 자동 잠금(`aria-disabled`, 클릭 시 흔들림 피드백)됩니다. 민원을 보내면 `resolve_district_and_place`가 청주 4개 구·읍면동 정규식과 네이버 지도(`lookup_navermap_place`) 1회 통합 조회로 관할 구와 `inferredPlace`를 찾고, 제목과 상세로 검색 API를 먼저 호출해 PREFIX-00+01 판정을 붙입니다. 보내는 동안 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링을 제공하고, 결과 화면에는 시민 안내 및 `📍 발생 지역` · `🗺️ 장소 추적` · `🤖 판정 엔진` 배지와 함께 `assist.codex` 사용자 JSON, Codex stdin 프롬프트 전문, JSON/프롬프트 복사 단추를 보여 줍니다. 민원 CRUD 테이블에는 쓰지 않으며, 화면 오른쪽 테스트 기록은 `.rag-cache/lab-runs` JSON으로 남깁니다. 공식 접수·자동 이관이 아닙니다. 기존 Flask 해시 `/#/lab`는 `:5000` CRUD 서버에 남아 있습니다.
+`llm` 브랜치의 기본 화면은 [`http://127.0.0.1:5010/`](http://127.0.0.1:5010/)입니다. 상단 단추에서 `.env` 기본(해석된 기본 엔진명 함께 표시) · `K-EXAONE 2.5`(무료 API) · `GPT-6 Luna`(API) · `Codex CLI` 엔진을 고를 수 있으며, API 키나 실행 파일이 없는 엔진은 `키 미설정` 배지와 함께 자동 잠금(`aria-disabled`, 클릭 시 흔들림 피드백)됩니다. 민원을 보내면 `resolve_district_and_place`가 청주 4개 구·읍면동 정규식과 네이버 지도(`lookup_navermap_place`) 1회 통합 조회로 관할 구와 `inferredPlace`를 찾고, 제목과 상세로 검색 API를 먼저 호출해 PREFIX-00+01 판정을 붙입니다. 보내는 동안 진행 단계(`read` → `search` → `review` → `draft`) 실시간 스트리밍 버퍼링을 제공하고, 결과 화면에는 시민 안내 및 `📍 발생 지역` · `🗺️ 장소 추적` · `🤖 LLM 엔진` 배지와 함께, 실제 사용한 엔진(`assist.llmProvider`·`assist.llmModel` 기준 엑사온 API·GPT API·Codex CLI)으로 구분한 **보낸 데이터(JSON, `assist.codex`) 상단 영역**과 **보낸 프롬프트 전문 하단 영역**, 복사 단추를 순서대로 보여 줍니다. 민원 CRUD 테이블에는 쓰지 않으며, 화면 오른쪽 테스트 기록은 `.rag-cache/lab-runs` JSON으로 남깁니다. 공식 접수·자동 이관이 아닙니다. 기존 Flask 해시 `/#/lab`는 `:5000` CRUD 서버에 남아 있습니다.
 
 ```mermaid
 flowchart LR
@@ -132,7 +133,7 @@ flowchart LR
     V -->|faq_answer| F["안내 문장 (PREFIX-02)"]
     V -->|department_suggestion| B["부서 추천 (PREFIX-03 초안)"]
     V -->|human_handoff| H["담당자 검토 (사유·초안)"]
-    V --> O["결과 배지 (지역·장소·엔진)<br/>& JSON·stdin 전문"]
+    V --> O["결과 배지 (지역·장소·엔진)<br/>& 엔진별 데이터 JSON ↑ · 프롬프트 ↓"]
     classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a
     classDef human fill:#fff7ed,stroke:#fb923c,color:#7c2d12
     classDef tool fill:#f0fdf4,stroke:#16a34a,color:#14532d
@@ -152,7 +153,7 @@ flowchart LR
 | 담당자 초안 | `PREFIX-00` + `PREFIX-03` | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내를 덮지 않음 |
 | 특이민원 순화 | `PREFIX-00` + `PREFIX-04` | 순화 요약 JSON | 원문 힌트가 있을 때만. 자동 차단 아님 |
 
-[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-078](docs/cases/사례-078-네이버지도-비로그인-장소추적-MCP-도구-2026-11-10.md) · [CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](docs/cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](docs/cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](docs/cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
+[CASE-022](docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](docs/cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-078](docs/cases/사례-078-네이버지도-비로그인-장소추적-MCP-도구-2026-11-10.md) · [CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](docs/cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](docs/cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](docs/cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md)
 
 ## 저장과 검색
 
@@ -377,7 +378,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 ## 검증 근거
 
-2026-11-13 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **140개가 모두 통과**했고, 수정한 백엔드 **6개 핵심 모듈**(`src/assist/pipeline.py`, `src/complaints/models.py`, `src/llm/settings.py`, `src/lab_web/`) `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(DB 연동 3개 건너뜀), 프론트엔드 `npm --prefix ui run check` **JavaScript 15개 문법 검사**와 `npm --prefix ui test` **11개 단위 테스트**가 모두 통과했습니다. [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
+2026-11-13 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **140개가 모두 통과**했고, 핵심·수정 백엔드 **11개 모듈**(`src/assist/`, `src/complaints/models.py`, `src/llm/`, `src/rag/http.py`, `src/lab_web/`) `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(DB 격리 3개 건너뜀)와 `python -m rag.verify` 무결성 대조(`passed: true`, FAQ 94·사례 5,015·부서 127)가 통과했고, 프론트엔드 `npm --prefix ui run check` **JavaScript 15개 문법 검사**와 `npm --prefix ui test` **12개 단위 테스트**가 모두 통과했습니다. 재기동한 `:5010` 서버 실응답(`GET /`, `/styles.css`, `/app.js`, `/api/v1/health`, `/api/v1/lab/fields`, `/api/v1/lab/runs`, `POST 422`)도 확인했습니다. [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
 
 2026-11-06 Windows / Python 3.12.10 `.venv-web`에서 `pytest src/tests rag/tests/test_assist.py` **71개가 통과**했고 PostgreSQL 왕복 1개는 `RUN_PG_TESTS`가 없어 건너뛰었습니다. RAG `.venv`에서 경로·검색·임베딩 설정 테스트 **16개가 통과**했습니다. [CASE-045](docs/cases/사례-045-패치-주석-문서-최적화-2026-11-06.md) · [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md) · [CASE-044](docs/cases/사례-044-LLM-완충지대-하네스와-프리픽스-원문-2026-11-06.md)
 

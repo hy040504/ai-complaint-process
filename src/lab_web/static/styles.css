@@ -466,6 +466,12 @@ pre {
   border-color: #bae6fd;
 }
 
+.llm-engine-badge[data-provider="legacy"] {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
 /* ── LLM 엔진 선택 단추 ── */
 .llm-select-container {
   margin: 12px 0 16px;
