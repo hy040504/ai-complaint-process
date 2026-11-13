@@ -47,9 +47,78 @@ const LLM_STORAGE_KEY = "cheongju_lab_llm_provider";
 /** 결과 화면의 `🤖 LLM 엔진` 배지 문구입니다. 빈 키는 `.env` 기본 설정입니다. */
 const PROVIDER_LABELS = {
   "": "기본 설정 (.env)",
-  exaone_api: "K-EXAONE 2.5 (무료 API)",
+  exaone_api: "엑사온 API (K-EXAONE 2.5)",
   codex_cli: "Codex CLI (GPT-6 Luna)",
-  openai_api: "GPT-6 Luna (OpenAI API)",
+  openai_api: "GPT API (GPT-6 Luna)",
+  legacy: "기타 호환 LLM API",
+};
+
+/** `/api/v1/lab/fields`의 `""` 기본 설정이 실제로 가리키는 공급자입니다. */
+let defaultResolvedProvider = "";
+
+/**
+ * 결과 화면의 LLM 데이터·프롬프트 영역에 쓸 엔진별 문구·배지 정보입니다.
+ * 엑사온 API·Codex CLI·GPT API를 한눈에 구별해 보여 줍니다.
+ */
+const LLM_DISPLAY_META = {
+  exaone_api: {
+    defaultModel: "k-exaone_v2.5",
+    subject: "엑사온 API (K-EXAONE 2.5)",
+    shortName: "엑사온 API",
+    chip: "EXAONE API · K-EXAONE 2.5",
+    dataNote:
+      "엑사온 API(K-EXAONE 2.5)로 보낸 단계별 사용자 JSON입니다. 1차 판정은 PREFIX-00+01, FAQ 안내는 PREFIX-00+02, 담당자 초안은 PREFIX-00+03, 순화는 PREFIX-00+04가 이어집니다.",
+    promptNote:
+      "엑사온 API(Chat Completions) 호출 시 system·user 메시지로 전달하는 전체 프롬프트(PREFIX + 사용자 JSON)를 호출마다 그대로 보여 줍니다.",
+    emptyPromptNote:
+      "이 기록에는 엑사온 API(K-EXAONE 2.5) 프롬프트 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.",
+  },
+  codex_cli: {
+    defaultModel: "gpt-6-luna",
+    subject: "Codex CLI",
+    shortName: "Codex CLI",
+    chip: "Codex CLI · GPT-6 Luna (MCP)",
+    dataNote:
+      "Codex CLI로 보낸 단계별 사용자 JSON입니다. 1차 판정은 PREFIX-00+01, FAQ 안내는 PREFIX-00+02, 담당자 초안은 PREFIX-00+03, 순화는 PREFIX-00+04가 이어집니다.",
+    promptNote:
+      "`codex exec -` 표준 입력(stdin) 전문입니다. 실행 래퍼, PREFIX 본문, 사용자 JSON을 호출마다 그대로 보여 줍니다.",
+    emptyPromptNote:
+      "이 기록에는 Codex CLI 표준 입력 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.",
+  },
+  openai_api: {
+    defaultModel: "gpt-6-luna",
+    subject: "GPT API (GPT-6 Luna)",
+    shortName: "GPT API",
+    chip: "OpenAI GPT API · GPT-6 Luna",
+    dataNote:
+      "OpenAI GPT API(Responses API · GPT-6 Luna)로 보낸 단계별 사용자 JSON입니다. 1차 판정은 PREFIX-00+01, FAQ 안내는 PREFIX-00+02, 담당자 초안은 PREFIX-00+03, 순화는 PREFIX-00+04가 이어집니다.",
+    promptNote:
+      "OpenAI GPT API(Responses API) 호출 시 instructions(시스템)·input(사용자) 필드로 보낸 전체 프롬프트 본문을 호출마다 그대로 보여 줍니다.",
+    emptyPromptNote:
+      "이 기록에는 GPT API 프롬프트 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.",
+  },
+  legacy: {
+    subject: "기타 LLM API",
+    shortName: "기타 LLM API",
+    chip: "Legacy LLM API",
+    dataNote:
+      "호환 LLM API로 보낸 단계별 사용자 JSON입니다. PREFIX-00+01~04 조합을 그대로 전달합니다.",
+    promptNote:
+      "호환 LLM API 호출 시 system·user 메시지로 보낸 전체 프롬프트 본문을 보여 줍니다.",
+    emptyPromptNote:
+      "이 기록에는 LLM 프롬프트 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.",
+  },
+  "": {
+    subject: "선택한 LLM",
+    shortName: "기본 설정",
+    chip: "기본 설정 (.env)",
+    dataNote:
+      "LLM에 전달한 단계별 사용자 JSON입니다. 시스템 지시는 PREFIX-00+01이며, FAQ 안내는 PREFIX-00+02, 담당자 초안은 PREFIX-00+03, 순화는 PREFIX-00+04가 이어집니다.",
+    promptNote:
+      "실행한 LLM에 전달한 호출별 전체 프롬프트(시스템 지시 PREFIX + 사용자 JSON)를 보여 줍니다. 예전 기록에는 이 칸이 없을 수 있습니다.",
+    emptyPromptNote:
+      "이 기록에는 LLM 프롬프트 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.",
+  },
 };
 
 /** 잠긴 단추에 보일 배지·설명 문구입니다. Codex는 키가 아니라 실행 파일이 필요합니다. */
@@ -296,6 +365,7 @@ async function loadFields() {
     value.districtAreas || {},
   );
   if (value.providers) {
+    defaultResolvedProvider = value.providers[""]?.resolvedProvider || "";
     updateLlmAvailability(document, value.providers);
   }
 }
@@ -390,14 +460,104 @@ const ROLE_PROMPT_NAMES = {
 };
 
 /**
- * Codex CLI 표준 입력 전문을 호출마다 그립니다.
+ * 응대 결과에 실제로 사용된 LLM 엔진 표시 정보를 계산합니다.
+ *
+ * `assist.llmProvider`(백엔드가 실제 해석한 공급자)를 최우선으로 보고,
+ * 없으면 요청한 `provider`나 (기록 조회가 아닐 때) `.env` 기본 공급자를 씁니다.
+ *
+ * @param {object} payload 검사기에 보낸 민원 요청 본문입니다.
+ * @param {object} received 서버 응답 JSON입니다.
+ * @param {{fromHistory?:boolean,defaultProvider?:string}} [options] 해석 옵션입니다.
+ * @returns {{
+ *   providerKey:string,
+ *   subject:string,
+ *   shortName:string,
+ *   chipText:string,
+ *   badgeText:string,
+ *   dataTitle:string,
+ *   promptTitle:string,
+ *   copyAriaLabel:string,
+ *   dataNote:string,
+ *   promptNote:string,
+ *   emptyPromptNote:string,
+ * }} 화면 섹션·배지 렌더링용 표시 정보입니다.
+ */
+export function resolveLlmSectionMeta(
+  payload,
+  received,
+  { fromHistory = false, defaultProvider = "" } = {},
+) {
+  const assist = received?.assist || {};
+  const requested = String(
+    payload?.provider || received?.complaint?.provider || "",
+  )
+    .trim()
+    .toLowerCase();
+  const actual = String(assist.llmProvider || "").trim().toLowerCase();
+  const fallback = !fromHistory ? String(defaultProvider || "").trim().toLowerCase() : "";
+  const providerKey = actual || requested || fallback;
+  const base = LLM_DISPLAY_META[providerKey] || {
+    subject: PROVIDER_LABELS[providerKey] || providerKey,
+    shortName: providerKey,
+    chip: providerKey,
+    dataNote: LLM_DISPLAY_META[""].dataNote,
+    promptNote: LLM_DISPLAY_META[""].promptNote,
+    emptyPromptNote: LLM_DISPLAY_META[""].emptyPromptNote,
+  };
+  const model = String(assist.llmModel || "").trim();
+  const isCustomModel =
+    Boolean(model) && model.toLowerCase() !== (base.defaultModel || "");
+  const chipText = isCustomModel ? `${base.shortName} · ${model}` : base.chip;
+  const fromEnvDefault = !requested && Boolean(actual || fallback);
+  const labelCore = PROVIDER_LABELS[providerKey] || base.subject;
+  let badgeText = `🤖 LLM 엔진: ${labelCore}`;
+  if (isCustomModel) badgeText += ` · ${model}`;
+  if (fromEnvDefault) badgeText += " · .env 기본";
+
+  return {
+    providerKey,
+    subject: base.subject,
+    shortName: base.shortName,
+    chipText,
+    badgeText,
+    dataTitle: `${base.subject}에 보낸 데이터`,
+    promptTitle: `${base.subject}에 보낸 프롬프트`,
+    copyAriaLabel: `${base.subject}에 보낸 데이터 JSON 복사`,
+    dataNote: base.dataNote,
+    promptNote: base.promptNote,
+    emptyPromptNote: base.emptyPromptNote,
+  };
+}
+
+/**
+ * 데이터·프롬프트 제목 옆의 LLM 엔진 칩을 갱신합니다.
+ *
+ * @param {Element|null} chipNode 대상 칩 요소입니다.
+ * @param {ReturnType<typeof resolveLlmSectionMeta>} meta 엔진 표시 정보입니다.
+ * @returns {void}
+ */
+function applyEngineChip(chipNode, meta) {
+  if (!chipNode) return;
+  chipNode.textContent = meta.chipText;
+  chipNode.className = meta.providerKey
+    ? `engine-chip engine-chip--${meta.providerKey}`
+    : "engine-chip";
+  chipNode.hidden = false;
+}
+
+/**
+ * LLM에 전달한 호출별 프롬프트 전문을 호출마다 그립니다.
  *
  * @param {Array<{role?:string,system?:string,sent?:boolean,prompt?:string}>} calls
  *   `assist.codex` 목록입니다.
+ * @param {{emptyNote?:string,shortName?:string,root?:ParentNode}} [options] 표시 옵션입니다.
  * @returns {void}
  */
-export function renderCodexPrompts(calls) {
-  const host = document.querySelector("#codex-prompts");
+export function renderCodexPrompts(
+  calls,
+  { emptyNote = "", shortName = "", root = document } = {},
+) {
+  const host = root.querySelector("#codex-prompts");
   if (!host) return;
   host.replaceChildren();
   const items = (calls || []).filter(
@@ -406,11 +566,11 @@ export function renderCodexPrompts(calls) {
   if (!items.length) {
     const empty = document.createElement("p");
     empty.className = "hint-block";
-    empty.textContent =
-      "이 기록에는 Codex stdin 전문이 없습니다. 새로 민원을 보내면 호출마다 표시됩니다.";
+    empty.textContent = emptyNote || LLM_DISPLAY_META[""].emptyPromptNote;
     host.append(empty);
     return;
   }
+  const enginePart = shortName && shortName !== "기본 설정" ? ` · ${shortName}` : "";
   items.forEach((call, index) => {
     const block = document.createElement("div");
     block.className = "json-block prompt-block";
@@ -419,7 +579,7 @@ export function renderCodexPrompts(calls) {
     const title = document.createElement("h4");
     const roleName = ROLE_PROMPT_NAMES[call.role] || call.role || "호출";
     const sentLabel = call.sent ? "보냄" : "보내지 않음";
-    title.textContent = `${index + 1}. ${roleName} · ${call.system || ""} · ${sentLabel}`;
+    title.textContent = `${index + 1}. ${roleName}${enginePart} · ${call.system || ""} · ${sentLabel}`;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "json-copy";
@@ -463,18 +623,23 @@ export function bindPromptCopyButtons(root = document) {
  * 응대 결과를 화면에 채웁니다.
  *
  * @param {ReturnType<typeof readComplaint>} payload 검사기에 보낸 민원입니다.
- * @param {object} received 서버 JSON입니다. `assist.codex`는 사용자 JSON과 stdin 전문입니다.
+ * @param {object} received 서버 JSON입니다. `assist.codex`는 사용자 JSON과 프롬프트 전문입니다.
  * @param {string} [sourceText] 기록에서 다시 볼 때 안내 문구입니다.
+ * @param {ParentNode} [root=document] 결과를 채울 DOM 루트입니다.
  * @returns {void}
  */
-function showResult(payload, received, sourceText = "") {
+export function showResult(payload, received, sourceText = "", root = document) {
   const assist = received.assist || {};
-  const source = document.querySelector("#result-source");
+  const llmMeta = resolveLlmSectionMeta(payload, received, {
+    fromHistory: Boolean(sourceText),
+    defaultProvider: defaultResolvedProvider,
+  });
+  const source = root.querySelector("#result-source");
   if (source) {
     source.textContent = sourceText;
     source.hidden = !sourceText;
   }
-  const districtBadge = document.querySelector("#result-district");
+  const districtBadge = root.querySelector("#result-district");
   if (districtBadge) {
     const effDistrict = received.effectiveDistrict || assist.district;
     const inferred = Boolean(received.districtInferred ?? assist.districtInferred);
@@ -488,7 +653,7 @@ function showResult(payload, received, sourceText = "") {
       districtBadge.hidden = false;
     }
   }
-  const placeBadge = document.querySelector("#result-place");
+  const placeBadge = root.querySelector("#result-place");
   if (placeBadge) {
     const place = assist.inferredPlace || received.inferredPlace;
     if (place && place.title) {
@@ -507,33 +672,34 @@ function showResult(payload, received, sourceText = "") {
       placeBadge.hidden = true;
     }
   }
-  const llmBadge = document.querySelector("#result-llm");
+  const llmBadge = root.querySelector("#result-llm");
   if (llmBadge) {
-    const provider = payload?.provider || received.complaint?.provider || "";
-    llmBadge.textContent = `🤖 LLM 엔진: ${PROVIDER_LABELS[provider] || provider}`;
+    llmBadge.textContent = llmMeta.badgeText;
+    if (llmMeta.providerKey) llmBadge.dataset.provider = llmMeta.providerKey;
+    else delete llmBadge.dataset.provider;
     llmBadge.hidden = false;
   }
-  document.querySelector("#result-message").textContent = received.message;
-  document.querySelector("#result-outcome").textContent =
+  root.querySelector("#result-message").textContent = received.message;
+  root.querySelector("#result-outcome").textContent =
     outcomeNames[assist.outcome] || assist.outcome || "";
   const reason = assist.reasonCode || assist.decision?.reasonCode || "";
-  document.querySelector("#result-reason").textContent = reason
+  root.querySelector("#result-reason").textContent = reason
     ? reasonNames[reason] || reason
     : "";
   const failures = assist.policyFailures || [];
-  document.querySelector("#result-failures").textContent = failures.length
+  root.querySelector("#result-failures").textContent = failures.length
     ? `정책 검사: ${failures.join(" ")}`
     : "";
-  document.querySelector("#result-answer").textContent = assist.answer || "";
+  root.querySelector("#result-answer").textContent = assist.answer || "";
   const draft = assist.staffDraft;
-  document.querySelector("#result-draft").textContent = draft
+  root.querySelector("#result-draft").textContent = draft
     ? draft.draftAnswer || ""
     : "이번 민원에는 담당자 초안을 만들지 않았습니다.";
   const cleaned = assist.sanitize;
-  document.querySelector("#result-sanitize").textContent = cleaned
+  root.querySelector("#result-sanitize").textContent = cleaned
     ? cleaned.sanitizedSummary || ""
     : "거친 표현 힌트가 없어 순화 호출을 건너뛰었습니다.";
-  const hits = document.querySelector("#result-hits");
+  const hits = root.querySelector("#result-hits");
   hits.replaceChildren();
   for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {
     const item = document.createElement("li");
@@ -545,14 +711,32 @@ function showResult(payload, received, sourceText = "") {
     item.textContent = "표시할 자료가 없습니다.";
     hits.append(item);
   }
-  renderCodexPrompts(assist.codex || []);
-  document.querySelector("#codex-json").textContent = JSON.stringify(
+  const dataTitle = root.querySelector("#codex-data-title");
+  if (dataTitle) dataTitle.textContent = llmMeta.dataTitle;
+  applyEngineChip(root.querySelector("#codex-data-engine"), llmMeta);
+  const copyDataBtn = root.querySelector("#codex-json-copy");
+  if (copyDataBtn) copyDataBtn.setAttribute("aria-label", llmMeta.copyAriaLabel);
+  const dataNote = root.querySelector("#codex-note");
+  if (dataNote) dataNote.textContent = llmMeta.dataNote;
+  root.querySelector("#codex-json").textContent = JSON.stringify(
     assist.codex || [],
     null,
     2,
   );
-  document.querySelector("#sent-json").textContent = JSON.stringify(payload, null, 2);
-  document.querySelector("#received-json").textContent = JSON.stringify(
+
+  const promptTitle = root.querySelector("#codex-prompt-title");
+  if (promptTitle) promptTitle.textContent = llmMeta.promptTitle;
+  applyEngineChip(root.querySelector("#codex-prompt-engine"), llmMeta);
+  const promptNote = root.querySelector("#codex-prompt-note");
+  if (promptNote) promptNote.textContent = llmMeta.promptNote;
+  renderCodexPrompts(assist.codex || [], {
+    emptyNote: llmMeta.emptyPromptNote,
+    shortName: llmMeta.shortName,
+    root,
+  });
+
+  root.querySelector("#sent-json").textContent = JSON.stringify(payload, null, 2);
+  root.querySelector("#received-json").textContent = JSON.stringify(
     received,
     null,
     2,

@@ -95,6 +95,25 @@ def llm_enabled(llm_fn: object, provider: str | None = None) -> bool:
     return callable(llm_fn)
 
 
+def _resolve_bound_settings(
+    llm_fn: object, provider: str | None
+) -> tuple[bool, dict[str, str | None] | None]:
+    """공급자 선택과 환경 설정으로 호출 가능 여부와 실제 설정을 함께 구합니다.
+
+    Args:
+        llm_fn: 환경 설정 사용 표시, 직접 함수, 또는 비활성화 `None`입니다.
+        provider: 검사기에서 고른 공급자입니다. 환경 설정을 쓸 때만 봅니다.
+
+    Returns:
+        `(호출 가능 여부, 환경 설정 딕셔너리 또는 None)`입니다.
+    """
+    if llm_fn is not USE_ENV_LLM:
+        return callable(llm_fn), None
+    if provider:
+        return check_provider_availability(provider)[0], settings_for_provider(provider)
+    return llm_configured(), llm_settings()
+
+
 def resolve_chat(
     llm_fn: object,
     provider: str | None,
@@ -116,13 +135,8 @@ def resolve_chat(
     """
     if llm_fn is not USE_ENV_LLM:
         return llm_fn if callable(llm_fn) else None
-    if provider:
-        if not check_provider_availability(provider)[0]:
-            return None
-        bound = settings_for_provider(provider)
-    elif llm_configured():
-        bound = llm_settings()
-    else:
+    usable, bound = _resolve_bound_settings(llm_fn, provider)
+    if not usable or bound is None:
         return None
 
     def chat(system: str, user: str) -> str:
@@ -170,6 +184,8 @@ def build_result(
     sanitize: dict[str, Any] | None = None,
     district_inferred: bool = False,
     inferred_place: dict[str, Any] | None = None,
+    llm_provider: str | None = None,
+    llm_model: str | None = None,
 ) -> dict[str, Any]:
     """세 갈래 응대와 근거·단계를 한 객체로 묶습니다.
 
@@ -189,6 +205,8 @@ def build_result(
         sanitize: PREFIX-04 순화 결과입니다. 없으면 비웁니다.
         district_inferred: 본문 지명으로 구를 자동 추론했으면 True입니다.
         inferred_place: 네이버 지도로 추론된 장소 객체입니다. 없으면 None입니다.
+        llm_provider: 실제 선택·해석된 LLM 공급자 식별자입니다.
+        llm_model: 실제 호출 대상 모델 이름입니다.
 
     Returns:
         API·CLI가 공유하는 응대 결과입니다.
@@ -226,6 +244,8 @@ def build_result(
         "policy_failures": failures,
         "stages": stages,
         "llm_configured": llm_on,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
         "retrieval": {
             "retrieval_only": search.get("retrieval_only", True),
             "decision": search.get("decision", "requires_gate"),
@@ -267,7 +287,15 @@ def iter_assist(
     effective_district, district_inferred, inferred_place = resolve_district_and_place(
         district, text
     )
-    llm_on = llm_enabled(llm_fn, provider)
+    llm_on, bound_meta = _resolve_bound_settings(llm_fn, provider)
+    resolved_provider = (
+        bound_meta.get("provider") if bound_meta else (provider or None)
+    )
+    if not llm_on and not provider and resolved_provider == "legacy":
+        resolved_provider = None
+    resolved_model = (
+        bound_meta.get("model") if bound_meta and resolved_provider else None
+    )
     yield progress("read")
     if not text or len(text) > 2000:
         decision = empty_decision("invalid_model_output")
@@ -285,6 +313,8 @@ def iter_assist(
                 llm_on=llm_on,
                 district_inferred=district_inferred,
                 inferred_place=inferred_place,
+                llm_provider=resolved_provider,
+                llm_model=resolved_model,
             ),
         }
         return
@@ -312,6 +342,8 @@ def iter_assist(
                 llm_on=False,
                 district_inferred=district_inferred,
                 inferred_place=inferred_place,
+                llm_provider=resolved_provider,
+                llm_model=resolved_model,
             ),
         }
         return
@@ -521,6 +553,8 @@ def iter_assist(
             sanitize=sanitize,
             district_inferred=district_inferred,
             inferred_place=inferred_place,
+            llm_provider=resolved_provider,
+            llm_model=resolved_model,
         ),
     }
 

@@ -249,9 +249,47 @@ pre {
   gap: 8px;
   margin: 16px 0 8px;
 }
+.json-title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
 .json-head h3,
 .json-head h4 {
   margin: 0;
+}
+.engine-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.engine-chip--exaone_api {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.engine-chip--codex_cli {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+.engine-chip--openai_api {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+.engine-chip--legacy {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
 }
 .prompt-block {
   margin-top: 12px;
@@ -411,6 +449,21 @@ pre {
   background: #f5f3ff;
   color: #6d28d9;
   border-color: #ddd6fe;
+}
+.llm-engine-badge[data-provider="exaone_api"] {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.llm-engine-badge[data-provider="codex_cli"] {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+.llm-engine-badge[data-provider="openai_api"] {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
 }
 
 /* ── LLM 엔진 선택 단추 ── */

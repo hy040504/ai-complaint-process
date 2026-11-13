@@ -143,10 +143,12 @@ class ProviderStatus(Model):
     Attributes:
         available: 현재 환경에서 호출 가능한지 여부입니다.
         reason: 미설정 또는 사용 불가 시 안내 문구입니다.
+        resolved_provider: 실제 호출될 공급자 식별자입니다. `.env` 기본 설정 해석에 씁니다.
     """
 
     available: bool
     reason: str = ""
+    resolved_provider: str | None = None
 
 
 class LabFields(Model):

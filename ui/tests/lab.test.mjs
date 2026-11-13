@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import { labQuery, labShell } from "../src/lab.js";
 import {
   initLlmSelector,
+  resolveLlmSectionMeta,
+  showResult,
   streamComplaint,
   updateLlmAvailability,
 } from "../../src/lab_web/static/app.js";
@@ -205,5 +207,160 @@ test("streamComplaint는 422 검증 오류와 error 이벤트에서 재시도 �
     );
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+/**
+ * 결과 화면 DOM 테스트를 위한 최소 모의 노드를 만듭니다.
+ *
+ * @param {string} [tagName="div"] 요소 태그 이름입니다.
+ * @returns {object} 텍스트·속성·자식 노드 조작을 지원하는 모의 요소입니다.
+ */
+function makeFakeNode(tagName = "div") {
+  const attrs = {};
+  const node = {
+    tagName,
+    textContent: "",
+    className: "",
+    hidden: false,
+    dataset: {},
+    children: [],
+    get childElementCount() {
+      return this.children.length;
+    },
+    replaceChildren(...items) {
+      this.children = items;
+    },
+    append(...items) {
+      this.children.push(...items);
+    },
+    setAttribute(k, v) {
+      attrs[k] = String(v);
+    },
+    getAttribute(k) {
+      return attrs[k] ?? null;
+    },
+  };
+  return node;
+}
+
+test("resolveLlmSectionMeta는 사용한 LLM에 따라 데이터·프롬프트 제목과 칩을 구분한다", () => {
+  const exaone = resolveLlmSectionMeta(
+    { provider: "exaone_api" },
+    { assist: { llmProvider: "exaone_api", llmModel: "k-exaone_v2.5" } },
+  );
+  assert.equal(exaone.dataTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 데이터");
+  assert.equal(exaone.promptTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 프롬프트");
+  assert.equal(exaone.chipText, "EXAONE API · K-EXAONE 2.5");
+  assert.match(exaone.badgeText, /엑사온 API/);
+
+  const codex = resolveLlmSectionMeta(
+    { provider: "codex_cli" },
+    { assist: { llmProvider: "codex_cli", llmModel: "gpt-6-luna" } },
+  );
+  assert.equal(codex.dataTitle, "Codex CLI에 보낸 데이터");
+  assert.equal(codex.promptTitle, "Codex CLI에 보낸 프롬프트");
+  assert.match(codex.chipText, /Codex CLI/);
+
+  const gpt = resolveLlmSectionMeta(
+    { provider: "openai_api" },
+    { assist: { llmProvider: "openai_api", llmModel: "gpt-6-luna" } },
+  );
+  assert.equal(gpt.dataTitle, "GPT API (GPT-6 Luna)에 보낸 데이터");
+  assert.equal(gpt.promptTitle, "GPT API (GPT-6 Luna)에 보낸 프롬프트");
+  assert.match(gpt.chipText, /GPT API/);
+
+  // 사용자가 기본 설정(.env)을 고른 경우에도 실제 해석된 공급자를 표시합니다.
+  const envDefault = resolveLlmSectionMeta(
+    { provider: null },
+    { assist: { llmProvider: "exaone_api", llmModel: "k-exaone_v2.5" } },
+  );
+  assert.equal(envDefault.dataTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 데이터");
+  assert.equal(envDefault.promptTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 프롬프트");
+  assert.match(envDefault.badgeText, /\.env 기본/);
+});
+
+test("showResult는 데이터 JSON·프롬프트 제목, 배지, 호출 카드를 사용한 LLM에 맞게 채운다", () => {
+  const originalDocument = globalThis.document;
+  const nodes = Object.fromEntries(
+    [
+      "#result-source",
+      "#result-district",
+      "#result-place",
+      "#result-llm",
+      "#result-message",
+      "#result-outcome",
+      "#result-reason",
+      "#result-failures",
+      "#result-answer",
+      "#result-draft",
+      "#result-sanitize",
+      "#result-hits",
+      "#codex-data-title",
+      "#codex-data-engine",
+      "#codex-json-copy",
+      "#codex-note",
+      "#codex-json",
+      "#codex-prompt-title",
+      "#codex-prompt-engine",
+      "#codex-prompt-note",
+      "#codex-prompts",
+      "#sent-json",
+      "#received-json",
+    ].map((id) => [id, makeFakeNode()]),
+  );
+  const root = { querySelector: (sel) => nodes[sel] || null };
+  globalThis.document = {
+    createElement: (tag) => makeFakeNode(tag),
+  };
+
+  try {
+    showResult(
+      { title: "테스트 민원", provider: null },
+      {
+        message: "완료",
+        complaint: { provider: null },
+        assist: {
+          llmProvider: "openai_api",
+          llmModel: "gpt-6-luna",
+          outcome: "human_handoff",
+          reasonCode: "out_of_scope",
+          policyFailures: [],
+          answer: "안내",
+          faq: [],
+          cases: [],
+          codex: [
+            {
+              role: "decision",
+              system: "PREFIX-00 + PREFIX-01",
+              sent: true,
+              user: { query: "테스트" },
+              prompt: "[시스템 지시]\nPREFIX\n\n[사용자 입력]\n{}",
+            },
+          ],
+        },
+      },
+      "",
+      root,
+    );
+
+    assert.equal(nodes["#codex-data-title"].textContent, "GPT API (GPT-6 Luna)에 보낸 데이터");
+    assert.equal(
+      nodes["#codex-prompt-title"].textContent,
+      "GPT API (GPT-6 Luna)에 보낸 프롬프트",
+    );
+    assert.equal(nodes["#codex-data-engine"].className, "engine-chip engine-chip--openai_api");
+    assert.equal(nodes["#codex-prompt-engine"].textContent, "OpenAI GPT API · GPT-6 Luna");
+    assert.equal(
+      nodes["#codex-json-copy"].getAttribute("aria-label"),
+      "GPT API (GPT-6 Luna)에 보낸 데이터 JSON 복사",
+    );
+    assert.match(nodes["#result-llm"].textContent, /GPT API.*\.env 기본/);
+    assert.equal(nodes["#codex-prompts"].children.length, 1);
+    const callHeading = nodes["#codex-prompts"].children[0].children[0].children[0].textContent;
+    assert.match(callHeading, /1차 판정 · GPT API · PREFIX-00 \+ PREFIX-01 · 보냄/);
+  } finally {
+    if (originalDocument === undefined) delete globalThis.document;
+    else globalThis.document = originalDocument;
   }
 });

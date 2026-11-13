@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- 응대 검사기(`src/lab_web`) 결과 화면에서 `보낸 데이터(JSON)` 영역(`#llm-data-block`)을 위, `보낸 프롬프트` 영역(`#llm-prompt-block`)을 아래로 재배치하고, 실제로 사용한 LLM(`assist.llmProvider`·`resolvedProvider`)에 따라 **엑사온 API (K-EXAONE 2.5)**·**Codex CLI**·**GPT API (GPT-6 Luna)** 이름과 엔진 배지 칩·안내 문구를 두 섹션 모두에 동적 표시한다. `.env` 기본 설정 사용 시에도 해석된 공급자·모델명을 백엔드(`src/assist/pipeline.py`, `src/complaints/models.py`, `src/llm/settings.py`)가 함께 기록한다. [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md)
+
 - 최근 패치([CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md)~[CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)) 전반의 한국어 docstring/JSDoc 누락(`pipeline.py`·`app.py`·`complete.py`·`lab.test.mjs`)과 `test_place_tool.py` 미사용 import를 보완하고, `src/lab_web/models.py` 중복 검증기(`blank_optional_to_none`) 통합 및 `src/llm/complete.py` `_as_int`/`_first_int`의 `bool` 배제·`0` 토큰 보존을 적용한다. 하네스 문서 4종(`AI_안전_보안_가드레일.md`·`AI_정보전달과_응답_하네스.md`·`architecture.md`·`시스템_프롬프트와_프리픽스_캐싱_지침.md`)과 `README.md` 상단 배지·빠른 탐색·Mermaid·환경변수 표·검증 근거를 최신화한다. [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md)
 
 - 전체 연동 점검 중 확인된 EXAONE HTTP 429(동시 요청 600·초당 한도 1) 연쇄 실패와 스트림·환경변수 누락을 보완한다. `src/rag/http.py`에 `retry-after-ms`/`retry-after`와 지수 백오프(최대 2회, 일일 한도 소진 시 즉시 중단)·`TimeoutError` 한국어 안내를 추가하고, `src/assist/pipeline.py`는 판정 API/CLI 실패 시 `llm_unavailable`로 조기 종료해 후속 `sanitize`/`staff_draft` 중복 429를 막는다. `EXAONE_URL`·`EXAONE_MODEL` 격리 로딩 및 `app.js`/`ui/src/lab.js`의 개행 없는 NDJSON EOF 플러시·422/오류 후 중복 재시도 차단을 반영하고 `:5010` 검사기 웹을 최신 코드로 재기동한다. [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)

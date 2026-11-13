@@ -160,14 +160,20 @@ def test_fields(client: FlaskClient) -> None:
 
 
 def test_index_is_lab_form(client: FlaskClient) -> None:
-    """루트는 추출한 검사기 화면입니다."""
+    """루트는 추출한 검사기 화면이며 데이터 JSON 영역이 프롬프트 영역보다 위에 옵니다."""
     response = client.get("/")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "민원 보내기" in html
-    assert "Codex에 보낸 데이터" in html
-    assert "Codex에 보낸 프롬프트" in html
+    assert "선택한 LLM에 보낸 데이터" in html
+    assert "선택한 LLM에 보낸 프롬프트" in html
+    assert 'id="codex-data-title"' in html
+    assert 'id="codex-data-engine"' in html
+    assert 'id="codex-prompt-title"' in html
+    assert 'id="codex-prompt-engine"' in html
     assert 'id="codex-prompts"' in html
+    assert html.index('id="llm-data-block"') < html.index('id="llm-prompt-block"')
+    assert html.index('id="codex-json"') < html.index('id="codex-prompts"')
     assert 'id="progress"' in html
     assert 'id="progress-steps"' in html
     assert 'id="result-district"' in html
@@ -191,6 +197,7 @@ def test_index_is_lab_form(client: FlaskClient) -> None:
     assert "bindJsonCopyButtons" in js
     assert "bindPromptCopyButtons" in js
     assert "renderCodexPrompts" in js
+    assert "resolveLlmSectionMeta" in js
     assert "streamComplaint" in js
     assert "showProgress" in js
     assert "copyText" in js

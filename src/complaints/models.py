@@ -432,6 +432,8 @@ class AssistResponse(Model):
         inferred_place: 네이버 지도로 추론된 장소 객체입니다. 없으면 None입니다.
         outcome: `faq_answer`·`department_suggestion`·`human_handoff`입니다.
         automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
+        llm_provider: 실제 선택·해석된 LLM 공급자 식별자입니다.
+        llm_model: 실제 호출 대상 모델 이름입니다.
         codex: 모델에 넣은 호출 목록입니다. 검색 실패면 빈 목록입니다.
         staff_draft: 담당자 초안입니다. FAQ 안내이거나 검증 실패면 비웁니다.
         sanitize: 순화 요약입니다. 원문 힌트가 없으면 비웁니다.
@@ -453,6 +455,8 @@ class AssistResponse(Model):
     policy_failures: list[str]
     stages: list[AssistStage]
     llm_configured: bool
+    llm_provider: str | None = None
+    llm_model: str | None = None
     retrieval: AssistRetrieval
     codex: list[CodexCall] = Field(default_factory=list)
     staff_draft: StaffDraft | None = None

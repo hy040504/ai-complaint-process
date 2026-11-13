@@ -15,7 +15,7 @@
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql) |
 | 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) |
-| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) |
+| 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`검사기-시작.cmd`](../검사기-시작.cmd), Linux [`start-lab.sh`](../start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) |
 | 한 문장 임베딩과 pgvector 이웃 | Windows [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`scripts/문장_임베딩.py`](../scripts/문장_임베딩.py), [CASE-043](cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md), [CASE-051](cases/사례-051-문장임베딩-pgvector-이웃-2026-11-06.md) |
 | 민원 문장으로 RAG+LLM 응대 | Windows [`민원-응대.cmd`](../민원-응대.cmd), [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md), [CASE-035](cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) |
 | Windows PostgreSQL·검색 API 기동 | [`검색-시작.cmd`](../검색-시작.cmd), [CASE-036](cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md) |
@@ -55,6 +55,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) | 2026-11-13 | 검사기 데이터(JSON) 영역 위·프롬프트 영역 아래 배치 및 엑사온 API·Codex CLI·GPT API 동적 표시(`llmProvider`·`resolvedProvider`) | 완료 |
 | [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) | 2026-11-13 | 패치 주석·JSDoc·`models.py`/`complete.py` 최적화, 하네스 4종 동기화 및 README 디자인·검증 근거 최신화 | 완료 |
 | [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) | 2026-11-13 | 전체 연동 점검: HTTP 429(`retry-after`·백오프) 재시도, API 실패 연쇄 호출 차단, `EXAONE_URL`/`EXAONE_MODEL` 격리, 스트림 버퍼·422 보완 | 완료 |
 | [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) | 2026-11-13 | 패치 점검(주소 키/잠금 복원 경쟁 버그 수정)·장소추적 재귀/중복 조회 최적화·문서/README 디자인 개선 | 완료 |

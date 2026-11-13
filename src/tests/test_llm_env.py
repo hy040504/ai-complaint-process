@@ -166,18 +166,57 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
 
 
 def test_provider_availability_map(monkeypatch: object) -> None:
-    """공급자별 API 키 유무에 따른 사용 가능 여부를 매핑합니다."""
+    """공급자별 API 키 유무와 `.env` 기본 공급자 해석 결과를 매핑합니다."""
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "exaone_api")
     monkeypatch.setenv("EXAONE_API_KEY", "test-key")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr(settings.shutil, "which", lambda cmd: None)
 
     avail = settings.provider_availability_map()
+    assert avail[""]["available"] is True
+    assert avail[""]["resolved_provider"] == "exaone_api"
     assert avail["exaone_api"]["available"] is True
     assert avail["exaone_api"]["reason"] == ""
+    assert avail["exaone_api"]["resolved_provider"] == "exaone_api"
     assert avail["openai_api"]["available"] is False
     assert "OPENAI_API_KEY" in avail["openai_api"]["reason"]
     assert avail["codex_cli"]["available"] is False
     assert "Codex CLI" in avail["codex_cli"]["reason"]
+
+
+def test_pipeline_records_resolved_llm_provider_and_model(monkeypatch: object) -> None:
+    """파이프라인 결과에 실제 선택·해석된 LLM 공급자와 모델 이름을 기록합니다."""
+    from src.assist import pipeline
+
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "exaone_api")
+    monkeypatch.setenv("EXAONE_API_KEY", "test-exaone-key")
+    monkeypatch.delenv("EXAONE_MODEL", raising=False)
+    monkeypatch.setenv("COMPLAINT_LLM_MODEL", "gpt-6-luna")
+
+    monkeypatch.setattr(
+        pipeline,
+        "complete_result",
+        lambda system, user, settings=None: type(
+            "R",
+            (),
+            {
+                "text": '{"scope":"out_of_scope","intent":"unclear","outcome":"human_handoff","reason_code":"out_of_scope","evidence_refs":[],"department_ids":[]}',
+                "usage": None,
+            },
+        )(),
+    )
+
+    result = pipeline.run_assist(
+        "테스트 민원",
+        search_fn=lambda q, d, l, r: {
+            "retrieval_only": True,
+            "decision": "requires_gate",
+            "faq": [],
+            "routing": [],
+        },
+    )
+    assert result["llm_provider"] == "exaone_api"
+    assert result["llm_model"] == "k-exaone_v2.5"
 
 
 def test_pipeline_resolve_chat_with_exaone_provider(monkeypatch: object) -> None:

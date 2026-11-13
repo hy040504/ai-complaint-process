@@ -304,11 +304,16 @@ def provider_availability_map() -> dict[str, dict[str, Any]]:
     """검사기에서 고를 수 있는 공급자 전체의 사용 가능 상태를 돌려줍니다.
 
     Returns:
-        `LAB_PROVIDERS` 순서의 `{공급자: {"available": bool, "reason": str}}`입니다.
-        빈 문자열 키는 `.env` 기본 설정입니다.
+        `LAB_PROVIDERS` 순서의 가용 상태·불가 사유·해석된 공급자 매핑입니다.
+        빈 문자열 키(`.env` 기본 설정)도 실제로 가리키는 `resolved_provider`를 담습니다.
     """
+    default_provider = llm_settings().get("provider") if llm_configured() else None
     result: dict[str, dict[str, Any]] = {}
     for prov in LAB_PROVIDERS:
         ok, reason = check_provider_availability(prov)
-        result[prov] = {"available": ok, "reason": reason}
+        result[prov] = {
+            "available": ok,
+            "reason": reason,
+            "resolved_provider": default_provider if not prov else prov,
+        }
     return result
