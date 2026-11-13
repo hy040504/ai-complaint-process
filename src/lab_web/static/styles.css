@@ -494,6 +494,38 @@ pre {
   background: #e0f2fe;
   color: #0369a1;
 }
+.badge-disabled {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+.llm-choice-btn:disabled,
+.llm-choice-btn.is-disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  border-style: dashed;
+  box-shadow: none;
+  filter: grayscale(0.5);
+}
+.llm-choice-btn:disabled:hover,
+.llm-choice-btn.is-disabled:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.llm-choice-btn.is-disabled small {
+  color: #dc2626;
+  font-weight: 600;
+}
+@keyframes llm-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+.llm-choice-btn.shake {
+  animation: llm-shake 0.3s ease;
+}
 
 @media (max-width: 900px) {
   .workspace {

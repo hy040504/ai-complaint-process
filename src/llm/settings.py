@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
 _LLM_ENV_KEYS = frozenset(
     {
@@ -227,3 +228,47 @@ def llm_configured() -> bool:
             shutil.which(os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")) is not None
         )
     return bool(settings["token"])
+
+
+def check_provider_availability(provider: str | None = None) -> tuple[bool, str]:
+    """공급자의 실행 가능 여부와 미설정 시 사유를 반환합니다.
+
+    Args:
+        provider: 'exaone_api', 'openai_api', 'codex_cli' 또는 None(기본 설정)입니다.
+
+    Returns:
+        (사용가능여부, 상태안내문구) 튜플입니다.
+    """
+    prov = (provider or "").strip().lower()
+    if not prov:
+        cfg = llm_configured()
+        return (cfg, "" if cfg else ".env에 활성화된 기본 LLM 설정이 없습니다.")
+    if prov == "exaone_api":
+        has_key = bool(optional_env("EXAONE_API_KEY"))
+        return (has_key, "" if has_key else ".env에 EXAONE_API_KEY가 설정되지 않았습니다.")
+    if prov == "openai_api":
+        has_key = bool(optional_env("OPENAI_API_KEY"))
+        return (has_key, "" if has_key else ".env에 OPENAI_API_KEY가 설정되지 않았습니다.")
+    if prov == "codex_cli":
+        has_cli = (
+            shutil.which(os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")) is not None
+        )
+        return (has_cli, "" if has_cli else "Codex CLI가 설치되지 않았거나 PATH에 없습니다.")
+    return (False, f"지원하지 않는 공급자입니다: {prov}")
+
+
+def provider_availability_map() -> dict[str, dict[str, Any]]:
+    """모든 LLM 공급자의 사용 가능 여부 맵을 반환합니다.
+
+    Returns:
+        공급자 식별자를 키로 하는 상태 딕셔너리입니다.
+    """
+    providers = ["", "exaone_api", "codex_cli", "openai_api"]
+    result: dict[str, dict[str, Any]] = {}
+    for p in providers:
+        ok, reason = check_provider_availability(p)
+        result[p] = {
+            "available": ok,
+            "reason": reason,
+        }
+    return result

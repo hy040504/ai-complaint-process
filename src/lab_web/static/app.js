@@ -59,25 +59,110 @@ export function initLlmSelector(root = document) {
 
   buttons.forEach((btn) => {
     const prov = btn.dataset.provider || "";
-    if (prov === saved) {
+    if (prov === saved && !btn.disabled) {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       hiddenInput.value = prov;
       matched = true;
     }
 
-    btn.addEventListener("click", () => {
-      buttons.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      const chosen = btn.dataset.provider || "";
-      hiddenInput.value = chosen;
-      localStorage.setItem(LLM_STORAGE_KEY, chosen);
-    });
+    if (!btn.dataset.bound) {
+      btn.dataset.bound = "true";
+      btn.addEventListener("click", () => {
+        if (btn.disabled || btn.classList.contains("is-disabled")) {
+          btn.classList.remove("shake");
+          void btn.offsetWidth;
+          btn.classList.add("shake");
+          return;
+        }
+        buttons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const chosen = btn.dataset.provider || "";
+        hiddenInput.value = chosen;
+        localStorage.setItem(LLM_STORAGE_KEY, chosen);
+      });
+    }
   });
 
-  if (!matched && buttons[0]) {
+  if (!matched && buttons[0] && !buttons[0].disabled) {
     buttons[0].classList.add("active");
     hiddenInput.value = buttons[0].dataset.provider || "";
+  }
+}
+
+/**
+ * 서버의 공급자 가용성 정보를 반영해 비활성화 및 UI 효과를 적용합니다.
+ *
+ * @param {ParentNode} [root=document] 검색 범위입니다.
+ * @param {Record<string, {available: boolean, reason?: string}>} [providerStatus={}] 공급자 상태입니다.
+ * @returns {void}
+ */
+export function updateLlmAvailability(root = document, providerStatus = {}) {
+  const buttons = root.querySelectorAll(".llm-choice-btn");
+  const hiddenInput = root.querySelector("#provider");
+  if (!buttons.length || !hiddenInput) return;
+
+  let activeBtn = null;
+
+  buttons.forEach((btn) => {
+    const prov = btn.dataset.provider || "";
+    const status = providerStatus[prov];
+    const isAvail = status ? Boolean(status.available) : true;
+    const badge = btn.querySelector(".btn-badge");
+    const desc = btn.querySelector("small");
+
+    if (!btn.dataset.origTitle) {
+      btn.dataset.origTitle = btn.title || "";
+    }
+
+    if (status && !isAvail) {
+      btn.disabled = true;
+      btn.classList.add("is-disabled");
+      btn.classList.remove("active");
+      btn.setAttribute("aria-disabled", "true");
+      const reasonMsg = status.reason || "현재 환경에서 사용할 수 없습니다.";
+      btn.title = `[선택 불가] ${reasonMsg}`;
+
+      if (badge) {
+        if (!badge.dataset.origClass) badge.dataset.origClass = badge.className;
+        if (!badge.dataset.origText) badge.dataset.origText = badge.textContent;
+        badge.className = "btn-badge badge-disabled";
+        badge.textContent = "키 미설정";
+      }
+      if (desc) {
+        if (!desc.dataset.origText) desc.dataset.origText = desc.textContent;
+        desc.textContent = "API 키 미설정 (.env)";
+      }
+    } else {
+      btn.disabled = false;
+      btn.classList.remove("is-disabled");
+      btn.removeAttribute("aria-disabled");
+      if (btn.dataset.origTitle) btn.title = btn.dataset.origTitle;
+      if (badge && badge.dataset.origClass) {
+        badge.className = badge.dataset.origClass;
+        badge.textContent = badge.dataset.origText;
+      }
+      if (desc && desc.dataset.origText) {
+        desc.textContent = desc.dataset.origText;
+      }
+    }
+
+    if (btn.classList.contains("active") && !btn.disabled) {
+      activeBtn = btn;
+    }
+  });
+
+  if (!activeBtn) {
+    const firstAvail = Array.from(buttons).find(
+      (b) => !b.disabled && !b.classList.contains("is-disabled"),
+    );
+    if (firstAvail) {
+      buttons.forEach((b) => b.classList.remove("active"));
+      firstAvail.classList.add("active");
+      const chosen = firstAvail.dataset.provider || "";
+      hiddenInput.value = chosen;
+      localStorage.setItem(LLM_STORAGE_KEY, chosen);
+    }
   }
 }
 
@@ -167,6 +252,9 @@ async function loadFields() {
     value.districts || [],
     value.districtAreas || {},
   );
+  if (value.providers) {
+    updateLlmAvailability(document, value.providers);
+  }
 }
 
 const COPY_IDLE = "JSON 복사";

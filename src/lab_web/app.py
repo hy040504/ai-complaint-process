@@ -16,6 +16,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory, stream
 from pydantic import BaseModel, ValidationError
 
 from src.assist import llm_configured, search_available
+from src.llm.settings import provider_availability_map
 from src.lab_web.models import (
     ErrorBody,
     LabAcceptResult,
@@ -26,6 +27,7 @@ from src.lab_web.models import (
     LabRunList,
     LabRunRecord,
     LabRunSummary,
+    ProviderStatus,
 )
 from src.lab_web.runs import (
     clear_runs,
@@ -138,8 +140,13 @@ def create_app(
 
     @app.get("/api/v1/lab/fields")
     def fields() -> Response:
-        """작성 양식의 분야·지역 목록을 줍니다."""
-        return _json(LabFields())
+        """작성 양식의 분야·지역 및 LLM 공급자 설정 상태를 줍니다."""
+        avail = provider_availability_map()
+        providers = {
+            k: ProviderStatus(available=v["available"], reason=v["reason"])
+            for k, v in avail.items()
+        }
+        return _json(LabFields(providers=providers))
 
     def _parse_complaint() -> LabComplaint | Response:
         """요청 JSON을 민원으로 검증합니다. 실패면 오류 응답입니다."""

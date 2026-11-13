@@ -154,6 +154,9 @@ def test_fields(client: FlaskClient) -> None:
     assert "districtAreas" in response.json
     assert "오송읍" in response.json["districtAreas"]["흥덕구"]
     assert "사창동" in response.json["districtAreas"]["서원구"]
+    assert "providers" in response.json
+    assert "exaone_api" in response.json["providers"]
+    assert "openai_api" in response.json["providers"]
 
 
 def test_index_is_lab_form(client: FlaskClient) -> None:

@@ -146,3 +146,19 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
     assert result.usage is not None
     assert result.usage["input_tokens"] == 120
     assert result.usage["output_tokens"] == 45
+
+
+def test_provider_availability_map(monkeypatch: object) -> None:
+    """공급자별 API 키 유무에 따른 사용 가능 여부를 매핑합니다."""
+    monkeypatch.setenv("EXAONE_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(settings.shutil, "which", lambda cmd: None)
+
+    avail = settings.provider_availability_map()
+    assert avail["exaone_api"]["available"] is True
+    assert avail["exaone_api"]["reason"] == ""
+    assert avail["openai_api"]["available"] is False
+    assert "OPENAI_API_KEY" in avail["openai_api"]["reason"]
+    assert avail["codex_cli"]["available"] is False
+    assert "Codex CLI" in avail["codex_cli"]["reason"]
+

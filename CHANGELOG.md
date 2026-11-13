@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- 응대 검사기 웹 UI에서 `.env`에 키가 설정되지 않은 API 기반 LLM(K-EXAONE 2.5, GPT-6 Luna 등)은 선택되지 않도록 비활성화하고 '키 미설정' 배지, 안내 툴팁 및 클릭 시 흔들림 애니메이션 피드백을 제공한다. `src/llm/settings.py`에 공급자별 가용성 판별 로직을 추가하고 `/api/v1/lab/fields` 계약을 확장하여 화면 초기화 시점에 실시간 상태를 동기화하며, 비활성 항목 선택 시 사용 가능한 기본 엔진으로 자동 fallback 전환한다. [CASE-085](docs/cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md)
+
 - LG AI연구원의 한국어 특화 무료 생성형 모델인 K-EXAONE 2.5를 API LLM 선택지로 추가하고 응대 검사기 웹 UI에서 엔진을 즉시 전환할 수 있도록 구현한다. `.env.example` 및 `.env`에 `EXAONE_API_KEY` 설정을 추가하고, `src/llm/settings.py`와 `src/llm/complete.py`에 `exaone_api` 전용 엔드포인트(`https://api.exaone.ai/v1/chat/completions`) 호출 및 추론 옵션(`reasoning_effort`) 연동 로직을 구현한다. 응대 검사기 화면에 LLM 엔진 세그먼트 버튼과 장소 추적·엔진 배지를 배치하고, 시스템 프롬프트(PREFIX)의 장소 추적 도구 활용 지침을 갱신한다. 수치·정형 데이터 전문 모델인 `EXAONE Tabular`의 후속 추가 위치(예상 처리기간 회귀 및 부서 재이송 위험도 분류)를 README에 명시한다. [CASE-084](docs/cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md)
 
 - '서원대학교 후문 편의점근처 나무 쓰러짐' 등 랜드마크·시설명 민원의 위치 특정 오류를 개선한다. `lookup_navermap_place` 도구의 문장 키워드 정제 및 관련성 검증을 도입하고, `extract_district`와 파이프라인의 2차 fallback 장소 추적, Codex CLI MCP 도구 활성화, 시스템 프롬프트(PREFIX-00, PREFIX-01) 권한 지침을 갱신하여 서원구 모충동 특정 및 타 구 부서 혼입 배제를 구현한다. [CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md)

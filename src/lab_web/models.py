@@ -122,18 +122,32 @@ class LabAcceptResult(Model):
     run: LabRunSummary | None = None
 
 
+class ProviderStatus(Model):
+    """LLM 공급자별 가용 상태입니다.
+
+    Attributes:
+        available: 현재 환경에서 호출 가능한지 여부입니다.
+        reason: 미설정 또는 사용 불가 시 안내 문구입니다.
+    """
+
+    available: bool
+    reason: str = ""
+
+
 class LabFields(Model):
-    """작성 양식에 쓰는 분야·지역 목록입니다.
+    """작성 양식에 쓰는 분야·지역 및 LLM 공급자 목록입니다.
 
     Attributes:
         categories: 허용 민원 분야 목록입니다.
         districts: 청주시 4대 자치구 목록입니다.
         district_areas: 각 자치구 산하 관할 읍·면·동 세부 지역 매핑입니다.
+        providers: LLM 공급자별 가용 상태 매핑입니다.
     """
 
     categories: tuple[Category, ...] = Field(default=CATEGORIES)
     districts: tuple[District, ...] = Field(default=DISTRICTS)
     district_areas: dict[str, tuple[str, ...]] = Field(default=DISTRICT_AREAS)
+    providers: dict[str, ProviderStatus] = Field(default_factory=dict)
 
 
 class LabHealth(Model):
