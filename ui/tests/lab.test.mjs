@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { labQuery, labShell } from "../src/lab.js";
 import {
   initLlmSelector,
+  streamComplaint,
   updateLlmAvailability,
 } from "../../src/lab_web/static/app.js";
 
@@ -104,5 +105,86 @@ test("검사기 LLM 버튼 잠금 시 aria-disabled·shake와 자동 복원 방�
     assert.equal(root.buttons[1].getAttribute("aria-pressed"), "true");
   } finally {
     delete globalThis.localStorage;
+  }
+});
+
+function fakeNdjsonResponse(chunks, { ok = true, status = 200 } = {}) {
+  const encoder = new TextEncoder();
+  let idx = 0;
+  return {
+    ok,
+    status,
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (idx >= chunks.length) return { value: undefined, done: true };
+            return { value: encoder.encode(chunks[idx++]), done: false };
+          },
+        };
+      },
+    },
+    async json() {
+      return null;
+    },
+  };
+}
+
+test("streamComplaint는 개행 없는 마지막 NDJSON done 줄을 유실하지 않는다", async () => {
+  const originalFetch = globalThis.fetch;
+  const seen = [];
+  globalThis.fetch = async () =>
+    fakeNdjsonResponse([
+      '{"type":"progress","key":"read","label":"민원 읽는 중"}\n',
+      '{"type":"done","result":{"ok":true,"provider":"exaone_api"}}',
+    ]);
+  try {
+    const result = await streamComplaint({ title: "제목", body: "본문입니다" }, (k, l) =>
+      seen.push([k, l]),
+    );
+    assert.deepEqual(seen, [["read", "민원 읽는 중"]]);
+    assert.deepEqual(result, { ok: true, provider: "exaone_api" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("streamComplaint는 422 검증 오류와 error 이벤트에서 재시도 금지를 표시한다", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({
+      ok: false,
+      status: 422,
+      body: null,
+      async json() {
+        return { message: "제목은 1자 이상이어야 합니다." };
+      },
+    });
+    await assert.rejects(
+      () => streamComplaint({}),
+      (err) => err.noFallback === true && err.status === 422 && /제목/.test(err.message),
+    );
+
+    globalThis.fetch = async () =>
+      fakeNdjsonResponse(['{"type":"error","message":"중단됨"}\n']);
+    await assert.rejects(
+      () => streamComplaint({}),
+      (err) => err.noFallback === true && err.message === "중단됨",
+    );
+
+    globalThis.fetch = async () => ({
+      ok: false,
+      status: 404,
+      body: null,
+      async json() {
+        return null;
+      },
+    });
+    await assert.rejects(
+      () => streamComplaint({}),
+      (err) => err.noFallback === undefined && err.status === 404,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });

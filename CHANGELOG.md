@@ -2,6 +2,8 @@
 
 ## 2026-11-13
 
+- 전체 연동 점검 중 확인된 EXAONE HTTP 429(동시 요청 600·초당 한도 1) 연쇄 실패와 스트림·환경변수 누락을 보완한다. `src/rag/http.py`에 `retry-after-ms`/`retry-after`와 지수 백오프(최대 2회, 일일 한도 소진 시 즉시 중단)·`TimeoutError` 한국어 안내를 추가하고, `src/assist/pipeline.py`는 판정 API/CLI 실패 시 `llm_unavailable`로 조기 종료해 후속 `sanitize`/`staff_draft` 중복 429를 막는다. `EXAONE_URL`·`EXAONE_MODEL` 격리 로딩 및 `app.js`/`ui/src/lab.js`의 개행 없는 NDJSON EOF 플러시·422/오류 후 중복 재시도 차단을 반영하고 `:5010` 검사기 웹을 최신 코드로 재기동한다. [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
+
 - 최근 LLM·MCP·검사기 UI 패치 전반(CASE-083~086)의 주석·docstring·버그·성능·문서를 점검·정비한다. `resolve_district_and_place` 통합 및 `_allow_fallback` 가드로 네이버 지도 중복·재귀 조회를 제거하고, `showResult` 주소 키(`road_address`/`jibun_address`) 누락과 비활성화 단추 비동기 `localStorage` 복원 경쟁 버그를 수정한다. OpenAI `usage_from_openai`의 `reasoning_tokens` 생략 호환과 `mypy` 타입 검사를 정비하고, `PREFIX-01`·`README.md` 디자인·`docs/README.md`·`src/README.md`·`src/lab_web/README.md`를 최신화한다. [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
 
 - K-EXAONE 2.5 API의 추론 토큰 특성을 감안하여 `max_tokens`를 기본 16,384로 상향하고, `.env`에 `EXAONE_REASONING_EFFORT`(`low`, `high`, `max`) 및 `EXAONE_MAX_TOKENS`, `EXAONE_TEMPERATURE`, `EXAONE_TOP_P` 설정 키를 새로 연결한다. 마크다운 코드블록 방어 파싱과 `reasoning_tokens` 사용량 집계를 지원한다. [CASE-086](docs/cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md)

@@ -15,6 +15,8 @@ _LLM_ENV_KEYS = frozenset(
         "COMPLAINT_CODEX_COMMAND",
         "OPENAI_API_KEY",
         "EXAONE_API_KEY",
+        "EXAONE_URL",
+        "EXAONE_MODEL",
         "EXAONE_REASONING_EFFORT",
         "EXAONE_MAX_TOKENS",
         "EXAONE_TEMPERATURE",
@@ -146,13 +148,16 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
     if prov == "exaone_api":
         configured_model = optional_env("COMPLAINT_LLM_MODEL")
         model = (
-            DEFAULT_EXAONE_MODEL
-            if not configured_model or configured_model == DEFAULT_LUNA_MODEL
-            else configured_model
+            optional_env("EXAONE_MODEL")
+            or (
+                configured_model
+                if configured_model and configured_model != DEFAULT_LUNA_MODEL
+                else DEFAULT_EXAONE_MODEL
+            )
         )
         return {
             "provider": prov,
-            "url": os.environ.get("COMPLAINT_LLM_URL") or EXAONE_COMPLETIONS_URL,
+            "url": optional_env("EXAONE_URL") or EXAONE_COMPLETIONS_URL,
             "model": model,
             "token": optional_env("EXAONE_API_KEY"),
             "auth": "bearer",

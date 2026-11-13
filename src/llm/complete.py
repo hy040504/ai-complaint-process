@@ -260,7 +260,15 @@ def complete_exaone_result(
         "User-Agent": "cheongju-assist/0.1",
         "Content-Type": "application/json",
     }
-    body = http_json(str(url), payload, headers=headers)
+    try:
+        body = http_json(str(url), payload, headers=headers)
+    except ValueError as exc:
+        if str(exc).startswith("API 429:"):
+            raise ValueError(
+                f"{exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
+                "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
+            ) from None
+        raise
     try:
         content = body["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:

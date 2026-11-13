@@ -119,26 +119,52 @@ async function streamLabAssist(body, paint) {
   });
   if (!response.ok || !response.body) {
     const value = await response.json().catch(() => null);
-    throw new Error(value?.message || "응대 진행 응답을 받지 못했습니다.");
+    const error = new Error(value?.message || "응대 진행 응답을 받지 못했습니다.");
+    if (response.status !== 404 && response.status !== 405 && value?.message) {
+      error.noFallback = true;
+    }
+    throw error;
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  let sawProgress = false;
+  const consumeLines = (chunkText) => {
+    buffer += chunkText;
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
     for (const line of lines) {
       if (!line.trim()) continue;
       const event = JSON.parse(line);
       if (event.type === "progress") {
+        sawProgress = true;
         labLive = { key: event.key, label: event.label };
         paint?.();
       } else if (event.type === "done") labResult = event.result;
-      else if (event.type === "error") throw new Error(event.message);
+      else if (event.type === "error") {
+        const error = new Error(
+          event.message || "응대 처리 중 오류가 발생했습니다.",
+        );
+        error.noFallback = true;
+        throw error;
+      }
     }
+  };
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        consumeLines(decoder.decode());
+        if (buffer.trim()) consumeLines("\n");
+        break;
+      }
+      consumeLines(decoder.decode(value, { stream: true }));
+    }
+  } catch (error) {
+    if (error && typeof error === "object" && sawProgress) {
+      error.noFallback = true;
+    }
+    throw error;
   }
 }
 
@@ -158,7 +184,8 @@ export async function runLabAssist(body, paint) {
   try {
     try {
       await streamLabAssist(body, paint);
-    } catch {
+    } catch (error) {
+      if (error && typeof error === "object" && error.noFallback) throw error;
       if (!labResult) {
         labResult = await api("/assist", { method: "POST", body });
       }

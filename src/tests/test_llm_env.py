@@ -201,3 +201,195 @@ def test_strip_code_fence_handles_json_and_plain_text() -> None:
     assert complete.strip_code_fence('{"ok": true}') == '{"ok": true}'
 
 
+def test_exaone_url_and_model_ignore_unrelated_complaint_url(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    """EXAONE_URL·EXAONE_MODEL이 COMPLAINT_LLM_URL에 덮이지 않고 우선 적용됩니다."""
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "COMPLAINT_LLM_PROVIDER=exaone_api\n"
+        "COMPLAINT_LLM_URL=https://other.example/v1/responses\n"
+        "EXAONE_URL=https://custom.exaone.local/v1/chat/completions\n"
+        "EXAONE_MODEL=k-exaone-custom\n"
+        "EXAONE_API_KEY=exaone-secret\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(settings, "_ENV_FILE", env_file)
+    settings._LLM_ENV_LOADED = False
+    for key in (
+        "COMPLAINT_LLM_PROVIDER",
+        "COMPLAINT_LLM_URL",
+        "COMPLAINT_LLM_MODEL",
+        "EXAONE_URL",
+        "EXAONE_MODEL",
+        "EXAONE_API_KEY",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    loaded = settings.llm_settings()
+    assert loaded["url"] == "https://custom.exaone.local/v1/chat/completions"
+    assert loaded["model"] == "k-exaone-custom"
+
+    monkeypatch.delenv("EXAONE_URL", raising=False)
+    defaulted = settings.settings_for_provider("exaone_api")
+    assert defaulted["url"] == settings.EXAONE_COMPLETIONS_URL
+
+
+def test_pipeline_unavailable_provider_reason_and_api_429_skip_followup(
+    monkeypatch: object,
+) -> None:
+    """키 누락 사유를 안내하고, 판정 API 실패 시 후속 초안 호출을 연달아 보내지 않습니다."""
+    from src.assist import pipeline
+
+    fake_search = {
+        "query": "가로수 쓰러짐",
+        "district": None,
+        "retrieval_only": True,
+        "decision": "requires_gate",
+        "faq": [],
+        "cases": [],
+        "departments": [],
+    }
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "exaone_api")
+    monkeypatch.setenv("EXAONE_API_KEY", "exaone-test-token")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    missing_key = pipeline.run_assist(
+        "창신초등학교 앞 가로수 쓰러짐입니다.",
+        search_fn=lambda *args: fake_search,
+        provider="openai_api",
+    )
+    assert missing_key["reason_code"] == "llm_unavailable"
+    assert any("OPENAI_API_KEY" in item for item in missing_key["policy_failures"])
+
+    calls: list[str] = []
+
+    def failing_api(system: str, user: str) -> str:
+        calls.append(system)
+        raise ValueError("API 429: rate_limit_exceeded")
+
+    failed = pipeline.run_assist(
+        "쓰레기같은 가로등을 고쳐 주세요.",
+        search_fn=lambda *args: fake_search,
+        llm_fn=failing_api,
+    )
+    assert failed["reason_code"] == "llm_unavailable"
+    assert len(calls) == 1
+    assert failed["staff_draft"] is None
+    assert failed["sanitize"] is None
+    assert any("API 429" in item for item in failed["policy_failures"])
+
+
+def test_http_json_retries_429_respects_retry_after_and_day_quota(
+    monkeypatch: object,
+) -> None:
+    """http_json은 일시 429 시 retry-after-ms를 존중해 재시도하고 일일 소진 시 즉시 중단합니다."""
+    import io
+    import urllib.error
+    from email.message import Message
+    from src.rag import http as rag_http
+
+    sleeps: list[float] = []
+    monkeypatch.setattr(rag_http.time, "sleep", lambda sec: sleeps.append(sec))
+
+    attempts = {"count": 0}
+
+    class FakeOkResponse:
+        def __enter__(self) -> FakeOkResponse:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"ok": true}'
+
+    def fake_urlopen(req: object, timeout: int = 180) -> FakeOkResponse:
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            hdrs = Message()
+            hdrs["retry-after-ms"] = "630"
+            hdrs["x-second-rate-limit-remaining"] = "0"
+            raise urllib.error.HTTPError(
+                "https://api.exaone.ai/v1/chat/completions",
+                429,
+                "Too Many Requests",
+                hdrs,
+                io.BytesIO(b'{"error":{"code":"rate_limit_exceeded"}}'),
+            )
+        return FakeOkResponse()
+
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", fake_urlopen)
+    assert rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1}) == {
+        "ok": True
+    }
+    assert attempts["count"] == 2
+    assert len(sleeps) == 1
+    assert 0.6 <= sleeps[0] <= 0.75
+
+    # 일일 한도 고갈(x-day-rate-limit-remaining: 0)이면 재시도 대기를 하지 않습니다.
+    sleeps.clear()
+    attempts["count"] = 0
+
+    def day_exhausted(req: object, timeout: int = 180) -> FakeOkResponse:
+        attempts["count"] += 1
+        hdrs = Message()
+        hdrs["x-day-rate-limit-remaining"] = "0"
+        raise urllib.error.HTTPError(
+            "https://api.exaone.ai/v1/chat/completions",
+            429,
+            "Too Many Requests",
+            hdrs,
+            io.BytesIO(b"daily quota exceeded"),
+        )
+
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", day_exhausted)
+    try:
+        rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1})
+        raise AssertionError("429 예외가 발생해야 합니다.")
+    except ValueError as exc:
+        assert "API 429:" in str(exc)
+    assert attempts["count"] == 1
+    assert sleeps == []
+
+
+def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
+    """TimeoutError는 한국어 메시지로 변환하고 EXAONE 429는 대응 안내를 덧붙입니다."""
+    import src.llm.complete as complete
+    from src.rag import http as rag_http
+
+    def timeout_urlopen(req: object, timeout: int = 180) -> object:
+        raise TimeoutError("The read operation timed out")
+
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", timeout_urlopen)
+    try:
+        rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1}, timeout=12)
+        raise AssertionError("시간 초과 예외가 발생해야 합니다.")
+    except ValueError as exc:
+        assert "요청 시간 초과" in str(exc)
+        assert "12초" in str(exc)
+
+    def raise_429(url: str, body: dict, headers: dict) -> dict:
+        raise ValueError('API 429: {"error":{"code":"rate_limit_exceeded"}}')
+
+    monkeypatch.setattr(complete, "http_json", raise_429)
+    exaone_cfg = {
+        "provider": "exaone_api",
+        "url": "https://api.exaone.ai/v1/chat/completions",
+        "model": "k-exaone_v2.5",
+        "token": "test-exaone-key",
+        "auth": "bearer",
+        "reasoning_effort": "max",
+        "max_tokens": "16384",
+        "temperature": "0.7",
+        "top_p": "0.95",
+    }
+    try:
+        complete.complete_result("시스템", "사용자", settings=exaone_cfg)
+        raise AssertionError("EXAONE 429 예외가 발생해야 합니다.")
+    except ValueError as exc:
+        text = str(exc)
+        assert "API 429:" in text
+        assert "EXAONE_REASONING_EFFORT=low" in text
+
+

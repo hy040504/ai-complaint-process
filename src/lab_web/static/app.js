@@ -509,7 +509,7 @@ function showResult(payload, received, sourceText = "") {
   }
   const llmBadge = document.querySelector("#result-llm");
   if (llmBadge) {
-    const provider = payload.provider || received.complaint?.provider || "";
+    const provider = payload?.provider || received.complaint?.provider || "";
     llmBadge.textContent = `🤖 LLM 엔진: ${PROVIDER_LABELS[provider] || provider}`;
     llmBadge.hidden = false;
   }
@@ -668,31 +668,46 @@ export async function streamComplaint(payload, onProgress) {
     const value = await response.json().catch(() => null);
     const error = new Error(value?.message || "응대 진행 응답을 받지 못했습니다.");
     error.status = response.status;
+    // 404/405나 스트림 본문 부재가 아닌 검증(422) 등 명확한 오류는 /complaints 재시도를 막습니다.
+    if (!response.ok && response.status && response.status !== 404 && response.status !== 405) {
+      error.noFallback = true;
+    }
     throw error;
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let result = null;
+  const consumeLine = (line) => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line);
+    if (event.type === "progress") {
+      onProgress?.(event.key, event.label);
+    } else if (event.type === "done") {
+      result = event.result;
+    } else if (event.type === "error") {
+      const error = new Error(event.message || "응대 진행이 실패했습니다.");
+      error.noFallback = true;
+      throw error;
+    }
+  };
   while (true) {
     const { value, done } = await reader.read();
-    if (done) break;
+    if (done) {
+      buffer += decoder.decode();
+      break;
+    }
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      const event = JSON.parse(line);
-      if (event.type === "progress") {
-        onProgress?.(event.key, event.label);
-      } else if (event.type === "done") {
-        result = event.result;
-      } else if (event.type === "error") {
-        throw new Error(event.message || "응대 진행이 실패했습니다.");
-      }
-    }
+    for (const line of lines) consumeLine(line);
   }
-  if (!result) throw new Error("응대 결과를 받지 못했습니다.");
+  for (const line of buffer.split("\n")) consumeLine(line);
+  if (!result) {
+    const error = new Error("응대 결과를 받지 못했습니다.");
+    error.noFallback = true;
+    throw error;
+  }
   return result;
 }
 
@@ -815,11 +830,16 @@ function bind() {
       node.disabled = true;
     });
     showProgress();
+    let sawProgress = false;
     try {
       let received;
       try {
-        received = await streamComplaint(payload, setProgress);
-      } catch {
+        received = await streamComplaint(payload, (key, label) => {
+          sawProgress = true;
+          setProgress(key, label);
+        });
+      } catch (streamError) {
+        if (streamError?.noFallback || sawProgress) throw streamError;
         received = await sendComplaint(payload);
       }
       hideProgress();

@@ -353,25 +353,40 @@ def iter_assist(
         return item
 
     raw_decision: dict[str, Any] | None = None
+    decision_call_failed = False
     started = time.perf_counter()
     if chat is None:
         stages.append(stage("판정", started, False))
         decision = empty_decision("llm_unavailable")
+        unavailable_reason = (
+            check_provider_availability(provider)[1]
+            if llm_fn is USE_ENV_LLM and provider
+            else ""
+        )
         failures = [
-            "COMPLAINT_LLM_PROVIDER(openai_api·codex_cli) 또는 "
-            "COMPLAINT_LLM_TOKEN·PUBLIC_LLM_TOKEN·XAI_API_KEY가 필요합니다."
+            unavailable_reason
+            or "EXAONE_API_KEY(exaone_api)·OPENAI_API_KEY(openai_api)·codex_cli 또는 legacy 토큰이 필요합니다."
         ]
     else:
         try:
-            raw_decision = parse_json_object(chat(DECISION_SYSTEM, decision_user))
-            stages.append(stage("판정", started, True))
-            checked = time.perf_counter()
-            decision, failures = validate_decision(raw_decision, search, parts)
-            stages.append(stage("정책검사", checked, not failures))
-        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            raw_reply = chat(DECISION_SYSTEM, decision_user)
+        except (ValueError, OSError) as exc:
+            # 외부 API(429·연결 오류)나 CLI 실패면 후속 LLM 호출을 연달아 보내지 않습니다.
+            decision_call_failed = True
             stages.append(stage("판정", started, False))
-            decision = empty_decision("invalid_model_output")
+            decision = empty_decision("llm_unavailable")
             failures = [str(exc)]
+        else:
+            try:
+                raw_decision = parse_json_object(raw_reply)
+                stages.append(stage("판정", started, True))
+                checked = time.perf_counter()
+                decision, failures = validate_decision(raw_decision, search, parts)
+                stages.append(stage("정책검사", checked, not failures))
+            except (ValueError, json.JSONDecodeError, OSError) as exc:
+                stages.append(stage("판정", started, False))
+                decision = empty_decision("invalid_model_output")
+                failures = [str(exc)]
 
     codex_calls: list[dict[str, Any]] = [
         record_call(
@@ -418,7 +433,7 @@ def iter_assist(
         )
 
     sanitize: dict[str, Any] | None = None
-    if chat is not None and needs_sanitize(text):
+    if chat is not None and not decision_call_failed and needs_sanitize(text):
         yield progress("sanitize")
         started = time.perf_counter()
         sanitize_user = sanitize_payload(text)
@@ -446,7 +461,11 @@ def iter_assist(
         )
 
     staff_draft: dict[str, Any] | None = None
-    if chat is not None and decision["outcome"] != "faq_answer":
+    if (
+        chat is not None
+        and not decision_call_failed
+        and decision["outcome"] != "faq_answer"
+    ):
         yield progress("draft")
         started = time.perf_counter()
         draft_user = staff_draft_payload(
