@@ -71,6 +71,8 @@ def is_place_relevant(title: str, query: str) -> bool:
     if not title or not query:
         return False
     norm_title = re.sub(r"[\s\-_()\[\]]", "", title.lower())
+    if not norm_title or len(norm_title) < 2:
+        return False
     words = [
         w for w in re.sub(r"[\(\)\[\]\{\}<>\"'·~!,?]", " ", query).split()
         if len(w) >= 2 and w not in _STOP_WORDS
