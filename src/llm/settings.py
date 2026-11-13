@@ -15,6 +15,10 @@ _LLM_ENV_KEYS = frozenset(
         "COMPLAINT_CODEX_COMMAND",
         "OPENAI_API_KEY",
         "EXAONE_API_KEY",
+        "EXAONE_REASONING_EFFORT",
+        "EXAONE_MAX_TOKENS",
+        "EXAONE_TEMPERATURE",
+        "EXAONE_TOP_P",
         "COMPLAINT_LLM_URL",
         "COMPLAINT_LLM_TOKEN",
         "PUBLIC_LLM_TOKEN",
@@ -29,6 +33,10 @@ DEFAULT_REASONING_EFFORT = "medium"
 
 EXAONE_COMPLETIONS_URL = "https://api.exaone.ai/v1/chat/completions"
 DEFAULT_EXAONE_MODEL = "k-exaone_v2.5"
+DEFAULT_EXAONE_REASONING_EFFORT = "max"
+DEFAULT_EXAONE_MAX_TOKENS = 16384
+DEFAULT_EXAONE_TEMPERATURE = 0.7
+DEFAULT_EXAONE_TOP_P = 0.95
 
 
 def optional_env(name: str) -> str | None:
@@ -135,8 +143,19 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
             "token": optional_env("EXAONE_API_KEY"),
             "auth": "bearer",
             "reasoning_effort": (
-                optional_env("COMPLAINT_LLM_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT
+                optional_env("EXAONE_REASONING_EFFORT")
+                or optional_env("COMPLAINT_LLM_REASONING_EFFORT")
+                or DEFAULT_EXAONE_REASONING_EFFORT
             ),
+            "max_tokens": (
+                optional_env("EXAONE_MAX_TOKENS")
+                or optional_env("COMPLAINT_LLM_MAX_TOKENS")
+                or str(DEFAULT_EXAONE_MAX_TOKENS)
+            ),
+            "temperature": (
+                optional_env("EXAONE_TEMPERATURE") or str(DEFAULT_EXAONE_TEMPERATURE)
+            ),
+            "top_p": optional_env("EXAONE_TOP_P") or str(DEFAULT_EXAONE_TOP_P),
         }
     if prov == "codex_cli":
         return luna_settings(prov, url=None, token=None, auth="codex")

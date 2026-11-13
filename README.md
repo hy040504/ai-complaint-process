@@ -201,6 +201,18 @@ flowchart TD
 
 Jev는 범위와 검색 근거를 먼저 살피는 보조 판정 단계입니다. 부서 배정이나 민원 접수를 자동 확정하지 않으며, 실제 이관 기능은 별도 개발이 필요합니다.
 
+### K-EXAONE 2.5 API 및 추론 파라미터 설정 (`.env`)
+
+LG AI연구원의 **`K-EXAONE 2.5`**(`k-exaone_v2.5`, 750B)는 공식 개발자 플랫폼([docs.exaone.ai](https://docs.exaone.ai))을 통해 무료로 제공되는 국산 초거대 추론 모델입니다. 512K 컨텍스트를 지원하며 내부 추론(Thinking)이 상시 작동하므로 다음 설정을 `.env`로 제어합니다:
+
+| 환경변수 키 | 기본값 | 설명 및 권장 설정 |
+| --- | --- | --- |
+| `EXAONE_API_KEY` | *(필수)* | [docs.exaone.ai](https://docs.exaone.ai) 발급 무료 API 키 |
+| `EXAONE_REASONING_EFFORT` | `max` | 추론 강도: `low`(빠른 응답), `high`(복잡 분석), `max`(최고 정확도 기본값) |
+| `EXAONE_MAX_TOKENS` | `16384` | 최대 생성 토큰 (내부 추론 토큰 + 최종 답변 토큰 합산 최대치) |
+| `EXAONE_TEMPERATURE` | `0.7` | 생성 다양성 (정형 JSON 안정성과 에이전틱 추론 품질 최적화) |
+| `EXAONE_TOP_P` | `0.95` | Nucleus sampling 임계값 (공식 권장값) |
+
 ### EXAONE Tabular 모델의 후속 추가 위치 (구상)
 
 LG AI연구원의 **`EXAONE Tabular`** 모델은 자연어 생성이 아닌 수치·표(Table) 데이터 특화 예측 모델(TabArena 1위)입니다. 본 프로젝트의 PostgreSQL `complaint_app` 및 이관 이력 메타데이터가 축적되면 다음과 같은 위치와 역할로 추가하기에 적합합니다:

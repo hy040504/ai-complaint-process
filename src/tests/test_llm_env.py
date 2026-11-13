@@ -114,12 +114,15 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
         assert headers["Authorization"] == "Bearer test-exaone-key"
         assert body["model"] == "k-exaone_v2.5"
         assert body["reasoning_effort"] == "high"
+        assert body["max_tokens"] == 16384
+        assert body["temperature"] == 0.7
+        assert body["top_p"] == 0.95
         return {
             "choices": [
                 {
                     "message": {
                         "role": "assistant",
-                        "content": '{"scope":"in_scope","outcome":"department_suggestion"}',
+                        "content": '```json\n{"scope":"in_scope","outcome":"department_suggestion"}\n```',
                         "reasoning_content": "나무 쓰러짐 민원이므로 서원구 조치 필요",
                     }
                 }
@@ -128,6 +131,7 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
                 "prompt_tokens": 120,
                 "completion_tokens": 45,
                 "total_tokens": 165,
+                "reasoning_tokens": 30,
             },
         }
 
@@ -140,12 +144,16 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
         "token": "test-exaone-key",
         "auth": "bearer",
         "reasoning_effort": "high",
+        "max_tokens": "16384",
+        "temperature": "0.7",
+        "top_p": "0.95",
     }
     result = complete.complete_result("시스템지시", "사용자입력", settings=exaone_cfg)
     assert result.text == '{"scope":"in_scope","outcome":"department_suggestion"}'
     assert result.usage is not None
     assert result.usage["input_tokens"] == 120
     assert result.usage["output_tokens"] == 45
+    assert result.usage.get("reasoning_tokens") == 30
 
 
 def test_provider_availability_map(monkeypatch: object) -> None:

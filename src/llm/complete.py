@@ -26,12 +26,14 @@ class CompleteUsage(TypedDict):
     """한 번의 완성 호출에서 읽은 토큰 사용량입니다.
 
     `cached_tokens`는 Responses API가 프리픽스 캐시를 적중했을 때만
-    채워집니다. Codex CLI는 이 값을 돌려주지 않습니다.
+    채워집니다. `reasoning_tokens`는 K-EXAONE 등 추론 모델이 사용한 토큰입니다.
+    Codex CLI는 이 값을 돌려주지 않습니다.
     """
 
     input_tokens: int | None
     output_tokens: int | None
     cached_tokens: int | None
+    reasoning_tokens: int | None
 
 
 class CompleteResult(NamedTuple):
@@ -66,10 +68,16 @@ def usage_from_openai(body: Any) -> CompleteUsage | None:
         cached = _as_int(details.get("cached_tokens"))
     input_tokens = _as_int(raw.get("input_tokens")) or _as_int(raw.get("prompt_tokens"))
     output_tokens = _as_int(raw.get("output_tokens")) or _as_int(raw.get("completion_tokens"))
+    reasoning_tokens = _as_int(raw.get("reasoning_tokens"))
+    if reasoning_tokens is None:
+        comp_details = raw.get("completion_tokens_details")
+        if isinstance(comp_details, dict):
+            reasoning_tokens = _as_int(comp_details.get("reasoning_tokens"))
     return CompleteUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         cached_tokens=cached,
+        reasoning_tokens=reasoning_tokens,
     )
 
 
@@ -187,8 +195,9 @@ def complete_exaone_result(
 ) -> CompleteResult:
     """LG AI연구원 EXAONE API 본문과 토큰 사용량을 함께 반환합니다.
 
-    OpenAI 호환 Chat Completions 규격을 사용하며, reasoning_effort 옵션과
-    사고 과정 분리 반환을 지원합니다.
+    OpenAI 호환 Chat Completions 규격을 사용하며, max_tokens(추론 토큰 포함 최대치),
+    reasoning_effort(추론 강도: low/high/max), temperature, top_p 및
+    사고 과정(reasoning_content) 분리 반환을 지원합니다.
 
     Args:
         settings: `llm_settings()`가 만든 공급자 설정입니다.
@@ -212,17 +221,42 @@ def complete_exaone_result(
     if not url or not model:
         raise ValueError("EXAONE API 주소 또는 모델명이 설정되지 않았습니다.")
 
+    max_tokens_val = 16384
+    raw_max_tokens = settings.get("max_tokens")
+    if raw_max_tokens:
+        try:
+            max_tokens_val = int(raw_max_tokens)
+        except (ValueError, TypeError):
+            max_tokens_val = 16384
+
+    temp_val = 0.7
+    raw_temp = settings.get("temperature")
+    if raw_temp:
+        try:
+            temp_val = float(raw_temp)
+        except (ValueError, TypeError):
+            temp_val = 0.7
+
+    top_p_val = 0.95
+    raw_top_p = settings.get("top_p")
+    if raw_top_p:
+        try:
+            top_p_val = float(raw_top_p)
+        except (ValueError, TypeError):
+            top_p_val = 0.95
+
     payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "temperature": 0.1,
-        "max_tokens": 2048,
+        "temperature": temp_val,
+        "top_p": top_p_val,
+        "max_tokens": max_tokens_val,
         "stream": False,
     }
-    effort = settings.get("reasoning_effort")
+    effort = (settings.get("reasoning_effort") or "max").strip().lower()
     if effort in {"low", "high", "max"}:
         payload["reasoning_effort"] = effort
 
@@ -233,13 +267,27 @@ def complete_exaone_result(
     }
     body = http_json(str(url), payload, headers=headers)
     try:
-        content = body["choices"][0]["message"]["content"]
+        choice = body["choices"][0]
+        content = choice["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise ValueError("EXAONE API 응답에 메시지 본문이 없습니다.") from exc
     if not isinstance(content, str) or not content.strip():
         raise ValueError("EXAONE API 응답 본문이 비어 있습니다.")
 
-    return CompleteResult(content.strip(), usage_from_openai(body))
+    text = content.strip()
+    if text.startswith("```"):
+        match = _JSON_BLOCK.search(text)
+        if match:
+            text = match.group(1).strip()
+        else:
+            lines = text.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            text = "\n".join(lines).strip()
+
+    return CompleteResult(text, usage_from_openai(body))
 
 
 def resolve_codex_argv(command: str) -> list[str]:

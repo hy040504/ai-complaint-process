@@ -339,6 +339,7 @@ class LlmUsage(Model):
     input_tokens: int | None = None
     output_tokens: int | None = None
     cached_tokens: int | None = None
+    reasoning_tokens: int | None = None
 
 
 class CodexCall(Model):
