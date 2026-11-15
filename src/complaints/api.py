@@ -16,11 +16,14 @@ from src.assist import (
     run_web_assist,
     search_available,
 )
+from src.assist.district import DISTRICT_AREAS, DISTRICTS
 from src.complaints.models import (
+    CATEGORIES,
     Actor,
     AnswerInput,
     AssignmentInput,
     AssistExampleList,
+    AssistFields,
     AssistInput,
     AssistResponse,
     ComplaintInput,
@@ -30,15 +33,18 @@ from src.complaints.models import (
     CreateHeaders,
     ErrorResponse,
     Health,
+    JobStartInput,
     ListQuery,
     MessageInput,
     PageResponse,
+    ProviderStatus,
     ReasonInput,
     SessionInput,
     VersionInput,
     WorkspaceResponse,
 )
 from src.complaints.service import ComplaintService, Operation
+from src.llm.settings import provider_availability_map
 
 
 def create_api(service: ComplaintService) -> APIBlueprint:
@@ -85,12 +91,33 @@ def create_api(service: ComplaintService) -> APIBlueprint:
 
     @api.get("/health", tags=[Tag(name="서버 상태")], responses={200: Health})
     def health() -> Response:
-        """서버 상태와 검색·LLM 설정 여부, 민원 CRUD의 AI 미연결을 반환합니다."""
+        """서버 상태와 검색·LLM 설정 여부, 민원 CRUD의 AI 연결 여부를 반환합니다."""
         return reply(
             Health(
                 storage=service.repository.storage,
+                ai_connected=service.ai_connected,
                 assist_search=search_available(),
                 assist_llm=llm_configured(),
+            )
+        )
+
+    @api.get(
+        "/assist/fields",
+        tags=[assist],
+        responses={200: AssistFields},
+    )
+    def assist_fields() -> Response:
+        """응대 검사기·담당자 AI 실행에서 선택할 분야·관할 지역·LLM 가용 상태를 반환합니다."""
+        providers = {
+            key: ProviderStatus.model_validate(value)
+            for key, value in provider_availability_map().items()
+        }
+        return reply(
+            AssistFields(
+                categories=CATEGORIES,
+                districts=DISTRICTS,
+                district_areas=DISTRICT_AREAS,
+                providers=providers,
             )
         )
 
@@ -108,32 +135,51 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         """검색 후 판정·정책 검사를 실행하고 세 갈래 결과를 반환합니다.
 
         Args:
-            body: 민원 원문과 선택 관할·검색 옵션입니다.
+            body: 민원 원문과 선택 관할·검색 옵션·LLM 공급자입니다.
 
         Returns:
             검증된 안내·부서 후보·담당자 검토 결과입니다.
         """
-        return reply(
-            AssistResponse.model_validate(
-                run_web_assist(body.query, body.district, body.limit, body.rerank)
+        raw = (
+            run_web_assist(
+                body.query,
+                body.district,
+                body.limit,
+                body.rerank,
+                provider=body.provider,
             )
+            if body.provider is not None
+            else run_web_assist(body.query, body.district, body.limit, body.rerank)
         )
+        return reply(AssistResponse.model_validate(raw))
 
     @api.post("/assist/stream", tags=[assist])
     def create_assist_stream(body: AssistInput) -> Response:
         """응대 진행 안내를 NDJSON으로 보내고 마지막에 결과를 붙입니다.
 
         Args:
-            body: 민원 원문과 선택 관할·검색 옵션입니다.
+            body: 민원 원문과 선택 관할·검색 옵션·LLM 공급자입니다.
 
         Returns:
             줄 단위 JSON 사건 흐름입니다. 민원 저장·공식 이관이 아닙니다.
         """
 
         def generate() -> Iterator[str]:
-            for event in iter_web_assist(
-                body.query, body.district, body.limit, body.rerank
-            ):
+            """진행 단계와 최종 응대 결과를 줄 단위 JSON 문자열로 생성합니다."""
+            stream = (
+                iter_web_assist(
+                    body.query,
+                    body.district,
+                    body.limit,
+                    body.rerank,
+                    provider=body.provider,
+                )
+                if body.provider is not None
+                else iter_web_assist(
+                    body.query, body.district, body.limit, body.rerank
+                )
+            )
+            for event in stream:
                 if event.get("type") == "done":
                     payload = AssistResponse.model_validate(event["result"]).model_dump(
                         mode="json"
@@ -395,12 +441,12 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         tags=[jobs],
         responses={200: ComplaintResponse},
     )
-    def start_job(path: ComplaintPath, body: VersionInput) -> Response:
-        """서버에서 시연 단계를 시작하며 편집본을 덮어쓰지 않습니다.
+    def start_job(path: ComplaintPath, body: JobStartInput) -> Response:
+        """서버에서 AI 응대 분석(또는 시연 작업)을 시작하며 편집본을 덮어쓰지 않습니다.
 
         Args:
             path: 민원 식별자입니다.
-            body: 기대 버전입니다.
+            body: 기대 버전과 선택 LLM 공급자입니다.
 
         Returns:
             실행 상태가 저장된 민원입니다.

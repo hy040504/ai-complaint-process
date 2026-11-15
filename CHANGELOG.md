@@ -1,5 +1,12 @@
 # 변경 이력
 
+## 2026-11-15
+
+- **민원 웹(`:5000`) CRUD·담당자 콘솔·`#/lab`에 응대 검사기 RAG+LLM 실시간 통합 ([CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)):**
+  - 백엔드(`src/complaints/models.py`·`http.py`·`api.py`·`service.py`·`src/app.py`, `src/llm/settings.py`, `src/lab_web/models.py`): `GET /api/v1/assist/fields`(4개 구·98개 읍·면·동·공급자 상태) 추가, `/health`의 `aiConnected` 실제 연동, `AssistInput.rerank=False` 기본화 및 읍·면·동 검증(`normalize_district`), `Complaint.ai_assist`·`Job.provider` 추가, `ComplaintService(..., iter_assist_fn, auto_start_ai)` 비동기 백그라운드 워커 및 `_live_jobs` 메모리 진행 병합(폴링 중 `version` 불필요 증가 방지·취소/수정 무효화·편집 초안 및 최초 `aiOriginal` 보호·실패 시 민원 보존). `Provider`·`AssistResponse`·`ProviderStatus`·`normalize_optional_text` 중복 제거.
+  - 프론트엔드(`ui/src/llm-meta.js` 신규, `ui/src/lab.js`·`lab.css`·`staff.js`·`staff.css`·`app.js`·`themes.css`, `ui/adapters/ui04-adapter.js`): `/#/lab`에 `:5010`과 동일한 4종 엔진 선택/잠금, 읍·면·동 선택, `분야:` 제외 질의, 장소 추적·엔진 배지, 데이터(JSON ↑)·프롬프트(↓) 트레이스 반영; 담당자 참고 카드에 `aiAssist` 판정·부서 후보(`dutyStatus`/`자동 이관 아님`)·FAQ/사례·요약 카드·원문 순화 표시 및 편집기 엔진 선택·`AI 후보 채우기` 추가.
+  - 검증: `ui` JS 문법 17개·단위 테스트 **16/16 통과**, `mypy` **30개 모듈 0오류**, `RUN_PG_TESTS=1 pytest src/tests` **151개 통과**, `pytest rag/tests` **48개 통과**(3건너뜀), `rag.verify` 통과, 격리 DB(`complaint_app_e2e`) `:5000`+`:8007` 실서버 모델별(`exaone_api`, `codex_cli`, `openai_api` 가드) E2E 검증 완료.
+
 ## 2026-11-13
 
 - **`origin/main` 비응대 기능 선택 병합 ([CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)):** `llm` 브랜치의 응대 검사기(`:5010` `src/lab_web`) 및 `src/assist`·`src/llm`·`src/rag`·`docs/harness/prompts/` 로직은 그대로 보존하고, `origin/main`에 있던 비응대 기능 두 축을 편입했습니다(Docker 파일 3종은 `AGENTS.md` 원칙에 따라 제외). ① 업무 DB(`db/` 실행 SQL·`load_samples.py`·샘플 JSON, `PublicComplaint.is_synthetic`, `complaint_app.complaints` 생성 칼럼 5개·색인 2개·`CHECK` 제약 3종·`DEMO-PUB-` 백필, `src/complaints/demo_data.py`, `seed-public-demo` CLI, [`업무DB_실행설계.md`](docs/harness/업무DB_실행설계.md), [`사례-054-업무DB...`](docs/cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md)). ② 시민 UI02~04·편집기(`/design/ui04` + `ui04-adapter.js`, `:5000` `#/citizen` 기본 해시 정렬·`#/lab` 보존, `PHRASES` 문구 바·글자 수·`Ctrl+S`/`⌘S`·`staffPager`·`nextStepBox`·`foldAnswer`·`daysSince`). 병합 후 `RUN_PG_TESTS=1 pytest src/tests` **147개 통과**, `mypy` 30개 모듈 0오류, `ui` 문법 16개·단위 테스트 12개 통과, Flask `/design/ui04` 및 `:5010` `/api/v1/health` 200 응답을 확인했습니다.

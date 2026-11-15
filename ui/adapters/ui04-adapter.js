@@ -135,8 +135,12 @@
       is_synthetic: !!c.isSynthetic, created_at: c.date, updated_at: c.date,
       deleted_at: c.status === 'withdrawn' ? c.date : null,
       latest_answer: pub ? { badge: badgeOf(pub.origin), published_at: pub.date } : null,
-      ai: { job: jobs[0] ? { id: jobs[0].id, state: jobs[0].state, stage: jobs[0].stage, error: '' } : null,
-            outcome: null, department: '', has_draft: hasDraft },
+      ai: {
+        job: jobs[0] ? { id: jobs[0].id, state: jobs[0].state, stage: jobs[0].stage, error: '' } : null,
+        outcome: (c.aiAssist && c.aiAssist.outcome) || null,
+        department: (c.aiAssist && c.aiAssist.departments && c.aiAssist.departments[0] && c.aiAssist.departments[0].canonicalName) || '',
+        has_draft: hasDraft
+      },
       can_edit: mine && open, can_withdraw: mine && open, has_draft: hasDraft
     };
   }
@@ -167,7 +171,7 @@
                retract_reason: v.reason || '', context_version: c.contextVersion };
     });
     out.jobs = jobsOf(c);
-    out.results = [];   // 서버에는 AI 결과 저장이 없습니다.
+    out.results = c.aiAssist ? [c.aiAssist] : [];
     out.inquiries = (c.messages || []).map(function (m, i) { return { id: c.id + '#m' + i, body: m.text, at: m.date }; });
     out.history = (c.history || []).map(function (h) { return { at: h.date, text: h.text }; });
     out.stale_draft = false;

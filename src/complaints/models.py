@@ -3,8 +3,19 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    StringConstraints,
+    ValidationInfo,
+    field_validator,
+)
 from pydantic.alias_generators import to_camel
+
+from src.assist.district import DISTRICT_AREAS, DISTRICTS, normalize_district
+from src.llm.settings import Provider, normalize_optional_text
 
 Role = Literal["citizen", "staff"]
 Status = Literal["submitted", "under_review", "answered", "closed", "withdrawn"]
@@ -15,6 +26,14 @@ District = Literal["상당구", "서원구", "흥덕구", "청원구", "모름"]
 Category = Literal[
     "도로·교통", "환경·청소", "공원·녹지", "생활·복지", "주택·건축", "기타"
 ]
+CATEGORIES: tuple[Category, ...] = (
+    "도로·교통",
+    "환경·청소",
+    "공원·녹지",
+    "생활·복지",
+    "주택·건축",
+    "기타",
+)
 Visibility = Literal["private", "public"]
 Title = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
@@ -105,12 +124,23 @@ class AnswerVersion(Model):
 
 
 class Job(Model):
-    """실제 AI와 분리된 서버 측 단계 시연 작업입니다."""
+    """실제 AI 또는 서버 측 단계 시연 작업입니다.
+
+    Attributes:
+        status: 작업 진행 상태입니다.
+        stage: 현재 진행 단계 안내 문구입니다.
+        attempt: 같은 민원에서 누적 실행한 작업 횟수입니다.
+        context_version: 이 작업이 기준으로 삼은 민원 내용 버전입니다.
+        provider: 작업에 지정한 LLM 공급자입니다. 비우면 `.env` 기본을 씁니다.
+        started_at: 작업 시작 시각(UTC)입니다.
+        events: 진행 중 기록한 단계별 이벤트 목록입니다.
+    """
 
     status: JobStatus = "queued"
     stage: str = "AI 미연동 · 담당자 검토 대기"
     attempt: int = 0
     context_version: int = 1
+    provider: Provider | None = None
     started_at: datetime | None = None
     events: list[Event] = Field(default_factory=list)
 
@@ -137,11 +167,12 @@ class PublicComplaint(Model):
 
 
 class Complaint(PublicComplaint):
-    """담당자만 조회하는 초안·AI 원본·내부 작업 정보를 포함합니다."""
+    """담당자만 조회하는 초안·AI 원본·내부 작업·응대 분석 정보를 포함합니다."""
 
     assigned: bool = False
     ai_original: str = ""
     ai_candidate: str = ""
+    ai_assist: "AssistResponse | None" = None
     draft: str = ""
     draft_version: int = 0
     versions: list[AnswerVersion] = Field(default_factory=list)
@@ -156,6 +187,20 @@ class ComplaintInput(Model):
     district: District
     category: Category
     visibility: Visibility = "private"
+    provider: Provider | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def clean_provider(cls, value: object) -> object:
+        """빈 문자열·공백 공급자를 None으로 정규화하고 소문자로 통일합니다.
+
+        Args:
+            value: 검증 전 공급자 입력 값입니다.
+
+        Returns:
+            정제한 공급자 문자열 또는 None입니다.
+        """
+        return normalize_optional_text(value, lowercase=True)
 
 
 class ComplaintUpdate(ComplaintInput):
@@ -168,6 +213,25 @@ class VersionInput(Model):
     """동시 변경을 거부하기 위한 기대 버전입니다."""
 
     version: Version
+
+
+class JobStartInput(VersionInput):
+    """담당자가 AI 작업 실행 시 버전을 함께 검증하고 선택 공급자를 넘깁니다."""
+
+    provider: Provider | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def clean_provider(cls, value: object) -> object:
+        """빈 문자열·공백 공급자를 None으로 정규화하고 소문자로 통일합니다.
+
+        Args:
+            value: 검증 전 공급자 입력 값입니다.
+
+        Returns:
+            정제한 공급자 문자열 또는 None입니다.
+        """
+        return normalize_optional_text(value, lowercase=True)
 
 
 class ReasonInput(VersionInput):
@@ -270,20 +334,91 @@ class Health(Model):
     status: Literal["ok"] = "ok"
     storage: Literal["postgresql", "memory"] = "postgresql"
     demo: Literal[True] = True
-    ai_connected: Literal[False] = False
+    ai_connected: bool = False
     assist_search: bool = False
     assist_llm: bool = False
 
 
 class AssistInput(Model):
-    """응대 검사기의 민원 입력입니다. 민원 CRUD와 구별합니다."""
+    """응대 검사기의 민원 입력입니다. 민원 CRUD와 구별합니다.
+
+    Attributes:
+        query: 검색·판정에 사용할 민원 질의 본문입니다.
+        district: 청주시 4개 구 또는 산하 읍·면·동 이름입니다. 없으면 None입니다.
+        limit: 검색 코퍼스별 최대 후보 수입니다.
+        rerank: 재정렬 사용 여부입니다. 기본 False입니다.
+        provider: 호출할 LLM 공급자입니다. 비우면 `.env` 기본을 씁니다.
+    """
 
     query: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
     ]
-    district: Literal["상당구", "서원구", "흥덕구", "청원구"] | None = None
+    district: str | None = Field(default=None, max_length=60)
     limit: int = Field(default=5, ge=1, le=10)
-    rerank: bool = True
+    rerank: bool = False
+    provider: Provider | None = None
+
+    @field_validator("district", "provider", mode="before")
+    @classmethod
+    def clean_optional_fields(
+        cls, value: object, info: ValidationInfo
+    ) -> object:
+        """선택 지역·공급자의 빈 값을 None으로 정리하고 관할 지역을 확인합니다.
+
+        Args:
+            value: 검증 전 입력 값입니다.
+            info: 검증 대상 필드 정보(`district` 또는 `provider`)입니다.
+
+        Returns:
+            정제된 문자열 또는 None입니다.
+
+        Raises:
+            ValueError: `district`에 알 수 없는 지역명이 들어오면 발생합니다.
+        """
+        is_provider = info.field_name == "provider"
+        cleaned = normalize_optional_text(value, lowercase=is_provider)
+        if cleaned is None:
+            return None
+        if not is_provider:
+            text = str(cleaned)
+            if text in ("전체", "모름"):
+                return None
+            if normalize_district(text) is None:
+                raise ValueError(
+                    "청주시 4개 자치구 또는 관할 읍·면·동 이름을 입력해 주세요."
+                )
+            return text
+        return cleaned
+
+
+class ProviderStatus(Model):
+    """LLM 공급자별 가용 상태입니다.
+
+    Attributes:
+        available: 현재 환경에서 호출 가능한지 여부입니다.
+        reason: 미설정 또는 사용 불가 시 안내 문구입니다.
+        resolved_provider: 실제 호출될 공급자 식별자입니다. `.env` 기본 해석용입니다.
+    """
+
+    available: bool
+    reason: str = ""
+    resolved_provider: str | None = None
+
+
+class AssistFields(Model):
+    """응대 검사기·담당자 AI 실행에서 선택할 수 있는 분야·지역·공급자 정보입니다.
+
+    Attributes:
+        categories: 허용 민원 분야 목록입니다.
+        districts: 청주시 4대 자치구 목록입니다.
+        district_areas: 각 자치구 산하 관할 읍·면·동 세부 지역 매핑입니다.
+        providers: LLM 공급자별 가용 상태 매핑입니다.
+    """
+
+    categories: tuple[Category, ...] = Field(default=CATEGORIES)
+    districts: tuple[str, ...] = Field(default=DISTRICTS)
+    district_areas: dict[str, tuple[str, ...]] = Field(default=DISTRICT_AREAS)
+    providers: dict[str, ProviderStatus] = Field(default_factory=dict)
 
 
 class AssistExample(Model):
@@ -475,3 +610,11 @@ class WorkspaceResponse(RootModel[PublicWorkspace | StaffWorkspace]):
 
 class PageResponse(RootModel[PublicPage | StaffPage]):
     """역할별 페이지 응답을 문서에 명시합니다."""
+
+
+Complaint.model_rebuild()
+StaffWorkspace.model_rebuild()
+StaffPage.model_rebuild()
+ComplaintResponse.model_rebuild()
+WorkspaceResponse.model_rebuild()
+PageResponse.model_rebuild()

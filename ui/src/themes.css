@@ -1256,3 +1256,29 @@ body[data-theme="dark"][data-site="staff"] .staff-footer b {
     background: #050b19ab;
   }
 }
+body[data-theme="dark"][data-site="staff"] .staff-ref-list > li > span {
+  color: #d2c39c;
+}
+body[data-theme="dark"][data-site="staff"] .staff-ref-warn {
+  color: #f6ba6f;
+}
+body[data-theme="dark"][data-site="staff"] .staff-workspace .staff-ai-runner {
+  border-color: #36445c;
+}
+body[data-theme="dark"][data-site="staff"] .staff-workspace .staff-ai-runner-row select {
+  background: #131f33;
+  border-color: #3b4b65;
+  color: #e1eafa;
+}
+body[data-theme="dark"] .staff-trace-details {
+  border-color: #364964;
+}
+body[data-theme="dark"] .staff-trace-details > summary {
+  color: #b7cdec;
+}
+body[data-theme="dark"] .staff-trace-details > h4 {
+  color: #cfdbef;
+}
+body[data-theme="dark"] .staff-trace-details > p {
+  color: #b3c1d8;
+}

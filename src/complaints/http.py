@@ -78,6 +78,7 @@ def protect_api() -> None:
         "/api/v1/health",
         "/api/v1/session",
         "/api/v1/assist",
+        "/api/v1/assist/fields",
         "/api/v1/assist/examples",
         "/api/v1/assist/stream",
     ):

@@ -38,22 +38,22 @@
 ---
 
 > [!IMPORTANT]
-> **브랜치 `llm` · GitHub 기본 브랜치 · 응대 검사기 웹 (`http://127.0.0.1:5010/`)**<br>
-> 민원을 입력하면 제목·상세에서 청주시 지명·장소(`resolve_district_and_place` · 네이버 지도 MCP)를 1회 추적하고, 검색 API(`:8007`) 호출 뒤 선택한 엔진(`K-EXAONE 2.5` · `GPT-6 Luna` · `Codex CLI`)으로 판정합니다. 결과 화면에서는 실제 사용한 엔진 배지와 함께 **보낸 데이터(JSON)**를 위쪽에, **보낸 프롬프트 전문**을 아래쪽에 구분해 표시합니다. 또한 `origin/main`의 비응대 기능(시민 UI02~04·담당자 편집기, `db/` 업무 DB 실행 설계·생성 칼럼·`CHECK`·`seed-public-demo`)도 선택 병합했습니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) · [`src/lab_web`](src/lab_web/README.md)
+> **브랜치 `llm` · GitHub 기본 브랜치 · 민원 웹(`:5000`) + 응대 검사기(`:5010`)**<br>
+> 민원 웹(`python -m src`, `:5000`)의 민원 CRUD·담당자 검토 콘솔(`#/staff`)·`/#/lab`에 응대 검사기(`:5010` `src/lab_web`)와 동일한 RAG+LLM(`K-EXAONE 2.5` · `Codex CLI` · `GPT-6 Luna` 가드) 및 지명/네이버 지도 장소 추적(`resolve_district_and_place`)을 비동기 백그라운드 워커로 통합했습니다. 시민 응답에는 `aiAssist`·초안을 노출하지 않으며, 담당자 편집본·최초 AI 원본 보호와 `automaticTransfer=False` 원칙을 지킵니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) · [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [`src/`](src/README.md) · [`src/lab_web`](src/lab_web/README.md)
 
 > [!NOTE]
-> **현재 구현 요약 (`2026-11-13` 기준)**
+> **현재 구현 요약 (`2026-11-15` 기준)**
 >
-> - **웹 · 업무 DB (`:5000`):** 시민 UI02~04(`/design/ui04`)·`#/citizen` 기본·`#/staff` 편집기(`PHRASES`·`Ctrl+S`), Flask·Swagger, PostgreSQL `complaint_app` 저장(생성 칼럼 5개·`CHECK` 3종·`isSynthetic`·`seed-public-demo`·`db/`), 검색 원본 `rag/origin` 5,109건(`dragonkue/multilingual-e5-small-ko` 384차원)
-> - **응대 검사기 (`:5010`):** 엔진 선택 단추(`.env 기본`에 해석된 기본 엔진 표시 + `.env` 키/실행파일 미설정 잠금 `aria-disabled`·흔들림 피드백), 지명·장소 1회 추적(`📍 발생 지역` · `🗺️ 장소 추적` · `🤖 LLM 엔진`), 엔진별 보낸 데이터(JSON) 상단·보낸 프롬프트 전문 하단(`assist.llmProvider`·`assist.llmModel`), NDJSON 진행 스트리밍(`decode` 플러시·422/오류 재시도 차단), 테스트 기록(`.rag-cache/lab-runs`), 원클릭 자동 기동([`검사기-시작.cmd`](검사기-시작.cmd))
+> - **웹 · 업무 DB (`:5000`):** 시민 UI02~04(`/design/ui04`)·`#/citizen` 기본·`#/staff`·`#/lab`, Flask·Swagger, PostgreSQL `complaint_app` 저장(생성 칼럼 5개·`CHECK` 3종·`isSynthetic`·`seed-public-demo`·`db/`), 민원 등록·수정·재실행 시 `ComplaintService` 비동기 백그라운드 워커(`aiAssist`·`job.provider`·초안/원본 보호·1.5초 폴링) 및 `GET /api/v1/assist/fields`(`rerank=False` 기본), 검색 원본 `rag/origin` 5,109건(`dragonkue/multilingual-e5-small-ko` 384차원)
+> - **응대 검사기 (`:5010` 및 `:5000/#/lab`):** 엔진 선택 단추(`.env 기본`에 해석된 기본 엔진 표시 + `.env` 키/실행파일 미설정 잠금 `aria-disabled`·흔들림 피드백), 4개 구·98개 읍·면·동 선택 및 지명·장소 추적(`📍 발생 지역` · `🗺️ 장소 추적` · `🤖 LLM 엔진`), 엔진별 보낸 데이터(JSON) 상단·보낸 프롬프트 전문 하단(`assist.llmProvider`·`assist.llmModel`), NDJSON 진행 스트리밍, 테스트 기록(`.rag-cache/lab-runs`), 원클릭 자동 기동([`검사기-시작.cmd`](검사기-시작.cmd))
 > - **LLM · 429 안정화 · MCP:** `K-EXAONE 2.5` (`EXAONE_URL`/`EXAONE_MODEL` 격리, `EXAONE_REASONING_EFFORT`, `EXAONE_MAX_TOKENS` 16384), `http_json` 429(`retry-after-ms`/`retry-after` 백오프 2회·일일 한도 즉시 중단) 및 판정 API 실패 시 연쇄 호출 차단, `Codex CLI` MCP (`search_complaint_rag` · `lookup_navermap_place`), `PREFIX-00~04`
-> - **후속 확장:** `openai_api` `cached_tokens` 실측(키 필요), 민원 CRUD LLM 연동, 시민 챗봇·담당자 SSE, [`EXAONE Tabular`](#exaone-tabular-모델의-후속-추가-위치-구상) 예측 모델, 공식 행정 이관
+> - **후속 확장:** `openai_api` `cached_tokens` 실측(키 필요), 시민 챗봇 실연동·담당자 SSE 실시간 푸시, 운영 본인·담당자 인증, [`EXAONE Tabular`](#exaone-tabular-모델의-후속-추가-위치-구상) 예측 모델, 공식 행정 이관
 
-| 지금 됨 | 응대 검사기 (`:5010`) | 아직 (후속) |
+| 지금 됨 | 응대 검사기 (`:5010` / `#/lab`) | 아직 (후속) |
 | --- | --- | --- |
-| 시민·담당자 CRUD, Flask·Swagger, PostgreSQL `complaint_app` | 엔진 선택(`K-EXAONE 2.5`·`GPT-6 Luna`·`Codex CLI`) · `.env` 기본 표시 · 키 미설정 자동 잠금 | 민원 CRUD의 LLM 연결 |
-| FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 지명·네이버 지도 1회 통합 추적 → 검색 → PREFIX-00~04 판정 및 결과 배지 | 시민 챗봇 실연결 · 담당자 SSE |
-| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | MCP NDJSON(검색·장소추적) · 엔진별 데이터 ↑·프롬프트 ↓ (`assist.codex`·`llmProvider`) · `.rag-cache/lab-runs` | `openai_api` `cached_tokens` · `EXAONE Tabular` · 공식 이관 |
+| 시민·담당자 CRUD, 비동기 RAG+LLM 워커·`aiAssist`·초안 보호, PostgreSQL `complaint_app` | 엔진 선택(`K-EXAONE 2.5`·`GPT-6 Luna`·`Codex CLI`) · `.env` 기본 표시 · 키 미설정 자동 잠금 | 담당자 실시간 SSE 푸시 · 시민 챗봇 실연결 |
+| FAQ 94 · 사례 5,015 · 부서 127, 원본 `rag/origin` | 4구/98 읍·면·동·네이버 지도 장소 추적 → 검색 → PREFIX-00~04 판정 및 결과 배지 | 운영 본인·담당자 인증 · `openai_api` 키 실측 |
+| Windows `setup.cmd` · `검사기-시작.cmd` · `검색-시작.cmd` · Linux `setup.sh` · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) | MCP NDJSON(검색·장소추적) · 엔진별 데이터 ↑·프롬프트 ↓ (`assist.codex`·`llmProvider`) · `.rag-cache/lab-runs` | `EXAONE Tabular` · 7테이블 정규화 · 공식 행정 이관 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -87,7 +87,7 @@
 
 ## 현재 구현 상태
 
-시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. `version` 칸이 없는 예전 `complaints` 테이블은 저장소 준비 때 채웁니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 응대 검사기는 `src/lab_web` `:5010`과 `src/assist`가 `src/rag`와 `src/llm`을 이어 그 검색 위에 판정만 올립니다. 실제 민원 CRUD의 LLM 연결·SSE·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
+시민·담당자 웹과 Flask 업무 서버는 Python 3.12 `.venv-web`에서 실행하고, 민원·답변·이력은 같은 PostgreSQL의 `complaint_app` 스키마에 저장합니다. `version` 칸이 없는 예전 `complaints` 테이블은 저장소 준비 때 채웁니다. 검색 색인은 `complaint_rag`이며 행을 섞지 않습니다. 민원 웹(`:5000`) CRUD와 `#/lab`은 `ComplaintService`·`src/complaints/api.py`를 통해 `src/assist` 백그라운드 워커 및 스트림 API를 직접 호출하며, 단독 검사기 웹(`src/lab_web` `:5010`)과 동일한 판정·초안·순화·정책 검사를 공유합니다. 담당자 실시간 SSE 푸시(현재 1.5초 폴링)·시민 챗봇·운영 인증·공식 이관은 미구현입니다. [서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
 
 | 영역 | 구성·역할 | 상태 |
 | --- | --- | --- |
@@ -98,8 +98,8 @@
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
-| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010` · K-EXAONE 2.5·GPT-6 Luna·Codex CLI 선택 · 초안 평가 개발 26/26 · 보류 3/3 · 400문항 아님 · openai_api 캐시 실측은 키 후속 |
-| 시연 웹 | 시민·담당자 화면, 목록·CRUD·초안·게시·단계 시연 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `웹-시작.cmd` |
+| AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010`·민원 CRUD 비동기 워커(`:5000`) · K-EXAONE 2.5·GPT-6 Luna(가드)·Codex CLI 선택 · 초안 평가 개발 26/26 · 보류 3/3 · 400문항 아님 · openai_api 캐시 실측은 키 후속 |
+| 시연 웹 | 시민·담당자 화면, 목록·CRUD·AI 참고/초안 보호·게시·1.5초 폴링 | Flask·Swagger·PostgreSQL `complaint_app` · Windows `웹-시작.cmd` · SSE 푸시/시민 챗봇은 후속 |
 | 응대 검사기 | `:5010` 작성 → 장소추적·검색 → 엔진선택 판정 | 업무 DB 없음 · `.rag-cache/lab-runs` 파일 기록 · 키 미설정 공급자 비활성화 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
@@ -377,6 +377,8 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 데이터 갱신 시에는 [수집·정규화 방법](rag/origin/README.md)과 [백업·재적재 절차](docs/harness/runbook.md)를 따릅니다. 변경 없는 벡터는 재사용하며 모델·본문 구성 규칙 변경에 따른 재생성은 별도로 구분합니다.
 
 ## 검증 근거
+
+2026-11-15 민원 웹 CRUD·`#/staff`·`#/lab` 통합(`CASE-093`) 이후 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **151개가 모두 통과**(`test_complaint_ai.py` 4건 포함 0건너뜀)했고, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(Windows 환경 `complaint_rag_test_template` 부재로 PG 격리 3개 건너뜀)와 `python -m rag.verify` 무결성 대조(`passed: true`, FAQ 94·사례 5,015·부서 127)가 통과했고, 프론트엔드 `npm --prefix ui run check` **JavaScript 17개 문법 검사**와 `npm --prefix ui test` **16개 단위 테스트**가 모두 통과했습니다. 또한 격리 PostgreSQL 스키마(`complaint_app_e2e`)의 `:5000`+`:8007` 실서버에서 `exaone_api`(`k-exaone_v2.5`), `codex_cli`(`gpt-6-luna`), 미설정 `openai_api` 가드를 모델별로 검증하고 테스트 후 `complaint_app_e2e`를 삭제해 `complaint_app` 원본 2행을 보존했습니다. [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
 
 2026-11-13 `origin/main` 비응대 기능 병합(`CASE-092`) 이후 Windows / Python 3.12 `.venv-web`에서 PostgreSQL 격리 테스트(`RUN_PG_TESTS=1`)를 포함해 `pytest src/tests -q -p no:cacheprovider` **147개가 모두 통과**(`test_demo_data.py` 4건·`test_postgres_schema.py` 3건 포함)했고, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy` 정적 타입 검사에서 오류가 없었습니다. RAG `.venv`에서는 `pytest rag/tests -q -p no:cacheprovider` **48개 통과**(DB 격리 3개 건너뜀)와 `python -m rag.verify` 무결성 대조(`passed: true`, FAQ 94·사례 5,015·부서 127)가 통과했고, 프론트엔드 `npm --prefix ui run check` **JavaScript 16개 문법 검사**(`ui04-adapter.js` 포함)와 `npm --prefix ui test` **12개 단위 테스트**가 모두 통과했습니다. Flask 인메모리 테스트 클라이언트로 `seed-public-demo`·`/`·`/design/ui04`·`/design/ui04-adapter.js` `200` 응답 및 `:5010` 실서버 `/api/v1/health` `200` 응답도 확인했습니다. [CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) · [CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) · [CASE-090](docs/cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) · [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
 

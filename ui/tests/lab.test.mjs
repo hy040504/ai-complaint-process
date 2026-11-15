@@ -1,7 +1,14 @@
-/** llm 브랜치 응대 검사기의 질의 합성과 화면 경계를 검증합니다. */
+/** llm 브랜치 응대 검사기와 민원웹 LLM UI 보조 함수의 질의 합성과 화면 경계를 검증합니다. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { labQuery, labShell } from "../src/lab.js";
+import { labQuery, labShell, resolveSelectableProvider } from "../src/lab.js";
+import {
+  buildDistrictOptionsHtml,
+  buildProviderOptionsHtml,
+  formatPlaceText,
+  resolveLlmMeta,
+} from "../src/llm-meta.js";
+import { staffReviewInfo } from "../src/staff.js";
 import {
   initLlmSelector,
   resolveLlmSectionMeta,
@@ -68,13 +75,13 @@ function makeFakeRoot() {
   };
 }
 
-test("제목·분야·본문을 검색 질의로 합친다", () => {
+test("분야를 제외하고 제목·본문만 검색 질의로 합친다", () => {
   const query = labQuery({
     category: "청소",
     title: "대형폐기물",
     body: "배출 방법이 궁금합니다",
   });
-  assert.equal(query, "분야: 청소\n\n대형폐기물\n\n배출 방법이 궁금합니다");
+  assert.equal(query, "대형폐기물\n\n배출 방법이 궁금합니다");
 });
 
 test("검사기 껍데기에 시민·담당자 화면 링크가 없다", () => {
@@ -389,4 +396,98 @@ test("showResult는 데이터 JSON·프롬프트 제목, 배지, 호출 카드�
     if (originalDocument === undefined) delete globalThis.document;
     else globalThis.document = originalDocument;
   }
+});
+
+test("사용 불가 LLM 공급자를 고르면 .env 기본값('')으로 되돌린다", () => {
+  const providers = {
+    "": { available: true, resolvedProvider: "codex_cli" },
+    exaone_api: { available: true },
+    openai_api: { available: false, reason: ".env에 OPENAI_API_KEY가 없습니다." },
+  };
+  assert.equal(resolveSelectableProvider(providers, "exaone_api"), "exaone_api");
+  assert.equal(resolveSelectableProvider(providers, "openai_api"), "");
+  assert.equal(resolveSelectableProvider(providers, ""), "");
+});
+
+test("읍·면·동 선택 옵션과 담당자 LLM 옵션 HTML을 생성한다", () => {
+  const districtHtml = buildDistrictOptionsHtml(
+    "오송읍",
+    ["상당구", "서원구", "흥덕구", "청원구", "모름"],
+    { 흥덕구: ["오송읍", "복대1동"] },
+  );
+  assert.match(districtHtml, /<optgroup label="청주시 4개 자치구 \(전체\)">/);
+  assert.match(districtHtml, /<option value="오송읍" selected>오송읍 \(흥덕구\)<\/option>/);
+
+  const providerHtml = buildProviderOptionsHtml(
+    {
+      "": { available: true, resolvedProvider: "exaone_api" },
+      exaone_api: { available: true },
+      codex_cli: { available: true },
+      openai_api: { available: false, reason: "API 키 없음" },
+    },
+    "codex_cli",
+  );
+  assert.match(providerHtml, /\.env 기본 \(엑사온 API\)/);
+  assert.match(providerHtml, /<option value="codex_cli" selected/);
+  assert.match(providerHtml, /<option value="openai_api" disabled/);
+});
+
+test("공급자별 LLM 메타데이터와 장소 문자열을 일관되게 조합한다", () => {
+  const meta = resolveLlmMeta("", { llmProvider: "exaone_api", llmModel: "k-exaone_v2.5" });
+  assert.equal(meta.dataTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 데이터");
+  assert.equal(meta.promptTitle, "엑사온 API (K-EXAONE 2.5)에 보낸 프롬프트");
+  assert.match(meta.badgeText, /LLM: 엑사온 API · k-exaone_v2\.5 · \.env 기본/);
+
+  assert.equal(
+    formatPlaceText({ title: "오송읍 행정복지센터", roadAddress: "충북 청주시 흥덕구 오송읍 오송가락로 123" }),
+    "오송읍 행정복지센터 (충북 청주시 흥덕구 오송읍 오송가락로 123)",
+  );
+  assert.equal(formatPlaceText(null), "");
+});
+
+test("담당자 검토 참고 카드가 실제 aiAssist 결과를 표시한다", () => {
+  const html = staffReviewInfo({
+    category: "도로·교통",
+    district: "모름",
+    job: { status: "succeeded", stage: "완료", provider: "exaone_api" },
+    aiAssist: {
+      outcome: "department_suggestion",
+      reasonCode: "department_candidate",
+      district: "흥덕구",
+      inferredPlace: { title: "오송읍행정복지센터", roadAddress: "청주시 흥덕구 오송읍" },
+      llmProvider: "exaone_api",
+      llmModel: "k-exaone_v2.5",
+      departments: [
+        {
+          canonicalName: "흥덕구 건설과",
+          dutyStatus: "unverified",
+          jurisdictionStatus: "unverified",
+          automaticTransfer: false,
+        },
+      ],
+      faq: [{ sourceId: "12", title: "가로등 고장 신고 안내" }],
+      cases: [{ sourceId: "34", title: "오송읍 가로등 점검 요청", departmentCurrent: "흥덕구 건설과" }],
+      sanitize: {
+        sanitizedSummary: "가로등 점등 불량 점검 요청",
+        humanProtectionReviewNeeded: false,
+      },
+      staffDraft: {
+        summaryCard: {
+          coreSummary: "오송읍 도로 가로등 미점등 신고",
+          missingInfo: ["정확한 전주 번호"],
+        },
+      },
+      policyFailures: [],
+      codex: [],
+    },
+  });
+  assert.match(html, /담당 부서 후보 안내/);
+  assert.match(html, /AI 감지: 흥덕구/);
+  assert.match(html, /오송읍행정복지센터 \(청주시 흥덕구 오송읍\)/);
+  assert.match(html, /흥덕구 건설과/);
+  assert.match(html, /업무분장: unverified, 관할: unverified · 자동 이관 아님/);
+  assert.match(html, /가로등 고장 신고 안내/);
+  assert.match(html, /오송읍 도로 가로등 미점등 신고/);
+  assert.match(html, /가로등 점등 불량 점검 요청/);
+  assert.match(html, /엑사온 API/);
 });

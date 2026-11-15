@@ -15,8 +15,12 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel
 
-from src.complaints.models import AssistResponse
+from src.complaints.models import (
+    AssistResponse as AssistResponse,
+    ProviderStatus as ProviderStatus,
+)
 from src.lab_web.constants import CATEGORIES, DISTRICT_AREAS, DISTRICTS, Category, District
+from src.llm.settings import Provider, normalize_optional_text
 
 Title = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
@@ -24,8 +28,6 @@ Title = Annotated[
 Body = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=10, max_length=2000)
 ]
-Provider = Literal["exaone_api", "codex_cli", "openai_api"]
-"""검사기에서 고를 수 있는 LLM 공급자입니다. `src.llm.settings.LAB_PROVIDERS`와 맞춥니다."""
 
 
 class Model(BaseModel):
@@ -71,12 +73,9 @@ class LabComplaint(Model):
         Returns:
             비어 있지 않으면 정제한 문자열, 비어 있으면 None입니다.
         """
-        if value is None or value == "":
-            return None
-        cleaned = str(value).strip()
-        if not cleaned:
-            return None
-        return cleaned.lower() if info.field_name == "provider" else cleaned
+        return normalize_optional_text(
+            value, lowercase=(info.field_name == "provider")
+        )
 
 
 class LlmEnvelope(Model):
@@ -135,20 +134,6 @@ class LabAcceptResult(Model):
     assist: AssistResponse
     message: str = "검색 후보를 찾은 뒤 판정했습니다."
     run: LabRunSummary | None = None
-
-
-class ProviderStatus(Model):
-    """LLM 공급자별 가용 상태입니다.
-
-    Attributes:
-        available: 현재 환경에서 호출 가능한지 여부입니다.
-        reason: 미설정 또는 사용 불가 시 안내 문구입니다.
-        resolved_provider: 실제 호출될 공급자 식별자입니다. `.env` 기본 설정 해석에 씁니다.
-    """
-
-    available: bool
-    reason: str = ""
-    resolved_provider: str | None = None
 
 
 class LabFields(Model):

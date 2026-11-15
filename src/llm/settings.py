@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 _LLM_ENV_KEYS = frozenset(
     {
@@ -44,9 +44,29 @@ DEFAULT_EXAONE_MAX_TOKENS = 16384
 DEFAULT_EXAONE_TEMPERATURE = 0.7
 DEFAULT_EXAONE_TOP_P = 0.95
 
+Provider = Literal["exaone_api", "codex_cli", "openai_api"]
+"""웹·업무 API에서 고를 수 있는 LLM 공급자 식별자입니다."""
 LAB_PROVIDERS: tuple[str, ...] = ("", "exaone_api", "codex_cli", "openai_api")
 """검사기 선택 단추 순서입니다. 빈 문자열은 `.env` 기본 설정입니다."""
 _PROVIDER_KEY_ENV = {"exaone_api": "EXAONE_API_KEY", "openai_api": "OPENAI_API_KEY"}
+
+
+def normalize_optional_text(value: object, *, lowercase: bool = False) -> object:
+    """빈 문자열·공백 입력을 None으로 정규화하고 필요 시 소문자로 바꿉니다.
+
+    Args:
+        value: 검증 전 원시 입력 값입니다.
+        lowercase: True이면 공급자 식별자처럼 소문자로 통일합니다.
+
+    Returns:
+        비어 있지 않으면 공백을 제거한 문자열, 비어 있으면 None입니다.
+    """
+    if value is None or value == "":
+        return None
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+    return cleaned.lower() if lowercase else cleaned
 
 
 def optional_env(name: str) -> str | None:

@@ -89,7 +89,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 | 메서드·경로 (`/api/v1` 기준) | 권한·기능 |
 | --- | --- |
-| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 |
+| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역·공급자별 사용 가능 여부(`providers`: `available`, `reason`, `resolvedProvider`) 목록 |
 | 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세 검색 및 장소 추적 후 선택 공급자(`provider`)로 판정. `assist.inferredPlace`·`assist.llmProvider`·`assist.llmModel`·`assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
@@ -97,9 +97,10 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | 검사기 웹 `GET /api/v1/lab/runs` | 테스트 기록 목록. 최신순 |
 | 검사기 웹 `GET /api/v1/lab/runs/<id>` | 기록 한 건. 모델을 다시 부르지 않음 |
 | 검사기 웹 `DELETE /api/v1/lab/runs` | 기록 JSON 모두 삭제 |
+| `GET /assist/fields` | 기존 Flask(`:5000`) 익명 필드 API. 허용 분야·4구/98 읍·면·동·공급자 가용 상태 반환 |
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
-| `POST /assist` | 검색+판정+정책 검사. 세션 불필요. 민원 저장 없음. 응답에 `codex` |
-| `POST /assist/stream` | 같은 파이프라인의 짧은 진행 안내 NDJSON. 세션 불필요 |
+| `POST /assist` | 검색+판정+정책 검사(`rerank` 기본 False·`provider` 선택·읍·면·동 허용). 세션 불필요. 민원 저장 없음 |
+| `POST /assist/stream` | 같은 파이프라인의 진행 안내 NDJSON 뒤 `done` 스트리밍. 세션 불필요 |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷 |
 | `GET /complaints` | 공개 범위 적용 후 검색·페이지 목록 |
@@ -113,8 +114,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `PUT /complaints/{complaint_id}/draft` | 담당자 초안·편집 이력 저장 |
 | `POST /complaints/{complaint_id}/publish` | 담당자 답변 게시·기원 판별 |
 | `POST /complaints/{complaint_id}/retract` | 담당자 게시본 철회·이력 보존 |
-| `POST /complaints/{complaint_id}/jobs` | 담당자 서버 단계 시연 시작 |
-| `POST /complaints/{complaint_id}/jobs/cancel` | 담당자 단계 시연 취소 |
+| `POST /complaints/{complaint_id}/jobs` | 담당자 비동기 AI 분석 시작(`JobStartInput.provider` 선택) 또는 테스트 미연결 시 단계 시연 |
+| `POST /complaints/{complaint_id}/jobs/cancel` | 담당자 실행 중 작업 취소 |
 
 등록 본문 예시:
 
@@ -140,7 +141,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 - 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
-- AI 완료·답변 게시·민원 상태는 구분한다. 새 민원은 실제 AI 미연동 대기 상태이며 저장 성공을 AI 성공으로 표시하지 않는다. 서버 단계 시연은 조회 시 경과 시간에 맞춰 이벤트를 저장하고 UI가 1.5초 간격으로 조회한다. 실제 추론·백그라운드 작업자·SSE가 아니다.
+- AI 완료·답변 게시·민원 상태는 구분합니다. 운영 앱(`testing=False`)에서는 민원 등록·수정 및 담당자 작업 실행 시 백그라운드 스레드(`ComplaintService`)가 `iter_web_assist`를 비동기로 실행하며 진행 단계를 `_live_jobs` 메모리에 반영하고 완료/실패 시에만 DB `version`을 갱신합니다(UI는 1.5초 폴링, SSE 푸시 미구현). 이미 담당자가 작성·수정한 초안(`draft`)과 최초 AI 원본(`aiOriginal`)은 후속 AI 실행으로 덮어쓰지 않고 `aiCandidate`·`aiAssist`만 갱신합니다. AI 실패 시에도 저장된 민원과 기존 초안은 보존됩니다(`testing=True` 또는 미연결 시에는 기존 `advance_jobs()` 단계 시연 동작 유지). [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
 - 기존 브라우저 `cheongju-ui-v1` 자료는 보존하며 서버로 자동 업로드하지 않는다. 신규 업무 저장은 API만 사용한다. `sessionStorage`에는 작성 전 임시 입력만 남긴다.
 
 ## 설정·검증·남은 범위
@@ -172,8 +173,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 `COMPLAINT_LLM_PROVIDER=exaone_api`(또는 검사기 화면에서 K-EXAONE 선택)이면 `EXAONE_API_KEY`로 `https://api.exaone.ai/v1/chat/completions`(또는 `EXAONE_URL`) Chat Completions API의 `k-exaone_v2.5`(또는 `EXAONE_MODEL`)를 호출하며, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·`EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 전달해 추론 토큰(`reasoning_tokens`)을 포함한 충분한 토큰 한도와 코드 울타리 정리(`strip_code_fence`)를 적용합니다. 일시적인 HTTP 429(`rate_limit_exceeded`·동시 요청 한도)에는 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도(일일 한도 `x-day-rate-limit-remaining: 0` 시 즉시 종료)하고, 판정 API 실패 시 후속 초안·순화 호출을 연달아 보내지 않습니다. `openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
 풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 사전 추적한 `inferred_place`를 사용자 JSON에 실어 보냅니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
-다시 실행합니다. 모든 공급자 모두 민원 CRUD와 분리된 응대 검사기에만 적용되고, 검색
-`retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약은 그대로 유지합니다.
+다시 실행합니다. 모든 공급자는 검색 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약을 그대로 유지합니다. 민원 CRUD 백그라운드 분석에서도 `aiAssist`·`aiCandidate`·`draft`는 담당자 전용 응답에만 포함하고 시민 응답(`PublicComplaint`·`PublicWorkspace`)에서는 제거하며, `automaticTransfer=False`·자동 게시 금지 원칙을 지킵니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. PREFIX 조립 적격은
 [`src/assist/prefix_cache.py`](assist/prefix_cache.py)가 검사하고, openai_api
 `cached_tokens`는 키가 있을 때 [`scripts/응대_비교.py`](../scripts/응대_비교.py)가
@@ -187,10 +187,12 @@ npm --prefix ui run check
 npm --prefix ui test
 ```
 
+2026-11-15 Windows / Python 3.12 `.venv-web`에서 민원 웹 CRUD·`#/staff`·`#/lab`에 `src.assist` 비동기 통합(`CASE-093`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **151개 통과**, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **16개 통과**, 격리 DB(`complaint_app_e2e`) `:5000`+`:8007` 실서버 모델별(`exaone_api`, `codex_cli`, `openai_api` 가드) E2E 검증을 확인했다. [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
+
 2026-11-13 Windows / Python 3.12 `.venv-web`에서 `main` 비응대 기능(`UI02~04`, `db/`, 생성 칼럼·CHECK, `demo_data`) 병합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **147개 통과**, 핵심 패키지 30개 파일 `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **16개 통과**·`npm --prefix ui test` **12개 통과**를 확인했다. [CASE-092](../docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)
 
 2026-11-05 Windows / Python 3.12.10 `.venv-web`에서 `pytest rag/tests/test_assist.py src/tests` 41개, `mypy --config-file src/mypy.ini`, `black --check src rag/assist.py`를 통과했다. 백엔드 패키지 분리와 검색 조각 재사용 시험을 포함한다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-028](../docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 
 2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
 
-**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 민원 CRUD의 실제 LLM 연결·작업자·SSE, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 응대 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3)을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.
+**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 담당자 실시간 SSE 푸시(현재 1.5초 폴링 비동기 워커), 시민 챗봇 실연결, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3)을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.

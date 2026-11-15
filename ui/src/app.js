@@ -29,12 +29,23 @@ import {
 } from "./store.js";
 import {
   labExamples,
+  labFields,
   labPage,
   labQuery,
+  labResult,
   labShell,
   loadLabExamples,
+  loadLabFields,
   runLabAssist,
+  selectedLabProvider,
+  setSelectedLabProvider,
 } from "./lab.js";
+import {
+  PROVIDER_SHORT_LABELS,
+  ROLE_PROMPT_NAMES,
+  buildProviderOptionsHtml,
+  resolveLlmMeta,
+} from "./llm-meta.js";
 
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
@@ -196,7 +207,7 @@ async function loadScreen() {
       '<div class="panel empty" role="status">검사기를 준비하고 있습니다…</div>',
     );
     try {
-      await loadLabExamples();
+      await Promise.all([loadLabExamples(), loadLabFields()]);
       if (sequence === loadSequence) render();
     } catch (error) {
       if (sequence === loadSequence)
@@ -211,7 +222,10 @@ async function loadScreen() {
   );
   try {
     await setRole(route.staff ? "staff" : "citizen");
-    await refresh();
+    await Promise.all([
+      refresh(),
+      route.staff ? loadLabFields().catch(() => null) : Promise.resolve(),
+    ]);
     if (sequence === loadSequence) {
       render();
       if (!route.staff) showCitizenIntro();
@@ -501,7 +515,16 @@ function citizenProgress(c) {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function editor(c) {
-  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>접수 ${daysSince(c.date)}일째</span><span id="draft-state" class="draft-state" role="status" aria-live="polite">서버 저장본</span></div><div class="assign-row"><span>담당자</span><b>${c.assigned ? "김담당" : "미지정"}</b>${button(c.assigned ? "담당 해제" : "내가 담당", "", 'data-action="assign" data-id="' + c.id + '"')}</div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><div class="phrase-bar" aria-label="자주 쓰는 문구">${PHRASES.map((p) => `<button type="button" class="phrase-chip" data-action="insert-phrase" data-phrase="${esc(p)}">${esc(p.slice(0, 14))}…</button>`).join("")}</div><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><div class="field-foot"><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><span class="char-count" id="answer-count">${c.draft.length}/4,000</span></div><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><span class="char-count" id="reason-count">0/200</span><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div><p class="shortcut-hint">Ctrl+S(또는 ⌘S)로 초안을 저장합니다.</p></form><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${button(`${icon("refresh", 15)} AI 시연 재실행`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div><div class="evidence-note">${icon("help", 17)}<span>검색·LLM 미연동 상태입니다. 공식 FAQ 근거와 부서 후보는 생성하지 않습니다.</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
+  const candidateDiffers = Boolean(
+    c.aiCandidate && c.aiCandidate.trim() && c.aiCandidate.trim() !== c.draft.trim(),
+  );
+  const evidenceText =
+    c.job?.status === "running"
+      ? `RAG 검색과 LLM 판정·초안 생성을 실행하고 있습니다 (${c.job.stage || "진행 중"}).`
+      : c.aiAssist
+        ? "RAG+LLM 분석 결과를 좌측 참고 정보에 표시했습니다. 게시 전 FAQ 조건·부서 업무분장을 확인하세요."
+        : "담당자가 직접 작성하거나 아래 엔진 선택으로 RAG+LLM 응대 분석을 실행할 수 있습니다.";
+  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>접수 ${daysSince(c.date)}일째</span><span id="draft-state" class="draft-state" role="status" aria-live="polite">서버 저장본</span></div><div class="assign-row"><span>담당자</span><b>${c.assigned ? "김담당" : "미지정"}</b>${button(c.assigned ? "담당 해제" : "내가 담당", "", 'data-action="assign" data-id="' + c.id + '"')}</div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><div class="phrase-bar" aria-label="자주 쓰는 문구">${PHRASES.map((p) => `<button type="button" class="phrase-chip" data-action="insert-phrase" data-phrase="${esc(p)}">${esc(p.slice(0, 14))}…</button>`).join("")}</div><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><div class="field-foot"><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><span class="char-count" id="answer-count">${c.draft.length}/4,000</span></div><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><span class="char-count" id="reason-count">0/200</span><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div><p class="shortcut-hint">Ctrl+S(또는 ⌘S)로 초안을 저장합니다.</p></form><div class="staff-ai-runner"><label for="staff-job-provider">AI 분석 엔진</label><div class="staff-ai-runner-row"><select id="staff-job-provider" aria-label="AI 분석 엔진 선택">${buildProviderOptionsHtml(labFields.providers, c.job?.provider || "")}</select>${button(`${icon("refresh", 15)} ${c.aiAssist ? "AI 재실행" : "AI 분석 실행"}`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div></div><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·추론 이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${candidateDiffers ? button(`${icon("spark", 15)} AI 후보 채우기`, "", 'data-action="apply-ai-candidate" data-id="' + c.id + '"') : ""}</div><div class="evidence-note">${icon("help", 17)}<span>${esc(evidenceText)}</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
 }
 /**
  * dashboard 화면 동작을 구성합니다.
@@ -521,7 +544,13 @@ function monitor() {
   const rows = data.complaints.filter(
     (c) => c.status !== "withdrawn" && (!filter || c.job.status === filter),
   );
-  return `<div class="page-content">${pageHeading("AI WORKSPACE", "AI 작업 모니터", "검색부터 검토 대기까지, AI 작업의 단계와 이력을 확인하세요.", `<span class="connection"><i></i> 서버 단계 시연</span>`)}<div class="info-banner amber">${icon("help", 20)}<span><b>실제 AI·SSE 미연동 · 서버 폴링</b> · 재실행 단계와 이벤트는 서버에 저장됩니다. 진행률과 검색 근거를 생성하지 않습니다.</span></div><div class="monitor-toolbar">${[
+  const stageChecks = [
+    ["읽기·접수", /읽|저장|요청|시뮬레이션/],
+    ["검색", /자료|검색/],
+    ["판정·검토", /살펴|판정|부서/],
+    ["안내·초안", /안내|작성|초안|정리|검증|완료/],
+  ];
+  return `<div class="page-content">${pageHeading("AI WORKSPACE", "AI 작업 모니터", "검색부터 검토 대기까지, AI 작업의 단계와 이력을 확인하세요.", `<span class="connection"><i></i> RAG + LLM 연동</span>`)}<div class="info-banner amber">${icon("help", 20)}<span><b>RAG + LLM 백그라운드 분석 · 1.5초 폴링</b> · 민원 등록·재실행 시 실제 검색과 LLM 판정·초안을 실행하며, 미게시 초안은 시민에게 노출하지 않습니다.</span></div><div class="monitor-toolbar">${[
     ["", "전체 작업"],
     ["queued", "실행 대기"],
     ["running", "실행 중"],
@@ -539,7 +568,12 @@ function monitor() {
     )
     .join(
       "",
-    )}<span class="muted">총 ${rows.length}건</span></div><div class="job-grid">${rows.map((c) => `<section class="panel job-card"><div class="job-card-top"><span class="mono">${c.id}</span><span class="badge job-${c.job.status}">${{ queued: "실행 대기", running: "실행 중", succeeded: "완료", failed: "실패", cancelled: "취소", superseded: "입력 변경" }[c.job.status] || c.job.status}</span></div><h2>${esc(c.title)}</h2><p class="job-meta">작업 ${c.id}-A${c.job.attempt} · 입력 v${c.job.contextVersion || c.contextVersion} · 시도 ${c.job.attempt}</p><div class="job-stage">${icon(c.job.status === "running" ? "refresh" : "monitor", 19)}<b>${esc(c.job.stage)}</b></div><div class="stage-steps">${["검색", "판정", "작성", "검증"].map((s) => `<span class="${c.job.events.some((e) => e.stage.includes(s)) ? "done" : ""}">${s}</span>`).join("")}</div><p class="job-updated">마지막 이벤트 · ${new Date(c.job.events.at(-1).date).toLocaleTimeString("ko-KR")}</p><div class="job-actions">${link("민원 열기", `/staff/detail/${c.id}`, "btn")}${button("이력", "", 'data-action="job-history" data-id="' + c.id + '"')}${button(c.job.status === "running" ? "취소" : "시연 재실행", c.job.status === "running" ? "danger" : "primary subtle", `data-action="${c.job.status === "running" ? "cancel-job" : "retry"}" data-id="${c.id}"`)}</div></section>`).join("")}</div>${!rows.length ? '<div class="panel empty"><h2>해당 상태의 작업이 없습니다</h2><p>다른 필터를 선택하거나 민원에서 시연 작업을 실행하세요.</p></div>' : ""}</div>`;
+    )}<span class="muted">총 ${rows.length}건</span></div><div class="job-grid">${rows.map((c) => {
+      const provKey = c.aiAssist?.llmProvider || c.job?.provider || "";
+      const provLabel = provKey ? ` · ${PROVIDER_SHORT_LABELS[provKey] || provKey}` : "";
+      const lastDate = c.job.events.at(-1)?.date;
+      return `<section class="panel job-card"><div class="job-card-top"><span class="mono">${c.id}</span><span class="badge job-${c.job.status}">${{ queued: "실행 대기", running: "실행 중", succeeded: "완료", failed: "실패", cancelled: "취소", superseded: "입력 변경" }[c.job.status] || c.job.status}</span></div><h2>${esc(c.title)}</h2><p class="job-meta">작업 ${c.id}-A${c.job.attempt} · 입력 v${c.job.contextVersion || c.contextVersion} · 시도 ${c.job.attempt}${esc(provLabel)}</p><div class="job-stage">${icon(c.job.status === "running" ? "refresh" : "monitor", 19)}<b>${esc(c.job.stage)}</b></div><div class="stage-steps">${stageChecks.map(([label, rx]) => `<span class="${c.job.events.some((e) => rx.test(e.stage)) ? "done" : ""}">${label}</span>`).join("")}</div><p class="job-updated">${lastDate ? `마지막 이벤트 · ${new Date(lastDate).toLocaleTimeString("ko-KR")}` : "대기 중"}</p><div class="job-actions">${link("민원 열기", `/staff/detail/${c.id}`, "btn")}${button("이력", "", 'data-action="job-history" data-id="' + c.id + '"')}${button(c.job.status === "running" ? "취소" : "AI 재실행", c.job.status === "running" ? "danger" : "primary subtle", `data-action="${c.job.status === "running" ? "cancel-job" : "retry"}" data-id="${c.id}"`)}</div></section>`;
+    }).join("")}</div>${!rows.length ? '<div class="panel empty"><h2>해당 상태의 작업이 없습니다</h2><p>다른 필터를 선택하거나 민원 상세에서 AI 분석을 실행하세요.</p></div>' : ""}</div>`;
 }
 /**
  * assistant 화면 동작을 구성합니다.
@@ -588,11 +622,11 @@ function guide() {
     ],
     [
       "등록한 내용은 어디에 저장되나요?",
-      "민원과 답변은 Flask 서버의 별도 SQLite DB에 저장되어 브라우저를 새로 열어도 유지됩니다. 작성 전 임시 입력만 이 탭에 저장합니다. 기존 localStorage 자료는 자동 업로드하지 않습니다.",
+      "민원과 답변은 Flask 서버의 PostgreSQL 업무 DB(`complaint_app`)에 저장되어 브라우저를 새로 열어도 유지됩니다. 작성 전 임시 입력만 이 탭에 저장합니다.",
     ],
     [
       "AI가 바로 답변하나요?",
-      "현재 실제 LLM과 검색 API는 연결되어 있지 않습니다. 작업 재실행은 서버 단계 시뮬레이션이며, 초안은 담당자가 명시적으로 게시하기 전까지 시민 화면에 표시하지 않습니다.",
+      "민원 등록 시 백그라운드에서 RAG 검색과 LLM 분석이 실행되어 담당자에게 참고 근거·부서 후보·초안을 제공합니다. 초안은 담당자가 검토·게시하기 전까지 시민 화면에 표시하지 않습니다.",
     ],
     [
       "민원을 수정하거나 철회할 수 있나요?",
@@ -630,6 +664,7 @@ function render() {
         end: document.activeElement?.selectionEnd,
       }
     : null;
+  const oldProviderChoice = $("#staff-job-provider")?.value;
   route = currentRoute();
   data = read();
   let content;
@@ -642,6 +677,7 @@ function render() {
             body: form.elements.body.value,
             district: form.elements.district.value,
             category: form.elements.category.value,
+            provider: form.elements.provider?.value,
           }
         : {},
     );
@@ -665,6 +701,16 @@ function render() {
   else content = missing();
   app.innerHTML = shell(content);
   const newEditor = $("#answer-form");
+  const newProviderSelect = $("#staff-job-provider");
+  if (
+    oldProviderChoice !== undefined &&
+    newProviderSelect &&
+    newEditor &&
+    editing &&
+    newEditor.dataset.id === editing.id
+  ) {
+    newProviderSelect.value = oldProviderChoice;
+  }
   if (
     editing &&
     newEditor &&
@@ -751,6 +797,42 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "lab-provider") {
+    if (target.getAttribute("aria-disabled") === "true") {
+      target.classList.remove("shake");
+      void target.offsetWidth;
+      target.classList.add("shake");
+      toast(target.getAttribute("title") || "현재 사용할 수 없는 LLM 엔진입니다.");
+      return;
+    }
+    setSelectedLabProvider(target.dataset.provider || "");
+    render();
+    return;
+  }
+  if (action === "lab-copy-data") {
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(labResult?.codex || [], null, 2),
+      );
+      toast("보낸 데이터 JSON을 복사했습니다.");
+    } catch {
+      toast("복사에 실패했습니다. 직접 선택해 복사해 주세요.");
+    }
+    return;
+  }
+  if (action === "lab-copy-prompt") {
+    const idx = Number(target.dataset.index);
+    const items = (labResult?.codex || []).filter(
+      (call) => typeof call?.prompt === "string" && call.prompt,
+    );
+    try {
+      await navigator.clipboard.writeText(items[idx]?.prompt || "");
+      toast("프롬프트를 복사했습니다.");
+    } catch {
+      toast("복사에 실패했습니다. 직접 선택해 복사해 주세요.");
+    }
+    return;
+  }
   if (action === "lab-example") {
     const sample = labExamples.find((item) => item.id === id);
     if (!sample) return;
@@ -770,6 +852,8 @@ document.addEventListener("click", async (event) => {
       }),
       district: sample.district || null,
       limit: 5,
+      rerank: false,
+      provider: form?.elements.provider?.value || selectedLabProvider || null,
     });
     return;
   }
@@ -847,7 +931,7 @@ document.addEventListener("click", async (event) => {
   if (action === "staff-help") {
     openModal(
       "민원과 업무 이용 안내",
-      `<div class="modal-content"><p>접수 대기·검토 목록에서 민원을 선택하고, 담당자 지정과 원문 확인을 진행하세요.</p><p>초안을 저장한 뒤 미리보기에서 시민에게 표시될 내용을 확인하고 게시할 수 있습니다. AI 원본과 수정 이력은 보존됩니다.</p><p>업무 상태·AI 작업·게시 여부는 다릅니다. 실제 AI·자동 부서 배정·법정기한·감사 로그·공식 이관은 연결되지 않은 로컬 시연입니다.</p>${button("확인", "primary", 'data-action="close-modal"')}</div>`,
+      `<div class="modal-content"><p>접수 대기·검토 목록에서 민원을 선택하고, 담당자 지정과 RAG+LLM 분석 근거를 확인하세요.</p><p>초안을 저장한 뒤 미리보기에서 시민에게 표시될 내용을 확인하고 게시할 수 있습니다. AI 원본과 수정 이력은 보존됩니다.</p><p>업무 상태·AI 작업·게시 여부는 구분됩니다. 자동 부서 배정·법정기한·공식 행정 이관은 연결되지 않은 로컬 시연입니다.</p>${button("확인", "primary", 'data-action="close-modal"')}</div>`,
     );
     return;
   }
@@ -911,16 +995,26 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (action === "retry") {
+    const provider = $("#staff-job-provider")?.value || null;
     await perform(
-      () => command("/jobs"),
-      "서버 단계 시연을 시작했습니다. 기존 편집본은 유지됩니다.",
+      () => command("/jobs", provider ? { provider } : {}),
+      "AI 응대 분석을 요청했습니다. 기존 편집본은 유지됩니다.",
     );
+    return;
+  }
+  if (action === "apply-ai-candidate") {
+    const field = $("#answer");
+    if (!field || !c?.aiCandidate) return;
+    field.value = c.aiCandidate;
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.focus();
+    toast("AI 후보 문장을 편집기에 채웠습니다. 검토 후 초안 저장 또는 게시해 주세요.");
     return;
   }
   if (action === "cancel-job") {
     await perform(
       () => command("/jobs/cancel"),
-      "서버 시연 작업을 취소했습니다.",
+      "진행 중인 AI 분석 작업을 취소했습니다.",
     );
     return;
   }
@@ -946,9 +1040,27 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (action === "compare") {
+    const llmMeta = c.aiAssist
+      ? resolveLlmMeta(c.job?.provider, c.aiAssist)
+      : null;
+    const codexItems = (c.aiAssist?.codex || []).filter(
+      (call) => typeof call?.prompt === "string" && call.prompt,
+    );
+    const traceHtml = c.aiAssist
+      ? `<details class="staff-trace-details"><summary>${esc(llmMeta?.dataTitle || "LLM 호출 데이터")} · ${esc(llmMeta?.chipText || "")}</summary><h4>${esc(llmMeta?.dataTitle || "LLM에 보낸 데이터")}</h4><pre class="compare-box">${esc(JSON.stringify(c.aiAssist.codex || [], null, 2))}</pre><h4>${esc(llmMeta?.promptTitle || "LLM에 보낸 프롬프트")}</h4>${
+          codexItems.length
+            ? codexItems
+                .map(
+                  (call, idx) =>
+                    `<details><summary>${idx + 1}. ${esc(ROLE_PROMPT_NAMES[call.role] || call.role || "호출")} · ${esc(call.system || "")} · ${call.sent ? "보냄" : "보내지 않음"}</summary><pre class="compare-box">${esc(call.prompt)}</pre></details>`,
+                )
+                .join("")
+            : `<p class="muted">${esc(llmMeta?.emptyPromptNote || "프롬프트 없음")}</p>`
+        }</details>`
+      : "";
     openModal(
-      "AI 원문과 답변 이력",
-      `<div class="modal-content"><span class="mini-chip">AI 원본 · 보존됨</span><div class="compare-box prose">${esc(c.aiOriginal || "AI 원본이 없습니다.")}</div>${c.aiCandidate ? `<h3>재실행 후보 · 편집본에 미적용</h3><div class="compare-box prose">${esc(c.aiCandidate)}</div>` : ""}<h3>저장·게시 이력 ${c.versions.length}개</h3>${
+      "AI 원문과 추론·답변 이력",
+      `<div class="modal-content"><span class="mini-chip">AI 원본 · 보존됨</span><div class="compare-box prose">${esc(c.aiOriginal || "AI 원본이 없습니다.")}</div>${c.aiCandidate ? `<h3>최신 AI 후보 · 편집본에 자동 덮어쓰기 안 함</h3><div class="compare-box prose">${esc(c.aiCandidate)}</div>` : ""}<h3>저장·게시 이력 ${c.versions.length}개</h3>${
         c.versions
           .slice()
           .reverse()
@@ -957,7 +1069,7 @@ document.addEventListener("click", async (event) => {
               `<details><summary>v${v.version} · ${esc(v.kind)} · ${date(v.date)}</summary><p class="prose">${esc(v.text)}</p><small>사유: ${esc(v.reason)}</small></details>`,
           )
           .join("") || "<p>아직 저장한 편집 이력이 없습니다.</p>"
-      }<p class="muted">실제 AI는 미연동입니다. 시연 후보는 현재 편집본에 자동 적용하지 않습니다.</p></div>`,
+      }${traceHtml}<p class="muted">재실행 후보는 현재 편집본에 자동 적용하지 않으며, 담당자 게시 전까지 시민 화면에 공개되지 않습니다.</p></div>`,
     );
     return;
   }
@@ -982,11 +1094,13 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
-  if (action === "job-history")
+  if (action === "job-history") {
+    const provTag = c.aiAssist?.llmProvider || c.job?.provider;
     openModal(
       "AI 작업 이벤트 이력",
-      `<div class="modal-content"><p class="mono">${c.id}-A${c.job.attempt} · 서버 단계 시연</p><ol class="timeline">${c.job.events.map((e) => `<li><b>${esc(e.stage)}</b><time>${new Date(e.date).toLocaleString("ko-KR")}</time></li>`).join("")}</ol></div>`,
+      `<div class="modal-content"><p class="mono">${c.id}-A${c.job.attempt}${provTag ? ` · ${esc(PROVIDER_SHORT_LABELS[provTag] || provTag)}` : ""}</p><ol class="timeline">${c.job.events.map((e) => `<li><b>${esc(e.stage)}</b><time>${new Date(e.date).toLocaleString("ko-KR")}</time></li>`).join("")}</ol></div>`,
     );
+  }
 });
 
 document.addEventListener("submit", async (event) => {
@@ -1003,6 +1117,8 @@ document.addEventListener("submit", async (event) => {
       query: labQuery(values),
       district: values.district || null,
       limit: 5,
+      rerank: false,
+      provider: values.provider || selectedLabProvider || null,
     });
     return;
   }
