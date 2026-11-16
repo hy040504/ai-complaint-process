@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="355" viewBox="0 0 960 355" role="img" aria-label="5대 테스트 축별 실증 검증 결과">
+  <title>5대 테스트 축별 실증 검증 결과</title>
+  <rect x="0.5" y="0.5" width="959" height="354" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <g font-family="'Malgun Gothic', 'Noto Sans KR', Arial, sans-serif">
+    <text x="28" y="34" fill="#0f172a" font-size="17" font-weight="700">1. 5대 테스트 축별 실증 검증 결과 (전체 112건 · 청주 한정 110건)</text>
+    <text x="28" y="56" fill="#475569" font-size="12">의미 검증: 통과 94건 (83.9%) · 미감지 취약 11건 · 결함 5건 · 타임아웃 2건 (자동 스크립트 원시: PASS 89 / FAIL 10 / GAP 11 / ERR 2)</text>
+    <rect x="28" y="72" width="12" height="12" rx="3" fill="#0d9488"/>
+    <text x="46" y="82" fill="#334155" font-size="12">통과·방어 적중</text>
+    <rect x="183" y="72" width="12" height="12" rx="3" fill="#d97706"/>
+    <text x="201" y="82" fill="#334155" font-size="12">미감지 취약점</text>
+    <rect x="338" y="72" width="12" height="12" rx="3" fill="#dc2626"/>
+    <text x="356" y="82" fill="#334155" font-size="12">추론·순화 결함</text>
+    <rect x="493" y="72" width="12" height="12" rx="3" fill="#64748b"/>
+    <text x="511" y="82" fill="#334155" font-size="12">외부 API 타임아웃</text>
+    <text x="28" y="128" fill="#0f172a" font-size="13" font-weight="700">A. FAQ 1차 응대·차단</text>
+    <rect x="248" y="111" width="357.1" height="24" rx="5" fill="#f1f5f9"/>
+    <rect x="248.0" y="111" width="357.1" height="24" rx="2" fill="#0d9488"/>
+    <text x="426.6" y="127" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">20</text>
+    <text x="619.1" y="127" fill="#1e293b" font-size="12" font-weight="600">20/20 (100%)</text>
+    <text x="28" y="173" fill="#0f172a" font-size="13" font-weight="700">B. 모호/&#x27;근처&#x27; 장소·부서</text>
+    <rect x="248" y="156" width="500.0" height="24" rx="5" fill="#f1f5f9"/>
+    <rect x="248.0" y="156" width="392.9" height="24" rx="2" fill="#0d9488"/>
+    <text x="444.4" y="172" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">22</text>
+    <rect x="640.9" y="156" width="71.4" height="24" rx="2" fill="#dc2626"/>
+    <text x="676.6" y="172" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">4</text>
+    <rect x="712.3" y="156" width="35.7" height="24" rx="2" fill="#64748b"/>
+    <text x="730.1" y="172" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">2</text>
+    <text x="762.0" y="172" fill="#1e293b" font-size="12" font-weight="600">22/28 (79%)</text>
+    <text x="28" y="218" fill="#0f172a" font-size="13" font-weight="700">C. RAG 모순 유도 방어</text>
+    <rect x="248" y="201" width="410.7" height="24" rx="5" fill="#f1f5f9"/>
+    <rect x="248.0" y="201" width="410.7" height="24" rx="2" fill="#0d9488"/>
+    <text x="453.4" y="217" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">23</text>
+    <text x="672.7" y="217" fill="#1e293b" font-size="12" font-weight="600">23/23 (100%)</text>
+    <text x="28" y="263" fill="#0f172a" font-size="13" font-weight="700">D. 욕설·비속어·비꼬기</text>
+    <rect x="248" y="246" width="375.0" height="24" rx="5" fill="#f1f5f9"/>
+    <rect x="248.0" y="246" width="160.7" height="24" rx="2" fill="#0d9488"/>
+    <text x="328.4" y="262" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">9</text>
+    <rect x="408.7" y="246" width="196.4" height="24" rx="2" fill="#d97706"/>
+    <text x="506.9" y="262" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">11</text>
+    <rect x="605.1" y="246" width="17.9" height="24" rx="2" fill="#dc2626"/>
+    <text x="637.0" y="262" fill="#1e293b" font-size="12" font-weight="600">9/21 (43%)</text>
+    <text x="28" y="308" fill="#0f172a" font-size="13" font-weight="700">E. AI 탈옥·인젝션 방어</text>
+    <rect x="248" y="291" width="357.1" height="24" rx="5" fill="#f1f5f9"/>
+    <rect x="248.0" y="291" width="357.1" height="24" rx="2" fill="#0d9488"/>
+    <text x="426.6" y="307" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">20</text>
+    <text x="619.1" y="307" fill="#1e293b" font-size="12" font-weight="600">20/20 (100%)</text>
+    <text x="28" y="340" fill="#64748b" font-size="11">※ A10·C01·C02·C05·C17(5건)은 자동 문자열 검사가 띄어쓰기/부정문 키워드를 오판했으나 실제 응답 의미 대조 시 정상 방어로 확인됨</text>
+  </g>
+</svg>

@@ -2,6 +2,9 @@
 
 ## 2026-11-17
 
+- **청주 민원 `:5010` 112건 실증 시각화 상세 분석 보고서 추가 ([보고서 MD](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.pdf)):**
+  - 원자료 112건 정식 통합([`rag/reports/lab-5010-eval-112-20261117.json`](rag/reports/lab-5010-eval-112-20261117.json)) 및 재현 스크립트([`scripts/상세분석보고서_112건_생성.py`](scripts/상세분석보고서_112건_생성.py)) 구축: SVG 차트 4종(`docs/assets/eval-112-axis-breakdown.svg` · `outcome-reason.svg` · `latency-engines.svg` · `district-and-gaps.svg`), 축별 심층 분석, 3대 코드 한계 및 개선안, 112건 전수 결과표를 Markdown 및 6쪽 PDF로 생성해 [`docs/report/`](docs/report/README.md)에 배치했습니다.
+
 - **검사기 테스트 기록 폼 복원 및 업무보고 전용 폴더(`docs/report/`) 통합·주석/코드 최적화 ([CASE-098](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md)):**
   - **`:5010` 기록 클릭 시 입력 폼 복원 (`src/lab_web/static/app.js`, `ui/tests/lab.test.mjs`):** 오른쪽 **테스트 기록** 항목 클릭 시 결과와 함께 `fillComplaintForm()`·`setSelectValue()`·`updateCharCounters()`로 당시 보낸 제목·민원 분야·발생 지역(`null` 포함)·LLM 엔진 선택 단추·상세 내용·글자 수를 왼쪽 작성 폼에 복원(`loadFields()` 로딩 전 값 유실 방지 포함)하고, 단위 테스트 및 `:5010` Edge 실서버 3건 클릭 검증을 통과했습니다.
   - **업무보고 전용 폴더 통합 및 11/16 종합 보고서 (`docs/report/`, `scripts/업무보고_*_pdf_생성.py`):** 실서버(`:5000`·`:5010`) 테스트 캡처 6종과 112건 실증 요약을 수록한 `업무보고_20261116.pdf`(5쪽)를 작성하고, 기존 `docs/` 루트의 일자별 업무보고 PDF(`20261109`~`20261111`)까지 [`docs/report/`](docs/report/README.md)로 일괄 통합(`20261104` 포함 5종)했습니다. 4개 PDF 생성 스크립트의 저장 경로, `README.md`·`docs/README.md`·`src/lab_web/README.md`·`scripts/README.md`·`CASE-077·080·081` 링크를 모두 일치시켰습니다.

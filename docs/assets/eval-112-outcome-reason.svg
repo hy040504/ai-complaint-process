@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-label="판정 분기 및 사유 코드 분포">
+  <title>판정 분기 및 사유 코드 분포</title>
+  <rect x="0.5" y="0.5" width="959" height="359" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <g font-family="'Malgun Gothic', 'Noto Sans KR', Arial, sans-serif">
+    <text x="28" y="34" fill="#0f172a" font-size="17" font-weight="700">2. 판정 분기(outcome) 및 처리 사유(reasonCode) 분포 (전체 112건)</text>
+    <text x="28" y="54" fill="#475569" font-size="12">자동 이관(automaticTransfer=true) 발생 0건 · 근거 부족/탈옥/복합 민원은 담당자 검토(human_handoff)로 안전 격리</text>
+    <path d="M 148.00 103.00 A 82.0 82.0 0 0 1 180.04 260.48 L 165.97 227.34 A 46.0 46.0 0 0 0 148.00 139.00 Z" fill="#f59e0b"/>
+    <path d="M 179.38 260.76 A 82.0 82.0 0 0 1 69.01 162.99 L 103.69 172.65 A 46.0 46.0 0 0 0 165.60 227.50 Z" fill="#2563eb"/>
+    <path d="M 69.20 162.30 A 82.0 82.0 0 0 1 138.11 103.60 L 142.45 139.34 A 46.0 46.0 0 0 0 103.80 172.27 Z" fill="#0d9488"/>
+    <path d="M 138.82 103.52 A 82.0 82.0 0 0 1 147.28 103.00 L 147.60 139.00 A 46.0 46.0 0 0 0 142.85 139.29 Z" fill="#64748b"/>
+    <text x="148.0" y="181.0" fill="#0f172a" font-size="22" font-weight="800" text-anchor="middle">112</text>
+    <text x="148.0" y="199.0" fill="#64748b" font-size="11" text-anchor="middle">전체 실측</text>
+    <rect x="28" y="275" width="10" height="10" rx="2" fill="#f59e0b"/>
+    <text x="43" y="285" fill="#334155" font-size="11">담당자 검토: 49건 (43.8%)</text>
+    <rect x="210" y="275" width="10" height="10" rx="2" fill="#2563eb"/>
+    <text x="225" y="285" fill="#334155" font-size="11">부서 추천: 40건 (35.7%)</text>
+    <rect x="28" y="297" width="10" height="10" rx="2" fill="#0d9488"/>
+    <text x="43" y="307" fill="#334155" font-size="11">FAQ 안내: 21건 (18.8%)</text>
+    <rect x="210" y="297" width="10" height="10" rx="2" fill="#64748b"/>
+    <text x="225" y="307" fill="#334155" font-size="11">타임아웃 무응답: 2건 (1.8%)</text>
+    <line x1="418" y1="78" x2="418" y2="335" stroke="#e2e8f0"/>
+    <text x="440" y="92" fill="#0f172a" font-size="13" font-weight="700">세부 사유 코드(reasonCode)별 건수</text>
+    <text x="440" y="124" fill="#334155" font-size="11">현장 조치 필요 (action_required)</text>
+    <rect x="688" y="112" width="220.0" height="16" rx="4" fill="#2563eb"/>
+    <text x="914.0" y="124" fill="#0f172a" font-size="11" font-weight="700">43</text>
+    <text x="440" y="149" fill="#334155" font-size="11">FAQ 안내 충족 (ok)</text>
+    <rect x="688" y="137" width="107.4" height="16" rx="4" fill="#0d9488"/>
+    <text x="801.4" y="149" fill="#0f172a" font-size="11" font-weight="700">21</text>
+    <text x="440" y="174" fill="#334155" font-size="11">근거 부족 검토 (insufficient_evidence)</text>
+    <rect x="688" y="162" width="56.3" height="16" rx="4" fill="#f59e0b"/>
+    <text x="750.3" y="174" fill="#0f172a" font-size="11" font-weight="700">11</text>
+    <text x="440" y="199" fill="#334155" font-size="11">적용 조건 불명확 (condition_unclear)</text>
+    <rect x="688" y="187" width="51.2" height="16" rx="4" fill="#f59e0b"/>
+    <text x="745.2" y="199" fill="#0f172a" font-size="11" font-weight="700">10</text>
+    <text x="440" y="224" fill="#334155" font-size="11">범위 외 / 차단 (out_of_scope)</text>
+    <rect x="688" y="212" width="51.2" height="16" rx="4" fill="#f59e0b"/>
+    <text x="745.2" y="224" fill="#0f172a" font-size="11" font-weight="700">10</text>
+    <text x="440" y="249" fill="#334155" font-size="11">부서 관할 미검증 (department_unverified)</text>
+    <rect x="688" y="237" width="46.0" height="16" rx="4" fill="#f59e0b"/>
+    <text x="740.0" y="249" fill="#0f172a" font-size="11" font-weight="700">9</text>
+    <text x="440" y="274" fill="#334155" font-size="11">안내+조치 복합 (mixed_request)</text>
+    <rect x="688" y="262" width="20.5" height="16" rx="4" fill="#f59e0b"/>
+    <text x="714.5" y="274" fill="#0f172a" font-size="11" font-weight="700">4</text>
+    <text x="440" y="299" fill="#334155" font-size="11">타임아웃 200s 초과 (None)</text>
+    <rect x="688" y="287" width="10.2" height="16" rx="4" fill="#64748b"/>
+    <text x="704.2" y="299" fill="#0f172a" font-size="11" font-weight="700">2</text>
+    <text x="440" y="324" fill="#334155" font-size="11">LLM 호출 실패 폴백 (llm_unavailable)</text>
+    <rect x="688" y="312" width="10.2" height="16" rx="4" fill="#64748b"/>
+    <text x="704.2" y="324" fill="#0f172a" font-size="11" font-weight="700">2</text>
+  </g>
+</svg>

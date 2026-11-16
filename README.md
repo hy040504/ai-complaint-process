@@ -69,7 +69,7 @@
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
 | API 문서 | `http://127.0.0.1:5000/docs` | [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
-| 업무 보고서 | [11/16 업무보고 PDF](docs/report/업무보고_20261116.pdf) · [11/11 PDF](docs/report/업무보고_20261111.pdf) · [보고서 모음(`docs/report/`)](docs/report/README.md) | 11/16 종합 보고서(실서버 테스트 6장면·청주 112건 요약) 및 일자별 PDF 전용 폴더 · 생성 스크립트 [`scripts/업무보고_20261116_pdf_생성.py`](scripts/업무보고_20261116_pdf_생성.py) |
+| 업무 보고서 | [11/16 업무보고 PDF](docs/report/업무보고_20261116.pdf) · [112건 상세분석(MD](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.md)/[PDF)](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.pdf) · [모음(`docs/report/`)](docs/report/README.md) | 11/16 종합 보고서, SVG 차트 4종 포함 112건 전수 분석 보고서 및 일자별 PDF 관리 · [`상세분석보고서_112건_생성.py`](scripts/상세분석보고서_112건_생성.py) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
 
@@ -388,7 +388,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 <details open>
 <summary><strong>:5010 단독 응대 검사기 112건(청주 한정 110건) 5대 축 실증 결과 (2026-11-16~17 KST)</strong></summary>
 
-`codex_cli` 102건(0 HTTP 오류, 평균 `23.27s`) + `exaone_api` 교차 10건(완료 8건 평균 `121.86s`·타임아웃 2건·429/오류 폴백 2건)을 실호출해 응답 전문까지 대조했습니다.
+`codex_cli` 102건(0 HTTP 오류, 평균 `23.27s`) + `exaone_api` 교차 10건(완료 6건 평균 `131.81s`·타임아웃 2건·429/오류 폴백 2건)을 실호출해 응답 전문까지 대조했습니다. 전체 그래프·축별 분석·112건 전수 결과표는 **[청주 민원 112건 상세 분석 보고서 (MD](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF)](docs/report/청주_민원_112건_상세분석보고서_2026-11-17.pdf)** · [원자료 JSON](rag/reports/lab-5010-eval-112-20261117.json)에서 확인할 수 있습니다.
 
 | 테스트 축 | 청주 건수 (전체) | `codex_cli` 결과 | `exaone_api` 결과 | 확인된 동작 및 한계 |
 | --- | ---: | --- | --- | --- |

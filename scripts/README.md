@@ -22,6 +22,7 @@
 | [`검색서비스_실행.sh`](검색서비스_실행.sh) · [`serve-search.sh`](serve-search.sh) | `python -m rag serve` | 우분투 `.venv` |
 | [`검색서비스_설치.sh`](검색서비스_설치.sh) · [`install-search-service.sh`](install-search-service.sh) | systemd 사용자 서비스 | 우분투 |
 | [`업무보고_pdf_생성.py`](업무보고_pdf_생성.py) · [`업무보고_20261110_pdf_생성.py`](업무보고_20261110_pdf_생성.py) · [`업무보고_20261111_pdf_생성.py`](업무보고_20261111_pdf_생성.py) · [`업무보고_20261116_pdf_생성.py`](업무보고_20261116_pdf_생성.py) | 일자별 업무보고 PDF([`docs/report/`](../docs/report/README.md)) 생성·병합 | `.venv-web` + Chrome/Edge |
+| [`상세분석보고서_112건_생성.py`](상세분석보고서_112건_생성.py) | 112건 원자료 JSON 기반 SVG 차트 4종·상세 분석 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 
 Windows 바로 가기는 저장소 루트의 [`setup.cmd`](../setup.cmd), [`문장-임베딩.cmd`](../문장-임베딩.cmd), [`민원-응대.cmd`](../민원-응대.cmd), [`검색-시작.cmd`](../검색-시작.cmd), [`웹-시작.cmd`](../웹-시작.cmd)입니다. Linux는 [`setup.sh`](../setup.sh), [`start-web.sh`](../start-web.sh), [`start-search.sh`](../start-search.sh), [`embed-sentence.sh`](../embed-sentence.sh), [`ask-assist.sh`](../ask-assist.sh)입니다. 영어 `.sh`는 한국어 스크립트를 호출하거나 같은 Python 모듈을 실행합니다. CMD는 UTF-8(무 BOM)·CRLF입니다. ASCII로 가상환경 Python을 정한 뒤 `chcp 65001`을 켜고 한국어 `.py` 경로를 호출합니다. `문장-임베딩.cmd`는 인자가 없으면 문장을 물어 본 뒤 벡터와 pgvector 이웃을 출력하고, 키 입력까지 창을 유지합니다. `--raw`는 숫자만 출력합니다. `검색-시작.cmd`는 PostgreSQL·검색 API를 별도 창에 두고, 이미 포트가 열려 있으면 상태만 보여 준 뒤 키 입력까지 기다립니다. 그 창이 닫혀도 이미 떠 있는 DB·API는 종료되지 않습니다. 검색 시험 메뉴는 [`rag/검색_시험.sh`](../rag/검색_시험.sh)와 영어 별칭 [`rag/test-search.sh`](../rag/test-search.sh)입니다. [CASE-054](../docs/cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md)
 
