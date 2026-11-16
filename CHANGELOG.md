@@ -1,5 +1,23 @@
 # 변경 이력
 
+## 2026-11-16
+
+- **최근 패치(CASE-094·095) 주석·최적화·문서 디자인 최종 점검 ([CASE-096](docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md)):**
+  - 주석·최적화(`src/complaints/departments.py`·`repository.py`·`service.py`, `ui/src/app.js`·`staff.js`·`staff.css`): Google docstring·JSDoc·한국어 주석 보완 및 `black` 정렬, `:8007/departments` 원격 목록 60초 TTL 캐시(`_remote_cache`), `repository.py` 기본 템플릿 불필요 더미 모델/지연 import 제거, `service.py` `change()` `_require_staff()` 재사용, 담당자 UI `staffDepartments`·`templatesLoaded` 세션 캐시(`force=true` 갱신) 및 부서 모달 `<select>` 폭 정렬 보완.
+  - 문서 정합·디자인(`README.md`, `docs/harness/업무DB_실행설계.md`, `docs/README.md`, `docs/cases/README.md`, `src/README.md`, `ui/README.md`): `complaint_app` 4테이블(`complaints`·`idempotency`·`answer_templates`·`app_meta`), 영구 삭제(`POST /complaints/{id}/delete`), 검사기 전용 메타 분리 설명, `README.md` 상태/DB 비교표/검증 근거 최신화.
+  - 검증: `ui check` **17개**·`ui test` **18/18**, `RUN_PG_TESTS=1 pytest src/tests` **156 passed**, `mypy` **31개 모듈 0오류**, `pytest rag/tests` **48 passed(3 skipped)** + `rag.verify` **`passed: true`**, 실서버 Edge `verify_staff_features.mjs` + `audit_dark_ui.mjs` **24/24** + PG DB `complaints` 3행/`answer_templates` 5행 보존 확인.
+
+- **담당자 사이트 다른 부서 배정 및 답변 템플릿 커스텀 추가·삭제 구현 ([CASE-095](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md)):**
+  - 다른 부서 배정(`src/rag/client.py`, `src/complaints/departments.py`·`models.py`·`service.py`·`api.py`, `ui/src/llm-meta.js`·`staff.js`·`app.js`): 기존 `내가 담당`/`담당 해제` 외에 `GET /api/v1/departments`(`:8007/departments` 우선 + `공개_민원_사례.json` 127개 부서 fallback)와 확장된 `PUT /api/v1/complaints/{id}/assignment`(`department`·`reason`)를 추가하고, 목록·상세에 검색/구별 필터링 및 AI 추천 후보 원클릭 선택 모달(`#assign-dept-form`)을 구현했습니다(`automatic_transfer=False`·시민 비공개 경계 유지).
+  - 답변 템플릿 커스텀 추가·삭제(`src/complaints/repository.py`·`schema/complaint_app.sql`·`service.py`·`api.py`, `ui/src/app.js`·`staff.css`·`themes.css`): `complaint_app.answer_templates`·`app_meta`(최초 1회 기본 5종 시드) 테이블과 `GET/POST /api/v1/templates`, `DELETE /api/v1/templates/{id}`, `POST /api/v1/templates/reset`을 추가해 편집 중 답변을 유지한 채 템플릿 추가(`현재 편집 중 답변 불러오기` 지원)·삽입·삭제·기본 복원이 가능하도록 구현했습니다.
+  - 검증: `npm --prefix ui run check` **17개**·`npm --prefix ui test` **18/18 통과**, `RUN_PG_TESTS=1 pytest src/tests` **156 passed**, `mypy` **31개 모듈 0오류**, Edge 다크 24/24(0건) 및 부서 배정·템플릿 CRUD 실브라우저 E2E 확인.
+
+- **다크 테마 청주시 로고·아이콘·호버 개선, 양쪽 검사기 UI 다듬기, 담당자 폰트 확대 및 시민 민원 삭제 구현 ([CASE-094](docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md)):**
+  - 다크 테마 브랜드·호버 정비(`ui/src/citizen-brand.css`, `ui/src/service-icons.js`, `ui/assets/service-icons/`, `ui/src/themes.css`, `ui/src/styles.css`, `ui/favicon.svg`): 투명 배경 다크 청주시 로고 PNG 분리·흰 박스 제거, 서비스 12종 SVG `<rect class="service-artwork-bg">` 재추출, `.citizen-shell` `--teal-soft`·`.icon-btn:hover`·`.citizen-update-row:hover`·`.citizen-bottom-nav > a:hover`·`.suggestions .btn:hover`·`.inline-actions` 등 밝은 호버 번쩍임 수정.
+  - 검사기 UI·담당자 가독성·부서 메타 분리(`ui/src/lab.js`, `ui/src/lab.css`, `ui/src/staff.css`, `ui/src/staff.js`, `src/lab_web/static/`): `#/lab` 및 `:5010`을 시민 사이트 디자인(`#2f6fed`·히어로·단계 안내·카드형 부서/보조 카드)으로 다듬고 `:5010`에 `minwon-ui-theme` 공유 다크 테마 전환 단추(`#lab-theme-toggle`) 추가, 담당자 포털 전체 폰트 크기 확대, `(업무분장: unverified, 관할: inferred_from_name · 자동 이관 아님)` 원시 표기를 검사기 전용으로 분리.
+  - 시민 본인 민원 영구 삭제(`src/complaints/repository.py`·`service.py`·`api.py`, `ui/src/app.js`, `src/tests/test_api.py`·`test_postgres_repository.py`): 논리 철회(`DELETE /complaints/{id}`)를 보존한 채 소유자·버전 검증 후 `idempotency` FK를 선삭제하는 `POST /api/v1/complaints/<complaint_id>/delete`(204)와 상세(`민원 삭제`)·내 민원 목록(`삭제`) UI 추가.
+  - 검증: `npm --prefix ui run check` **17개**·`npm --prefix ui test` **17/17 통과**, `RUN_PG_TESTS=1 pytest src/tests` **153개 통과**, `mypy` **30개 모듈 0오류**, 헤드리스 Edge 다크 전수 audit **24/24**·`:5010` **0오류**, 실마우스 호버 19종(`brightFlash: false`) 및 시민 상세·목록 삭제 E2E 확인.
+
 ## 2026-11-15
 
 - **민원 웹(`:5000`) CRUD·담당자 콘솔·`#/lab`에 응대 검사기 RAG+LLM 실시간 통합 ([CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)):**

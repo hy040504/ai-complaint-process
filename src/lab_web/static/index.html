@@ -15,29 +15,74 @@
   <body>
     <a class="skip" href="#main">본문 바로가기</a>
     <div class="demo-bar">
-      <span class="demo-label">LAB</span>
-      <span>민원톡톡 · 응대 검사기 · 업무 DB에는 저장하지 않습니다</span>
+      <div class="demo-bar-inner">
+        <span class="demo-label">LAB</span>
+        <span>민원톡톡 · 응대 검사기 · 업무 DB에는 저장하지 않습니다</span>
+      </div>
     </div>
-    <header>
-      <div class="brand">
-        <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
-          <rect width="40" height="40" rx="12" fill="#087f72" />
-          <path d="M11 11h18v15H19l-7 5v-5h-1z" fill="white" />
-        </svg>
-        <div>
-          <strong>민원<span>톡톡</span></strong>
-          <small>응대 검사기</small>
+    <header class="top-header">
+      <div class="header-inner">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+            <rect width="40" height="40" rx="12" fill="#2f6fed" />
+            <path d="M11 11h18v15H19l-7 5v-5h-1z" fill="white" />
+          </svg>
+          <div>
+            <strong>민원<span>톡톡</span></strong>
+            <small>응대 검사기 · RAG + LLM 검증</small>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="header-pill">테스트 환경 · 업무 DB 미저장</span>
+          <button
+            type="button"
+            id="lab-theme-toggle"
+            class="icon-btn"
+            aria-label="다크 테마로 전환"
+            aria-pressed="false"
+            title="어두운 화면"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
+            </svg>
+          </button>
         </div>
       </div>
     </header>
     <div class="page workspace">
     <main id="main">
-      <p class="lead">
-        제목과 상세 내용으로 저장된 안내·사례를 먼저 찾고, 그다음 판정합니다.
-        발생 지역은 검색 필터입니다. 민원 분야는 검색 질의에 넣지 않습니다.
-        보낸 결과는 오른쪽 목록에서 골라 다시 볼 수 있습니다.
-      </p>
+      <section class="lab-hero">
+        <div>
+          <span class="lab-hero-eyebrow">청주시 AI 응대 검사기 · STANDALONE LAB</span>
+          <h1>제목과 본문으로 찾고,<br><em>응대 흐름과 프롬프트</em>까지 확인해 보세요.</h1>
+          <p>
+            저장된 FAQ·공개 사례를 먼저 검색한 뒤 AI 판정, 부서 후보, 담당자 초안 및 LLM 호출 데이터를 점검합니다.
+          </p>
+        </div>
+        <span class="hero-symbol" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <i>AI</i>
+        </span>
+      </section>
+      <div class="form-steps" aria-hidden="true">
+        <span class="active"><b>1</b> 민원 내용 작성</span><i></i>
+        <span><b>2</b> 검색 · 판정</span><i></i>
+        <span><b>3</b> 결과 · 기록 확인</span>
+      </div>
+      <div class="info-banner">
+        <span class="info-dot" aria-hidden="true">i</span>
+        <span>
+          발생 지역은 검색 필터이며 민원 분야는 검색 질의에 섞지 않습니다.
+          보낸 결과는 오른쪽 <b>테스트 기록</b>(.rag-cache/lab-runs)에서 다시 볼 수 있습니다.
+        </span>
+      </div>
       <form id="complaint-form">
+        <div class="section-title">
+          <h2>민원 내용</h2>
+          <span><em>*</em> 필수 입력 항목</span>
+        </div>
         <label for="title">제목 <em>*</em></label>
         <input
           id="title"
@@ -141,31 +186,55 @@
         <ol id="progress-steps" class="progress-steps"></ol>
       </section>
       <section id="result" hidden>
-        <h2>응대 결과</h2>
+        <div class="result-head">
+          <h2>응대 결과</h2>
+          <span id="result-outcome" class="outcome-pill"></span>
+        </div>
         <p id="result-source" class="hint-block" hidden></p>
         <div class="result-badges">
           <p id="result-district" class="district-badge" hidden></p>
           <p id="result-place" class="place-badge" hidden></p>
           <p id="result-llm" class="llm-engine-badge" hidden></p>
         </div>
-        <p id="result-message"></p>
-        <p id="result-outcome"></p>
-        <p id="result-reason"></p>
-        <p id="result-failures" class="hint-block"></p>
-        <p id="result-answer"></p>
-        <h3>담당자 초안 (미게시)</h3>
-        <p id="staff-note" class="hint-block">
-          PREFIX-00+03 결과입니다. 시민 안내를 덮지 않으며 공식 게시가 아닙니다.
-        </p>
-        <p id="result-draft"></p>
-        <h3>순화 요약 (담당자 참고)</h3>
-        <p id="sanitize-note" class="hint-block">
-          PREFIX-00+04 결과입니다. 접수 거부나 자동 차단이 아닙니다.
-        </p>
-        <p id="result-sanitize"></p>
-        <h3>참고한 자료</h3>
-        <ul id="result-hits"></ul>
-        <div class="json-block" id="llm-data-block">
+        <div class="result-summary">
+          <p id="result-message"></p>
+          <p id="result-reason"></p>
+          <p id="result-failures" class="hint-block"></p>
+        </div>
+        <div class="answer-box">
+          <p id="result-answer"></p>
+        </div>
+        <div id="result-depts-block" class="result-subcard" hidden>
+          <h3>부서 후보</h3>
+          <ul id="result-depts" class="dept-list"></ul>
+        </div>
+        <div class="aux-grid">
+          <div class="aux-card">
+            <div class="aux-head">
+              <h3>담당자 초안 (미게시)</h3>
+              <span class="aux-chip">PREFIX-03</span>
+            </div>
+            <p id="staff-note" class="hint-block">
+              시민 안내를 덮지 않으며 공식 게시가 아닙니다.
+            </p>
+            <p id="result-draft" class="aux-body"></p>
+          </div>
+          <div class="aux-card">
+            <div class="aux-head">
+              <h3>순화 요약 (담당자 참고)</h3>
+              <span class="aux-chip">PREFIX-04</span>
+            </div>
+            <p id="sanitize-note" class="hint-block">
+              접수 거부나 자동 차단이 아닙니다.
+            </p>
+            <p id="result-sanitize" class="aux-body"></p>
+          </div>
+        </div>
+        <div class="result-subcard">
+          <h3>참고한 자료</h3>
+          <ul id="result-hits"></ul>
+        </div>
+        <div class="json-block result-subcard" id="llm-data-block">
           <div class="json-head">
             <div class="json-title-group">
               <h3 id="codex-data-title">선택한 LLM에 보낸 데이터</h3>
@@ -188,7 +257,7 @@
           </p>
           <pre id="codex-json"></pre>
         </div>
-        <div class="json-block" id="llm-prompt-block">
+        <div class="json-block result-subcard" id="llm-prompt-block">
           <div class="json-head">
             <div class="json-title-group">
               <h3 id="codex-prompt-title">선택한 LLM에 보낸 프롬프트</h3>
@@ -201,7 +270,7 @@
           </p>
           <div id="codex-prompts"></div>
         </div>
-        <div class="json-block">
+        <div class="json-block result-subcard">
           <div class="json-head">
             <h3>검사기에 보낸 JSON</h3>
             <button
@@ -215,7 +284,7 @@
           </div>
           <pre id="sent-json"></pre>
         </div>
-        <div class="json-block">
+        <div class="json-block result-subcard">
           <div class="json-head">
             <h3>검사기가 받은 JSON</h3>
             <button
@@ -245,6 +314,10 @@
       <ul id="run-list"></ul>
     </aside>
     </div>
+    <footer class="lab-footer">
+      <span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span>
+      <span>standalone lab · .rag-cache/lab-runs · 공식 접수·행정 이관 없음</span>
+    </footer>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

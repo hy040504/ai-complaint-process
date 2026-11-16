@@ -1,14 +1,21 @@
 /** llm 브랜치 응대 검사기와 민원웹 LLM UI 보조 함수의 질의 합성과 화면 경계를 검증합니다. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { labQuery, labShell, resolveSelectableProvider } from "../src/lab.js";
 import {
+  labPage,
+  labQuery,
+  labShell,
+  resolveSelectableProvider,
+  runLabAssist,
+} from "../src/lab.js";
+import {
+  buildDepartmentOptionsHtml,
   buildDistrictOptionsHtml,
   buildProviderOptionsHtml,
   formatPlaceText,
   resolveLlmMeta,
 } from "../src/llm-meta.js";
-import { staffReviewInfo } from "../src/staff.js";
+import { staffProcess, staffQueue, staffReviewInfo } from "../src/staff.js";
 import {
   initLlmSelector,
   resolveLlmSectionMeta,
@@ -461,7 +468,15 @@ test("담당자 검토 참고 카드가 실제 aiAssist 결과를 표시한다",
         {
           canonicalName: "흥덕구 건설과",
           dutyStatus: "unverified",
-          jurisdictionStatus: "unverified",
+          jurisdictionStatus: "inferred_from_name",
+          selected: true,
+          automaticTransfer: false,
+        },
+        {
+          canonicalName: "재난안전실 재난대응과",
+          dutyStatus: "unverified",
+          jurisdictionStatus: "inferred_from_name",
+          selected: false,
           automaticTransfer: false,
         },
       ],
@@ -484,10 +499,92 @@ test("담당자 검토 참고 카드가 실제 aiAssist 결과를 표시한다",
   assert.match(html, /담당 부서 후보 안내/);
   assert.match(html, /AI 감지: 흥덕구/);
   assert.match(html, /오송읍행정복지센터 \(청주시 흥덕구 오송읍\)/);
-  assert.match(html, /흥덕구 건설과/);
-  assert.match(html, /업무분장: unverified, 관할: unverified · 자동 이관 아님/);
+  assert.match(html, /흥덕구 건설과<\/b> <span>· AI 추천 후보/);
+  assert.match(html, /재난안전실 재난대응과<\/b> <span>· 유사 사례 참고/);
+  assert.doesNotMatch(html, /업무분장:|inferred_from_name|자동 이관 아님/);
   assert.match(html, /가로등 고장 신고 안내/);
   assert.match(html, /오송읍 도로 가로등 미점등 신고/);
   assert.match(html, /가로등 점등 불량 점검 요청/);
   assert.match(html, /엑사온 API/);
+});
+
+test("응대 검사기 labPage는 부서 후보에 업무분장·관할·자동 이관 아님 표기를 유지한다", async () => {
+  const prevFetch = globalThis.fetch;
+  const mockResult = {
+    outcome: "department_suggestion",
+    reasonCode: "action_required",
+    district: "흥덕구",
+    districtInferred: true,
+    llmProvider: "codex_cli",
+    llmModel: "gpt-6-luna",
+    answer: "담당 부서 후보를 안내합니다.",
+    departments: [
+      {
+        canonicalName: "흥덕구 건설과",
+        dutyStatus: "unverified",
+        jurisdictionStatus: "inferred_from_name",
+        selected: true,
+        automaticTransfer: false,
+      },
+    ],
+    faq: [],
+    cases: [],
+    codex: [],
+  };
+  const ndjson = `${JSON.stringify({ type: "done", result: mockResult })}\n`;
+  globalThis.fetch = async () =>
+    new Response(ndjson, {
+      status: 200,
+      headers: { "Content-Type": "application/x-ndjson" },
+    });
+  try {
+    await runLabAssist({ query: "가로등 점멸 신고", district: "흥덕구", provider: "codex_cli" });
+    const html = labPage();
+    assert.match(html, /흥덕구 건설과/);
+    assert.match(html, /업무분장: unverified, 관할: inferred_from_name · 자동 이관 아님/);
+  } finally {
+    globalThis.fetch = prevFetch;
+  }
+});
+
+test("buildDepartmentOptionsHtml과 담당자 화면은 배정 부서·버튼을 구분해 표시한다", () => {
+  const optionsHtml = buildDepartmentOptionsHtml(
+    [
+      { canonicalName: "건설교통국 대중교통과", district: null },
+      { canonicalName: "흥덕구 건설과", district: "흥덕구" },
+      { canonicalName: "서원구 행정지원과", district: "서원구" },
+    ],
+    "흥덕구 건설과",
+    "건설",
+  );
+  assert.match(optionsHtml, /<optgroup label="청주시 본청 · 사업소 \(1\)">/);
+  assert.match(optionsHtml, /<optgroup label="흥덕구 \(1\)">/);
+  assert.match(optionsHtml, /<option value="흥덕구 건설과" selected>흥덕구 건설과<\/option>/);
+  assert.doesNotMatch(optionsHtml, /서원구 행정지원과/);
+
+  const row = {
+    id: "DEMO-2026-DEPT1",
+    title: "보행로 파손 신고",
+    body: "보행로 보도블록이 깨졌습니다. 점검을 부탁드립니다.",
+    category: "도로·교통",
+    district: "흥덕구",
+    status: "under_review",
+    visibility: "private",
+    date: "2026-11-16T00:00:00Z",
+    assigned: true,
+    department: "흥덕구 건설과",
+    draft: "",
+    draftVersion: 0,
+    published: null,
+    messages: [],
+    job: { status: "queued" },
+  };
+  const procHtml = staffProcess(row);
+  assert.match(procHtml, /담당·부서 지정/);
+  assert.match(procHtml, /흥덕구 건설과 · 김담당/);
+
+  const queueHtml = staffQueue({ complaints: [row] }, new URLSearchParams());
+  assert.match(queueHtml, /<span class="staff-tag dept"[^>]*>흥덕구 건설과<\/span>/);
+  assert.match(queueHtml, /data-action="open-assign-dept"[^>]*>부서 변경<\/button>/);
+  assert.match(queueHtml, /data-action="assign"[^>]*>담당 해제<\/button>/);
 });

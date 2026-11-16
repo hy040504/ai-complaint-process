@@ -11,6 +11,7 @@ from pydantic import (
     StringConstraints,
     ValidationInfo,
     field_validator,
+    model_validator,
 )
 from pydantic.alias_generators import to_camel
 
@@ -170,6 +171,7 @@ class Complaint(PublicComplaint):
     """담당자만 조회하는 초안·AI 원본·내부 작업·응대 분석 정보를 포함합니다."""
 
     assigned: bool = False
+    department: str | None = None
     ai_original: str = ""
     ai_candidate: str = ""
     ai_assist: "AssistResponse | None" = None
@@ -249,9 +251,109 @@ class MessageInput(VersionInput):
 
 
 class AssignmentInput(VersionInput):
-    """담당자 자신의 담당 지정 또는 해제를 요청합니다."""
+    """담당자 자신의 담당 지정·해제 또는 시연 부서 전달 배정을 요청합니다."""
 
-    assigned: bool = Field(strict=True)
+    assigned: bool | None = Field(default=None, strict=True)
+    department: str | None = Field(default=None, max_length=120)
+    reason: Reason | None = None
+
+    @field_validator("department", mode="before")
+    @classmethod
+    def clean_department(cls, value: object) -> object:
+        """부서명 문자열 앞뒤 공백을 정리하되 빈 문자열은 배정 해제로 보존합니다.
+
+        Args:
+            value: 검증 전 부서 입력 값입니다.
+
+        Returns:
+            공백을 정리한 부서명 문자열 또는 None입니다.
+        """
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def clean_reason(cls, value: object) -> object:
+        """공백만 있는 배정 사유를 None으로 정규화합니다.
+
+        Args:
+            value: 검증 전 배정 사유 값입니다.
+
+        Returns:
+            정제한 사유 문자열 또는 None입니다.
+        """
+        return normalize_optional_text(value)
+
+    @model_validator(mode="after")
+    def check_target_present(self) -> "AssignmentInput":
+        """담당 여부 또는 부서 배정 중 최소 하나는 지정했는지 검증합니다.
+
+        Returns:
+            검증을 통과한 입력 모델입니다.
+
+        Raises:
+            ValueError: 담당 여부와 배정 부서가 모두 비어 있으면 발생합니다.
+        """
+        if self.assigned is None and self.department is None:
+            raise ValueError("assigned 또는 department 중 하나를 지정해야 합니다.")
+        return self
+
+
+class DepartmentEntry(Model):
+    """담당자 포털의 시연 배정 선택지에 표시하는 청주시 현행 부서 정보입니다."""
+
+    canonical_name: str
+    district: str | None = None
+    duty_status: str = "unverified"
+    jurisdiction_status: str = "inferred_from_name"
+    automatic_transfer: Literal[False] = False
+
+
+class DepartmentListResponse(Model):
+    """담당자 부서 배정 드롭다운용 현행 부서 목록 응답입니다."""
+
+    departments: list[DepartmentEntry]
+
+
+TemplateTitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)
+]
+TemplateContent = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+]
+
+
+class AnswerTemplate(Model):
+    """담당자 답변 편집기에서 재사용하는 자주 쓰는 안내 템플릿입니다."""
+
+    id: str
+    title: str
+    content: str
+    is_default: bool = False
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class TemplateCreateInput(Model):
+    """새 답변 템플릿 생성 요청을 검증합니다."""
+
+    title: TemplateTitle
+    content: TemplateContent
+
+
+class TemplatePath(BaseModel):
+    """템플릿 경로 식별자의 형식과 길이를 검사합니다."""
+
+    model_config = ConfigDict(extra="forbid")
+    template_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+
+
+class TemplateListResponse(Model):
+    """담당자 답변 편집기용 템플릿 목록 응답입니다."""
+
+    templates: list[AnswerTemplate]
 
 
 class AnswerInput(VersionInput):

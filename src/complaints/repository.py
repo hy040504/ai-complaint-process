@@ -6,6 +6,7 @@
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from datetime import timedelta
 from threading import Lock
 from typing import Literal, Protocol
 
@@ -14,9 +15,30 @@ from psycopg import sql
 from psycopg.types.json import Jsonb
 
 from src.complaints.errors import AppError
-from src.complaints.models import Complaint
+from src.complaints.models import AnswerTemplate, Complaint, utcnow
 
 StorageKind = Literal["postgresql", "memory"]
+
+# 최초 스키마 준비 시 한 번만 시드하는 담당자 기본 답변 템플릿 목록이다.
+DEFAULT_ANSWER_TEMPLATES: tuple[tuple[str, str, str], ...] = (
+    (
+        "TPL-DEF-1",
+        "검토 결과 인사",
+        "안녕하십니까. 접수하신 민원의 검토 결과를 안내드립니다.",
+    ),
+    ("TPL-DEF-2", "불편 사과", "불편을 드려 죄송합니다."),
+    (
+        "TPL-DEF-3",
+        "추가 조사·부서 전달",
+        "확인 과정에서 추가 조사가 필요하여 담당 부서에 전달하였습니다.",
+    ),
+    (
+        "TPL-DEF-4",
+        "추가 문의 안내",
+        "추가 문의가 있으시면 민원 상세 화면의 추가 문의로 남겨 주세요.",
+    ),
+    ("TPL-DEF-5", "맺음말 감사", "감사합니다."),
+)
 
 # psycopg는 한 execute에 여러 문을 넣지 못하므로 스키마·테이블을 나눠 적용합니다.
 _SCHEMA_STATEMENTS = (
@@ -63,6 +85,21 @@ _SCHEMA_STATEMENTS = (
     UPDATE {schema}.complaints
     SET payload = payload || jsonb_build_object('isSynthetic', true)
     WHERE left(id, 9) = 'DEMO-PUB-' AND NOT (payload ? 'isSynthetic')
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS {schema}.answer_templates (
+        id text PRIMARY KEY,
+        title text NOT NULL,
+        content text NOT NULL,
+        is_default boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS {schema}.app_meta (
+        key text PRIMARY KEY,
+        value text NOT NULL
+    )
     """,
 )
 
@@ -132,6 +169,42 @@ class ComplaintRepository(Protocol):
         """
         ...
 
+    def delete(
+        self, complaint_id: str, expected: int, check: Callable[[Complaint], None]
+    ) -> None:
+        """최신 버전을 검사한 뒤 민원과 연결된 멱등성 키를 영구 삭제합니다.
+
+        Args:
+            complaint_id: 삭제할 민원 식별자입니다.
+            expected: 호출자가 조회한 현재 버전입니다.
+            check: 삭제 권한을 검증할 함수입니다.
+        """
+        ...
+
+    def list_templates(self) -> list[AnswerTemplate]:
+        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다."""
+        ...
+
+    def create_template(self, template: AnswerTemplate) -> AnswerTemplate:
+        """새 답변 템플릿을 저장하고 반환합니다.
+
+        Args:
+            template: 저장할 템플릿 모델입니다.
+        """
+        ...
+
+    def delete_template(self, template_id: str) -> None:
+        """지정한 답변 템플릿을 삭제합니다.
+
+        Args:
+            template_id: 삭제할 템플릿 식별자입니다.
+        """
+        ...
+
+    def reset_default_templates(self) -> list[AnswerTemplate]:
+        """누락된 기본 답변 템플릿을 복원하고 전체 목록을 반환합니다."""
+        ...
+
 
 class MemoryRepository:
     """프로세스 안의 업무 저장소입니다. 단위 테스트 전용입니다.
@@ -142,9 +215,13 @@ class MemoryRepository:
     storage: StorageKind = "memory"
 
     def __init__(self) -> None:
-        """빈 민원·멱등성 맵과 변경 잠금을 준비합니다."""
+        """빈 민원·멱등성 맵, 기본 답변 템플릿과 변경 잠금을 준비합니다."""
         self._rows: dict[str, Complaint] = {}
         self._keys: dict[tuple[str, str], tuple[str, str]] = {}
+        self._templates: list[AnswerTemplate] = [
+            AnswerTemplate(id=tpl_id, title=title, content=content, is_default=True)
+            for tpl_id, title, content in DEFAULT_ANSWER_TEMPLATES
+        ]
         self._lock = Lock()
 
     def all(self) -> list[Complaint]:
@@ -238,6 +315,88 @@ class MemoryRepository:
             self._rows[complaint_id] = row
         return row.model_copy(deep=True)
 
+    def delete(
+        self, complaint_id: str, expected: int, check: Callable[[Complaint], None]
+    ) -> None:
+        """잠금 안에서 버전·삭제 권한을 검사한 뒤 민원과 멱등성 키를 삭제합니다.
+
+        Args:
+            complaint_id: 삭제할 민원 식별자입니다.
+            expected: 호출자가 조회한 현재 버전입니다.
+            check: 삭제 권한을 검증할 함수입니다.
+
+        Raises:
+            AppError: 대상이 없거나 버전 충돌·권한 검증 실패 시 발생합니다.
+        """
+        with self._lock:
+            current = self._rows.get(complaint_id)
+            if current is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            if current.version != expected:
+                raise AppError(
+                    409,
+                    "version_conflict",
+                    "다른 화면에서 내용이 변경되었습니다. 최신 내용을 불러온 뒤 다시 시도해 주세요.",
+                )
+            check(current.model_copy(deep=True))
+            del self._rows[complaint_id]
+            stale_keys = [
+                k for k, (_, cid) in self._keys.items() if cid == complaint_id
+            ]
+            for key in stale_keys:
+                del self._keys[key]
+
+    def list_templates(self) -> list[AnswerTemplate]:
+        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다."""
+        with self._lock:
+            return [tpl.model_copy(deep=True) for tpl in self._templates]
+
+    def create_template(self, template: AnswerTemplate) -> AnswerTemplate:
+        """새 답변 템플릿을 저장하고 사본을 반환합니다.
+
+        Args:
+            template: 저장할 템플릿 모델입니다.
+
+        Returns:
+            저장된 템플릿 모델 사본입니다.
+        """
+        with self._lock:
+            stored = template.model_copy(deep=True)
+            self._templates.append(stored)
+            return stored.model_copy(deep=True)
+
+    def delete_template(self, template_id: str) -> None:
+        """지정한 식별자의 답변 템플릿을 삭제합니다.
+
+        Args:
+            template_id: 삭제할 템플릿 식별자입니다.
+
+        Raises:
+            AppError: 일치하는 템플릿이 없을 때 발생합니다.
+        """
+        with self._lock:
+            before = len(self._templates)
+            self._templates = [tpl for tpl in self._templates if tpl.id != template_id]
+            if len(self._templates) == before:
+                raise AppError(404, "not_found", "템플릿을 찾을 수 없습니다.")
+
+    def reset_default_templates(self) -> list[AnswerTemplate]:
+        """삭제된 기본 답변 템플릿만 복원하고 기존 커스텀 항목은 유지합니다.
+
+        Returns:
+            복원 후 전체 템플릿 목록입니다.
+        """
+        with self._lock:
+            existing_ids = {tpl.id for tpl in self._templates}
+            for tpl_id, title, content in DEFAULT_ANSWER_TEMPLATES:
+                if tpl_id not in existing_ids:
+                    self._templates.append(
+                        AnswerTemplate(
+                            id=tpl_id, title=title, content=content, is_default=True
+                        )
+                    )
+            return [tpl.model_copy(deep=True) for tpl in self._templates]
+
 
 class PostgresRepository:
     """PostgreSQL `complaint_app`에 민원 JSON을 저장하는 업무 저장소입니다.
@@ -291,11 +450,34 @@ class PostgresRepository:
             "UPDATE {}.complaints SET version = %s, payload = %s "
             "WHERE id = %s AND version = %s"
         ).format(ident)
+        self._sql_delete_keys = sql.SQL(
+            "DELETE FROM {}.idempotency WHERE complaint_id = %s"
+        ).format(ident)
+        self._sql_delete = sql.SQL(
+            "DELETE FROM {}.complaints WHERE id = %s AND version = %s"
+        ).format(ident)
+        self._sql_list_tpl = sql.SQL(
+            "SELECT id, title, content, is_default, created_at "
+            "FROM {}.answer_templates ORDER BY created_at ASC, id ASC"
+        ).format(ident)
+        self._sql_insert_tpl = sql.SQL(
+            "INSERT INTO {}.answer_templates (id, title, content, is_default, created_at) "
+            "VALUES (%s, %s, %s, %s, %s) "
+            "ON CONFLICT (id) DO NOTHING"
+        ).format(ident)
+        self._sql_delete_tpl = sql.SQL(
+            "DELETE FROM {}.answer_templates WHERE id = %s"
+        ).format(ident)
+        self._sql_seed_meta = sql.SQL(
+            "INSERT INTO {}.app_meta (key, value) VALUES (%s, %s) "
+            "ON CONFLICT (key) DO NOTHING RETURNING key"
+        ).format(ident)
         with self.connection() as conn:
             for statement in _SCHEMA_STATEMENTS:
                 conn.execute(sql.SQL(statement).format(schema=ident))
             self._ensure_version_check(conn)
             self._ensure_value_checks(conn)
+            self._ensure_default_templates(conn)
 
     def _ensure_version_check(self, conn: psycopg.Connection) -> None:
         """예전 테이블에 `version > 0` 제약이 없으면 추가합니다.
@@ -475,3 +657,122 @@ class PostgresRepository:
                 ),
             )
         return row
+
+    def delete(
+        self, complaint_id: str, expected: int, check: Callable[[Complaint], None]
+    ) -> None:
+        """트랜잭션 안에서 버전·권한을 검증하고 민원과 멱등성 키를 영구 삭제합니다.
+
+        Args:
+            complaint_id: 삭제할 민원 식별자입니다.
+            expected: 기대하는 현재 버전입니다.
+            check: 삭제 가능 여부를 검증할 함수입니다.
+
+        Raises:
+            AppError: 대상이 없거나 버전 충돌·권한 검증 실패 시 발생합니다.
+        """
+        with self.connection() as conn:
+            result = conn.execute(self._sql_lock, (complaint_id,)).fetchone()
+            if result is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            row = Complaint.model_validate(result[0])
+            if row.version != expected:
+                raise AppError(
+                    409,
+                    "version_conflict",
+                    "다른 화면에서 내용이 변경되었습니다. 입력을 보관한 뒤 최신 내용을 불러와 주세요.",
+                )
+            check(row)
+            # idempotency 테이블이 complaints를 외래 키로 참조하므로 먼저 정리한다.
+            conn.execute(self._sql_delete_keys, (complaint_id,))
+            deleted = conn.execute(self._sql_delete, (complaint_id, expected))
+            if deleted.rowcount == 0:
+                raise AppError(
+                    409,
+                    "version_conflict",
+                    "다른 화면에서 내용이 변경되었습니다. 입력을 보관한 뒤 최신 내용을 불러와 주세요.",
+                )
+
+    def _ensure_default_templates(self, conn: psycopg.Connection) -> None:
+        """최초 스키마 초기화 시 한 번만 기본 답변 템플릿 5건을 넣습니다.
+
+        Args:
+            conn: 스키마를 준비 중인 PostgreSQL 연결입니다.
+        """
+        inserted = conn.execute(
+            self._sql_seed_meta, ("default_templates_seeded", "1")
+        ).fetchone()
+        if inserted is None:
+            return
+        self._insert_default_template_rows(conn)
+
+    def _insert_default_template_rows(self, conn: psycopg.Connection) -> None:
+        """누락된 기본 답변 템플릿 행을 순서대로 삽입합니다.
+
+        Args:
+            conn: 활성 PostgreSQL 연결입니다.
+        """
+        # created_at ASC 정렬 순서를 고정하려고 1ms 간격으로 기본 템플릿 시각을 둔다.
+        base_time = utcnow()
+        for idx, (tpl_id, title, content) in enumerate(DEFAULT_ANSWER_TEMPLATES):
+            conn.execute(
+                self._sql_insert_tpl,
+                (tpl_id, title, content, True, base_time + timedelta(milliseconds=idx)),
+            )
+
+    def list_templates(self) -> list[AnswerTemplate]:
+        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다."""
+        with self.connection() as conn:
+            rows = conn.execute(self._sql_list_tpl).fetchall()
+        return [
+            AnswerTemplate(
+                id=row[0],
+                title=row[1],
+                content=row[2],
+                is_default=bool(row[3]),
+                created_at=row[4],
+            )
+            for row in rows
+        ]
+
+    def create_template(self, template: AnswerTemplate) -> AnswerTemplate:
+        """새 답변 템플릿을 PostgreSQL 테이블에 저장하고 반환합니다.
+
+        Args:
+            template: 저장할 템플릿 모델입니다.
+
+        Returns:
+            저장한 템플릿 모델입니다.
+        """
+        with self.connection() as conn:
+            conn.execute(
+                self._sql_insert_tpl,
+                (
+                    template.id,
+                    template.title,
+                    template.content,
+                    template.is_default,
+                    template.created_at,
+                ),
+            )
+        return template
+
+    def delete_template(self, template_id: str) -> None:
+        """지정한 답변 템플릿을 PostgreSQL 테이블에서 삭제합니다.
+
+        Args:
+            template_id: 삭제할 템플릿 식별자입니다.
+
+        Raises:
+            AppError: 일치하는 템플릿이 없을 때 발생합니다.
+        """
+        with self.connection() as conn:
+            deleted = conn.execute(self._sql_delete_tpl, (template_id,))
+            if deleted.rowcount == 0:
+                raise AppError(404, "not_found", "템플릿을 찾을 수 없습니다.")
+
+    def reset_default_templates(self) -> list[AnswerTemplate]:
+        """삭제된 기본 답변 템플릿만 복원하고 전체 목록을 반환합니다."""
+        with self.connection() as conn:
+            self._insert_default_template_rows(conn)
+        return self.list_templates()

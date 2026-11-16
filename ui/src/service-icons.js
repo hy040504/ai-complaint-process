@@ -80,5 +80,5 @@ const artwork = {
 export function serviceIcon(name) {
   if (!Object.hasOwn(artwork, name))
     throw new Error(`서비스 아이콘을 찾을 수 없습니다: ${name}`);
-  return `<svg class="service-artwork" width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-service-icon="${name}"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/>${artwork[name]}</svg>`;
+  return `<svg class="service-artwork" width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-service-icon="${name}"><rect class="service-artwork-bg" x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/>${artwork[name]}</svg>`;
 }

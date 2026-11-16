@@ -357,3 +357,131 @@ def test_cross_origin_malformed_json_and_disabled_demo(
         )
     ).test_client()
     assert off.post("/api/v1/session", json={"role": "staff"}).status_code == 403
+
+
+def test_owner_permanent_delete_and_guards(
+    app: OpenAPI, citizen: FlaskClient, staff: FlaskClient
+) -> None:
+    """민원 작성자는 본인 민원을 완전 삭제할 수 있고 타인·담당자·이전 버전은 거부됩니다."""
+    created = citizen.post("/api/v1/complaints", json=BODY).json
+    url = "/api/v1/complaints/" + created["id"]
+    other_service: ComplaintService = app.extensions["complaint_service"]
+    other = Complaint(id="OTHER-DEL-1", owner="other", visibility="public", **BODY)
+    other_service.repository.create(other, None, "")
+
+    assert staff.post(url + "/delete", json={"version": 1}).status_code == 403
+    assert (
+        citizen.post(
+            "/api/v1/complaints/OTHER-DEL-1/delete", json={"version": 1}
+        ).status_code
+        == 403
+    )
+    assert citizen.post(url + "/delete", json={"version": 99}).status_code == 409
+
+    deleted = citizen.post(url + "/delete", json={"version": 1})
+    assert deleted.status_code == 204
+    assert deleted.data == b""
+    assert citizen.get(url).status_code == 404
+    assert staff.get(url).status_code == 404
+    assert not citizen.get("/api/v1/complaints?mine=true").json["complaints"]
+    assert citizen.post(url + "/delete", json={"version": 1}).status_code == 404
+
+
+def test_staff_department_assignment_and_directory(
+    citizen: FlaskClient, staff: FlaskClient
+) -> None:
+    """담당자는 검증된 청주시 부서로 배정·해제할 수 있고 시민 응답은 이를 숨깁니다."""
+    created = citizen.post("/api/v1/complaints", json=BODY).json
+    url = "/api/v1/complaints/" + created["id"]
+
+    assert citizen.get("/api/v1/departments").status_code == 403
+    depts_resp = staff.get("/api/v1/departments")
+    assert depts_resp.status_code == 200
+    names = {item["canonicalName"] for item in depts_resp.json["departments"]}
+    assert "흥덕구 건설과" in names and len(names) >= 100
+    assert all(
+        item["automaticTransfer"] is False for item in depts_resp.json["departments"]
+    )
+
+    assert (
+        staff.put(
+            url + "/assignment", json={"version": 1, "department": "존재하지않는과"}
+        ).status_code
+        == 422
+    )
+    assert staff.put(url + "/assignment", json={"version": 1}).status_code == 422
+    assert (
+        citizen.put(
+            url + "/assignment", json={"version": 1, "department": "흥덕구 건설과"}
+        ).status_code
+        == 403
+    )
+
+    assigned = staff.put(
+        url + "/assignment",
+        json={"version": 1, "department": "흥덕구 건설과", "reason": "현장 점검"},
+    )
+    assert assigned.status_code == 200
+    assert assigned.json["department"] == "흥덕구 건설과"
+    assert assigned.json["assigned"] is True
+    assert assigned.json["status"] == "under_review"
+    assert (
+        "담당 부서 지정(시연 · 공식 이관 아님): 흥덕구 건설과 · 현장 점검"
+        in assigned.json["history"][-1]["text"]
+    )
+
+    public_view = citizen.get(url).json
+    assert "department" not in public_view
+    assert staff.get("/api/v1/complaints?assign=mine").json["total"] == 1
+
+    cleared = staff.put(url + "/assignment", json={"version": 2, "department": ""})
+    assert cleared.status_code == 200
+    assert cleared.json["department"] is None
+    assert cleared.json["assigned"] is False
+
+
+def test_staff_answer_templates_crud_and_reset(
+    citizen: FlaskClient, staff: FlaskClient
+) -> None:
+    """담당자는 답변 템플릿을 추가·삭제·복원할 수 있고 시민은 접근할 수 없습니다."""
+    assert citizen.get("/api/v1/templates").status_code == 403
+    assert (
+        citizen.post(
+            "/api/v1/templates", json={"title": "불허", "content": "불허 내용"}
+        ).status_code
+        == 403
+    )
+    assert citizen.delete("/api/v1/templates/TPL-DEF-1").status_code == 403
+    assert citizen.post("/api/v1/templates/reset").status_code == 403
+
+    initial = staff.get("/api/v1/templates")
+    assert initial.status_code == 200
+    assert len(initial.json["templates"]) == 5
+
+    created = staff.post(
+        "/api/v1/templates",
+        json={
+            "title": "가로등 점검 전달",
+            "content": "가로등 시설 점검 담당 부서에 내용을 전달하여 확인 중입니다.",
+        },
+    )
+    assert created.status_code == 201
+    tpl_id = created.json["id"]
+    assert tpl_id.startswith("TPL-")
+
+    listed = staff.get("/api/v1/templates").json["templates"]
+    assert any(
+        item["id"] == tpl_id and item["title"] == "가로등 점검 전달" for item in listed
+    )
+
+    assert staff.delete("/api/v1/templates/" + tpl_id).status_code == 204
+    assert staff.delete("/api/v1/templates/TPL-DEF-2").status_code == 204
+    assert staff.delete("/api/v1/templates/" + tpl_id).status_code == 404
+
+    after_delete = staff.get("/api/v1/templates").json["templates"]
+    remaining_ids = {item["id"] for item in after_delete}
+    assert tpl_id not in remaining_ids and "TPL-DEF-2" not in remaining_ids
+
+    restored = staff.post("/api/v1/templates/reset")
+    assert restored.status_code == 200
+    assert any(item["id"] == "TPL-DEF-2" for item in restored.json["templates"])

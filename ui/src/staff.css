@@ -42,17 +42,18 @@ body[data-site="staff"] .role-switch a.selected {
   --muted: #7a8496;
   --line: #e0e6f0;
   --bg: #f4f6fa;
-  margin-left: 218px;
+  margin-left: 236px;
   background: #f4f6fa;
   min-height: calc(100dvh - 36px);
   color: #28344d;
+  font-size: 14px;
 }
 .staff-sidebar {
   position: fixed;
   top: 36px;
   bottom: 0;
   left: 0;
-  width: 218px;
+  width: 236px;
   z-index: 80;
   display: flex;
   flex-direction: column;
@@ -76,16 +77,16 @@ body[data-site="staff"] .role-switch a.selected {
   display: block;
   color: #fff;
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 1.4px;
   font-weight: 750;
 }
 .staff-console-brand small {
   display: block;
   color: #8d9fc1;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 7px;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 .staff-sidebar nav {
   display: flex;
@@ -95,8 +96,8 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-nav-group {
   color: #65799e;
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 1.6px;
+  font-size: 11px;
+  letter-spacing: 1.4px;
   padding: 16px 9px 7px;
 }
 .staff-nav-link {
@@ -104,11 +105,11 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 10px;
   padding: 11px 10px;
-  min-height: 41px;
+  min-height: 43px;
   border-radius: 8px;
   color: #adbfdf;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.55;
   font-weight: 550;
   transition:
     background 0.15s,
@@ -135,10 +136,10 @@ body[data-site="staff"] .role-switch a.selected {
   color: #fff;
   border-radius: 10px;
   font-family: ui-monospace, Consolas, monospace;
-  padding: 0 6px;
-  font-size: 9px;
-  line-height: 1.7;
-  min-width: 18px;
+  padding: 1px 7px;
+  font-size: 11px;
+  line-height: 1.6;
+  min-width: 20px;
   text-align: center;
   font-weight: 650;
 }
@@ -159,15 +160,15 @@ body[data-site="staff"] .role-switch a.selected {
   color: #b2a276;
 }
 .staff-sidebar-policy > b {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.2px;
   margin-left: 6px;
   color: #d3ba75;
 }
 .staff-sidebar-policy p {
-  font-size: 10px;
+  font-size: 12px;
   color: #8396b8;
-  line-height: 1.9;
+  line-height: 1.75;
   margin-top: 6px;
 }
 .staff-help-link,
@@ -177,7 +178,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 10px;
   padding: 11px;
   color: #8ea5cb;
-  font-size: 10px;
+  font-size: 13px;
   text-align: left;
   width: 100%;
   border-radius: 6px;
@@ -199,31 +200,31 @@ body[data-site="staff"] .role-switch a.selected {
   padding: 17px 9px 20px;
 }
 .staff-account-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   background: #2d3d5e;
   border: 1px solid #415778;
   color: #d3def2;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 .staff-account b {
   display: block;
-  font-size: 11px;
+  font-size: 13px;
   color: #e4eaf7;
 }
 .staff-account b > small {
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 400;
   margin-left: 5px;
   color: #7084a9;
 }
 .staff-account p {
-  font-size: 9px;
-  line-height: 1.8;
+  font-size: 12px;
+  line-height: 1.7;
   color: #8298bd;
   margin-top: 3px;
 }
@@ -231,7 +232,7 @@ body[data-site="staff"] .role-switch a.selected {
   position: sticky;
   top: 36px;
   z-index: 30;
-  height: 45px;
+  height: 50px;
   display: flex;
   align-items: center;
   gap: 17px;
@@ -245,7 +246,7 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
   color: #2f9c6b;
 }
@@ -256,7 +257,7 @@ body[data-site="staff"] .role-switch a.selected {
   background: #2ba36b;
 }
 .staff-crumb {
-  font-size: 10px;
+  font-size: 12px;
   color: #99a5ba;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -273,12 +274,12 @@ body[data-site="staff"] .role-switch a.selected {
   margin-left: auto;
 }
 .staff-topbar-right > span:first-child {
-  font-size: 9px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
   color: #a17b50;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 .staff-workspace .icon-btn {
@@ -288,15 +289,15 @@ body[data-site="staff"] .role-switch a.selected {
   background: #edf2fb;
 }
 .staff-mini-avatar {
-  height: 25px;
-  width: 25px;
+  height: 28px;
+  width: 28px;
   display: grid;
   place-items: center;
   border: 1px solid #d9e1f0;
   border-radius: 50%;
   color: #7b8da8;
   background: #f5f7fc;
-  font-size: 9px;
+  font-size: 11px;
 }
 .staff-menu-toggle,
 .staff-drawer-close,
@@ -319,22 +320,22 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-page-title h1 {
   font-family: inherit;
-  font-size: 26px;
+  font-size: 28px;
   letter-spacing: -0.85px;
   line-height: 1.5;
   font-weight: 800;
   color: #16203a;
 }
 .staff-page-title > span {
-  font-size: 9px;
+  font-size: 12px;
   color: #9eabc0;
   border: 1px solid #e0e6f0;
-  border-radius: 4px;
-  padding: 3px 7px;
-  line-height: 1.6;
+  border-radius: 5px;
+  padding: 3px 8px;
+  line-height: 1.5;
 }
 .staff-page-title > small {
-  font-size: 10px;
+  font-size: 12px;
   color: #8c9ab0;
   white-space: nowrap;
 }
@@ -348,8 +349,8 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 2px;
 }
 .staff-scope > a {
-  font-size: 10px;
-  padding: 6px 10px;
+  font-size: 13px;
+  padding: 7px 12px;
   border-radius: 6px;
   color: #8b9ab1;
   font-weight: 550;
@@ -367,14 +368,14 @@ body[data-site="staff"] .role-switch a.selected {
   border: 1px solid #c9d9fd;
   background: #eaf1ff;
   border-radius: 10px;
-  padding: 12px 15px;
+  padding: 13px 16px;
   margin-bottom: 15px;
-  font-size: 11px;
+  font-size: 13px;
   color: #8b9ec2;
 }
 .staff-banner-dot {
-  height: 5px;
-  width: 5px;
+  height: 6px;
+  width: 6px;
   border-radius: 50%;
   background: #2f6fed;
   box-shadow: 0 0 0 3px #2f6fed0a;
@@ -391,7 +392,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .btn {
   border-color: #e0e6f0;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
   padding: 9px 15px;
   color: #536580;
   line-height: 1.5;
@@ -414,8 +415,8 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .staff-inbox-banner > .btn {
   background: #2f6fed;
   border-color: #2f6fed;
-  font-size: 10px;
-  padding: 6px 11px;
+  font-size: 12px;
+  padding: 7px 12px;
   white-space: nowrap;
 }
 .staff-kpi-grid {
@@ -428,7 +429,7 @@ body[data-site="staff"] .role-switch a.selected {
   border: 1px solid #dfe6f1;
   background: #fff;
   border-radius: 11px;
-  padding: 17px 17px 15px;
+  padding: 18px 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -442,12 +443,12 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-kpi-label {
   color: #7b8ba8;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 .staff-kpi > strong {
   font-family: inherit;
-  font-size: 30px;
+  font-size: 32px;
   line-height: 1.35;
   font-weight: 750;
   letter-spacing: -0.6px;
@@ -455,14 +456,14 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-kpi > strong > small {
   font-family: inherit;
-  font-size: 11px;
+  font-size: 13px;
   color: #a6b1c3;
   margin-left: 6px;
 }
 .staff-kpi-sub {
-  font-size: 10px;
+  font-size: 12px;
   color: #94a1b6;
-  line-height: 1.7;
+  line-height: 1.65;
 }
 .staff-kpi-sub.red {
   color: #c98d85;
@@ -490,16 +491,16 @@ body[data-site="staff"] .role-switch a.selected {
   flex: 1;
 }
 .staff-section-rule > h2 {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
   color: #7186a8;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 .staff-section-rule > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #a2afc5;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 .staff-filter-chips {
   display: flex;
@@ -511,12 +512,12 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-filter-chip {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   border: 1px solid #dfe6f1;
   border-radius: 20px;
   background: white;
-  padding: 6px 12px;
-  font-size: 11px;
+  padding: 7px 13px;
+  font-size: 13px;
   line-height: 1.5;
   color: #5b7298;
   white-space: nowrap;
@@ -525,7 +526,7 @@ body[data-site="staff"] .role-switch a.selected {
     border-color 0.15s;
 }
 .staff-filter-chip > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #94a7c7;
   min-width: 7px;
 }
@@ -565,13 +566,13 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-filter-form input,
 .staff-filter-form select {
-  height: 37px;
-  font-size: 11px;
+  height: 40px;
+  font-size: 13px;
   border: 1px solid #e0e6ef;
   border-radius: 7px;
   background: #fbfcfe;
   color: #607595;
-  padding: 0 10px;
+  padding: 0 11px;
 }
 .staff-filter-form .search-field > input {
   padding-left: 36px;
@@ -581,15 +582,15 @@ body[data-site="staff"] .role-switch a.selected {
   left: 12px;
 }
 .staff-filter-form select {
-  width: 111px;
+  width: 126px;
 }
 .staff-filter-form .btn {
-  padding: 8px 15px;
-  font-size: 11px;
+  padding: 9px 16px;
+  font-size: 13px;
 }
 .staff-filter-form .icon-btn {
-  width: 27px;
-  height: 32px;
+  width: 30px;
+  height: 36px;
 }
 .staff-list-caption {
   display: flex;
@@ -598,7 +599,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 15px;
   padding: 12px 17px;
   border-bottom: 1px solid #edf1f7;
-  font-size: 10px;
+  font-size: 12px;
   color: #a1afc3;
 }
 .staff-list-caption b {
@@ -607,14 +608,14 @@ body[data-site="staff"] .role-switch a.selected {
   margin: 0 2px;
 }
 .staff-list-caption > span:last-child {
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-queue-row {
   display: grid;
-  grid-template-columns: 85px minmax(0, 1fr) 103px 12px;
+  grid-template-columns: 118px minmax(0, 1fr) 114px 14px;
   align-items: center;
   gap: 12px;
-  padding: 17px 17px;
+  padding: 18px 17px;
   border-bottom: 1px solid #edf1f7;
   transition:
     background 0.13s,
@@ -631,7 +632,7 @@ body[data-site="staff"] .role-switch a.selected {
   box-shadow: inset 3px 0 0 #2f6fed;
 }
 .staff-row-code {
-  font-size: 10px;
+  font-size: 12px;
   font-family: ui-monospace, Consolas, monospace;
   font-weight: 550;
   color: #8c9bb3;
@@ -649,30 +650,30 @@ body[data-site="staff"] .role-switch a.selected {
   flex-wrap: wrap;
 }
 .staff-row-heading h2 {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.7;
+  line-height: 1.65;
   letter-spacing: -0.25px;
   color: #263957;
   overflow-wrap: anywhere;
 }
 .staff-row-heading > .staff-tag {
-  font-size: 9px;
+  font-size: 11px;
 }
 .staff-row-private {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 9px;
+  font-size: 12px;
   color: #a6b2c4;
   font-weight: 400;
   white-space: nowrap;
 }
 .staff-row-excerpt {
   color: #7a879e;
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 5px;
-  line-height: 1.7;
+  line-height: 1.65;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -683,8 +684,8 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 7px;
   flex-wrap: wrap;
   margin-top: 7px;
-  line-height: 1.8;
-  font-size: 9px;
+  line-height: 1.75;
+  font-size: 12px;
   color: #98a8c1;
 }
 .staff-row-meta > span {
@@ -697,10 +698,10 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 2px 6px;
-  font-size: 9px;
+  padding: 2px 7px;
+  font-size: 12px;
   border-radius: 5px;
-  line-height: 1.6;
+  line-height: 1.55;
   font-weight: 500;
   white-space: nowrap;
   background: #f0f3f8;
@@ -731,7 +732,7 @@ body[data-site="staff"] .role-switch a.selected {
   color: #7d8da7;
 }
 .staff-published-mark {
-  font-size: 9px;
+  font-size: 12px;
   color: #75a98d;
 }
 .staff-row-state {
@@ -742,7 +743,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-row-state > time {
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 9px;
+  font-size: 12px;
   color: #9eacc1;
   white-space: nowrap;
 }
@@ -751,11 +752,11 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .badge {
   border-radius: 5px;
-  font-size: 9px;
-  padding: 4px 7px;
-  line-height: 1.6;
+  font-size: 12px;
+  padding: 4px 8px;
+  line-height: 1.5;
   font-weight: 550;
-  min-width: 55px;
+  min-width: 66px;
 }
 /* 처리 상태 색: 시민 화면과 같은 명세 색을 쓴다 */
 .staff-workspace .badge.withdrawn {
@@ -782,12 +783,12 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .pagination {
   padding: 17px;
   color: #9daec4;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-workspace .pagination .btn {
-  padding: 5px 9px;
-  font-size: 10px;
-  min-width: 26px;
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: 30px;
 }
 .staff-workspace .pagination .btn.active {
   background: #edf3ff;
@@ -804,7 +805,7 @@ body[data-site="staff"] .role-switch a.selected {
   border: 1px solid #e7edf6;
   border-radius: 8px;
   background: #fafcfe;
-  padding: 13px 14px;
+  padding: 14px 15px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -814,52 +815,52 @@ body[data-site="staff"] .role-switch a.selected {
   border-color: #cfddf2;
 }
 .staff-category-panel span {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #7188ac;
 }
 .staff-category-panel b {
   font-family: inherit;
-  font-size: 23px;
+  font-size: 25px;
   color: #48668f;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 .staff-category-panel small {
   font-family: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   color: #a7b3c8;
   margin-left: 6px;
 }
 .staff-workspace .page-heading h1 {
   font-family: inherit;
-  font-size: 27px;
+  font-size: 29px;
   color: #16203a;
   font-weight: 800;
   letter-spacing: -0.8px;
 }
 .staff-workspace .page-heading p {
-  font-size: 12px;
+  font-size: 14px;
   color: #8a9ab4;
-  line-height: 1.9;
+  line-height: 1.85;
 }
 .staff-workspace .eyebrow {
   color: #98a9c5;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.5px;
 }
 .staff-workspace .page-heading .connection {
   color: #8a9fbb;
-  font-size: 10px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .staff-workspace .info-banner {
   color: #7891b7;
   background: #eef4ff;
   border-color: #d7e4ff;
-  font-size: 11px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.85;
 }
 .staff-workspace .info-banner.amber {
   color: #ac965e;
@@ -868,7 +869,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .back-link {
   color: #8a9fbe;
-  font-size: 11px;
+  font-size: 13px;
   margin-bottom: 19px;
 }
 .staff-workspace .detail-heading {
@@ -878,16 +879,16 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .detail-heading h1 {
   font-family: inherit;
-  font-size: 25px;
-  line-height: 1.7;
+  font-size: 27px;
+  line-height: 1.65;
   color: #16203a;
   letter-spacing: -0.8px;
   font-weight: 800;
 }
 .staff-workspace .detail-heading p {
   color: #98a8bf;
-  font-size: 10px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.85;
 }
 .staff-workspace .detail-heading .eyebrow {
   letter-spacing: 0.7px;
@@ -909,13 +910,13 @@ body[data-site="staff"] .role-switch a.selected {
   margin-bottom: 19px;
 }
 .staff-workspace .detail-grid h2 {
-  font-size: 14px;
+  font-size: 16px;
   color: #334766;
   letter-spacing: -0.25px;
 }
 .staff-workspace .detail-grid .prose {
-  font-size: 12px;
-  line-height: 2;
+  font-size: 14px;
+  line-height: 1.95;
   color: #7184a3;
 }
 /* 답변 편집기가 있는 오른쪽 열은 화면을 내려도 위에 고정한다 */
@@ -931,7 +932,7 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 12px;
   margin: -4px 0 14px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 .staff-pager a {
@@ -943,37 +944,58 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-pager .disabled {
   color: #b8c3d4;
 }
-/* 목록의 "내가 담당" 버튼: 링크 행 바깥의 형제 요소로 두고 행 오른쪽에 겹쳐 놓는다 */
+/* 목록의 "부서 배정 · 내가 담당" 버튼 묶음: 링크 행 바깥의 형제 요소로 두고 행 오른쪽에 겹쳐 놓는다 */
 .staff-queue-item {
   position: relative;
 }
 .staff-queue-item > .staff-queue-row {
-  padding-right: 170px;
+  padding-right: 214px;
 }
 .staff-queue-item:last-child > .staff-queue-row {
   border-bottom: 0;
 }
-.staff-assign-btn {
+.staff-row-actions {
   position: absolute;
   right: 17px;
   top: 50%;
   transform: translateY(-50%);
-  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.staff-assign-btn {
+  height: 34px;
   padding: 0 12px;
   border: 1px solid #c9d6ea;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #fff;
   color: #2f6fed;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
+  white-space: nowrap;
 }
 .staff-assign-btn:hover {
   background: #edf3ff;
 }
+.staff-dept-btn {
+  color: #36507d;
+  border-color: #d4deee;
+  background: #f7f9fd;
+}
+.staff-dept-btn:hover {
+  background: #eaf1fd;
+  border-color: #b7cae9;
+  color: #214585;
+}
 .staff-assign-btn:disabled {
   opacity: 0.5;
   cursor: wait;
+}
+.staff-tag.dept {
+  background: #e5efff;
+  color: #234f9f;
+  border: 1px solid #c9dcff;
 }
 .staff-process {
   margin-bottom: 19px;
@@ -988,14 +1010,14 @@ body[data-site="staff"] .role-switch a.selected {
   border-bottom: 1px solid #e4ebf5;
 }
 .staff-process > header > h2 {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 750;
   color: #324869;
 }
 .staff-process > header > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #a4b2c8;
-  line-height: 1.8;
+  line-height: 1.75;
 }
 .staff-process > header > span > b {
   color: #6b8bba;
@@ -1031,13 +1053,13 @@ body[data-site="staff"] .role-switch a.selected {
   display: none;
 }
 .staff-process li > span {
-  height: 29px;
-  width: 29px;
+  height: 30px;
+  width: 30px;
   border-radius: 50%;
   border: 2px solid #e0e7f3;
   background: #fff;
   color: #b3bfd2;
-  font-size: 12px;
+  font-size: 13px;
   display: grid;
   place-items: center;
 }
@@ -1056,7 +1078,7 @@ body[data-site="staff"] .role-switch a.selected {
   outline-offset: 1px;
 }
 .staff-process li > b {
-  font-size: 11px;
+  font-size: 13px;
   color: #536d94;
   font-weight: 650;
   margin-top: 3px;
@@ -1068,9 +1090,9 @@ body[data-site="staff"] .role-switch a.selected {
   color: #acb9cf;
 }
 .staff-process li > small {
-  font-size: 9px;
+  font-size: 12px;
   color: #a6b5cb;
-  line-height: 1.9;
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 .staff-workspace .detail-grid .staff-reference-card {
@@ -1092,13 +1114,13 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 7px;
   color: #b18e35 !important;
-  font-size: 12px !important;
+  font-size: 14px !important;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
 }
 .staff-reference-card > header > span {
   color: #c7b580;
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .staff-reference-card > dl {
@@ -1111,18 +1133,18 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 14px;
   padding: 11px 0;
   border-bottom: 1px dashed #e8d9b3;
-  font-size: 11px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.8;
 }
 .staff-reference-card dl > div:last-child {
   border-bottom: 0;
 }
 .staff-reference-card dt {
-  width: 65px;
+  width: 78px;
   flex-shrink: 0;
   color: #b2944a;
   font-weight: 650;
-  font-size: 10px;
+  font-size: 12px;
   padding-top: 1px;
 }
 .staff-reference-card dd {
@@ -1132,7 +1154,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-reference-card dd > span {
   color: #bdac81;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-reference-note {
   margin: 8px 15px 16px;
@@ -1141,15 +1163,15 @@ body[data-site="staff"] .role-switch a.selected {
   border-radius: 8px;
   background: #fff;
   color: #b09d6d;
-  font-size: 10px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.75;
 }
 .staff-workspace .editor-status {
   color: #9aacca;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-workspace .assign-row {
-  font-size: 11px;
+  font-size: 13px;
   border-color: #e8edf5;
   margin-top: 18px;
 }
@@ -1161,24 +1183,24 @@ body[data-site="staff"] .role-switch a.selected {
   color: #627c9f;
 }
 .staff-workspace .assign-row .btn {
-  font-size: 10px;
-  padding: 5px 9px;
+  font-size: 12px;
+  padding: 6px 10px;
 }
 .staff-workspace .editor-panel label {
-  font-size: 11px;
+  font-size: 13px;
   color: #6e85a9;
 }
 .staff-workspace .editor-panel textarea {
-  font-size: 12px;
+  font-size: 14px;
   color: #5f769b;
   background: #fcfdff;
   border-color: #dfe7f3;
-  line-height: 2.1;
+  line-height: 1.95;
   min-height: 285px;
   border-radius: 8px;
 }
 .staff-workspace .editor-panel input {
-  font-size: 11px;
+  font-size: 13px;
   color: #627ca3;
   background: #fcfdff;
   border-color: #dfe7f3;
@@ -1193,9 +1215,9 @@ body[data-site="staff"] .role-switch a.selected {
   color: #b0bdd2;
 }
 .staff-workspace .field-hint {
-  font-size: 10px;
+  font-size: 12px;
   color: #a2b1c8;
-  line-height: 1.9;
+  line-height: 1.8;
 }
 .staff-workspace .editor-buttons {
   gap: 8px;
@@ -1205,26 +1227,26 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 8px;
 }
 .staff-workspace .editor-tools .btn {
-  font-size: 10px;
-  padding: 8px;
+  font-size: 13px;
+  padding: 8px 10px;
 }
 .staff-workspace .evidence-note {
   background: #f7f9fd;
   color: #94a8c7;
-  font-size: 10px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.75;
 }
 .staff-workspace .mini-chip {
   border-color: #e1e8f4;
   background: #f1f5fc;
   color: #9aacc8;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-workspace .origin-badge {
   border-color: #eee0b4;
   background: #fcf7e8;
   color: #b39a55;
-  font-size: 9px;
+  font-size: 12px;
 }
 /* 답변 배지: AI 검토(초록), AI 수정(노랑), 담당자 답변(검정) */
 .staff-workspace .origin-badge.ai {
@@ -1245,7 +1267,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .answer-disclosure {
   background: #fcf8ec;
   color: #b9a575;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-workspace .answer-person .avatar {
   background: #eef3fc;
@@ -1253,17 +1275,17 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .answer-person b {
   color: #6c85ab;
-  font-size: 11px;
+  font-size: 13px;
 }
 .staff-workspace .answer-person b span,
 .staff-workspace .answer-person small {
   color: #a6b5cc;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-workspace .detail-note {
   color: #a1b1cc;
-  font-size: 10px;
-  line-height: 1.8;
+  font-size: 12px;
+  line-height: 1.75;
   border-color: #e9eef6;
 }
 .staff-workspace .timeline {
@@ -1278,22 +1300,22 @@ body[data-site="staff"] .role-switch a.selected {
   border-color: #e9f0fc;
 }
 .staff-workspace .timeline b {
-  font-size: 10px;
+  font-size: 13px;
   color: #8099c1;
   font-weight: 500;
-  line-height: 1.9;
+  line-height: 1.75;
 }
 .staff-workspace .timeline time {
-  font-size: 9px;
+  font-size: 12px;
   color: #b0bed4;
 }
 .staff-workspace .history-panel h2 {
-  font-size: 13px;
+  font-size: 15px;
 }
 .staff-workspace .muted {
-  font-size: 11px;
+  font-size: 13px;
   color: #9aacc8;
-  line-height: 1.9;
+  line-height: 1.8;
 }
 .staff-workspace .message {
   border-color: #e8edf6;
@@ -1303,27 +1325,27 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .message p {
   color: #839ac0;
-  font-size: 11px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.8;
 }
 .staff-workspace .message span {
   color: #b0bed4;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-workspace .waiting-answer {
   color: #a4b8d9;
 }
 .staff-workspace .waiting-answer h3 {
   color: #8aa3c7;
-  font-size: 12px;
+  font-size: 14px;
 }
 .staff-workspace .waiting-answer p {
   color: #a8b8d1;
-  font-size: 10px;
+  font-size: 13px;
 }
 .staff-workspace .monitor-toolbar .btn {
-  font-size: 10px;
-  padding: 7px 11px;
+  font-size: 13px;
+  padding: 8px 12px;
 }
 .staff-workspace .job-grid {
   gap: 15px;
@@ -1332,21 +1354,21 @@ body[data-site="staff"] .role-switch a.selected {
   padding: 19px;
 }
 .staff-workspace .job-card h2 {
-  font-size: 13px;
+  font-size: 15px;
   color: #425d84;
-  line-height: 1.8;
+  line-height: 1.75;
   margin-top: 16px;
 }
 .staff-workspace .job-meta,
 .staff-workspace .job-updated {
   color: #a2b3ce;
-  font-size: 9px;
-  line-height: 1.8;
+  font-size: 12px;
+  line-height: 1.75;
 }
 .staff-workspace .job-stage {
   background: #f4f7fd;
   color: #829dc7;
-  font-size: 10px;
+  font-size: 13px;
 }
 .staff-workspace .stage-steps span {
   background: #f1f4f9;
@@ -1358,11 +1380,11 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .mono {
   color: #9eafca;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-workspace .job-actions .btn {
-  font-size: 10px;
-  padding: 7px 9px;
+  font-size: 13px;
+  padding: 8px 11px;
 }
 .staff-workspace .staff-footer {
   max-width: none;
@@ -1370,17 +1392,17 @@ body[data-site="staff"] .role-switch a.selected {
   padding: 20px 0;
   border-top: 1px solid #e0e7f2;
   color: #b3bfd3;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staff-footer > span:first-child {
-  font-size: 12px !important;
+  font-size: 14px !important;
   color: #7188ad !important;
   font-weight: 700;
 }
 .staff-footer b {
   color: #a7b6cd;
   font-weight: 400;
-  font-size: 9px;
+  font-size: 12px;
   margin-left: 12px;
 }
 .staff-workspace a:focus-visible,
@@ -1404,17 +1426,18 @@ body[data-site="staff"] .modal-head {
 }
 body[data-site="staff"] .modal-head h2 {
   color: #263b5e;
-  font-size: 16px;
+  font-size: 18px;
 }
 body[data-site="staff"] .modal-content > p {
-  font-size: 12px;
-  line-height: 2;
+  font-size: 14px;
+  line-height: 1.9;
   color: #8399bd;
 }
 body[data-site="staff"] .modal-content .compare-box {
   border-color: #e2e9f5;
   background: #f7faff;
   color: #6d85ac;
+  font-size: 13px;
 }
 body[data-site="staff"] .modal-content .btn.primary {
   background: #16203a;
@@ -1424,7 +1447,7 @@ body[data-site="staff"] #toast {
   background: #172139;
   border-color: #ffffff0f;
   box-shadow: 0 7px 25px #17213920;
-  font-size: 11px;
+  font-size: 13px;
 }
 @media (min-width: 1700px) {
   .staff-workspace .page-content {
@@ -1437,18 +1460,18 @@ body[data-site="staff"] #toast {
     padding-block: 19px;
   }
   .staff-row-heading h2 {
-    font-size: 14px;
+    font-size: 16px;
   }
   .staff-row-excerpt {
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 @media (max-width: 1200px) {
   .staff-sidebar {
-    width: 205px;
+    width: 222px;
   }
   .staff-workspace {
-    margin-left: 205px;
+    margin-left: 222px;
   }
   .staff-workspace .page-content {
     padding: 24px 22px 32px;
@@ -1458,7 +1481,7 @@ body[data-site="staff"] #toast {
     gap: 13px;
   }
   .staff-inbox-banner {
-    font-size: 10px;
+    font-size: 12px;
     gap: 9px;
     padding-inline: 13px;
   }
@@ -1478,31 +1501,31 @@ body[data-site="staff"] #toast {
     min-width: 105px;
   }
   .staff-row-code {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-queue-row {
-    grid-template-columns: 73px minmax(0, 1fr) 87px 10px;
+    grid-template-columns: 104px minmax(0, 1fr) 98px 12px;
     gap: 10px;
     padding: 16px 15px;
   }
   .staff-row-heading h2 {
-    font-size: 12px;
+    font-size: 14px;
   }
   .staff-row-excerpt {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-row-meta {
-    font-size: 9px;
+    font-size: 12px;
     gap: 6px;
   }
   .staff-kpi {
     padding: 16px;
   }
   .staff-kpi-label {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-kpi-sub {
-    font-size: 9px;
+    font-size: 12px;
   }
   .staff-kpi-grid {
     gap: 11px;
@@ -1520,14 +1543,14 @@ body[data-site="staff"] #toast {
     padding: 0;
   }
   .staff-process > header > span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .staff-process > ol {
     padding-inline: 10px;
   }
   .staff-workspace .editor-buttons .btn {
     padding-inline: 9px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-workspace .staff-footer {
     margin-inline: 22px;
@@ -1535,35 +1558,35 @@ body[data-site="staff"] #toast {
 }
 @media (max-width: 980px) {
   .staff-sidebar {
-    width: 190px;
+    width: 208px;
     padding-inline: 10px;
   }
   .staff-workspace {
-    margin-left: 190px;
+    margin-left: 208px;
   }
   .staff-console-brand {
     padding-inline: 7px;
   }
   .staff-console-brand > a > span {
-    font-size: 12px;
+    font-size: 14px;
   }
   .staff-console-brand small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-nav-link {
-    font-size: 11px;
+    font-size: 13px;
     gap: 9px;
     padding-inline: 8px;
   }
   .staff-nav-count {
-    font-size: 8px;
-    min-width: 16px;
+    font-size: 11px;
+    min-width: 18px;
   }
   .staff-page-title {
     gap: 10px;
   }
   .staff-page-title h1 {
-    font-size: 24px;
+    font-size: 26px;
   }
   .staff-page-title > small {
     display: none;
@@ -1572,14 +1595,14 @@ body[data-site="staff"] #toast {
     margin-left: auto;
   }
   .staff-scope > a {
-    font-size: 9px;
-    padding: 6px 8px;
+    font-size: 12px;
+    padding: 6px 9px;
   }
   .staff-topbar {
     gap: 10px;
   }
   .staff-crumb {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-topbar-right > span:first-child {
     display: none;
@@ -1589,7 +1612,7 @@ body[data-site="staff"] #toast {
     gap: 11px;
   }
   .staff-kpi > strong {
-    font-size: 29px;
+    font-size: 30px;
   }
   .staff-kpi {
     gap: 6px;
@@ -1599,15 +1622,15 @@ body[data-site="staff"] #toast {
     display: none;
   }
   .staff-filter-chip {
-    font-size: 10px;
+    font-size: 12px;
     padding: 6px 10px;
     gap: 4px;
   }
   .staff-filter-chip > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-queue-row {
-    grid-template-columns: 65px minmax(0, 1fr) 80px;
+    grid-template-columns: 96px minmax(0, 1fr) 92px;
     gap: 9px;
     padding: 15px 13px;
   }
@@ -1618,16 +1641,16 @@ body[data-site="staff"] #toast {
     gap: 5px;
   }
   .staff-row-heading h2 {
-    font-size: 12px;
+    font-size: 14px;
   }
   .staff-row-private {
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-row-meta {
     gap: 5px;
   }
   .staff-row-state > time {
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-category-panel {
     grid-template-columns: repeat(2, 1fr);
@@ -1647,7 +1670,7 @@ body[data-site="staff"] #toast {
     align-items: start;
   }
   .staff-workspace .detail-heading h1 {
-    font-size: 23px;
+    font-size: 25px;
   }
   .staff-workspace .job-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1657,8 +1680,8 @@ body[data-site="staff"] #toast {
     gap: 5px;
   }
   .staff-workspace .job-actions .btn {
-    font-size: 9px;
-    padding: 7px;
+    font-size: 12px;
+    padding: 7px 9px;
   }
   .staff-workspace .job-actions .btn:last-child {
     margin-left: 0;
@@ -1674,11 +1697,11 @@ body[data-site="staff"] #toast {
   }
   body[data-site="staff"] .demo-bar > div:first-child > span:last-child:before {
     content: "민원과 업무 시연";
-    font-size: 9px;
+    font-size: 11px;
     color: #aebbd3;
   }
   body[data-site="staff"] .demo-bar .demo-label {
-    font-size: 8px;
+    font-size: 10px;
   }
   .staff-workspace {
     margin-left: 0;
@@ -1705,16 +1728,16 @@ body[data-site="staff"] #toast {
     gap: 5px;
   }
   .staff-sidebar .staff-nav-link {
-    font-size: 12px;
-    min-height: 42px;
+    font-size: 14px;
+    min-height: 43px;
     padding: 11px;
     gap: 12px;
   }
   .staff-console-brand > a > span {
-    font-size: 14px;
+    font-size: 16px;
   }
   .staff-console-brand small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-drawer-close {
     display: inline-flex;
@@ -1725,11 +1748,11 @@ body[data-site="staff"] #toast {
     color: white;
   }
   .staff-nav-count {
-    font-size: 9px;
+    font-size: 11px;
     min-width: 18px;
   }
   .staff-nav-group {
-    font-size: 9px;
+    font-size: 11px;
     padding-top: 16px;
   }
   .staff-sidebar-policy {
@@ -1740,7 +1763,7 @@ body[data-site="staff"] #toast {
   }
   .staff-help-link,
   .staff-exit-link {
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-menu-backdrop {
     position: fixed;
@@ -1758,7 +1781,7 @@ body[data-site="staff"] #toast {
     overflow: hidden;
   }
   .staff-topbar {
-    height: 47px;
+    height: 49px;
     top: 34px;
     padding: 0 14px;
     gap: 10px;
@@ -1770,7 +1793,7 @@ body[data-site="staff"] #toast {
     flex-shrink: 0;
   }
   .staff-connection {
-    font-size: 9px;
+    font-size: 11px;
     gap: 5px;
   }
   .staff-connection > i {
@@ -1778,7 +1801,7 @@ body[data-site="staff"] #toast {
     height: 5px;
   }
   .staff-crumb {
-    font-size: 9px;
+    font-size: 11px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1802,7 +1825,7 @@ body[data-site="staff"] #toast {
   .staff-compact-nav {
     display: flex;
     position: sticky;
-    top: 81px;
+    top: 83px;
     z-index: 25;
     background: #fff;
     border-bottom: 1px solid #e0e6f0;
@@ -1812,7 +1835,7 @@ body[data-site="staff"] #toast {
     scrollbar-width: none;
   }
   .staff-compact-nav > a {
-    font-size: 10px;
+    font-size: 12px;
     white-space: nowrap;
     padding: 13px 8px 12px;
     color: #8d9fbc;
@@ -1836,24 +1859,24 @@ body[data-site="staff"] #toast {
     align-items: center;
   }
   .staff-page-title h1 {
-    font-size: 24px;
+    font-size: 25px;
     line-height: 1.6;
     letter-spacing: -0.6px;
   }
   .staff-page-title > span {
-    font-size: 8px;
-    padding: 2px 5px;
+    font-size: 11px;
+    padding: 2px 6px;
   }
   .staff-page-title > .staff-scope {
     width: 100%;
     margin-left: 0;
     margin-top: 3px;
     justify-content: flex-start;
-    max-width: 245px;
+    max-width: 265px;
     padding: 3px;
   }
   .staff-scope > a {
-    font-size: 10px;
+    font-size: 12px;
     padding: 6px 10px;
     flex: 1;
     text-align: center;
@@ -1863,14 +1886,15 @@ body[data-site="staff"] #toast {
     gap: 8px;
     margin-bottom: 14px;
     flex-wrap: wrap;
-    line-height: 1.8;
+    line-height: 1.75;
+    font-size: 12px;
   }
   .staff-inbox-banner > b {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-inbox-banner > .btn {
-    font-size: 9px;
-    padding: 5px 8px;
+    font-size: 11px;
+    padding: 5px 9px;
     margin-left: auto;
   }
   .staff-kpi-grid {
@@ -1883,14 +1907,14 @@ body[data-site="staff"] #toast {
     border-radius: 10px;
   }
   .staff-kpi-label {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-kpi > strong {
-    font-size: 28px;
+    font-size: 29px;
   }
   .staff-kpi-sub {
-    font-size: 9px;
-    line-height: 1.8;
+    font-size: 11px;
+    line-height: 1.75;
     white-space: normal;
   }
   .staff-section-rule {
@@ -1898,19 +1922,19 @@ body[data-site="staff"] #toast {
     gap: 10px;
   }
   .staff-section-rule h2 {
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-filter-chips {
     gap: 6px;
     margin-bottom: 12px;
   }
   .staff-filter-chip {
-    font-size: 10px;
-    padding: 6px 9px;
+    font-size: 12px;
+    padding: 6px 10px;
     gap: 5px;
   }
   .staff-filter-chip > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-filter-form {
     padding: 13px 12px;
@@ -1921,8 +1945,8 @@ body[data-site="staff"] #toast {
   }
   .staff-filter-form input,
   .staff-filter-form select {
-    font-size: 10px;
-    height: 36px;
+    font-size: 12px;
+    height: 38px;
   }
   .staff-filter-form select {
     min-width: 0;
@@ -1932,63 +1956,63 @@ body[data-site="staff"] #toast {
     width: 110px;
   }
   .staff-filter-form .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 12px;
   }
   .staff-filter-form .icon-btn {
-    height: 33px;
-    width: 25px;
+    height: 34px;
+    width: 28px;
   }
   .staff-list-caption {
-    font-size: 9px;
+    font-size: 11px;
     padding: 12px;
   }
   .staff-list-caption > span:last-child {
-    font-size: 8px;
+    font-size: 11px;
     max-width: 65%;
     text-align: right;
   }
   .staff-queue-row {
-    grid-template-columns: 62px minmax(0, 1fr);
+    grid-template-columns: 88px minmax(0, 1fr);
     gap: 7px 10px;
     padding: 15px 12px;
     align-items: start;
   }
   .staff-row-code {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 3px;
   }
   .staff-row-content {
     min-width: 0;
   }
   .staff-row-heading h2 {
-    font-size: 12px;
-    line-height: 1.8;
-    letter-spacing: -0.4px;
+    font-size: 14px;
+    line-height: 1.7;
+    letter-spacing: -0.3px;
   }
   .staff-row-heading {
     gap: 5px;
   }
   .staff-row-private {
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-row-excerpt {
-    font-size: 10px;
-    line-height: 1.9;
+    font-size: 12px;
+    line-height: 1.8;
     margin-top: 4px;
   }
   .staff-row-meta {
     gap: 5px;
-    font-size: 9px;
-    line-height: 1.8;
+    font-size: 11px;
+    line-height: 1.75;
     margin-top: 7px;
   }
   .staff-tag {
-    font-size: 8px;
-    padding: 2px 5px;
+    font-size: 11px;
+    padding: 2px 6px;
   }
   .staff-row-heading > .staff-tag {
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-row-state {
     grid-column: 2;
@@ -1998,12 +2022,12 @@ body[data-site="staff"] #toast {
     margin-top: 3px;
   }
   .staff-row-state > time {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-workspace .badge {
-    font-size: 9px;
+    font-size: 11px;
     min-width: 0;
-    padding: 3px 6px;
+    padding: 4px 7px;
   }
   .staff-workspace .pagination {
     padding: 16px 12px;
@@ -2015,9 +2039,9 @@ body[data-site="staff"] #toast {
     display: none;
   }
   .staff-workspace .pagination .btn {
-    font-size: 10px;
-    padding: 5px 8px;
-    min-width: 24px;
+    font-size: 12px;
+    padding: 6px 9px;
+    min-width: 28px;
   }
   .staff-category-panel {
     gap: 9px;
@@ -2027,68 +2051,68 @@ body[data-site="staff"] #toast {
     padding: 13px;
   }
   .staff-category-panel span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-category-panel b {
-    font-size: 23px;
+    font-size: 24px;
   }
   .staff-category-panel small {
-    font-size: 9px;
+    font-size: 11px;
     margin-left: 5px;
   }
   .staff-workspace .page-heading h1 {
-    font-size: 25px;
+    font-size: 26px;
   }
   .staff-workspace .page-heading p {
-    font-size: 11px;
-    line-height: 1.9;
+    font-size: 13px;
+    line-height: 1.85;
   }
   .staff-workspace .page-heading {
     align-items: flex-start;
   }
   .staff-workspace .page-heading > .connection {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 2px;
   }
   .staff-workspace .page-heading .eyebrow {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-workspace .info-banner {
-    font-size: 10px;
+    font-size: 12px;
     padding: 12px;
-    line-height: 1.9;
+    line-height: 1.85;
     gap: 8px;
   }
   .staff-workspace .back-link {
-    font-size: 10px;
+    font-size: 12px;
     margin-bottom: 18px;
   }
   .staff-workspace .detail-heading {
     gap: 8px;
     position: relative;
-    padding-bottom: 31px;
+    padding-bottom: 33px;
     margin-bottom: 18px;
     align-items: flex-start;
   }
   .staff-workspace .detail-heading h1 {
-    font-size: 23px;
-    line-height: 1.7;
-    letter-spacing: -0.8px;
+    font-size: 25px;
+    line-height: 1.65;
+    letter-spacing: -0.7px;
   }
   .staff-workspace .detail-heading p {
-    font-size: 9px;
-    line-height: 1.9;
+    font-size: 12px;
+    line-height: 1.85;
     margin-top: 10px;
   }
   .staff-workspace .detail-heading .eyebrow {
-    font-size: 8px;
+    font-size: 11px;
     letter-spacing: 0.3px;
   }
   .staff-workspace .detail-heading > .badge {
     position: absolute;
     bottom: 0;
     left: 0;
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-process {
     margin-bottom: 17px;
@@ -2100,11 +2124,11 @@ body[data-site="staff"] #toast {
     gap: 5px;
   }
   .staff-process > header > h2 {
-    font-size: 12px;
+    font-size: 14px;
   }
   .staff-process > header > span {
-    font-size: 9px;
-    line-height: 1.9;
+    font-size: 11px;
+    line-height: 1.8;
   }
   .staff-process > ol {
     padding: 19px 9px 17px;
@@ -2120,22 +2144,22 @@ body[data-site="staff"] #toast {
     height: 1px;
   }
   .staff-process li > span {
-    height: 25px;
-    width: 25px;
-    font-size: 10px;
+    height: 26px;
+    width: 26px;
+    font-size: 12px;
   }
   .staff-process li > span > svg {
     width: 14px;
   }
   .staff-process li > b {
-    font-size: 10px;
-    line-height: 1.8;
+    font-size: 12px;
+    line-height: 1.75;
     margin-top: 3px;
     white-space: nowrap;
   }
   .staff-process li > small {
-    font-size: 8px;
-    line-height: 1.8;
+    font-size: 11px;
+    line-height: 1.75;
   }
   .staff-workspace .detail-grid.staff-detail {
     display: flex;
@@ -2153,11 +2177,11 @@ body[data-site="staff"] #toast {
     margin-bottom: 17px;
   }
   .staff-workspace .detail-grid h2 {
-    font-size: 13px;
+    font-size: 15px;
   }
   .staff-workspace .detail-grid .prose {
-    font-size: 12px;
-    line-height: 2;
+    font-size: 14px;
+    line-height: 1.95;
   }
   .staff-workspace .detail-grid .staff-reference-card {
     padding: 0;
@@ -2167,10 +2191,10 @@ body[data-site="staff"] #toast {
     gap: 7px;
   }
   .staff-reference-card > header > h2 {
-    font-size: 11px !important;
+    font-size: 13px !important;
   }
   .staff-reference-card > header > span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-reference-card > dl {
     padding-inline: 14px;
@@ -2178,49 +2202,49 @@ body[data-site="staff"] #toast {
   .staff-reference-card dl > div {
     padding: 10px 0;
     gap: 11px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-reference-card dt {
-    font-size: 9px;
-    width: 60px;
+    font-size: 11px;
+    width: 72px;
   }
   .staff-reference-card dd > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-reference-note {
-    font-size: 10px;
-    line-height: 1.9;
+    font-size: 12px;
+    line-height: 1.85;
     margin: 9px 13px 14px;
     padding: 11px;
   }
   .staff-workspace .editor-panel textarea {
-    font-size: 12px;
-    line-height: 2;
+    font-size: 14px;
+    line-height: 1.95;
     min-height: 270px;
   }
   .staff-workspace .editor-panel input {
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-workspace .editor-panel label {
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-workspace .editor-buttons .btn {
-    font-size: 11px;
-    padding: 10px 9px;
+    font-size: 13px;
+    padding: 10px;
   }
   .staff-workspace .editor-tools .btn {
-    font-size: 10px;
-    padding: 8px 6px;
+    font-size: 12px;
+    padding: 8px 7px;
   }
   .staff-workspace .assign-row .btn {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-workspace .field-hint {
-    font-size: 9px;
-    line-height: 1.9;
+    font-size: 11px;
+    line-height: 1.8;
   }
   .staff-workspace .evidence-note {
-    font-size: 9px;
+    font-size: 12px;
     padding: 12px;
   }
   .staff-workspace .job-grid {
@@ -2231,22 +2255,22 @@ body[data-site="staff"] #toast {
     padding: 19px 17px;
   }
   .staff-workspace .job-card h2 {
-    font-size: 13px;
+    font-size: 15px;
     min-height: 0;
   }
   .staff-workspace .job-meta,
   .staff-workspace .job-updated {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-workspace .job-stage {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-workspace .job-actions {
     flex-wrap: nowrap;
     gap: 6px;
   }
   .staff-workspace .job-actions .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 7px 10px;
   }
   .staff-workspace .job-actions .btn:last-child {
@@ -2256,20 +2280,20 @@ body[data-site="staff"] #toast {
     gap: 6px;
   }
   .staff-workspace .monitor-toolbar .btn {
-    font-size: 9px;
-    padding: 7px 9px;
+    font-size: 12px;
+    padding: 7px 10px;
   }
   .staff-workspace .monitor-toolbar > .muted {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-workspace .staff-footer {
     margin: 0 16px;
     padding: 20px 0;
     gap: 7px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .staff-footer b {
-    font-size: 8px;
+    font-size: 11px;
     margin-left: 8px;
   }
   body[data-site="staff"] #modal {
@@ -2280,18 +2304,18 @@ body[data-site="staff"] #toast {
     padding: 19px;
   }
   body[data-site="staff"] .modal-head h2 {
-    font-size: 15px;
-    line-height: 1.8;
+    font-size: 17px;
+    line-height: 1.75;
   }
   body[data-site="staff"] .modal-content {
     padding: 20px 19px;
   }
   body[data-site="staff"] .modal-content > p {
-    font-size: 11px;
-    line-height: 2;
+    font-size: 13px;
+    line-height: 1.9;
   }
   body[data-site="staff"] #toast {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.8;
     white-space: normal;
     max-width: calc(100% - 30px);
@@ -2302,63 +2326,63 @@ body[data-site="staff"] #toast {
     padding-inline: 13px;
   }
   .staff-page-title h1 {
-    font-size: 22px;
+    font-size: 23px;
   }
   .staff-inbox-banner {
     padding: 11px;
     gap: 6px;
   }
   .staff-inbox-banner > b {
-    font-size: 9px;
+    font-size: 11px;
   }
   .staff-inbox-banner > .btn {
-    font-size: 8px;
-    padding: 5px 7px;
+    font-size: 11px;
+    padding: 5px 8px;
   }
   .staff-filter-form {
     gap: 6px;
     padding-inline: 10px;
   }
   .staff-filter-form select {
-    font-size: 9px;
+    font-size: 11px;
     padding-left: 6px;
     padding-right: 8px;
   }
   .staff-filter-form .btn {
-    font-size: 9px;
+    font-size: 11px;
     padding-inline: 10px;
   }
   .staff-filter-form .icon-btn {
-    width: 22px;
+    width: 24px;
   }
   .staff-queue-row {
-    grid-template-columns: 53px minmax(0, 1fr);
+    grid-template-columns: 74px minmax(0, 1fr);
     padding-inline: 11px;
     gap: 6px 8px;
   }
   .staff-row-code {
-    font-size: 8px;
+    font-size: 10px;
   }
   .staff-row-heading h2 {
-    font-size: 11px;
+    font-size: 13px;
   }
   .staff-filter-chip {
-    font-size: 9px;
-    padding: 6px 8px;
+    font-size: 11px;
+    padding: 6px 9px;
   }
   .staff-filter-chip > span {
-    font-size: 8px;
+    font-size: 10px;
   }
   .staff-compact-nav {
     gap: 5px;
     padding-inline: 8px;
   }
   .staff-compact-nav > a {
-    font-size: 9px;
+    font-size: 11px;
     padding-inline: 6px;
   }
   .staff-crumb {
-    font-size: 8px;
+    font-size: 10px;
   }
   .staff-topbar {
     gap: 7px;
@@ -2379,12 +2403,12 @@ body[data-site="staff"] #toast {
   margin-left: auto;
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 12px;
   white-space: nowrap;
 }
 .staff-workspace .draft-state {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 13px;
 }
 .staff-workspace .draft-state.dirty {
   color: var(--review);
@@ -2398,7 +2422,7 @@ body[data-site="staff"] #toast {
 }
 .staff-workspace .char-count {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 12px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -2413,9 +2437,9 @@ body[data-site="staff"] #toast {
   border-radius: 999px;
   background: transparent;
   color: var(--ink);
-  padding: 4px 10px;
+  padding: 5px 11px;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 13px;
   cursor: pointer;
 }
 .staff-workspace .phrase-chip:hover,
@@ -2426,7 +2450,7 @@ body[data-site="staff"] #toast {
 .staff-workspace .shortcut-hint {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 12px;
 }
 .staff-workspace .empty-line {
   color: var(--muted);
@@ -2435,22 +2459,23 @@ body[data-site="staff"] #toast {
 .staff-workspace .history-panel summary {
   cursor: pointer;
   list-style-position: inside;
+  font-size: 13px;
 }
 .staff-ref-list {
   margin: 0;
   padding-left: 16px;
   display: grid;
-  gap: 4px;
+  gap: 5px;
 }
 .staff-ref-list > li > span {
   color: #bdac81;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-ref-warn {
   margin-top: 4px;
   color: #b45309;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 12px;
 }
 .staff-workspace .staff-ai-runner {
   margin-top: 14px;
@@ -2470,13 +2495,13 @@ body[data-site="staff"] #toast {
 .staff-workspace .staff-ai-runner-row select {
   flex: 1 1 200px;
   min-width: 0;
-  padding: 7px 10px;
+  padding: 8px 11px;
   border: 1px solid #d8e1ee;
   border-radius: 8px;
   background: #fcfdff;
   color: #4f678c;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
 }
 .staff-trace-details {
   margin-top: 14px;
@@ -2485,22 +2510,177 @@ body[data-site="staff"] #toast {
 }
 .staff-trace-details > summary {
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #45628b;
   list-style-position: inside;
 }
 .staff-trace-details > h4 {
   margin: 12px 0 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: #506687;
 }
 .staff-trace-details > p {
   margin: 4px 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #5c708f;
 }
 .staff-trace-details > pre.compare-box {
   max-height: 240px;
   overflow: auto;
+}
+.staff-workspace .assign-row {
+  flex-wrap: wrap;
+}
+.staff-workspace .assign-actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.staff-workspace .assign-actions .btn {
+  margin-left: 0;
+}
+.phrase-section {
+  margin: 6px 0 10px;
+}
+.phrase-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.phrase-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5c7296;
+}
+.phrase-title small {
+  margin-left: 3px;
+  color: #7c90b0;
+  font-weight: 600;
+}
+.phrase-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.phrase-manage-btn,
+.phrase-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid #cad8ed;
+  background: #f5f9ff;
+  color: #2f5fa8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.phrase-manage-btn:hover,
+.phrase-reset-btn:hover {
+  background: #e7f0ff;
+  border-color: #acc4ea;
+}
+.phrase-chip-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #d5e0ef;
+  border-radius: 999px;
+  background: #f8fbff;
+  overflow: hidden;
+}
+.staff-workspace .phrase-chip-wrap .phrase-chip {
+  border: 0;
+  border-radius: 0;
+  padding: 5px 10px 5px 12px;
+  background: transparent;
+}
+.staff-workspace .phrase-chip-wrap .phrase-chip:hover {
+  background: #edf3ff;
+}
+.phrase-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  border: 0;
+  border-left: 1px solid #e1e8f3;
+  background: transparent;
+  color: #8293ae;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.phrase-del:hover {
+  background: #fdecec;
+  color: #b83a44;
+}
+.phrase-empty {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed #cfdbe9;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #6b7f9e;
+  background: #f8fafd;
+}
+.dept-suggest-block {
+  margin: 10px 0 6px;
+}
+.dept-suggest-block > small {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #4f6488;
+}
+.dept-suggest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dept-suggest-btn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #c9dbff;
+  background: #edf3ff;
+  color: #214e9e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.dept-suggest-btn:hover {
+  background: #dce8ff;
+}
+.modal-inline-action {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0 8px;
+}
+#assign-dept-form select {
+  width: 100%;
+}
+@media (max-width: 720px) {
+  .staff-queue-item > .staff-queue-row {
+    padding-right: 122px;
+  }
+  .staff-row-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    right: 12px;
+  }
+  .staff-row-actions .staff-assign-btn {
+    height: 30px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
 }

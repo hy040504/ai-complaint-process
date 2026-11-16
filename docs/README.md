@@ -4,7 +4,7 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-15 UTC**.
+기준일: **2026-11-16 UTC**.
 
 ## 시작점
 
@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | FAQ·사례 원문 | `rag/origin/자주_묻는_민원.json`, `rag/origin/공개_민원_사례.json` | Git에 포함. 94건·5,015건 |
 | 검색 테이블 정의 | `rag/origin/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
-| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/02_complaint_app.sql` | Git에 포함. jsonb `complaints`(생성 칼럼 5개·CHECK 3종)·`idempotency`. [실행 설계](harness/업무DB_실행설계.md). 7테이블 정규화는 후속 |
+| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/02_complaint_app.sql` | Git에 포함. jsonb `complaints`(생성 칼럼 5개·CHECK 3종)·`idempotency`·`answer_templates`·`app_meta`. [실행 설계](harness/업무DB_실행설계.md). 7테이블 정규화는 후속 |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
 | 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/검색덤프_내보내기.sh` |
 | 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
@@ -55,6 +55,9 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-096](cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md) | 2026-11-16 | 최근 패치(CASE-094·095) 주석/docstring/JSDoc 보완, TTL/더미검증/세션 캐시 최적화, 문서 디자인·정합 최종 점검 및 검증 | 완료 |
+| [CASE-095](cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) | 2026-11-16 | 담당자 사이트 청주시 127개 다른 부서 배정(검색·AI 후보 선택·해제) 및 답변 템플릿 커스텀 추가·삭제·복원(`answer_templates` DB) | 완료 |
+| [CASE-094](cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md) | 2026-11-16 | 다크 테마 청주시 투명 로고·서비스 SVG·호버 19종 수정, `#/lab`·`:5010` UI 다듬기 및 다크 토글, 담당자 폰트 확대, 시민 영구 삭제(`POST /complaints/{id}/delete`) | 완료 |
 | [CASE-093](cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) | 2026-11-15 | 민원 웹(`:5000`) CRUD 비동기 AI 분석(`EXAONE`/`Codex`/`openai_api` 가드)·담당자 콘솔 `aiAssist`·`#/lab` 검사기 패리티·`rerank=False` 기본값·실서버 E2E 검증 | 완료 |
 | [CASE-092](cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md) | 2026-11-13 | `origin/main` 비응대 기능(UI02~04·편집기, `db/`, 생성 칼럼 5개·CHECK 3종·`seed-public-demo`, `업무DB_실행설계.md`) 선택 병합 (`:5010`·LLM 로직 보존) | 완료 |
 | [CASE-091](cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md) | 2026-11-13 | 패치 후속 `legacy` 배지·`.env 기본` 엔진명 표시·`applyLlmSection()` 중복 제거·문서 동기화 및 전체 테스트/실서버 최종 검증 | 완료 |

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+import urllib.parse
 
 from src.rag.http import http_json
 
@@ -55,6 +56,22 @@ def require_search_contract(search: dict[str, Any]) -> dict[str, Any]:
             "검색 응답이 retrieval_only/requires_gate 계약을 지키지 않습니다."
         )
     return search
+
+
+def departments_via_api(query: str = "") -> list[dict[str, Any]]:
+    """실행 중인 검색 API에서 청주시 현행 부서 디렉터리를 조회합니다.
+
+    Args:
+        query: 부서 검색어입니다. 비우면 전체 부서 목록을 가져옵니다.
+
+    Returns:
+        정규화 부서 사전 목록입니다.
+    """
+    params = f"?query={urllib.parse.quote(query)}" if query.strip() else ""
+    body = http_json(search_api_url() + "/departments" + params, timeout=3)
+    if not isinstance(body, dict) or not isinstance(body.get("departments"), list):
+        raise ValueError("검색 API 부서 디렉터리 응답 형식이 올바르지 않습니다.")
+    return [row for row in body["departments"] if isinstance(row, dict)]
 
 
 def search_via_api(

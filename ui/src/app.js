@@ -43,6 +43,7 @@ import {
 import {
   PROVIDER_SHORT_LABELS,
   ROLE_PROMPT_NAMES,
+  buildDepartmentOptionsHtml,
   buildProviderOptionsHtml,
   resolveLlmMeta,
 } from "./llm-meta.js";
@@ -50,14 +51,73 @@ import {
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
 const $ = (s, parent = document) => parent.querySelector(s);
-/** 담당자 답변 편집기에서 커서 위치에 넣는 자주 쓰는 문구입니다. */
-const PHRASES = [
-  "안녕하십니까. 접수하신 민원의 검토 결과를 안내드립니다.",
-  "불편을 드려 죄송합니다.",
-  "확인 과정에서 추가 조사가 필요하여 담당 부서에 전달하였습니다.",
-  "추가 문의가 있으시면 민원 상세 화면의 추가 문의로 남겨 주세요.",
-  "감사합니다.",
+/** 서버 연결 전 또는 복원 기준으로 쓰는 기본 답변 템플릿 5종입니다. */
+const FALLBACK_TEMPLATES = [
+  {
+    id: "TPL-DEF-1",
+    title: "검토 결과 인사",
+    content: "안녕하십니까. 접수하신 민원의 검토 결과를 안내드립니다.",
+    isDefault: true,
+  },
+  {
+    id: "TPL-DEF-2",
+    title: "불편 사과",
+    content: "불편을 드려 죄송합니다.",
+    isDefault: true,
+  },
+  {
+    id: "TPL-DEF-3",
+    title: "추가 조사·부서 전달",
+    content: "확인 과정에서 추가 조사가 필요하여 담당 부서에 전달하였습니다.",
+    isDefault: true,
+  },
+  {
+    id: "TPL-DEF-4",
+    title: "추가 문의 안내",
+    content: "추가 문의가 있으시면 민원 상세 화면의 추가 문의로 남겨 주세요.",
+    isDefault: true,
+  },
+  {
+    id: "TPL-DEF-5",
+    title: "맺음말 감사",
+    content: "감사합니다.",
+    isDefault: true,
+  },
 ];
+let staffDepartments = [];
+let answerTemplates = [...FALLBACK_TEMPLATES];
+let templatesLoaded = false;
+
+/**
+ * 담당자 부서 배정에 사용할 청주시 현행 부서 목록을 서버에서 불러옵니다.
+ *
+ * 한 번 로드한 현행 부서 목록은 메모리 캐시를 재사용해 반복 HTTP 요청을 줄입니다.
+ *
+ * @param {boolean} [force=false] 캐시를 무시하고 서버에서 다시 불러올지 여부입니다.
+ * @returns {Promise<Array<object>>} 부서 목록입니다.
+ */
+async function loadStaffDepartments(force = false) {
+  if (!force && staffDepartments.length) return staffDepartments;
+  const res = await api("/departments");
+  staffDepartments = Array.isArray(res?.departments) ? res.departments : [];
+  return staffDepartments;
+}
+
+/**
+ * 담당자 답변 편집기용 템플릿 목록을 서버에서 불러옵니다.
+ *
+ * @param {boolean} [force=false] 캐시를 무시하고 서버에서 최신 목록을 다시 조회할지 여부입니다.
+ * @returns {Promise<Array<object>>} 저장된 답변 템플릿 목록입니다.
+ */
+async function loadAnswerTemplates(force = false) {
+  if (!force && templatesLoaded) return answerTemplates;
+  const res = await api("/templates");
+  if (Array.isArray(res?.templates)) {
+    answerTemplates = res.templates;
+    templatesLoaded = true;
+  }
+  return answerTemplates;
+}
 /** 화면에 필요한 값을 변환합니다. */
 const esc = (value) =>
   String(value ?? "").replace(
@@ -224,7 +284,13 @@ async function loadScreen() {
     await setRole(route.staff ? "staff" : "citizen");
     await Promise.all([
       refresh(),
-      route.staff ? loadLabFields().catch(() => null) : Promise.resolve(),
+      route.staff
+        ? Promise.all([
+            loadLabFields().catch(() => null),
+            loadStaffDepartments().catch(() => null),
+            loadAnswerTemplates().catch(() => null),
+          ])
+        : Promise.resolve(),
     ]);
     if (sequence === loadSequence) {
       render();
@@ -283,17 +349,18 @@ function home() {
   return citizenHome(data);
 }
 /**
- * listRows 화면 동작을 구성합니다.
+ * 민원 게시판 표의 본문 행(`<tr>`)을 렌더링합니다.
  *
  * @param {Array<object>} rows 현재 권한으로 조회한 민원 목록입니다.
  * @param {boolean} [staff=false] 담당자 화면인지 여부입니다.
- * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
+ * @param {boolean} [mine=false] 시민 '내 민원' 화면인지 여부(본인 행 삭제 버튼 노출 기준)입니다.
+ * @returns {string} 화면에 사용할 HTML 문자열입니다.
  */
-function listRows(rows, staff = false) {
+function listRows(rows, staff = false, mine = false) {
   return rows
     .map(
       (c) =>
-        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? "김담당" : "담당자 미지정") : `<span class="origin-badge ${c.published?.origin || ""}">${origin(c.published)}</span>`}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td><a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></td></tr>`,
+        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? "김담당" : "담당자 미지정") : `<span class="origin-badge ${c.published?.origin || ""}">${origin(c.published)}</span>`}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td>${!staff && mine && c.owner === "citizen-demo" ? `<div class="row-actions"><button type="button" class="row-delete-btn" data-action="delete-complaint" data-id="${c.id}" aria-label="${esc(c.title)} 삭제">삭제</button><a class="row-open" href="#/citizen/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></div>` : `<a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a>`}</td></tr>`,
     )
     .join("");
 }
@@ -353,7 +420,7 @@ function board(staff = false) {
     )
     .join(
       "",
-    )}</div><form id="filters" class="filters"><div class="search-field">${icon("search", 18)}<input name="q" aria-label="민원 제목 검색" placeholder="어떤 민원을 찾으세요? 제목을 검색해 보세요." value="${esc(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select>${staff ? `<select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select>` : ""}${button("검색", "primary", 'type="submit"')}<button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 18)}</button></form><div class="table-meta"><span>총 <b>${total}</b>건의 민원</span><span>최근 등록순 ${icon("filter", 14)}</span></div><div class="table-wrap"><table><thead><tr><th scope="col">번호</th><th scope="col">민원 제목</th><th scope="col">지역</th><th scope="col">처리 상태</th><th scope="col">등록일</th><th scope="col"><span class="sr-only">상세</span></th></tr></thead><tbody>${listRows(rows, staff)}</tbody></table></div>${total === 0 ? `<div class="empty">${icon("search", 38)}<h3>검색 결과가 없습니다</h3><p>검색어나 필터를 바꾸어 다시 찾아보세요.</p>${button("검색 조건 초기화", "", 'data-action="reset-filters"')}</div>` : ""}<div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div>${button("‹", "", 'data-action="page" data-page="' + (page - 1) + '" ' + (page === 1 ? "disabled" : ""))}${Array.from({ length: pages }, (_, i) => button(i + 1, page === i + 1 ? "active" : "", `data-action="page" data-page="${i + 1}"`)).join("")}${button("›", "", 'data-action="page" data-page="' + (page + 1) + '" ' + (page === pages ? "disabled" : ""))}</div><span>페이지당 8건</span></div></section></div>`;
+    )}</div><form id="filters" class="filters"><div class="search-field">${icon("search", 18)}<input name="q" aria-label="민원 제목 검색" placeholder="어떤 민원을 찾으세요? 제목을 검색해 보세요." value="${esc(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select>${staff ? `<select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select>` : ""}${button("검색", "primary", 'type="submit"')}<button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 18)}</button></form><div class="table-meta"><span>총 <b>${total}</b>건의 민원</span><span>최근 등록순 ${icon("filter", 14)}</span></div><div class="table-wrap"><table><thead><tr><th scope="col">번호</th><th scope="col">민원 제목</th><th scope="col">지역</th><th scope="col">처리 상태</th><th scope="col">등록일</th><th scope="col"><span class="sr-only">상세</span></th></tr></thead><tbody>${listRows(rows, staff, mine)}</tbody></table></div>${total === 0 ? `<div class="empty">${icon("search", 38)}<h3>검색 결과가 없습니다</h3><p>검색어나 필터를 바꾸어 다시 찾아보세요.</p>${button("검색 조건 초기화", "", 'data-action="reset-filters"')}</div>` : ""}<div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div>${button("‹", "", 'data-action="page" data-page="' + (page - 1) + '" ' + (page === 1 ? "disabled" : ""))}${Array.from({ length: pages }, (_, i) => button(i + 1, page === i + 1 ? "active" : "", `data-action="page" data-page="${i + 1}"`)).join("")}${button("›", "", 'data-action="page" data-page="' + (page + 1) + '" ' + (page === pages ? "disabled" : ""))}</div><span>페이지당 8건</span></div></section></div>`;
 }
 /**
  * writeForm 화면 동작을 구성합니다.
@@ -404,7 +471,7 @@ function detail() {
   );
   if (!c) return missing();
   const owner = c.owner === "citizen-demo";
-  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button data-action="withdraw" data-id="${c.id}">민원 철회</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
+  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button type="button" data-action="withdraw" data-id="${c.id}">민원 철회</button><button type="button" class="danger-link" data-action="delete-complaint" data-id="${c.id}">민원 삭제</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
     .slice()
     .reverse()
     .map((h) => `<li><b>${esc(h.text)}</b><time>${date(h.date)}</time></li>`)
@@ -518,13 +585,23 @@ function editor(c) {
   const candidateDiffers = Boolean(
     c.aiCandidate && c.aiCandidate.trim() && c.aiCandidate.trim() !== c.draft.trim(),
   );
+  const assignLabel = c.department
+    ? c.assigned
+      ? `${esc(c.department)} · 김담당`
+      : esc(c.department)
+    : c.assigned
+      ? "김담당"
+      : "미지정";
+  const templates = Array.isArray(answerTemplates) ? answerTemplates : [];
+  const existingIds = new Set(templates.map((t) => t.id));
+  const hasMissingDefaults = FALLBACK_TEMPLATES.some((t) => !existingIds.has(t.id));
   const evidenceText =
     c.job?.status === "running"
       ? `RAG 검색과 LLM 판정·초안 생성을 실행하고 있습니다 (${c.job.stage || "진행 중"}).`
       : c.aiAssist
         ? "RAG+LLM 분석 결과를 좌측 참고 정보에 표시했습니다. 게시 전 FAQ 조건·부서 업무분장을 확인하세요."
         : "담당자가 직접 작성하거나 아래 엔진 선택으로 RAG+LLM 응대 분석을 실행할 수 있습니다.";
-  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>접수 ${daysSince(c.date)}일째</span><span id="draft-state" class="draft-state" role="status" aria-live="polite">서버 저장본</span></div><div class="assign-row"><span>담당자</span><b>${c.assigned ? "김담당" : "미지정"}</b>${button(c.assigned ? "담당 해제" : "내가 담당", "", 'data-action="assign" data-id="' + c.id + '"')}</div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><div class="phrase-bar" aria-label="자주 쓰는 문구">${PHRASES.map((p) => `<button type="button" class="phrase-chip" data-action="insert-phrase" data-phrase="${esc(p)}">${esc(p.slice(0, 14))}…</button>`).join("")}</div><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><div class="field-foot"><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><span class="char-count" id="answer-count">${c.draft.length}/4,000</span></div><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><span class="char-count" id="reason-count">0/200</span><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div><p class="shortcut-hint">Ctrl+S(또는 ⌘S)로 초안을 저장합니다.</p></form><div class="staff-ai-runner"><label for="staff-job-provider">AI 분석 엔진</label><div class="staff-ai-runner-row"><select id="staff-job-provider" aria-label="AI 분석 엔진 선택">${buildProviderOptionsHtml(labFields.providers, c.job?.provider || "")}</select>${button(`${icon("refresh", 15)} ${c.aiAssist ? "AI 재실행" : "AI 분석 실행"}`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div></div><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·추론 이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${candidateDiffers ? button(`${icon("spark", 15)} AI 후보 채우기`, "", 'data-action="apply-ai-candidate" data-id="' + c.id + '"') : ""}</div><div class="evidence-note">${icon("help", 17)}<span>${esc(evidenceText)}</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
+  return `<section class="panel editor-panel"><div class="section-title"><h2>${icon("spark", 19)} 답변 검토·편집</h2><span class="mini-chip">시민 비공개</span></div><div class="editor-status"><span class="badge under_review">검토 우선</span><span>접수 ${daysSince(c.date)}일째</span><span id="draft-state" class="draft-state" role="status" aria-live="polite">서버 저장본</span></div><div class="assign-row"><span>담당·부서</span><b>${assignLabel}</b><div class="assign-actions">${button(c.department ? "부서 변경" : "다른 부서 배정", "", 'type="button" data-action="open-assign-dept" data-id="' + c.id + '"')}${button(c.assigned ? "담당 해제" : "내가 담당", "", 'type="button" data-action="assign" data-id="' + c.id + '"')}</div></div><form id="answer-form" data-id="${c.id}" data-version="${c.version}" data-context="${c.contextVersion}" data-draft="${c.draftVersion}"><label for="answer">시민에게 안내할 답변</label><div class="phrase-section"><div class="phrase-header"><span class="phrase-title">자주 쓰는 답변 템플릿 <small>${templates.length}</small></span><div class="phrase-header-actions"><button type="button" class="phrase-manage-btn" data-action="open-add-template">${icon("plus", 13)} 템플릿 추가</button>${hasMissingDefaults ? '<button type="button" class="phrase-reset-btn" data-action="reset-templates">기본 복원</button>' : ""}</div></div>${templates.length ? `<div class="phrase-bar" aria-label="자주 쓰는 답변 템플릿">${templates.map((t) => `<span class="phrase-chip-wrap"><button type="button" class="phrase-chip" data-action="insert-phrase" data-phrase="${esc(t.content)}" title="${esc(t.content)}">${esc(t.title)}</button><button type="button" class="phrase-del" data-action="delete-template" data-id="${esc(t.id)}" data-title="${esc(t.title)}" aria-label="${esc(t.title)} 템플릿 삭제" title="템플릿 삭제">×</button></span>`).join("")}</div>` : '<p class="phrase-empty">저장된 답변 템플릿이 없습니다. "+ 템플릿 추가"로 자주 쓰는 안내 문구를 등록해 보세요.</p>'}</div><textarea id="answer" name="answer" required maxlength="4000" rows="13" placeholder="검토한 내용을 바탕으로 답변을 작성해 주세요.">${esc(c.draft)}</textarea><div class="field-foot"><p class="field-hint">${c.aiOriginal ? "AI 작성 기원과 원본을 보존합니다." : "담당자가 직접 작성하는 답변입니다."}</p><span class="char-count" id="answer-count">${c.draft.length}/4,000</span></div><label for="reason">수정·게시 사유 <em>*</em></label><input id="reason" name="reason" required maxlength="200" placeholder="예: 현장 확인 필요 사항을 보완함"><span class="char-count" id="reason-count">0/200</span><div class="editor-buttons">${button("초안 저장", "", 'type="submit"')}${button("미리보기·게시", "primary", 'type="button" data-action="preview-answer"')}</div><p class="shortcut-hint">Ctrl+S(또는 ⌘S)로 초안을 저장합니다.</p></form><div class="staff-ai-runner"><label for="staff-job-provider">AI 분석 엔진</label><div class="staff-ai-runner-row"><select id="staff-job-provider" aria-label="AI 분석 엔진 선택">${buildProviderOptionsHtml(labFields.providers, c.job?.provider || "")}</select>${button(`${icon("refresh", 15)} ${c.aiAssist ? "AI 재실행" : "AI 분석 실행"}`, "", 'data-action="retry" data-id="' + c.id + '" ' + (c.job.status === "running" ? "disabled" : ""))}</div></div><div class="editor-tools">${button(`${icon("book", 15)} AI 원문·추론 이력`, "", 'data-action="compare" data-id="' + c.id + '"')}${candidateDiffers ? button(`${icon("spark", 15)} AI 후보 채우기`, "", 'data-action="apply-ai-candidate" data-id="' + c.id + '"') : ""}</div><div class="evidence-note">${icon("help", 17)}<span>${esc(evidenceText)}</span></div>${c.published ? button("게시 답변 철회", "danger subtle", 'data-action="retract" data-id="' + c.id + '"') : ""}</section>`;
 }
 /**
  * dashboard 화면 동작을 구성합니다.
@@ -720,6 +797,18 @@ function render() {
   ) {
     newEditor.elements.answer.value = editing.text;
     newEditor.elements.reason.value = editing.reason;
+    const answerCount = $("#answer-count");
+    if (answerCount) {
+      answerCount.textContent =
+        editing.text.length.toLocaleString("ko-KR") + "/4,000";
+    }
+    const reasonCount = $("#reason-count");
+    if (reasonCount) reasonCount.textContent = editing.reason.length + "/200";
+    const draftState = $("#draft-state");
+    if (draftState && editing.text !== newEditor.elements.answer.defaultValue) {
+      draftState.textContent = "작성 중 · 저장 안 됨";
+      draftState.classList.add("dirty");
+    }
     if (editing.focus === "answer" || editing.focus === "reason") {
       const field = document.getElementById(editing.focus);
       field.focus({ preventScroll: true });
@@ -990,6 +1079,94 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "open-assign-dept") {
+    if (!c) return;
+    if (!staffDepartments.length) {
+      await loadStaffDepartments().catch(() => []);
+    }
+    const aiDepts = [
+      ...new Set(
+        (c.aiAssist?.departments || [])
+          .map((item) => item?.canonicalName)
+          .filter(Boolean),
+      ),
+    ].slice(0, 6);
+    const suggestHtml = aiDepts.length
+      ? `<div class="dept-suggest-block"><small>AI 추천 부서 후보 (참고용 · 눌러서 선택)</small><div class="dept-suggest-chips">${aiDepts
+          .map(
+            (name) =>
+              `<button type="button" class="dept-suggest-btn" data-action="pick-suggest-dept" data-department="${esc(name)}">${esc(name)}</button>`,
+          )
+          .join("")}</div></div>`
+      : "";
+    openModal(
+      "다른 부서로 배정하기",
+      `<form id="assign-dept-form" class="modal-content" data-id="${esc(c.id)}" data-version="${c.version}"><p>시연 업무 포털 내에서 담당 부서를 지정·전달합니다. 실제 청주시 공식 이관은 수행하지 않으며, 배정 전 업무분장을 확인해 주세요.</p>${suggestHtml}<label for="dept-search">부서 검색</label><input id="dept-search" type="search" placeholder="예: 건설과, 대중교통과, 흥덕구" autocomplete="off"><label for="dept-select">배정할 부서 <em>*</em></label><select id="dept-select" name="department" required>${buildDepartmentOptionsHtml(staffDepartments, c.department || "", "")}</select><label for="dept-reason">전달·배정 메모 (선택)</label><input id="dept-reason" name="reason" maxlength="200" placeholder="예: 현장 점검 구역 확인 요청"><div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${c.department ? button("배정 해제", "danger subtle", 'type="button" data-action="clear-assign-dept" data-id="' + esc(c.id) + '"') : ""}${button("부서 배정 저장", "primary", 'type="submit"')}</div></form>`,
+    );
+    return;
+  }
+  if (action === "pick-suggest-dept") {
+    const deptName = target.dataset.department || "";
+    const searchInput = $("#dept-search");
+    const select = $("#dept-select");
+    if (searchInput) searchInput.value = "";
+    if (select) {
+      select.innerHTML = buildDepartmentOptionsHtml(
+        staffDepartments,
+        deptName,
+        "",
+      );
+      select.value = deptName;
+      select.focus();
+    }
+    return;
+  }
+  if (action === "clear-assign-dept") {
+    if (!c) return;
+    const ok = await perform(
+      () => command("/assignment", { department: "" }, "PUT"),
+      "담당 부서 배정을 해제했습니다.",
+    );
+    if (ok) modal.close();
+    return;
+  }
+  if (action === "open-add-template") {
+    const currentAnswer = ($("#answer")?.value || "").trim();
+    openModal(
+      "답변 템플릿 추가",
+      `<form id="template-form" class="modal-content"><label for="template-title">템플릿 이름 <em>*</em></label><input id="template-title" name="title" required maxlength="60" placeholder="예: 가로등 점검 안내"><label for="template-content">안내 문구 내용 <em>*</em></label><textarea id="template-content" name="content" required maxlength="2000" rows="6" placeholder="시민 안내 답변에 넣을 문구를 입력해 주세요."></textarea>${currentAnswer ? '<div class="modal-inline-action"><button type="button" class="phrase-manage-btn" data-action="fill-template-from-answer">현재 편집 중 답변 불러오기</button></div>' : ""}<div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${button("템플릿 저장", "primary", 'type="submit"')}</div></form>`,
+    );
+    return;
+  }
+  if (action === "fill-template-from-answer") {
+    const src = $("#answer")?.value?.trim() || "";
+    const dest = $("#template-content");
+    if (dest && src) dest.value = src.slice(0, 2000);
+    if ($("#template-title") && !$("#template-title").value.trim()) {
+      $("#template-title").focus();
+    } else if (dest) {
+      dest.focus();
+    }
+    return;
+  }
+  if (action === "delete-template") {
+    const tplTitle = target.dataset.title || "선택한";
+    openModal(
+      "템플릿을 삭제하시겠어요?",
+      `<form id="confirm-form" class="modal-content" data-id="${esc(id || "")}" data-kind="delete-template"><p><strong>${esc(tplTitle)}</strong> 답변 템플릿을 삭제합니다. 작성 중인 답변 본문은 그대로 유지됩니다.</p><div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${button("삭제하기", "danger", 'type="submit"')}</div></form>`,
+    );
+    return;
+  }
+  if (action === "reset-templates") {
+    await perform(async () => {
+      const res = await api("/templates/reset", { method: "POST" });
+      if (Array.isArray(res?.templates)) {
+        answerTemplates = res.templates;
+        templatesLoaded = true;
+      }
+    }, "기본 답변 템플릿을 복원했습니다.");
+    return;
+  }
   if (action === "review") {
     await perform(() => command("/review"), "재검토 요청을 저장했습니다.");
     return;
@@ -1024,6 +1201,14 @@ document.addEventListener("click", async (event) => {
         ? "민원을 철회하시겠어요?"
         : "게시 답변을 철회하시겠어요?",
       `<form id="confirm-form" class="modal-content" data-id="${id}" data-version="${c.version}" data-kind="${action}"><p>현재 목록 또는 게시 화면에서 숨겨집니다. 서버 DB의 이전 본문과 변경 이력은 보존됩니다.</p><label for="confirm-reason">철회 사유</label><input id="confirm-reason" name="reason" required maxlength="200" placeholder="철회 사유를 입력해 주세요"><div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${button("철회하기", "danger", 'type="submit"')}</div></form>`,
+    );
+    return;
+  }
+  if (action === "delete-complaint") {
+    if (!c) return;
+    openModal(
+      "민원을 삭제하시겠어요?",
+      `<form id="confirm-form" class="modal-content" data-id="${id}" data-version="${c.version}" data-kind="delete-complaint"><p><strong>${esc(c.title)}</strong> 민원을 서버에서 완전히 삭제합니다. 삭제한 민원은 복구할 수 없으며 내 민원과 공개 목록에서 모두 사라집니다.</p><div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${button("삭제하기", "danger", 'type="submit"')}</div></form>`,
     );
     return;
   }
@@ -1207,9 +1392,82 @@ document.addEventListener("submit", async (event) => {
     if (ok && publish) modal.close();
     return;
   }
+  if (form.id === "assign-dept-form") {
+    const dept = (values.department || "").trim();
+    if (!dept) {
+      toast("배정할 부서를 선택해 주세요.");
+      return;
+    }
+    const reason = (values.reason || "").trim();
+    const ok = await perform(
+      () =>
+        api("/complaints/" + form.dataset.id + "/assignment", {
+          method: "PUT",
+          body: {
+            version: Number(form.dataset.version),
+            department: dept,
+            ...(reason ? { reason } : {}),
+          },
+        }),
+      `시연 담당 부서를 "${dept}"(으)로 배정했습니다.`,
+    );
+    if (ok) modal.close();
+    return;
+  }
+  if (form.id === "template-form") {
+    const tplTitle = (values.title || "").trim();
+    const content = (values.content || "").trim();
+    if (!tplTitle || !content) {
+      toast("템플릿 이름과 안내 문구를 모두 입력해 주세요.");
+      return;
+    }
+    const ok = await perform(async () => {
+      await api("/templates", {
+        method: "POST",
+        body: { title: tplTitle, content },
+      });
+      await loadAnswerTemplates(true);
+    }, `"${tplTitle}" 템플릿을 추가했습니다.`);
+    if (ok) modal.close();
+    return;
+  }
   if (form.id === "confirm-form") {
+    const kind = form.dataset.kind;
+    if (kind === "delete-template") {
+      const targetId = form.dataset.id;
+      const ok = await perform(async () => {
+        await api("/templates/" + encodeURIComponent(targetId), {
+          method: "DELETE",
+        });
+        await loadAnswerTemplates(true);
+      }, "답변 템플릿을 삭제했습니다.");
+      if (ok) modal.close();
+      return;
+    }
+    if (kind === "delete-complaint") {
+      const targetId = form.dataset.id;
+      const ok = await perform(
+        () =>
+          api("/complaints/" + targetId + "/delete", {
+            method: "POST",
+            body: { version: Number(form.dataset.version) },
+          }),
+        "민원을 삭제했습니다.",
+        false,
+      );
+      if (ok) {
+        if (newlyCreatedId === targetId) newlyCreatedId = null;
+        modal.close();
+        if (route.path.startsWith("/citizen/detail/")) {
+          location.hash = "/citizen/mine";
+        } else {
+          render();
+        }
+      }
+      return;
+    }
     if (!values.reason.trim()) return;
-    const withdraw = form.dataset.kind === "withdraw";
+    const withdraw = kind === "withdraw";
     const ok = await perform(
       () =>
         api("/complaints/" + form.dataset.id + (withdraw ? "" : "/retract"), {
@@ -1244,6 +1502,26 @@ document.addEventListener("input", (event) => {
   }
   if (event.target.id === "reason")
     $("#reason-count").textContent = event.target.value.length + "/200";
+  if (event.target.id === "dept-search") {
+    const select = $("#dept-select");
+    if (select) {
+      const currentVal = select.value;
+      select.innerHTML = buildDepartmentOptionsHtml(
+        staffDepartments,
+        currentVal,
+        event.target.value,
+      );
+      if (!select.value && event.target.value.trim()) {
+        // 검색 결과가 있을 때는 첫 번째 실제 부서를 바로 선택 상태로 맞춘다.
+        for (const opt of select.options) {
+          if (opt.value && !opt.disabled) {
+            select.value = opt.value;
+            break;
+          }
+        }
+      }
+    }
+  }
   if (event.target.id === "title")
     $("#title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "body")

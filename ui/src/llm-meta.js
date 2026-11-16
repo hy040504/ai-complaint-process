@@ -292,3 +292,52 @@ export function buildProviderOptionsHtml(providers = {}, selected = "") {
     return `<option value="${esc(choice.value)}"${isSelected ? " selected" : ""}${!available ? " disabled" : ""} title="${esc(status?.reason || choice.defaultDesc)}">${esc(label)}</option>`;
   }).join("");
 }
+
+/**
+ * 담당자 부서 배정 모달용 `<optgroup>`/`<option>` HTML을 구·본청별로 생성합니다.
+ *
+ * @param {Array<{canonicalName?:string, district?:string|null}>} departments 청주시 현행 부서 목록입니다.
+ * @param {string} [selected=""] 현재 선택된 부서 이름입니다.
+ * @param {string} [filterText=""] 부서명 또는 구 이름 검색어입니다.
+ * @returns {string} `<select>` 내부 HTML 문자열입니다.
+ */
+export function buildDepartmentOptionsHtml(
+  departments = [],
+  selected = "",
+  filterText = "",
+) {
+  const needle = String(filterText || "").trim().toLowerCase();
+  const list = (departments || []).filter((item) => {
+    const name = String(item?.canonicalName || "").trim();
+    if (!name) return false;
+    if (!needle) return true;
+    const gu = String(item?.district || "").toLowerCase();
+    return name.toLowerCase().includes(needle) || gu.includes(needle);
+  });
+  if (!list.length) {
+    return '<option value="" disabled>일치하는 부서가 없습니다</option>';
+  }
+  const order = ["청주시 본청 · 사업소", "상당구", "서원구", "흥덕구", "청원구"];
+  const groups = new Map(order.map((label) => [label, []]));
+  for (const item of list) {
+    const key =
+      item.district && groups.has(item.district)
+        ? item.district
+        : "청주시 본청 · 사업소";
+    groups.get(key).push(item.canonicalName);
+  }
+  const blocks = ['<option value="">배정할 부서를 선택해 주세요</option>'];
+  for (const label of order) {
+    const names = groups.get(label) || [];
+    if (!names.length) continue;
+    blocks.push(
+      `<optgroup label="${esc(label)} (${names.length})">${names
+        .map(
+          (name) =>
+            `<option value="${esc(name)}"${name === selected ? " selected" : ""}>${esc(name)}</option>`,
+        )
+        .join("")}</optgroup>`,
+    );
+  }
+  return blocks.join("");
+}

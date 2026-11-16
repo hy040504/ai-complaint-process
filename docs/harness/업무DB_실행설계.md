@@ -2,13 +2,13 @@
 
 [하네스 안내](README.md) · [데이터 계약](data-contracts.md) · [서버 안내](../../src/README.md) · [사례 색인](../cases/README.md)
 
-**기준일: 2026-11-06 UTC.** 이 문서는 현재 실행 중인 민원 업무 DB의 구조를 설명합니다. 2026-10-30 설계 초안(7테이블)과 다른 점은 [3절](#3-2026-10-30-설계와의-대응)에 정리했습니다. 2026-11-06 이전 자료의 구조 설명은 이 문서로 대체합니다.
+**기준일: 2026-11-16 KST (초기 구조 2026-11-06 UTC 확장).** 이 문서는 현재 실행 중인 민원 업무 DB의 구조를 설명합니다. 2026-10-30 설계 초안(7테이블)과 다른 점은 [3절](#3-2026-10-30-설계와의-대응)에 정리했습니다. 2026-11-06 이전 자료의 구조 설명은 이 문서로 대체합니다.
 
 ## 1. 한눈에 보기
 
 - 저장소: 같은 PostgreSQL 서버의 `complaint_app` 스키마 (기본값, `COMPLAINT_APP_SCHEMA`로 바꿀 수 있음)
-- 테이블 2개: `complaints`(민원 한 건 = 한 행), `idempotency`(등록 중복 방지)
-- 원본은 `complaints.payload`(jsonb) 하나입니다. 답변 버전·추가 문의·AI 후보·작업 단계는 모두 payload 안에 있습니다.
+- 테이블 4개: `complaints`(민원 한 건 = 한 행), `idempotency`(등록 중복 방지), `answer_templates`(담당자 자주 쓰는 답변 템플릿), `app_meta`(기본 템플릿 최초 1회 시드 플래그)
+- 원본은 `complaints.payload`(jsonb) 하나입니다. 답변 버전·추가 문의·배정 부서·AI 후보·`aiAssist`·작업 단계는 모두 payload 안에 있습니다.
 - 목록·필터용 칼럼 5개는 payload에서 자동 계산되는 **생성 칼럼**입니다. 따로 쓰지 않으므로 payload와 어긋나지 않습니다.
 - 검색 색인 `complaint_rag`와 섞지 않습니다. 현재 `complaint_rag`는 이 DB에 없습니다(검색 적재는 별도 작업).
 
@@ -40,15 +40,17 @@ CHECK 제약:
 
 생성 칼럼의 CHECK는 NULL을 통과시킵니다. 그래서 `payload`에 해당 키가 없는 예전 행도 저장을 막지 않습니다.
 
-### 2.2 `complaint_app.idempotency`
+### 2.2 `complaint_app.idempotency` · `answer_templates` · `app_meta`
 
-| 칼럼 | 설명 |
-| --- | --- |
-| `owner`, `key` | 작성자별 `Idempotency-Key` (기본 키) |
-| `fingerprint` | 등록 본문의 SHA-256 해시. 같은 키에 다른 본문이 오면 409 |
-| `complaint_id` | 등록된 민원 (`complaints.id` 외래 키) |
+| 테이블 | 칼럼 | 설명 |
+| --- | --- | --- |
+| `idempotency` | `owner`, `key` | 작성자별 `Idempotency-Key` (기본 키) |
+| `idempotency` | `fingerprint` | 등록 본문의 SHA-256 해시. 같은 키에 다른 본문이 오면 409 |
+| `idempotency` | `complaint_id` | 등록된 민원 (`complaints.id` 외래 키). 시민 영구 삭제 시 먼저 정리 |
+| `answer_templates` | `id`, `title`, `content`, `is_default`, `created_at` | 담당자 답변 편집기 커스텀·기본 답변 템플릿(CRUD) |
+| `app_meta` | `key`, `value` | `default_templates_seeded` 등 초기화 완료 플래그(삭제한 기본 템플릿 부활 방지) |
 
-이 테이블은 2026-10-30 설계에 없습니다. 웹 등록의 재전송 안전성을 위해 추가했습니다.
+이 테이블들은 2026-10-30 설계에 없으며 재전송 안전성과 담당자 편집기 템플릿 영속화를 위해 추가했습니다.
 
 ### 2.3 `payload` 구조 (camelCase JSON)
 
@@ -60,10 +62,10 @@ CHECK 제약:
 | `messages[]` | 시민 추가 문의 `{author, text, date}` | 시민 응답 포함 |
 | `published` | 현재 게시된 답변 `{text, origin, reason, date}` 또는 `null` | 시민 응답 포함 |
 | `history[]` | 처리 이력 `{text, stage, date, public}` | `public=true`만 시민에게 |
-| `assigned`, `draft`, `draftVersion` | 담당 여부, 담당자 초안 | 담당자만 |
+| `assigned`, `department`, `draft`, `draftVersion` | 담당 여부, 시연 배정 부서명, 담당자 초안 | 담당자만 |
 | `versions[]` | 답변 버전 `{version, text, reason, kind, date}` (`kind`: 초안 저장·게시·게시 철회·시민 원문 수정 전 등) | 담당자만 |
-| `aiOriginal`, `aiCandidate` | AI 원본 문장, 시연 후보 문장 | 담당자만 |
-| `job` | 시연 작업 `{status, stage, attempt, contextVersion, startedAt, events[]}` | 담당자만 |
+| `aiOriginal`, `aiCandidate`, `aiAssist` | AI 원본 문장, 시연 후보 문장, 응대 분석 결과(`AssistResponse`) | 담당자만 |
+| `job` | 작업 상태 `{status, stage, attempt, contextVersion, provider, startedAt, events[]}` | 담당자만 |
 
 `origin`은 `ai`, `ai_edited`, `staff` 중 하나입니다. 담당자 응답에서 `aiOriginal`이 있으면 작성 기원을 서버가 정합니다.
 
@@ -81,6 +83,7 @@ CHECK 제약:
 | `ai_results` | `payload.aiCandidate` (근거·부서 없음) | 미구현 |
 | `job_events` | `payload.job.events[]` (공개 구분 `vis` 없음) | 미정규화 |
 | (없음) | `idempotency` | 추가됨 |
+| (없음) | `answer_templates`, `app_meta` | 추가됨 (2026-11-16 담당자 답변 템플릿 CRUD·1회 시드) |
 
 설계와 다른 값 기준:
 
@@ -91,9 +94,9 @@ CHECK 제약:
 | 분류 | "대분류 › 중분류" 자유 텍스트 | 6개 고정 목록 (`도로·교통` …) |
 | 지역 | 모르면 `NULL` | `모름` 문자열 |
 | 시연 표시 | `is_synthetic` 칼럼 | 같은 이름의 생성 칼럼 (2026-11-06 반영) |
-| 삭제 | `deleted_at` | `withdrawn` 상태 |
+| 삭제 | `deleted_at` | `withdrawn` 논리 철회(`DELETE /complaints/{id}`) + 작성자 영구 삭제(`POST /complaints/{id}/delete`) |
 
-**2026-11-06에 설계 쪽으로 맞춘 것:** 시연 표시(`is_synthetic`)와 상태·지역·공개 범위 검사만 맞췄습니다. 나머지 차이는 현재 구조를 유지하는 결정입니다.
+**2026-11-06~2026-11-16에 추가·정합화한 내용:** 시연 표시(`is_synthetic`)·상태·지역·공개 범위 CHECK 제약, 시민 영구 삭제(`idempotency` 선삭제 후 삭제), `payload.department`·`payload.aiAssist`, 담당자 템플릿 테이블(`answer_templates`·`app_meta`)을 반영했습니다. 나머지 7테이블 정규화 차이는 현재 구조를 유지합니다.
 
 ## 4. 다른 자료와의 관계
 

@@ -117,3 +117,16 @@ CREATE TABLE IF NOT EXISTS complaint_app.idempotency (
                   REFERENCES complaint_app.complaints(id),
     PRIMARY KEY (owner, key)
 );
+
+CREATE TABLE IF NOT EXISTS complaint_app.answer_templates (
+    id          text        PRIMARY KEY,                 -- 답변 템플릿 식별자
+    title       text        NOT NULL,                    -- 칩에 표시할 템플릿 이름
+    content     text        NOT NULL,                    -- 편집기 삽입 문구 본문
+    is_default  boolean     NOT NULL DEFAULT false,      -- 기본 제공 템플릿 여부
+    created_at  timestamptz NOT NULL DEFAULT now()       -- 등록 시각
+);
+
+CREATE TABLE IF NOT EXISTS complaint_app.app_meta (
+    key         text        PRIMARY KEY,                 -- 시연 스키마 초기화 플래그
+    value       text        NOT NULL                     -- 설정·시드 상태 값
+);

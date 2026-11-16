@@ -110,7 +110,7 @@ export function labQuery(values) {
  * @returns {string} 페이지 HTML입니다.
  */
 export function labShell(content) {
-  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · RAG + LLM · 민원은 저장하지 않습니다</span></span></div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><div class="citizen-header-actions">${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>llm 브랜치 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
+  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · RAG + LLM · 민원은 저장하지 않습니다</span></span></div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><div class="citizen-header-actions"><span class="lab-header-pill">RAG + LLM 검증</span>${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>llm 브랜치 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
 }
 
 /**
@@ -353,7 +353,7 @@ export function labPage(form = {}) {
     ? resolveLlmMeta(requestedLabProvider, result, defaultResolved)
     : null;
   const placeText = result ? formatPlaceText(result.inferredPlace) : "";
-  return `<div class="page-content narrow"><div class="page-heading"><div><div class="eyebrow">ASSIST LAB</div><h1>작은 목소리도 소중히 듣겠습니다</h1><p>일상에서 느낀 불편이나 궁금한 점을 남겨 주세요. 저장된 안내와 사례를 찾아 바로 안내할 수 있는지 살펴봅니다.</p></div></div><div class="form-steps">${steps
+  return `<div class="page-content narrow"><section class="lab-hero"><div><span class="lab-hero-eyebrow">청주시 AI 응대 검사기 · ASSIST LAB</span><h1>작은 불편도, 궁금한 일도<br><em>응대 흐름을 미리 확인</em>해 보세요.</h1><p>제목과 본문으로 저장된 안내와 사례를 먼저 찾고, AI 판정과 부서 후보·프롬프트 전문을 한눈에 점검합니다.</p></div><span class="citizen-welcome-symbol" aria-hidden="true">${icon("chat", 42)}<i>AI</i></span></section><div class="form-steps">${steps
     .map(
       (label, index) =>
         `<span class="${index === step ? "active" : ""}"><b>${index + 1}</b> ${label}</span>${index < 2 ? "<i></i>" : ""}`,
@@ -361,7 +361,7 @@ export function labPage(form = {}) {
     .join("")}</div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 검사기</b>입니다. 실제 개인정보를 입력하지 마세요. 민원은 저장되지 않으며 청주시 공식 접수로 연결되지 않습니다.</span></div><section class="panel lab-examples-panel"><div class="section-title"><h2>시험용 예시</h2><span>내용을 채운 뒤 바로 실행합니다</span></div><div class="lab-examples">${labExamples
     .map(
       (item) =>
-        `<button type="button" class="lab-example" data-action="lab-example" data-id="${esc(item.id)}"><b>${esc(item.title)}</b><span>${esc(item.query)}</span></button>`,
+        `<button type="button" class="lab-example" data-action="lab-example" data-id="${esc(item.id)}"><span class="lab-example-head"><b>${esc(item.title)}</b>${item.district ? `<em class="lab-example-tag">${esc(item.district)}</em>` : ""}</span><span>${esc(item.query)}</span></button>`,
     )
     .join("")}</div></section><form id="assist-form" class="panel complaint-form"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div>${renderLlmChoices(provider)}<label for="lab-title">제목 <em>*</em></label><input id="lab-title" name="title" required maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(title)}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="lab-title-count">${title.length}/120</span></div><div class="form-grid"><div><label for="lab-category">민원 분야 <em>*</em></label><select id="lab-category" name="category" required>${fieldCategories
     .map(
@@ -382,7 +382,7 @@ export function labPage(form = {}) {
           placeText
             ? `<span class="lab-meta-badge badge-place" id="lab-result-place">🗺️ 장소 추적: ${esc(placeText)}</span>`
             : ""
-        }<span class="lab-meta-badge badge-llm" id="lab-result-llm" data-provider="${esc(llmMeta?.providerKey || "")}">${esc(llmMeta?.badgeText || "")}</span></div><div class="prose">${esc(result.answer || "안내 문장이 없습니다.").replace(/\n/g, "<br>")}</div>${
+        }<span class="lab-meta-badge badge-llm" id="lab-result-llm" data-provider="${esc(llmMeta?.providerKey || "")}">${esc(llmMeta?.badgeText || "")}</span></div><div class="lab-answer-box prose">${esc(result.answer || "안내 문장이 없습니다.").replace(/\n/g, "<br>")}</div>${
           result.policyFailures?.length
             ? `<p class="lab-policy-warn">정책 검사: ${esc(result.policyFailures.join(" "))}</p>`
             : ""
@@ -395,7 +395,7 @@ export function labPage(form = {}) {
                 )
                 .join("")}</ul>`
             : ""
-        }</section><section class="panel lab-aux-grid"><div class="lab-aux-card"><h3>담당자 초안 (미게시)</h3><p class="prose">${esc(result.staffDraft?.draftAnswer || "이번 민원에는 담당자 초안을 만들지 않았습니다.")}</p></div><div class="lab-aux-card"><h3>순화 요약 (담당자 참고)</h3><p class="prose">${esc(result.sanitize?.sanitizedSummary || "거친 표현 힌트가 없어 순화 호출을 건너뛰었습니다.")}</p></div></section><section class="panel"><div class="section-title"><h2>참고한 자료</h2><span>FAQ ${result.faq?.length || 0}건 · 사례 ${result.cases?.length || 0}건</span></div><ul class="lab-evidence">${[
+        }</section><section class="panel lab-aux-grid"><div class="lab-aux-card"><div class="lab-aux-head"><h3>담당자 초안 (미게시)</h3><span class="mini-chip">PREFIX-03</span></div><p class="prose">${esc(result.staffDraft?.draftAnswer || "이번 민원에는 담당자 초안을 만들지 않았습니다.")}</p></div><div class="lab-aux-card"><div class="lab-aux-head"><h3>순화 요약 (담당자 참고)</h3><span class="mini-chip">PREFIX-04</span></div><p class="prose">${esc(result.sanitize?.sanitizedSummary || "거친 표현 힌트가 없어 순화 호출을 건너뛰었습니다.")}</p></div></section><section class="panel"><div class="section-title"><h2>참고한 자료</h2><span>FAQ ${result.faq?.length || 0}건 · 사례 ${result.cases?.length || 0}건</span></div><ul class="lab-evidence">${[
           ...(result.faq || []).map((hit) => ({ ...hit, kind: "FAQ" })),
           ...(result.cases || []).map((hit) => ({ ...hit, kind: "사례" })),
         ]

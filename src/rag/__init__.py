@@ -6,6 +6,7 @@
 """
 
 from src.rag.client import (
+    departments_via_api,
     require_search_contract,
     search_api_url,
     search_available,
@@ -30,6 +31,7 @@ __all__ = [
     "compact_case",
     "compact_faq",
     "department_candidates",
+    "departments_via_api",
     "evidence_index",
     "faq_hits",
     "hit_excerpt",

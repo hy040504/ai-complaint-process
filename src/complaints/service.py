@@ -6,17 +6,23 @@ from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
+from src.complaints.departments import (
+    load_department_directory,
+    valid_department_names,
+)
 from src.complaints.errors import AppError
 from src.complaints.models import (
     Actor,
     Answer,
     AnswerInput,
+    AnswerTemplate,
     AnswerVersion,
     AssignmentInput,
     AssistResponse,
     Complaint,
     ComplaintInput,
     ComplaintUpdate,
+    DepartmentListResponse,
     Event,
     History,
     Job,
@@ -30,6 +36,8 @@ from src.complaints.models import (
     ReasonInput,
     StaffPage,
     StaffWorkspace,
+    TemplateCreateInput,
+    TemplateListResponse,
     VersionInput,
     utcnow,
 )
@@ -66,7 +74,18 @@ class AssistIterFn(Protocol):
         rerank: bool,
         provider: str | None = None,
     ) -> Iterator[dict[str, Any]]:
-        """민원 질의를 검색·판정하고 진행 이벤트와 최종 `done` 사전을 순차 반환합니다."""
+        """민원 질의를 검색·판정하고 진행 이벤트와 최종 `done` 사전을 순차 반환합니다.
+
+        Args:
+            query: 검색 및 판정에 사용할 민원 질의 문자열입니다.
+            district: 선택 관할 자치구·읍면동 문자열 또는 None입니다.
+            limit: 컬렉션별 검색 후보 최대 개수입니다.
+            rerank: 검색 결과 재정렬 사용 여부입니다.
+            provider: 지정할 LLM 공급자 ID 또는 None입니다.
+
+        Returns:
+            진행 단계 이벤트와 최종 `done` 결과를 내보내는 이터레이터입니다.
+        """
         ...
 
 
@@ -90,7 +109,14 @@ def compose_complaint_query(row: Complaint) -> str:
 
 
 def _ai_district_arg(district: str) -> str | None:
-    """저장된 민원 관할 값을 응대 파이프라인 인자로 변환합니다."""
+    """저장된 민원 관할 값을 응대 파이프라인 인자로 변환합니다.
+
+    Args:
+        district: 업무 민원에 저장된 관할 문자열입니다.
+
+    Returns:
+        `'모름'`이면 지명 자동 감지를 위해 None을, 그 외에는 원문 관할을 반환합니다.
+    """
     return None if district == "모름" else district
 
 
@@ -98,7 +124,8 @@ def extract_ai_candidate(assist: AssistResponse) -> str:
     """응대 결과에서 담당자 편집기 후보 문장을 추출합니다.
 
     담당자용 초안(`staff_draft.draft_answer`)이 있으면 우선 사용하고,
-    없으면 시민용 안내 문구(`answer`)를 반환합니다.
+    없으면 시민용 안내 문구(`answer`)를 반환합니다. 단, 부서 후보 판정에서
+    초안이 비어 있을 때는 검사기용 미검증 상태 표기를 뺀 추천 안내 문구로 정리합니다.
 
     Args:
         assist: 검증을 통과한 응대 분석 결과입니다.
@@ -108,7 +135,26 @@ def extract_ai_candidate(assist: AssistResponse) -> str:
     """
     if assist.staff_draft and assist.staff_draft.draft_answer.strip():
         return assist.staff_draft.draft_answer.strip()
-    return (assist.answer or "").strip()
+    answer = (assist.answer or "").strip()
+    if (
+        assist.outcome == "department_suggestion"
+        and "(업무분장:" in answer
+        and assist.departments
+    ):
+        chosen = [d for d in assist.departments if d.selected] or list(
+            assist.departments
+        )
+        lines = [
+            f"- {d.canonical_name or d.department_id}"
+            for d in chosen
+            if d.canonical_name or d.department_id
+        ]
+        if lines:
+            return (
+                "유사한 공개 사례를 기준으로 아래 담당 부서 후보를 참고하여 "
+                "답변을 검토해 주세요.\n" + "\n".join(lines)
+            )
+    return answer
 
 
 class ComplaintService:
@@ -168,7 +214,9 @@ class ComplaintService:
         stage, events = snapshot
         updated = row.model_copy(deep=True)
         updated.job.stage = stage
-        updated.job.events = [Event(date=item.date, stage=item.stage) for item in events]
+        updated.job.events = [
+            Event(date=item.date, stage=item.stage) for item in events
+        ]
         return updated
 
     def wait_for_jobs(self, timeout: float = 5.0) -> None:
@@ -281,7 +329,7 @@ class ComplaintService:
                 row
                 for row in rows
                 if isinstance(row, Complaint)
-                and row.assigned == (query.assign == "mine")
+                and (row.assigned or bool(row.department)) == (query.assign == "mine")
             ]
         total = len(rows)
         selected = rows[(query.page - 1) * query.limit : query.page * query.limit]
@@ -338,7 +386,9 @@ class ComplaintService:
                 context_version=1,
                 provider=body.provider,
                 started_at=utcnow(),
-                events=[Event(stage=f"민원 저장 완료 · AI 자동 분석 시작{provider_note}")],
+                events=[
+                    Event(stage=f"민원 저장 완료 · AI 자동 분석 시작{provider_note}")
+                ],
             )
         else:
             row.job.events.append(Event(stage="민원 저장 완료 · 실제 AI 미연동"))
@@ -373,13 +423,126 @@ class ComplaintService:
             AppError: 역할·작성자·버전이 일치하지 않으면 발생합니다.
         """
         row = self.get(actor, complaint_id)
-        if staff and actor.role != "staff":
-            raise AppError(403, "staff_required", "담당자만 수행할 수 있는 작업입니다.")
+        if staff:
+            self._require_staff(actor)
         if not staff and (actor.role != "citizen" or row.owner != actor.id):
             raise AppError(
                 403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
             )
         return self.repository.change(complaint_id, version, action)
+
+    def delete_complaint(self, actor: Actor, complaint_id: str, version: int) -> None:
+        """작성자 본인이 등록한 민원을 저장소에서 완전히 삭제합니다.
+
+        Args:
+            actor: 삭제를 요청한 사용자입니다.
+            complaint_id: 삭제할 민원 식별자입니다.
+            version: 클라이언트가 마지막으로 조회한 낙관적 잠금 버전입니다.
+
+        Raises:
+            AppError: 민원이 없거나 작성자 본인이 아니거나 버전이 다르면 발생합니다.
+        """
+        row = self.get(actor, complaint_id)
+        if actor.role != "citizen" or row.owner != actor.id:
+            raise AppError(
+                403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
+            )
+
+        def check_owner(locked: Complaint) -> None:
+            """트랜잭션 잠금 안에서 작성자 본인 여부와 상태를 한 번 더 검증합니다.
+
+            Args:
+                locked: 잠금으로 읽은 최신 민원입니다.
+            """
+            if locked.status == "withdrawn":
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            if actor.role != "citizen" or locked.owner != actor.id:
+                raise AppError(
+                    403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
+                )
+
+        self.repository.delete(complaint_id, version, check_owner)
+
+    def _require_staff(self, actor: Actor) -> None:
+        """요청 사용자가 담당자 역할인지 검증합니다.
+
+        Args:
+            actor: 인증된 시연 사용자입니다.
+
+        Raises:
+            AppError: 담당자 역할이 아니면 403 오류를 발생합니다.
+        """
+        if actor.role != "staff":
+            raise AppError(403, "staff_required", "담당자만 수행할 수 있는 작업입니다.")
+
+    def list_departments(self, actor: Actor) -> DepartmentListResponse:
+        """담당자 부서 배정 모달에 표시할 청주시 현행 부서 목록을 반환합니다.
+
+        Args:
+            actor: 조회를 요청한 담당자입니다.
+
+        Returns:
+            정규화된 청주시 현행 부서 목록입니다.
+        """
+        self._require_staff(actor)
+        return DepartmentListResponse(
+            departments=load_department_directory(prefer_remote=self.ai_connected)
+        )
+
+    def list_templates(self, actor: Actor) -> TemplateListResponse:
+        """담당자 답변 편집기에서 사용할 템플릿 목록을 반환합니다.
+
+        Args:
+            actor: 조회를 요청한 담당자입니다.
+
+        Returns:
+            등록순으로 정렬된 답변 템플릿 목록입니다.
+        """
+        self._require_staff(actor)
+        return TemplateListResponse(templates=self.repository.list_templates())
+
+    def create_template(
+        self, actor: Actor, body: TemplateCreateInput
+    ) -> AnswerTemplate:
+        """담당자 커스텀 답변 템플릿을 저장하고 반환합니다.
+
+        Args:
+            actor: 생성을 요청한 담당자입니다.
+            body: 템플릿 이름과 본문입니다.
+
+        Returns:
+            새로 저장한 템플릿입니다.
+        """
+        self._require_staff(actor)
+        template = AnswerTemplate(
+            id="TPL-" + uuid4().hex[:10].upper(),
+            title=body.title,
+            content=body.content,
+            is_default=False,
+        )
+        return self.repository.create_template(template)
+
+    def delete_template(self, actor: Actor, template_id: str) -> None:
+        """담당자가 지정한 답변 템플릿을 삭제합니다.
+
+        Args:
+            actor: 삭제를 요청한 담당자입니다.
+            template_id: 삭제할 템플릿 식별자입니다.
+        """
+        self._require_staff(actor)
+        self.repository.delete_template(template_id)
+
+    def reset_templates(self, actor: Actor) -> TemplateListResponse:
+        """삭제된 기본 답변 템플릿을 복원하고 전체 목록을 반환합니다.
+
+        Args:
+            actor: 복원을 요청한 담당자입니다.
+
+        Returns:
+            복원 후 전체 템플릿 목록입니다.
+        """
+        self._require_staff(actor)
+        return TemplateListResponse(templates=self.repository.reset_default_templates())
 
     def update(
         self, actor: Actor, complaint_id: str, body: ComplaintUpdate
@@ -599,10 +762,36 @@ class ComplaintService:
                 self.invalidate(row)
                 text = "시민이 담당자 재검토 요청"
             elif operation == "assign" and isinstance(body, AssignmentInput):
-                row.assigned = body.assigned
-                if row.assigned and row.status == "submitted":
-                    row.status = "under_review"
-                text = "담당자 지정" if row.assigned else "담당자 지정 해제"
+                if body.department is not None:
+                    dept = body.department
+                    if dept:
+                        allowed = valid_department_names(
+                            prefer_remote=self.ai_connected
+                        )
+                        if dept not in allowed:
+                            raise AppError(
+                                422,
+                                "invalid_department",
+                                "청주시 현행 부서 목록에서 배정할 부서를 선택해 주세요.",
+                            )
+                        row.department = dept
+                        row.assigned = True if body.assigned is None else body.assigned
+                        if row.status == "submitted":
+                            row.status = "under_review"
+                        text = f"담당 부서 지정(시연 · 공식 이관 아님): {dept}"
+                        if body.reason:
+                            text += f" · {body.reason}"
+                    else:
+                        row.department = None
+                        row.assigned = False if body.assigned is None else body.assigned
+                        text = "담당 부서 배정 해제"
+                        if body.reason:
+                            text += f": {body.reason}"
+                else:
+                    row.assigned = bool(body.assigned)
+                    if row.assigned and row.status == "submitted":
+                        row.status = "under_review"
+                    text = "담당자 지정" if row.assigned else "담당자 지정 해제"
             elif operation in ("draft", "publish") and isinstance(body, AnswerInput):
                 publish = operation == "publish"
                 self._save_answer(row, body, publish)
@@ -763,7 +952,11 @@ class ComplaintService:
                 return
 
             def apply_checked(current: Complaint) -> None:
-                """트랜잭션 잠금 안에서 실행 맥락 일치 여부를 한 번 더 검증합니다."""
+                """트랜잭션 잠금 안에서 실행 맥락 일치 여부를 한 번 더 검증합니다.
+
+                Args:
+                    current: 잠금으로 조회한 최신 민원 레코드입니다.
+                """
                 if self._matches_running_job(current, attempt, context_version):
                     updater(current)
 
@@ -778,7 +971,16 @@ class ComplaintService:
     def _matches_running_job(
         row: Complaint, attempt: int, context_version: int
     ) -> bool:
-        """민원이 삭제되지 않았고 동일 시도·맥락의 실행 중 작업인지 확인합니다."""
+        """민원이 삭제되지 않았고 동일 시도·맥락의 실행 중 작업인지 확인합니다.
+
+        Args:
+            row: 검사할 민원 레코드입니다.
+            attempt: 백그라운드 작업이 시작한 시도 번호입니다.
+            context_version: 작업 시작 시점의 민원 내용 버전입니다.
+
+        Returns:
+            결과를 커밋할 수 있는 동일 실행 중 작업이면 True입니다.
+        """
         return (
             row.status != "withdrawn"
             and row.context_version == context_version
@@ -805,7 +1007,11 @@ class ComplaintService:
         """
 
         def update(current: Complaint) -> None:
-            """완료된 AI 판정·초안 후보·이력을 민원 레코드에 안전하게 반영합니다."""
+            """완료된 AI 판정·초안 후보·이력을 민원 레코드에 안전하게 반영합니다.
+
+            Args:
+                current: 잠금으로 읽은 최신 민원 레코드입니다.
+            """
             candidate = extract_ai_candidate(assist)
             final_stage = _OUTCOME_STAGE_LABELS.get(
                 assist.outcome, "AI 분석 완료 · 담당자 검토 대기"
@@ -858,7 +1064,11 @@ class ComplaintService:
         """
 
         def update(current: Complaint) -> None:
-            """AI 실패 상태와 요약 단계를 기록하되 민원 본문·초안은 보존합니다."""
+            """AI 실패 상태와 요약 단계를 기록하되 민원 본문·초안은 보존합니다.
+
+            Args:
+                current: 잠금으로 읽은 최신 민원 레코드입니다.
+            """
             reason = (message or "알 수 없는 오류").strip()[:120]
             final_stage = f"AI 분석 실패: {reason}"
             current.job.status = "failed"

@@ -713,17 +713,38 @@ export function showResult(payload, received, sourceText = "", root = document) 
     llmBadge.hidden = false;
   }
   root.querySelector("#result-message").textContent = received.message;
-  root.querySelector("#result-outcome").textContent =
-    outcomeNames[assist.outcome] || assist.outcome || "";
+  const outcomeNode = root.querySelector("#result-outcome");
+  outcomeNode.textContent = outcomeNames[assist.outcome] || assist.outcome || "";
+  if (outcomeNode.dataset) outcomeNode.dataset.outcome = assist.outcome || "";
   const reason = assist.reasonCode || assist.decision?.reasonCode || "";
   root.querySelector("#result-reason").textContent = reason
     ? reasonNames[reason] || reason
     : "";
   const failures = assist.policyFailures || [];
-  root.querySelector("#result-failures").textContent = failures.length
+  const failureNode = root.querySelector("#result-failures");
+  failureNode.textContent = failures.length
     ? `정책 검사: ${failures.join(" ")}`
     : "";
+  failureNode.hidden = !failures.length;
   root.querySelector("#result-answer").textContent = assist.answer || "";
+  const deptsWrap = root.querySelector("#result-depts-block");
+  const deptsList = root.querySelector("#result-depts");
+  if (deptsList) {
+    deptsList.replaceChildren();
+    const deptItems = assist.departments || [];
+    for (const dept of deptItems) {
+      const li = document.createElement("li");
+      const name = document.createElement("b");
+      name.textContent = dept.canonicalName || "";
+      const meta = document.createElement("span");
+      const duty = dept.dutyStatus || "unverified";
+      const juris = dept.jurisdictionStatus || "unverified";
+      meta.textContent = `(업무분장: ${duty}, 관할: ${juris} · 자동 이관 아님)${dept.selected ? " · 후보" : ""}`;
+      li.append(name, meta);
+      deptsList.append(li);
+    }
+    if (deptsWrap) deptsWrap.hidden = deptItems.length === 0;
+  }
   const draft = assist.staffDraft;
   root.querySelector("#result-draft").textContent = draft
     ? draft.draftAnswer || ""
@@ -736,11 +757,17 @@ export function showResult(payload, received, sourceText = "", root = document) 
   hits.replaceChildren();
   for (const hit of [...(assist.faq || []), ...(assist.cases || [])]) {
     const item = document.createElement("li");
-    item.textContent = `${hit.corpus === "routing" ? "사례" : "FAQ"} · ${hit.title || hit.sourceId || ""}`;
+    const kind = document.createElement("span");
+    kind.className = "hit-chip";
+    kind.textContent = hit.corpus === "routing" ? "사례" : "FAQ";
+    const title = document.createElement("b");
+    title.textContent = hit.title || hit.sourceId || "";
+    item.append(kind, title);
     hits.append(item);
   }
   if (!hits.childElementCount) {
     const item = document.createElement("li");
+    item.className = "hit-empty";
     item.textContent = "표시할 자료가 없습니다.";
     hits.append(item);
   }
@@ -984,6 +1011,10 @@ function bind() {
   const list = document.querySelector("#run-list");
   const empty = document.querySelector("#run-empty");
   const clear = document.querySelector("#run-clear");
+  const steps = document.querySelectorAll(".form-steps > span");
+  const setStep = (activeIndex) => {
+    steps.forEach((node, idx) => node.classList.toggle("active", idx === activeIndex));
+  };
   let runs = [];
   let selectedId = "";
 
@@ -1031,6 +1062,7 @@ function bind() {
             "파일 기록에서 다시 보는 결과입니다. 모델을 다시 호출하지 않았습니다.",
           );
           result.hidden = false;
+          setStep(2);
           renderRuns();
         } catch (error) {
           errorBox.textContent = error.message;
@@ -1052,6 +1084,7 @@ function bind() {
     form.querySelectorAll("input, select, textarea").forEach((node) => {
       node.disabled = true;
     });
+    setStep(1);
     showProgress();
     let sawProgress = false;
     try {
@@ -1070,10 +1103,12 @@ function bind() {
       runs = await fetchRuns();
       showResult(payload, received);
       result.hidden = false;
+      setStep(2);
       renderRuns();
       result.scrollIntoView({ block: "start" });
     } catch (error) {
       hideProgress();
+      setStep(0);
       errorBox.textContent = error.message;
       errorBox.hidden = false;
     } finally {
@@ -1111,7 +1146,93 @@ function bind() {
     });
 }
 
+const THEME_STORAGE_KEY = "minwon-ui-theme";
+const THEME_MOON_SVG =
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" /></svg>';
+const THEME_SUN_SVG =
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>';
+
+/**
+ * 로컬 저장소에 저장된 화면 테마를 읽습니다.
+ *
+ * @returns {"light" | "dark"} 저장된 테마 이름입니다.
+ */
+export function readSavedTheme() {
+  try {
+    return typeof localStorage !== "undefined" &&
+      localStorage.getItem(THEME_STORAGE_KEY) === "dark"
+      ? "dark"
+      : "light";
+  } catch {
+    return "light";
+  }
+}
+
+/**
+ * 단독 응대 검사기 문서에 테마 속성과 토글 단추 상태를 반영합니다.
+ *
+ * @param {"light" | "dark"} theme 적용할 테마입니다.
+ * @param {boolean} [persist=false] 저장소에 테마를 기록할지 여부입니다.
+ * @param {Document | ParentNode} [root=document] 단추를 찾을 루트입니다.
+ * @returns {"light" | "dark"} 최종 적용된 테마입니다.
+ */
+export function applyTheme(theme, persist = false, root = document) {
+  const next = theme === "dark" ? "dark" : "light";
+  const dark = next === "dark";
+  if (typeof document !== "undefined") {
+    document.documentElement.style.colorScheme = next;
+    if (document.body) document.body.dataset.theme = next;
+  }
+  if (persist) {
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+      }
+    } catch {
+      /* 저장소가 막힌 브라우저에서도 화면 전환은 유지한다. */
+    }
+  }
+  const button = root?.querySelector?.("#lab-theme-toggle");
+  if (button) {
+    button.setAttribute("aria-pressed", dark ? "true" : "false");
+    button.setAttribute(
+      "aria-label",
+      dark ? "라이트 테마로 전환" : "다크 테마로 전환",
+    );
+    button.setAttribute("title", dark ? "밝은 화면" : "어두운 화면");
+    button.innerHTML = dark ? THEME_SUN_SVG : THEME_MOON_SVG;
+  }
+  return next;
+}
+
+/**
+ * 단독 응대 검사기 헤더의 다크·라이트 테마 전환 단추를 초기화합니다.
+ *
+ * @param {Document | ParentNode} [root=document] 단추를 찾을 루트입니다.
+ * @returns {void}
+ */
+export function initThemeToggle(root = document) {
+  applyTheme(readSavedTheme(), false, root);
+  const button = root?.querySelector?.("#lab-theme-toggle");
+  if (button && button.dataset.themeBound !== "1") {
+    button.dataset.themeBound = "1";
+    button.addEventListener("click", () => {
+      const dark = typeof document !== "undefined" && document.body?.dataset?.theme === "dark";
+      applyTheme(dark ? "light" : "dark", true, root);
+    });
+  }
+  if (typeof window !== "undefined" && !window.__labThemeStorageBound) {
+    window.__labThemeStorageBound = true;
+    window.addEventListener("storage", (event) => {
+      if (event.key === THEME_STORAGE_KEY) {
+        applyTheme(event.newValue === "dark" ? "dark" : "light", false, root);
+      }
+    });
+  }
+}
+
 if (typeof document !== "undefined" && document.querySelector("#complaint-form")) {
+  initThemeToggle();
   loadFields()
     .catch((error) => {
       const errorBox = document.querySelector("#error");

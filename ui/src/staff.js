@@ -77,8 +77,8 @@ function queryLink(path, params, changes) {
 export function staffShell(content, route, data) {
   const rows = live(data),
     pending = rows.filter(open).length;
-  const mine = rows.filter((c) => c.assigned).length;
-  const unassigned = rows.filter((c) => !c.assigned).length;
+  const mine = rows.filter((c) => c.assigned || c.department).length;
+  const unassigned = rows.filter((c) => !c.assigned && !c.department).length;
   const followups = rows.filter((c) => c.messages.length).length;
   const failed = rows.filter((c) => c.job.status === "failed").length;
   const view = route.params.get("view"),
@@ -210,10 +210,10 @@ function queueRows(rows) {
     .map(
       (c) =>
         `<div class="staff-queue-item">${a(
-        `<span class="staff-row-code" title="${e(c.id)}">#${e(c.id.split("-").at(-1))}</span><div class="staff-row-content"><div class="staff-row-heading"><h2>${e(c.title)}</h2><span class="staff-row-age">접수 ${daysSince(c.date)}일째</span>${c.messages.length ? `<span class="staff-tag amber">추가 문의 ${c.messages.length}</span>` : ""}${c.visibility === "private" ? `<span class="staff-row-private">${icon("shield", 12)} 비공개</span>` : ""}</div><p class="staff-row-excerpt">원문: ${e(c.body.replace(/\s+/g, " ").slice(0, 82))}${c.body.length > 82 ? "…" : ""}</p><div class="staff-row-meta"><span class="staff-tag navy">${e(c.category)}</span><span>${icon("pin", 11)} ${e(c.district)}</span><span class="staff-tag ${c.assigned ? "gray" : "amber"}">${c.assigned ? "김담당" : "담당자 미지정"}</span>${unpublished(c) ? '<span class="staff-tag gold">검토 전 초안</span>' : ""}${c.job.status === "failed" ? '<span class="staff-tag red">AI 분석 실패</span>' : ""}${c.job.status === "running" ? '<span class="staff-tag blue">AI 분석 중</span>' : ""}${c.published ? '<span class="staff-published-mark">' + icon("check", 11) + " 답변 게시됨</span>" : ""}</div></div><div class="staff-row-state"><span class="badge ${c.status}">${statusNames[c.status]}</span><time>${day(c.date)} 등록</time></div><span class="staff-row-open">${icon("chevron", 16)}</span>`,
+        `<span class="staff-row-code" title="${e(c.id)}">#${e(c.id.split("-").at(-1))}</span><div class="staff-row-content"><div class="staff-row-heading"><h2>${e(c.title)}</h2><span class="staff-row-age">접수 ${daysSince(c.date)}일째</span>${c.messages.length ? `<span class="staff-tag amber">추가 문의 ${c.messages.length}</span>` : ""}${c.visibility === "private" ? `<span class="staff-row-private">${icon("shield", 12)} 비공개</span>` : ""}</div><p class="staff-row-excerpt">원문: ${e(c.body.replace(/\s+/g, " ").slice(0, 82))}${c.body.length > 82 ? "…" : ""}</p><div class="staff-row-meta"><span class="staff-tag navy">${e(c.category)}</span><span>${icon("pin", 11)} ${e(c.district)}</span>${c.department ? `<span class="staff-tag dept" title="시연 배정 부서">${e(c.department)}</span>` : ""}${c.assigned ? '<span class="staff-tag gray">김담당</span>' : !c.department ? '<span class="staff-tag amber">담당자 미지정</span>' : ""}${unpublished(c) ? '<span class="staff-tag gold">검토 전 초안</span>' : ""}${c.job.status === "failed" ? '<span class="staff-tag red">AI 분석 실패</span>' : ""}${c.job.status === "running" ? '<span class="staff-tag blue">AI 분석 중</span>' : ""}${c.published ? '<span class="staff-published-mark">' + icon("check", 11) + " 답변 게시됨</span>" : ""}</div></div><div class="staff-row-state"><span class="badge ${c.status}">${statusNames[c.status]}</span><time>${day(c.date)} 등록</time></div><span class="staff-row-open">${icon("chevron", 16)}</span>`,
         `/staff/detail/${c.id}`,
         "staff-queue-row",
-      )}<button class="staff-assign-btn" type="button" data-action="assign" data-id="${e(c.id)}">${c.assigned ? "담당 해제" : "내가 담당"}</button></div>`,
+      )}<div class="staff-row-actions"><button class="staff-assign-btn staff-dept-btn" type="button" data-action="open-assign-dept" data-id="${e(c.id)}">${c.department ? "부서 변경" : "부서 배정"}</button><button class="staff-assign-btn" type="button" data-action="assign" data-id="${e(c.id)}">${c.assigned ? "담당 해제" : "내가 담당"}</button></div></div>`,
     )
     .join("");
 }
@@ -240,13 +240,16 @@ export function staffQueue(data, params, { landing = false } = {}) {
   let base = all.filter(
     (c) =>
       (!landing || open(c)) &&
-      (scope !== "mine" || c.assigned || c.status === "submitted"),
+      (scope !== "mine" ||
+        c.assigned ||
+        Boolean(c.department) ||
+        c.status === "submitted"),
   );
   const totals = {
     all: base.length,
     submitted: base.filter((c) => c.status === "submitted").length,
     review: base.filter((c) => c.status === "under_review").length,
-    none: base.filter((c) => !c.assigned).length,
+    none: base.filter((c) => !c.assigned && !c.department).length,
     followup: base.filter((c) => c.messages.length).length,
     drafts: base.filter(unpublished).length,
     failed: base.filter((c) => c.job.status === "failed").length,
@@ -258,7 +261,10 @@ export function staffQueue(data, params, { landing = false } = {}) {
       (!status || c.status === status) &&
       (!district || c.district === district) &&
       (!category || c.category === category) &&
-      (!assign || (assign === "mine" ? c.assigned : !c.assigned)) &&
+      (!assign ||
+        (assign === "mine"
+          ? c.assigned || Boolean(c.department)
+          : !c.assigned && !c.department)) &&
       (!view ||
         (view === "followup"
           ? c.messages.length
@@ -362,9 +368,15 @@ function categoryOverview(rows) {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function staffProcess(c) {
+  const hasAssignee = Boolean(c.assigned || c.department);
+  const assigneeLabel = c.department
+    ? `${c.department}${c.assigned ? " · 김담당" : ""}`
+    : c.assigned
+      ? "김담당"
+      : "담당자 미지정";
   const steps = [
     ["서버 접수", true, "민원 원문 저장"],
-    ["담당자 지정", c.assigned, c.assigned ? "김담당" : "담당자 미지정"],
+    ["담당·부서 지정", hasAssignee, assigneeLabel],
     [
       "답변 초안",
       Boolean(c.draft),
@@ -404,12 +416,13 @@ export function staffReviewInfo(c) {
   const outcomeHtml = assist
     ? `<b>${e(OUTCOME_SHORT_NAMES[assist.outcome] || assist.outcome)}</b> <span>· ${e(REASON_NAMES[assist.reasonCode] || assist.reasonCode)}</span>${assist.policyFailures?.length ? `<div class="staff-ref-warn">정책 검사: ${e(assist.policyFailures.join(" "))}</div>` : ""}`
     : e(c.job?.stage || "아직 AI 분석을 실행하지 않았습니다.");
+  // 검증 상태 메타데이터(dutyStatus·jurisdictionStatus·자동 이관 아님)는 응대 검사기에서만 표시합니다.
   const deptHtml = assist
     ? assist.departments?.length
       ? `<ul class="staff-ref-list">${assist.departments
           .map(
             (d) =>
-              `<li><b>${e(d.canonicalName || "")}</b> <span>(업무분장: ${e(d.dutyStatus || "unverified")}, 관할: ${e(d.jurisdictionStatus || "unverified")} · 자동 이관 아님)</span></li>`,
+              `<li><b>${e(d.canonicalName || "")}</b> <span>${d.selected ? "· AI 추천 후보" : "· 유사 사례 참고"}</span></li>`,
           )
           .join("")}</ul>`
       : "추천 부서 후보 없음 <span>· 담당자 판단 필요</span>"

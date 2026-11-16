@@ -18,6 +18,7 @@ from src import create_app
 from src.complaints.config import Settings
 from src.complaints.models import AssistResponse, Complaint, Job
 from src.complaints.repository import PostgresRepository
+from src.complaints.service import extract_ai_candidate
 
 
 def _fake_assist_payload(
@@ -540,6 +541,28 @@ def test_late_ai_superseded_and_failure_resilience() -> None:
     assert failed_view["job"]["status"] == "failed"
     assert "429" in failed_view["job"]["stage"]
     assert failed_view["title"] == "API 429 오류에도 민원이 저장되어야 합니다"
+
+
+def test_extract_ai_candidate_strips_unverified_tag_when_staff_draft_missing() -> None:
+    """담당자 초안이 비어 있을 때 민원 웹 후보 문장에 검사기용 미검증 표기를 넣지 않습니다."""
+    assist = AssistResponse.model_validate(
+        _fake_assist_payload(
+            query="오송읍 가로등 고장",
+            district="흥덕구",
+            outcome="department_suggestion",
+            provider="exaone_api",
+            answer=(
+                "유사한 공개 사례를 기준으로 담당 부서 후보를 안내합니다. "
+                "공식 접수·이관이 아니며 담당자 확인이 필요합니다.\n"
+                "- 흥덕구 건설과 (업무분장: unverified, 자동 이관 아님)"
+            ),
+            staff_draft_answer=None,
+        )
+    )
+    candidate = extract_ai_candidate(assist)
+    assert "흥덕구 건설과" in candidate
+    assert "업무분장:" not in candidate
+    assert "자동 이관 아님" not in candidate
 
 
 @pytest.mark.skipif(

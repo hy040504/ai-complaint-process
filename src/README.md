@@ -108,9 +108,12 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /complaints/{complaint_id}` | 허용된 상세만 조회 |
 | `PUT /complaints/{complaint_id}` | 게시 전 본인 원문 수정 |
 | `DELETE /complaints/{complaint_id}` | 본인 글 논리 철회와 사유 저장 |
+| `POST /complaints/{complaint_id}/delete` | 작성자 본인 민원 영구 삭제(버전·작성자 검증, `idempotency` FK 정리 후 204 반환) |
 | `POST /complaints/{complaint_id}/messages` | 본인 추가 문의·검토 재개 |
 | `POST /complaints/{complaint_id}/review` | 본인 재검토 요청 |
-| `PUT /complaints/{complaint_id}/assignment` | 담당자 지정·해제 |
+| `PUT /complaints/{complaint_id}/assignment` | 담당자 본인 지정·해제 또는 청주시 127개 현행 부서 시연 배정(`department`·`reason`) |
+| `GET /departments` | 담당자 전용 청주시 현행 부서 디렉터리 목록(`automaticTransfer: false`) |
+| `GET /templates`, `POST /templates`, `DELETE /templates/{template_id}`, `POST /templates/reset` | 담당자 전용 답변 템플릿 조회·커스텀 추가·삭제·기본 5종 복원(`complaint_app.answer_templates`) |
 | `PUT /complaints/{complaint_id}/draft` | 담당자 초안·편집 이력 저장 |
 | `POST /complaints/{complaint_id}/publish` | 담당자 답변 게시·기원 판별 |
 | `POST /complaints/{complaint_id}/retract` | 담당자 게시본 철회·이력 보존 |
@@ -186,6 +189,12 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 npm --prefix ui run check
 npm --prefix ui test
 ```
+
+2026-11-16(최종 점검, `CASE-096`) `departments.py` 원격 부서 디렉터리 60초 TTL 캐시·`repository.py` 기본 템플릿 불필요 검증/지연 import 제거·`service.py` `change()` `_require_staff()` 재사용·Google Python docstring/JSDoc 보완·[`업무DB_실행설계.md`](../docs/harness/업무DB_실행설계.md) 4테이블 정합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **156개 통과**, **31개 모듈** `mypy` 오류 없음, `npm --prefix ui run check` **17개**·`test` **18개 통과**, Edge E2E·다크 24/24(0건)를 확인했다. [CASE-096](../docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md)
+
+2026-11-16(후속, `CASE-095`) 담당자 다른 부서 배정(`127`개 현행 부서 검증·검색) 및 답변 템플릿 추가·삭제·복원(`answer_templates`) 반영 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **156개 통과**, 핵심 **31개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **18개 통과**, 헤드리스 Edge 다크 감사 24/24(0건) 및 실브라우저 부서 배정·템플릿 E2E를 확인했다. [CASE-095](../docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md)
+
+2026-11-16 Windows / Python 3.12 `.venv-web`에서 다크 테마 청주시 로고·호버·검사기 UI 다듬기·담당자 폰트 확대·시민 영구 삭제(`POST /complaints/{complaint_id}/delete`, `CASE-094`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **153개 통과**, 핵심 **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **17개 통과**, 헤드리스 Edge 다크 전수 대비(`:5000` 24/24·`:5010` 0오류)·호버 19종·시민 상세/목록 삭제 E2E를 확인했다. [CASE-094](../docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md)
 
 2026-11-15 Windows / Python 3.12 `.venv-web`에서 민원 웹 CRUD·`#/staff`·`#/lab`에 `src.assist` 비동기 통합(`CASE-093`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **151개 통과**, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **16개 통과**, 격리 DB(`complaint_app_e2e`) `:5000`+`:8007` 실서버 모델별(`exaone_api`, `codex_cli`, `openai_api` 가드) E2E 검증을 확인했다. [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
 

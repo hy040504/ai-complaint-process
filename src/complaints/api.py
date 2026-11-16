@@ -21,6 +21,7 @@ from src.complaints.models import (
     CATEGORIES,
     Actor,
     AnswerInput,
+    AnswerTemplate,
     AssignmentInput,
     AssistExampleList,
     AssistFields,
@@ -31,6 +32,7 @@ from src.complaints.models import (
     ComplaintResponse,
     ComplaintUpdate,
     CreateHeaders,
+    DepartmentListResponse,
     ErrorResponse,
     Health,
     JobStartInput,
@@ -40,6 +42,9 @@ from src.complaints.models import (
     ProviderStatus,
     ReasonInput,
     SessionInput,
+    TemplateCreateInput,
+    TemplateListResponse,
+    TemplatePath,
     VersionInput,
     WorkspaceResponse,
 )
@@ -335,6 +340,24 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         return operate(path, body, "withdraw")
 
     @api.post(
+        "/complaints/<complaint_id>/delete",
+        tags=[complaints],
+        responses={204: None},
+    )
+    def delete_complaint(path: ComplaintPath, body: VersionInput) -> Response:
+        """작성자 본인의 민원을 저장소에서 완전히 삭제합니다.
+
+        Args:
+            path: 민원 식별자입니다.
+            body: 기대 버전입니다.
+
+        Returns:
+            본문 없는 204 응답입니다.
+        """
+        service.delete_complaint(actor(), path.complaint_id, body.version)
+        return Response(status=204)
+
+    @api.post(
         "/complaints/<complaint_id>/messages",
         tags=[complaints],
         responses={200: ComplaintResponse},
@@ -374,16 +397,88 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         responses={200: ComplaintResponse},
     )
     def assignment(path: ComplaintPath, body: AssignmentInput) -> Response:
-        """담당자가 자신의 담당 지정 또는 해제를 수행합니다.
+        """담당자 본인 지정·해제 또는 시연 부서 배정을 수행합니다.
 
         Args:
             path: 민원 식별자입니다.
-            body: 기대 버전과 지정 여부입니다.
+            body: 기대 버전과 담당 여부 또는 배정 부서입니다.
 
         Returns:
             담당 정보가 변경된 민원입니다.
         """
         return operate(path, body, "assign")
+
+    @api.get(
+        "/departments",
+        tags=[answers],
+        responses={200: DepartmentListResponse},
+    )
+    def list_departments() -> Response:
+        """담당자 부서 배정 시 사용하는 청주시 현행 부서 목록을 반환합니다.
+
+        Returns:
+            정규화된 청주시 부서 디렉터리 목록입니다.
+        """
+        return reply(service.list_departments(actor()))
+
+    @api.get(
+        "/templates",
+        tags=[answers],
+        responses={200: TemplateListResponse},
+    )
+    def list_templates() -> Response:
+        """담당자 답변 편집기에서 사용할 자주 쓰는 템플릿 목록을 반환합니다.
+
+        Returns:
+            등록순 답변 템플릿 목록입니다.
+        """
+        return reply(service.list_templates(actor()))
+
+    @api.post(
+        "/templates",
+        tags=[answers],
+        responses={201: AnswerTemplate},
+    )
+    def create_template(body: TemplateCreateInput) -> Response:
+        """담당자가 입력한 커스텀 답변 템플릿을 저장합니다.
+
+        Args:
+            body: 템플릿 제목과 삽입할 안내 문구입니다.
+
+        Returns:
+            저장한 템플릿 정보입니다.
+        """
+        return reply(service.create_template(actor(), body), 201)
+
+    @api.delete(
+        "/templates/<template_id>",
+        tags=[answers],
+        responses={204: None},
+    )
+    def delete_template(path: TemplatePath) -> Response:
+        """담당자가 선택한 답변 템플릿을 삭제합니다.
+
+        Args:
+            path: 삭제할 템플릿 식별자입니다.
+
+        Returns:
+            본문 없는 204 응답입니다.
+        """
+        service.delete_template(actor(), path.template_id)
+        return Response(status=204)
+
+    @api.post(
+        "/templates/reset",
+        tags=[answers],
+        responses={200: TemplateListResponse},
+    )
+    def reset_templates() -> Response:
+        """삭제한 기본 답변 템플릿 5종을 복원합니다.
+
+        Returns:
+            복원 후 전체 템플릿 목록입니다.
+        """
+        return reply(service.reset_templates(actor()))
 
     @api.put(
         "/complaints/<complaint_id>/draft",
