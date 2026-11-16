@@ -13,10 +13,14 @@ import json
 import math
 from pathlib import Path
 import statistics
-import subprocess
 import sys
-import tempfile
 from typing import Any
+
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from 보고서_공통 import render_html_to_pdf  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_JSON = ROOT_DIR / "rag" / "reports" / "lab-5010-eval-112-20261117.json"
@@ -24,14 +28,6 @@ ASSETS_DIR = ROOT_DIR / "docs" / "assets"
 REPORT_DIR = ROOT_DIR / "docs" / "test"
 OUT_MD_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.md"
 OUT_PDF_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.pdf"
-
-CHROME_CANDIDATES = (
-    Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
-    Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
-    Path.home() / r"AppData\Local\Google\Chrome\Application\chrome.exe",
-    Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
-    Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
-)
 
 AXIS_LABELS: dict[str, str] = {
     "A_faq": "A. FAQ 1차 응대·차단",
@@ -86,19 +82,23 @@ class EvalStats:
     flag_counts: Counter[str]
 
 
-def find_browser() -> Path:
-    """Chrome 또는 Edge 브라우저 실행 파일 경로를 찾습니다.
+@dataclass(frozen=True)
+class ReportRowCells:
+    """Markdown과 PDF 전수 표에서 공유하는 단일 행 표시 필드입니다."""
 
-    Returns:
-        존재하는 브라우저 실행 파일 경로입니다.
-
-    Raises:
-        FileNotFoundError: 사용 가능한 Chrome 또는 Edge가 없을 때 발생합니다.
-    """
-    for candidate in CHROME_CANDIDATES:
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError("Chrome 또는 Edge 실행 파일을 찾을 수 없습니다.")
+    case_id: str
+    axis_short: str
+    provider: str
+    title: str
+    district: str
+    place_title: str
+    outcome_pair: str
+    department: str
+    sanitized: str
+    elapsed: str
+    auto_status: str
+    semantic_group: str
+    semantic_verdict: str
 
 
 def compute_stats(rows: list[dict[str, Any]]) -> EvalStats:
@@ -554,6 +554,43 @@ def _format_cell(text: str | None, limit: int = 38) -> str:
     return val
 
 
+def _extract_report_cells(
+    row: dict[str, Any], *, title_limit: int = 34, place_limit: int = 16
+) -> ReportRowCells:
+    """실증 결과 행을 Markdown·PDF 표 공용 셀 구조로 변환합니다.
+
+    Args:
+        row: 112건 결과 중 단일 건 딕셔너리입니다.
+        title_limit: 제목 칼럼 축약 길이 상한입니다.
+        place_limit: 추론 장소 칼럼 축약 길이 상한입니다.
+
+    Returns:
+        정제·축약된 표 칼럼 값을 담은 `ReportRowCells` 객체입니다.
+    """
+    dept = _format_cell(
+        (row.get("selected_dept_names") or row.get("dept_names") or ["-"])[0], 18
+    )
+    out_pair = f"{row.get('outcome') or '-'} / {row.get('reason_code') or '-'}"
+    elapsed = f"{row['elapsed_s']:.1f}s" if row.get("elapsed_s") is not None else "-"
+    return ReportRowCells(
+        case_id=str(row["id"]),
+        axis_short=str(row["axis"]).split("_", 1)[0],
+        provider=str(row.get("provider_requested") or "-"),
+        title=_format_cell(row.get("title"), title_limit),
+        district=str(row.get("effective_district") or "-"),
+        place_title=_format_cell(
+            (row.get("inferred_place") or {}).get("title"), place_limit
+        ),
+        outcome_pair=out_pair,
+        department=dept,
+        sanitized="ON" if row.get("sanitize_triggered") else "-",
+        elapsed=elapsed,
+        auto_status=str(row.get("auto_status") or "-"),
+        semantic_group=str(row["semantic_group"]),
+        semantic_verdict=_format_cell(row.get("semantic_verdict"), 28),
+    )
+
+
 def build_markdown_report(rows: list[dict[str, Any]], stats: EvalStats) -> str:
     """112건 전수 분석 Markdown 보고서 전문을 조립합니다.
 
@@ -566,18 +603,11 @@ def build_markdown_report(rows: list[dict[str, Any]], stats: EvalStats) -> str:
     """
     all_rows_lines: list[str] = []
     for r in rows:
-        dept = _format_cell(
-            (r.get("selected_dept_names") or r.get("dept_names") or ["-"])[0], 18
-        )
-        dist = r.get("effective_district") or "-"
-        place_title = _format_cell((r.get("inferred_place") or {}).get("title"), 16)
-        out_pair = f"{r.get('outcome') or '-'} / {r.get('reason_code') or '-'}"
-        san = "ON" if r.get("sanitize_triggered") else "-"
-        t_s = f"{r['elapsed_s']:.1f}s" if r.get("elapsed_s") is not None else "-"
+        c = _extract_report_cells(r, title_limit=32, place_limit=16)
         all_rows_lines.append(
-            f"| {r['id']} | {r['axis'].split('_')[0]} | `{r['provider_requested']}` | "
-            f"{_format_cell(r['title'], 32)} | {dist} | {place_title} | `{out_pair}` | "
-            f"{dept} | {san} | {t_s} | {r['auto_status']} | {_format_cell(r['semantic_verdict'], 28)} |"
+            f"| {c.case_id} | {c.axis_short} | `{c.provider}` | "
+            f"{c.title} | {c.district} | {c.place_title} | `{c.outcome_pair}` | "
+            f"{c.department} | {c.sanitized} | {c.elapsed} | {c.auto_status} | {c.semantic_verdict} |"
         )
 
     codex_avg = statistics.mean(stats.codex_times)
@@ -684,30 +714,22 @@ def build_pdf_html(
 
     table_rows_html: list[str] = []
     for r in rows:
-        dept = _format_cell(
-            (r.get("selected_dept_names") or r.get("dept_names") or ["-"])[0], 18
-        )
-        dist = r.get("effective_district") or "-"
-        place_title = _format_cell((r.get("inferred_place") or {}).get("title"), 15)
-        out_pair = f"{r.get('outcome') or '-'} / {r.get('reason_code') or '-'}"
-        san = "ON" if r.get("sanitize_triggered") else "-"
-        t_s = f"{r['elapsed_s']:.1f}s" if r.get("elapsed_s") is not None else "-"
-        sg = r["semantic_group"]
-        badge_cls = f"badge-{sg}"
+        c = _extract_report_cells(r, title_limit=34, place_limit=15)
+        badge_cls = f"badge-{c.semantic_group}"
         table_rows_html.append(
             "<tr>"
-            f"<td class='c'><strong>{html.escape(r['id'])}</strong></td>"
-            f"<td class='c'>{html.escape(r['axis'].split('_')[0])}</td>"
-            f"<td class='c'>{html.escape(r['provider_requested'])}</td>"
-            f"<td>{html.escape(_format_cell(r['title'], 34))}</td>"
-            f"<td class='c'>{html.escape(dist)}</td>"
-            f"<td>{html.escape(place_title)}</td>"
-            f"<td><code>{html.escape(out_pair)}</code></td>"
-            f"<td>{html.escape(dept)}</td>"
-            f"<td class='c'>{san}</td>"
-            f"<td class='r'>{t_s}</td>"
-            f"<td class='c'>{html.escape(r['auto_status'])}</td>"
-            f"<td><span class='badge {badge_cls}'>{html.escape(_format_cell(r['semantic_verdict'], 28))}</span></td>"
+            f"<td class='c'><strong>{html.escape(c.case_id)}</strong></td>"
+            f"<td class='c'>{html.escape(c.axis_short)}</td>"
+            f"<td class='c'>{html.escape(c.provider)}</td>"
+            f"<td>{html.escape(c.title)}</td>"
+            f"<td class='c'>{html.escape(c.district)}</td>"
+            f"<td>{html.escape(c.place_title)}</td>"
+            f"<td><code>{html.escape(c.outcome_pair)}</code></td>"
+            f"<td>{html.escape(c.department)}</td>"
+            f"<td class='c'>{c.sanitized}</td>"
+            f"<td class='r'>{c.elapsed}</td>"
+            f"<td class='c'>{html.escape(c.auto_status)}</td>"
+            f"<td><span class='badge {badge_cls}'>{html.escape(c.semantic_verdict)}</span></td>"
             "</tr>"
         )
 
@@ -897,43 +919,6 @@ def build_pdf_html(
 </body>
 </html>
 """
-
-
-def render_html_to_pdf(html_text: str, output_pdf: Path) -> None:
-    """HTML 문자열을 헤드리스 브라우저 인쇄 기능으로 A4 PDF 파일로 출력합니다.
-
-    Args:
-        html_text: 렌더링할 HTML 문서 문자열입니다.
-        output_pdf: 저장할 PDF 파일 경로입니다.
-
-    Raises:
-        FileNotFoundError: 사용 가능한 Chrome 또는 Edge 브라우저를 찾지 못했을 때 발생합니다.
-        subprocess.CalledProcessError: 헤드리스 브라우저 PDF 변환 명령이 실패했을 때 발생합니다.
-    """
-    browser = find_browser()
-    with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", suffix=".html", delete=False
-    ) as tf:
-        tf.write(html_text)
-        temp_html = Path(tf.name)
-    try:
-        output_pdf.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                str(browser),
-                "--headless=new",
-                "--disable-gpu",
-                "--no-pdf-header-footer",
-                f"--print-to-pdf={output_pdf}",
-                str(temp_html.resolve()),
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    finally:
-        if temp_html.exists():
-            temp_html.unlink()
 
 
 def main() -> None:

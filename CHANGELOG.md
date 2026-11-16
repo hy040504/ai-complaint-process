@@ -2,8 +2,9 @@
 
 ## 2026-11-17
 
-- **청주 민원 `:5010` 112건 실증 시각화 상세 분석 보고서 추가 및 `docs/test/` 전용 폴더 배치 ([보고서 MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf) · [안내](docs/test/README.md)):**
+- **청주 민원 `:5010` 112건 실증 시각화 상세 분석 보고서 추가 및 `docs/test/` 전용 폴더 배치 ([CASE-099](docs/cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) · [보고서 MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf) · [안내](docs/test/README.md)):**
   - 원자료 112건 정식 통합([`rag/reports/lab-5010-eval-112-20261117.json`](rag/reports/lab-5010-eval-112-20261117.json)) 및 재현 스크립트([`scripts/상세분석보고서_112건_생성.py`](scripts/상세분석보고서_112건_생성.py)) 구축: SVG 차트 4종(`docs/assets/eval-112-axis-breakdown.svg` · `outcome-reason.svg` · `latency-engines.svg` · `district-and-gaps.svg`), 축별 심층 분석, 3대 코드 한계 및 개선안, 112건 전수 결과표를 Markdown 및 6쪽 PDF로 생성해 [`docs/test/`](docs/test/README.md) 전용 폴더에 배치했습니다.
+  - **주석·코드 최적화·README 디자인 개선:** 공용 브라우저·PDF 인쇄 모듈 [`scripts/보고서_공통.py`](scripts/보고서_공통.py)로 `업무보고_20261116_pdf_생성.py`·`상세분석보고서_112건_생성.py` 간 인쇄 코드 중복을 제거하고 `_extract_report_cells()`로 MD/PDF 표 행 생성을 통합했으며, [`README.md`](README.md) 상단 `Test-112_Analysis_6Pages` 배지 및 `검증 근거` 5대 축 SVG 차트를 추가했습니다.
 
 - **검사기 테스트 기록 폼 복원 및 업무보고 전용 폴더(`docs/report/`) 통합·주석/코드 최적화 ([CASE-098](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md)):**
   - **`:5010` 기록 클릭 시 입력 폼 복원 (`src/lab_web/static/app.js`, `ui/tests/lab.test.mjs`):** 오른쪽 **테스트 기록** 항목 클릭 시 결과와 함께 `fillComplaintForm()`·`setSelectValue()`·`updateCharCounters()`로 당시 보낸 제목·민원 분야·발생 지역(`null` 포함)·LLM 엔진 선택 단추·상세 내용·글자 수를 왼쪽 작성 폼에 복원(`loadFields()` 로딩 전 값 유실 방지 포함)하고, 단위 테스트 및 `:5010` Edge 실서버 3건 클릭 검증을 통과했습니다.
