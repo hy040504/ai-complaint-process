@@ -132,6 +132,16 @@ def load_department_directory(*, prefer_remote: bool = True) -> list[DepartmentE
     return list(_fallback_departments())
 
 
+@lru_cache(maxsize=1)
+def _fallback_department_names() -> frozenset[str]:
+    """원본 JSON 기준 허용 부서 이름 집합을 메모리 캐시로 반환합니다.
+
+    Returns:
+        `review_required`가 아닌 정규화 부서명 `frozenset`입니다.
+    """
+    return frozenset(entry.canonical_name for entry in _fallback_departments())
+
+
 def valid_department_names(*, prefer_remote: bool = False) -> frozenset[str]:
     """배정 입력 검증에 사용할 허용 부서 이름 집합을 반환합니다.
 
@@ -141,7 +151,8 @@ def valid_department_names(*, prefer_remote: bool = False) -> frozenset[str]:
     Returns:
         정규화 부서명 집합입니다.
     """
+    if not prefer_remote:
+        return _fallback_department_names()
     return frozenset(
-        entry.canonical_name
-        for entry in load_department_directory(prefer_remote=prefer_remote)
+        entry.canonical_name for entry in load_department_directory(prefer_remote=True)
     )

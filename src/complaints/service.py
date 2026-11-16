@@ -189,7 +189,11 @@ class ComplaintService:
 
     @property
     def ai_connected(self) -> bool:
-        """민원 CRUD 작업에 실제 RAG+LLM 실행기가 연결되어 있으면 True입니다."""
+        """민원 CRUD 작업에 실제 RAG+LLM 실행기가 연결되어 있는지 확인합니다.
+
+        Returns:
+            실제 응대 실행 함수가 연결되어 있으면 True입니다.
+        """
         return self.iter_assist_fn is not None
 
     def _enrich_live(self, row: Complaint) -> Complaint:

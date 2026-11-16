@@ -347,7 +347,11 @@ class MemoryRepository:
                 del self._keys[key]
 
     def list_templates(self) -> list[AnswerTemplate]:
-        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다."""
+        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다.
+
+        Returns:
+            등록순으로 정렬된 답변 템플릿 모델 목록 사본입니다.
+        """
         with self._lock:
             return [tpl.model_copy(deep=True) for tpl in self._templates]
 
@@ -721,7 +725,11 @@ class PostgresRepository:
             )
 
     def list_templates(self) -> list[AnswerTemplate]:
-        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다."""
+        """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다.
+
+        Returns:
+            DB 등록순으로 조회한 답변 템플릿 목록입니다.
+        """
         with self.connection() as conn:
             rows = conn.execute(self._sql_list_tpl).fetchall()
         return [
@@ -772,7 +780,11 @@ class PostgresRepository:
                 raise AppError(404, "not_found", "템플릿을 찾을 수 없습니다.")
 
     def reset_default_templates(self) -> list[AnswerTemplate]:
-        """삭제된 기본 답변 템플릿만 복원하고 전체 목록을 반환합니다."""
+        """삭제된 기본 답변 템플릿만 복원하고 전체 목록을 반환합니다.
+
+        Returns:
+            기본 문구 복원 후 전체 답변 템플릿 목록입니다.
+        """
         with self.connection() as conn:
             self._insert_default_template_rows(conn)
         return self.list_templates()

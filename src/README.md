@@ -190,6 +190,8 @@ npm --prefix ui run check
 npm --prefix ui test
 ```
 
+2026-11-17(실증 평가, `CASE-097`) 단독 검사기(`:5010`) 청주 한정 110건 포함 총 112건 5대 축(`codex_cli` 102건 0오류 평균 23.27s + `exaone_api` 10건 교차) 실측으로 FAQ(20/20)·환각 방어(23/23)·탈옥 차단(20/20) 및 3대 개선 과제(`SANITIZE_HINTS`·숫자 경계·장소 일반명사)를 식별하고, `departments.py` `_fallback_department_names` 캐시·docstring `Returns:` 보완 후 전수 회귀(`pytest 156`, `mypy 31`, `ui 18/18`)를 재확인했다. [CASE-097](../docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md)
+
 2026-11-16(최종 점검, `CASE-096`) `departments.py` 원격 부서 디렉터리 60초 TTL 캐시·`repository.py` 기본 템플릿 불필요 검증/지연 import 제거·`service.py` `change()` `_require_staff()` 재사용·Google Python docstring/JSDoc 보완·[`업무DB_실행설계.md`](../docs/harness/업무DB_실행설계.md) 4테이블 정합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **156개 통과**, **31개 모듈** `mypy` 오류 없음, `npm --prefix ui run check` **17개**·`test` **18개 통과**, Edge E2E·다크 24/24(0건)를 확인했다. [CASE-096](../docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md)
 
 2026-11-16(후속, `CASE-095`) 담당자 다른 부서 배정(`127`개 현행 부서 검증·검색) 및 답변 템플릿 추가·삭제·복원(`answer_templates`) 반영 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **156개 통과**, 핵심 **31개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **18개 통과**, 헤드리스 Edge 다크 감사 24/24(0건) 및 실브라우저 부서 배정·템플릿 E2E를 확인했다. [CASE-095](../docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md)
