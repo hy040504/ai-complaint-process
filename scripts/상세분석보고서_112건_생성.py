@@ -21,7 +21,7 @@ from typing import Any
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_JSON = ROOT_DIR / "rag" / "reports" / "lab-5010-eval-112-20261117.json"
 ASSETS_DIR = ROOT_DIR / "docs" / "assets"
-REPORT_DIR = ROOT_DIR / "docs" / "report"
+REPORT_DIR = ROOT_DIR / "docs" / "test"
 OUT_MD_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.md"
 OUT_PDF_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.pdf"
 
@@ -586,7 +586,7 @@ def build_markdown_report(rows: list[dict[str, Any]], stats: EvalStats) -> str:
 
     return f"""# 청주 민원 단독 응대 검사기(:5010) 112건 실증 상세 분석 보고서
 
-[업무보고서 모음](README.md) · [프로젝트 소개](../../README.md) · [CASE-097](../cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [원자료 JSON](../../rag/reports/lab-5010-eval-112-20261117.json)
+[테스트 보고서 모음](README.md) · [업무보고서 모음](../report/README.md) · [프로젝트 소개](../../README.md) · [CASE-097](../cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [원자료 JSON](../../rag/reports/lab-5010-eval-112-20261117.json)
 
 > **기준일:** 2026-11-17 KST (`POST http://127.0.0.1:5010/api/v1/lab/complaints` 실서버 전수 호출)  
 > **대상:** 청주 한정 민원 **110건** + 타 지자체 대조군 **2건**(`C09` 대전 유성구 · `C20` 세종 조치원읍) = **총 112건**  

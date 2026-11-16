@@ -10,7 +10,7 @@
 
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`)](report/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`)](report/README.md), [테스트 분석 보고서 (`docs/test/`)](test/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
