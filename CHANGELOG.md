@@ -2,6 +2,11 @@
 
 ## 2026-11-17
 
+- **검사기 테스트 기록 폼 복원 및 업무보고 전용 폴더(`docs/report/`) 통합·주석/코드 최적화 ([CASE-098](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md)):**
+  - **`:5010` 기록 클릭 시 입력 폼 복원 (`src/lab_web/static/app.js`, `ui/tests/lab.test.mjs`):** 오른쪽 **테스트 기록** 항목 클릭 시 결과와 함께 `fillComplaintForm()`·`setSelectValue()`·`updateCharCounters()`로 당시 보낸 제목·민원 분야·발생 지역(`null` 포함)·LLM 엔진 선택 단추·상세 내용·글자 수를 왼쪽 작성 폼에 복원(`loadFields()` 로딩 전 값 유실 방지 포함)하고, 단위 테스트 및 `:5010` Edge 실서버 3건 클릭 검증을 통과했습니다.
+  - **업무보고 전용 폴더 통합 및 11/16 종합 보고서 (`docs/report/`, `scripts/업무보고_*_pdf_생성.py`):** 실서버(`:5000`·`:5010`) 테스트 캡처 6종과 112건 실증 요약을 수록한 `업무보고_20261116.pdf`(5쪽)를 작성하고, 기존 `docs/` 루트의 일자별 업무보고 PDF(`20261109`~`20261111`)까지 [`docs/report/`](docs/report/README.md)로 일괄 통합(`20261104` 포함 5종)했습니다. 4개 PDF 생성 스크립트의 저장 경로, `README.md`·`docs/README.md`·`src/lab_web/README.md`·`scripts/README.md`·`CASE-077·080·081` 링크를 모두 일치시켰습니다.
+  - **주석·최적화·검증:** `scripts/업무보고_20261116_pdf_생성.py` 중복 HTML/파일 목록을 `SCENE_PAGES` 데이터 테이블·`_build_scene_pages_html()`·`_REPORT_CSS`로 리팩터링하고 `Raises:` docstring을 보완했으며, `src/lab_web/app.py` Google `Returns:` 보완 및 `black` 포맷 정비 후 `src/tests` **156 passed**, `ui check` **17개**·`ui test` **19/19**, `mypy` **31모듈 0오류**, `rag.verify` **`passed: true`**, 실서버 `:5010` Edge 검증을 완료했습니다.
+
 - **단독 응대 검사기(`:5010`) 청주 한정 112건 실증 테스트 및 한계·최적화 점검 ([CASE-097](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md)):**
   - 실증 평가(`:5010` `POST /api/v1/lab/complaints`, 112건 = 청주 한정 110건 + 타 지자체 대조 2건): `codex_cli` 102건(0 HTTP 오류·평균 `23.27s`) + `exaone_api` 교차 10건(8건 평균 `121.86s`, 200초 타임아웃 2건, 429 폴백 2건). FAQ 1차 안내·경계(20/20), RAG 모순 유도질문 방어(23/23), 탈옥·인젝션 방어(20/20)를 검증했고, 후속 개선 과제 3건(`SANITIZE_HINTS` `"꺼져"` 오탐 3건·우회/비꼬기 11건 미감지, `"봉명동1349"` 숫자 경계, `"지역"`·`"접수"` 오매칭 및 `"청주국제공항"` 5개 컷오프)을 식별·기록했습니다.
   - 주석·최적화·문서 디자인 정비: `src/complaints/repository.py`·`service.py` Google `Returns:` 보완 및 `black` 정렬, `departments.py` `@lru_cache` 기반 `_fallback_department_names()` 캐시 추가, `README.md` 112건 실증 접이식 요약표·이전 검증 이력 접기 정비 및 관련 문서 일괄 동기화.

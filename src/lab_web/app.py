@@ -12,7 +12,14 @@ import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    request,
+    send_from_directory,
+    stream_with_context,
+)
 from pydantic import BaseModel, ValidationError
 
 from src.assist import llm_configured, search_available
@@ -126,12 +133,20 @@ def create_app(
 
     @app.get("/")
     def index() -> Response:
-        """검사기 작성 화면을 돌려줍니다."""
+        """검사기 작성 화면 HTML을 반환합니다.
+
+        Returns:
+            정적 작성 화면 `index.html` 응답입니다.
+        """
         return send_from_directory(STATIC_DIR, "index.html")
 
     @app.get("/api/v1/health")
     def health() -> Response:
-        """검사기 웹이 켜져 있는지 확인합니다."""
+        """검사기 웹이 켜져 있는지 확인합니다.
+
+        Returns:
+            검색·LLM 설정 상태를 담은 JSON 응답입니다.
+        """
         return _json(
             LabHealth(
                 search_available=search_available(),
@@ -141,10 +156,13 @@ def create_app(
 
     @app.get("/api/v1/lab/fields")
     def fields() -> Response:
-        """작성 양식의 분야·지역과 LLM 공급자별 사용 가능 상태를 줍니다.
+        """작성 양식의 분야·지역과 LLM 공급자별 사용 가능 상태를 반환합니다.
 
         공급자 상태는 키·실행 파일 존재만 반영합니다. 화면은 이 값으로
         키가 없는 엔진 단추를 잠급니다.
+
+        Returns:
+            분야, 청주 지역, 공급자 가용 상태를 담은 JSON 응답입니다.
         """
         providers = {
             name: ProviderStatus.model_validate(status)
@@ -153,7 +171,11 @@ def create_app(
         return _json(LabFields(providers=providers))
 
     def _parse_complaint() -> LabComplaint | Response:
-        """요청 JSON을 민원으로 검증합니다. 실패면 오류 응답입니다."""
+        """요청 JSON을 민원 입력 모델로 검증합니다.
+
+        Returns:
+            유효하면 `LabComplaint` 모델, JSON 형식 또는 검증 실패 시 오류 응답입니다.
+        """
         raw = request.get_json(silent=True)
         if not isinstance(raw, dict):
             return _json(

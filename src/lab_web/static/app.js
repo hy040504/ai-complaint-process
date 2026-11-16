@@ -306,6 +306,100 @@ export function readComplaint(form) {
 }
 
 /**
+ * 제목과 상세 내용 입력란의 글자 수 표시를 갱신합니다.
+ *
+ * @param {HTMLInputElement|null} titleInput 제목 입력 요소입니다.
+ * @param {HTMLTextAreaElement|null} bodyInput 상세 내용 입력 요소입니다.
+ * @param {HTMLElement|null} titleCount 제목 글자 수 표시 요소입니다.
+ * @param {HTMLElement|null} bodyCount 본문 글자 수 표시 요소입니다.
+ * @returns {void}
+ */
+function updateCharCounters(titleInput, bodyInput, titleCount, bodyCount) {
+  if (titleInput && titleCount) {
+    titleCount.textContent = `${String(titleInput.value || "").length}/120`;
+  }
+  if (bodyInput && bodyCount) {
+    bodyCount.textContent = `${String(bodyInput.value || "").length}/2,000`;
+  }
+}
+
+/**
+ * 셀렉트 박스에 저장된 값을 반영하며 없는 옵션은 임시 복원 항목으로 추가합니다.
+ *
+ * @param {HTMLSelectElement|null} select 대상 셀렉트 요소입니다.
+ * @param {string|null|undefined} value 반영할 값입니다.
+ * @returns {void}
+ */
+function setSelectValue(select, value) {
+  if (!select) return;
+  select.querySelectorAll?.("option[data-restored='true']").forEach((node) => node.remove());
+  const next = String(value ?? "").trim();
+  if (!next) {
+    select.value = "";
+    return;
+  }
+  // loadFields() 비동기 로딩 전이나 과거 기록 값이 목록에 없어도 선택 값이 비어지지 않게 보존합니다.
+  if (select.options && !Array.from(select.options).some((opt) => opt.value === next)) {
+    if (typeof document !== "undefined" && typeof select.append === "function") {
+      const restoredOption = document.createElement("option");
+      restoredOption.value = next;
+      restoredOption.textContent = next.includes(":") ? next.replace(":", " ") : next;
+      restoredOption.dataset.restored = "true";
+      select.append(restoredOption);
+    }
+  }
+  select.value = next;
+}
+
+/**
+ * 저장된 실행 기록의 payload 값을 민원 작성 폼과 엔진 선택 상태에 채웁니다.
+ *
+ * @param {HTMLFormElement|object|null} form 민원 작성 폼 요소입니다.
+ * @param {{title?:string,category?:string,district?:string|null,body?:string,provider?:string|null}|null|undefined} payload 복원할 민원 입력 JSON입니다.
+ * @param {Document|HTMLElement|object} [root=form] 엔진 버튼과 글자 수 카운터를 찾을 루트입니다.
+ * @returns {void}
+ */
+export function fillComplaintForm(form, payload, root = form) {
+  const data = payload && typeof payload === "object" ? payload : {};
+  const scope = root || form || (typeof document !== "undefined" ? document : null);
+  const hasSeparateScope = Boolean(scope && scope !== form);
+  const query = (selector) =>
+    form?.querySelector?.(selector) ?? (hasSeparateScope ? scope.querySelector?.(selector) : null) ?? null;
+  const queryAll = (selector) => {
+    const inForm = form?.querySelectorAll?.(selector);
+    if (inForm && inForm.length > 0) return inForm;
+    return hasSeparateScope ? (scope.querySelectorAll?.(selector) ?? []) : [];
+  };
+
+  const titleInput = query("#title");
+  const bodyInput = query("#body");
+  if (titleInput) titleInput.value = String(data.title ?? "");
+  if (bodyInput) bodyInput.value = String(data.body ?? "");
+
+  setSelectValue(query("#category"), data.category);
+  setSelectValue(query("#district"), data.district);
+
+  const buttons = queryAll(".llm-choice-btn");
+  const providerInput = query("#provider");
+  const provider = String(data.provider ?? "").trim();
+  const matchedButton = Array.from(buttons).find(
+    (item) => (item.dataset?.provider || "") === provider,
+  );
+  if (matchedButton && providerInput) {
+    activateProvider(buttons, matchedButton, providerInput);
+  } else if (providerInput) {
+    // 현재 화면에 대응 버튼이 없는 공급자라도 숨은 입력 값은 그대로 유지해 재전송 시 보존합니다.
+    buttons.forEach?.((item) => {
+      item.classList?.toggle?.("active", false);
+      item.setAttribute?.("aria-pressed", "false");
+    });
+    providerInput.value = provider;
+  }
+
+  updateCharCounters(titleInput, bodyInput, query("#title-count"), query("#body-count"));
+}
+
+/**
  * 선택 목록을 채웁니다.
  *
  * @param {HTMLSelectElement} select 대상 목록입니다.
@@ -1019,8 +1113,7 @@ function bind() {
   let selectedId = "";
 
   const count = () => {
-    titleCount.textContent = `${title.value.length}/120`;
-    bodyCount.textContent = `${body.value.length}/2,000`;
+    updateCharCounters(title, body, titleCount, bodyCount);
   };
   title.addEventListener("input", count);
   body.addEventListener("input", count);
@@ -1056,6 +1149,7 @@ function bind() {
         try {
           const record = await fetchRun(run.id);
           selectedId = run.id;
+          fillComplaintForm(form, record.payload, document);
           showResult(
             record.payload,
             record.received,

@@ -21,12 +21,18 @@ CHROME_CANDIDATES = (
 
 UI_CHANGE_PDF_CANDIDATES = (
     Path(r"C:\Users\user\Documents\카카오톡 받은 파일\UI_변경_2026-11-11.pdf"),
-    Path(r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\UI_변경_2026-11-11.pdf"),
+    Path(
+        r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\UI_변경_2026-11-11.pdf"
+    ),
     Path(__file__).resolve().parent.parent / "docs" / "UI_변경_2026-11-11.pdf",
 )
 
-OUTPUT_PDF_PATH_1 = Path(r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261111.pdf")
-OUTPUT_PDF_PATH_2 = Path(r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\업무보고_20261111.pdf")
+OUTPUT_PDF_PATH_1 = Path(
+    r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261111.pdf"
+)
+OUTPUT_PDF_PATH_2 = (
+    Path(__file__).resolve().parent.parent / "docs" / "report" / "업무보고_20261111.pdf"
+)
 
 
 def build_page1_html() -> str:
@@ -240,7 +246,9 @@ def render_html_to_pdf(html_text: str, output_pdf: Path) -> None:
         output_pdf: 저장할 PDF 파일 경로입니다.
     """
     browser = find_browser()
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".html", delete=False) as tf:
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", suffix=".html", delete=False
+    ) as tf:
         tf.write(html_text)
         temp_html = Path(tf.name)
 
@@ -271,7 +279,9 @@ def generate_report_pdf() -> None:
 
     temp_page1_pdf = Path(tempfile.gettempdir()) / "page1_report_1111_temp.pdf"
     render_html_to_pdf(page1_html, temp_page1_pdf)
-    print(f"   -> 1페이지 임시 PDF 생성 완료: {temp_page1_pdf} ({temp_page1_pdf.stat().st_size} bytes)")
+    print(
+        f"   -> 1페이지 임시 PDF 생성 완료: {temp_page1_pdf} ({temp_page1_pdf.stat().st_size} bytes)"
+    )
 
     print("2. 기민 님 11/11 UI 변경 보고서 PDF 확인 중...")
     ui_pdf_path = find_ui_change_pdf()
@@ -283,7 +293,9 @@ def generate_report_pdf() -> None:
     reader_ui = pypdf.PdfReader(str(ui_pdf_path))
     print(f"   -> UI 변경 보고서 페이지 수: {len(reader_ui.pages)}")
 
-    print(f"3. PDF 병합 중 (1페이지 + UI 변경 {len(reader_ui.pages)}페이지 = 총 {len(reader_page1.pages) + len(reader_ui.pages)}페이지)...")
+    print(
+        f"3. PDF 병합 중 (1페이지 + UI 변경 {len(reader_ui.pages)}페이지 = 총 {len(reader_page1.pages) + len(reader_ui.pages)}페이지)..."
+    )
     writer = pypdf.PdfWriter()
 
     # 1페이지 추가
@@ -298,7 +310,9 @@ def generate_report_pdf() -> None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "wb") as f:
             writer.write(f)
-        print(f"   -> 최종 PDF 저장 완료: {out_path} ({out_path.stat().st_size} bytes, 총 {len(writer.pages)}쪽)")
+        print(
+            f"   -> 최종 PDF 저장 완료: {out_path} ({out_path.stat().st_size} bytes, 총 {len(writer.pages)}쪽)"
+        )
 
     # 임시 파일 정리
     if temp_page1_pdf.exists():

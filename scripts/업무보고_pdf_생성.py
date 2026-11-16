@@ -378,6 +378,9 @@ def generate_pdf(output_paths: list[Path]) -> None:
 if __name__ == "__main__":
     targets = [
         Path(r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261109.pdf"),
-        Path(r"docs\업무보고_20261109.pdf"),
+        Path(__file__).resolve().parent.parent
+        / "docs"
+        / "report"
+        / "업무보고_20261109.pdf",
     ]
     generate_pdf(targets)

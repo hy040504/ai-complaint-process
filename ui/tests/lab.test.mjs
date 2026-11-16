@@ -17,6 +17,7 @@ import {
 } from "../src/llm-meta.js";
 import { staffProcess, staffQueue, staffReviewInfo } from "../src/staff.js";
 import {
+  fillComplaintForm,
   initLlmSelector,
   resolveLlmSectionMeta,
   showResult,
@@ -587,4 +588,66 @@ test("buildDepartmentOptionsHtml과 담당자 화면은 배정 부서·버튼을
   assert.match(queueHtml, /<span class="staff-tag dept"[^>]*>흥덕구 건설과<\/span>/);
   assert.match(queueHtml, /data-action="open-assign-dept"[^>]*>부서 변경<\/button>/);
   assert.match(queueHtml, /data-action="assign"[^>]*>담당 해제<\/button>/);
+});
+
+test("fillComplaintForm은 저장된 실행 payload를 폼 입력란·글자 수·엔진 버튼에 복원한다", () => {
+  const root = makeFakeRoot();
+  const titleInput = { value: "" };
+  const categorySelect = { value: "" };
+  const districtSelect = { value: "청원구" };
+  const bodyInput = { value: "" };
+  const titleCount = { textContent: "0/120" };
+  const bodyCount = { textContent: "0/2,000" };
+  const elements = {
+    "#title": titleInput,
+    "#category": categorySelect,
+    "#district": districtSelect,
+    "#body": bodyInput,
+    "#title-count": titleCount,
+    "#body-count": bodyCount,
+    "#provider": root.hiddenInput,
+  };
+  const fakeForm = {
+    querySelector: (sel) => elements[sel] || null,
+    querySelectorAll: (sel) => root.querySelectorAll(sel),
+  };
+
+  fillComplaintForm(
+    fakeForm,
+    {
+      title: "오송읍 가로등 고장 신고",
+      category: "도로·교통",
+      district: "흥덕구:오송읍",
+      body: "오송역 앞 횡단보도 가로등이 어제부터 켜지지 않습니다.",
+      provider: "codex_cli",
+    },
+    fakeForm,
+  );
+  assert.equal(titleInput.value, "오송읍 가로등 고장 신고");
+  assert.equal(categorySelect.value, "도로·교통");
+  assert.equal(districtSelect.value, "흥덕구:오송읍");
+  assert.equal(bodyInput.value, "오송역 앞 횡단보도 가로등이 어제부터 켜지지 않습니다.");
+  assert.equal(titleCount.textContent, "13/120");
+  assert.equal(bodyCount.textContent, "30/2,000");
+  assert.equal(root.hiddenInput.value, "codex_cli");
+  assert.equal(root.buttons[3].classList.contains("active"), true);
+  assert.equal(root.buttons[0].classList.contains("active"), false);
+
+  fillComplaintForm(
+    fakeForm,
+    {
+      title: "쓰레기 배출 방법 문의",
+      category: "청소",
+      district: null,
+      body: "대형폐기물 스티커 인터넷 신청 절차가 궁금합니다.",
+      provider: null,
+    },
+    fakeForm,
+  );
+  assert.equal(districtSelect.value, "");
+  assert.equal(root.hiddenInput.value, "");
+  assert.equal(root.buttons[0].classList.contains("active"), true);
+  assert.equal(root.buttons[3].classList.contains("active"), false);
+  assert.equal(titleCount.textContent, "12/120");
+  assert.equal(bodyCount.textContent, "27/2,000");
 });
