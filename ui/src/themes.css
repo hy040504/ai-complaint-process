@@ -1473,3 +1473,25 @@ body[data-theme="dark"][data-site="lab"] .lab-reply .prose {
 body[data-theme="dark"][data-site="lab"] .lab-reply .lab-engine-note {
   color: #a9bbd6;
 }
+
+/* 묶음 구획·더보기·보조 버튼의 다크 전용 색 */
+body[data-theme="dark"][data-site="citizen"] .citizen-askbar .citizen-ask-go {
+  background: transparent;
+  color: #9bbcff;
+  box-shadow: inset 0 0 0 1.5px #5b9bff;
+}
+body[data-theme="dark"][data-site="citizen"] .write-group {
+  border-top-color: #2b3a52;
+}
+body[data-theme="dark"][data-site="citizen"] .write-group > h3 {
+  color: #e3ebf7;
+}
+body[data-theme="dark"][data-site="citizen"] .write-group > h3 > b {
+  background: #3b74e8;
+}
+body[data-theme="dark"][data-site="staff"] .staff-filter-more > summary {
+  color: #aebbd2;
+}
+body[data-theme="dark"][data-site="staff"] .staff-filter-more > summary span {
+  color: #84acff;
+}

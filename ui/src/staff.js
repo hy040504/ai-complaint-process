@@ -299,22 +299,10 @@ export function staffQueue(data, params, { landing = false } = {}) {
       status === "under_review",
     ],
     [
-      "미지정",
-      totals.none,
-      { status: "", assign: "none", view: "" },
-      assign === "none",
-    ],
-    [
       "미게시 초안",
       totals.drafts,
       { status: "", assign: "", view: "drafts" },
       view === "drafts",
-    ],
-    [
-      "추가 문의",
-      totals.followup,
-      { status: "", assign: "", view: "followup" },
-      view === "followup",
     ],
     [
       "AI 시연 실패",
@@ -322,14 +310,14 @@ export function staffQueue(data, params, { landing = false } = {}) {
       { status: "", assign: "", view: "failed" },
       view === "failed",
     ],
-    [
-      "게시 답변",
-      totals.published,
-      { status: "", assign: "", view: "published" },
-      view === "published",
-    ],
   ];
-  return `<div class="page-content staff-queue-page"><div class="staff-page-title"><h1>${title}</h1><span>${landing ? "M-01" : "M-02"}</span><div class="staff-scope">${a("전체 업무", queryLink(path, params, { scope: "all" }), "", scope === "all")}${a("내 담당·접수 대기", queryLink(path, params, { scope: "mine" }), "", scope === "mine")}</div><small>최신 등록순</small></div>${landing ? `<div class="staff-inbox-banner"><span class="staff-banner-dot"></span><b>접수 대기 민원 ${all.filter((c) => c.status === "submitted").length}건이 있습니다</b><span>담당자 미지정 여부와 민원 내용을 확인해 주세요.</span>${a("접수 대기 보기", "/staff/complaints?status=submitted", "btn primary")}</div>${metrics(all)}` : ""}<div class="staff-section-rule"><h2>${landing ? "검토할 업무 큐" : "민원 검색·검토 목록"}</h2><span>민원·AI 작업·답변 게시 상태를 구분합니다</span></div><div class="staff-filter-chips">${chips.map(([label, count, changes, active]) => a(`${label}<span>${count}</span>`, queryLink(path, params, changes), "staff-filter-chip", active)).join("")}</div><section class="panel staff-queue-panel"><form id="filters" class="staff-filter-form"><div class="search-field">${icon("search", 17)}<input name="q" aria-label="민원 제목 검색" placeholder="민원 제목으로 검색" value="${e(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select><select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select><button class="btn primary" type="submit">검색</button><button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 17)}</button></form><div class="staff-list-caption"><span>총 <b>${total}</b>건</span><span>민원을 선택하면 상세 검토로 이동합니다</span></div><div class="staff-queue-list">${rows.length ? queueRows(rows) : `<div class="empty">${icon("search", 32)}<h2>조건에 맞는 민원이 없습니다</h2><p>검색어나 필터를 변경해 주세요.</p><button class="btn" data-action="reset-filters">검색 조건 초기화</button></div>`}</div><div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div><button class="btn" data-action="page" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>‹</button>${Array.from({ length: pages }, (_, i) => `<button class="btn ${page === i + 1 ? "active" : ""}" data-action="page" data-page="${i + 1}" aria-label="${i + 1}페이지">${i + 1}</button>`).join("")}<button class="btn" data-action="page" data-page="${page + 1}" ${page === pages ? "disabled" : ""}>›</button></div><span>페이지당 8건</span></div></section>${landing ? categoryOverview(all) : ""}</div>`;
+  const chipLinks = (list) =>
+    list
+      .map(([label, count, changes, active]) =>
+        a(`${label}<span>${count}</span>`, queryLink(path, params, changes), "staff-filter-chip", active),
+      )
+      .join("");
+  return `<div class="page-content staff-queue-page"><div class="staff-page-title"><h1>${title}</h1><span>${landing ? "M-01" : "M-02"}</span><div class="staff-scope">${a("전체 업무", queryLink(path, params, { scope: "all" }), "", scope === "all")}${a("내 담당·접수 대기", queryLink(path, params, { scope: "mine" }), "", scope === "mine")}</div><small>최신 등록순</small></div>${landing ? `<div class="staff-inbox-banner"><span class="staff-banner-dot"></span><b>접수 대기 민원 ${all.filter((c) => c.status === "submitted").length}건이 있습니다</b><span>담당자 미지정 여부와 민원 내용을 확인해 주세요.</span>${a("접수 대기 보기", "/staff/complaints?status=submitted", "btn primary")}</div>${metrics(all)}` : ""}<div class="staff-section-rule"><h2>${landing ? "검토할 업무 큐" : "민원 검색·검토 목록"}</h2><span>민원·AI 작업·답변 게시 상태를 구분합니다</span></div><div class="staff-filter-chips">${chipLinks(chips.slice(0, 4))}</div>${chips.length > 4 ? `<details class="staff-filter-more"${chips.slice(4).some((c) => c[3]) ? " open" : ""}><summary>더보기 <span>${chips.length - 4}</span></summary><div class="staff-filter-chips">${chipLinks(chips.slice(4))}</div></details>` : ""}<section class="panel staff-queue-panel"><form id="filters" class="staff-filter-form"><div class="search-field">${icon("search", 17)}<input name="q" aria-label="민원 제목 검색" placeholder="민원 제목으로 검색" value="${e(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select><select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select><button class="btn primary" type="submit">검색</button><button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 17)}</button></form><div class="staff-list-caption"><span>총 <b>${total}</b>건</span><span>민원을 선택하면 상세 검토로 이동합니다</span></div><div class="staff-queue-list">${rows.length ? queueRows(rows) : `<div class="empty">${icon("search", 32)}<h2>조건에 맞는 민원이 없습니다</h2><p>검색어나 필터를 변경해 주세요.</p><button class="btn" data-action="reset-filters">검색 조건 초기화</button></div>`}</div><div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div><button class="btn" data-action="page" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>‹</button>${Array.from({ length: pages }, (_, i) => `<button class="btn ${page === i + 1 ? "active" : ""}" data-action="page" data-page="${i + 1}" aria-label="${i + 1}페이지">${i + 1}</button>`).join("")}<button class="btn" data-action="page" data-page="${page + 1}" ${page === pages ? "disabled" : ""}>›</button></div><span>페이지당 8건</span></div></section>${landing ? categoryOverview(all) : ""}</div>`;
 }
 
 /**

@@ -216,7 +216,7 @@ export function citizenHome(data) {
     )
     .join(
       "",
-    )}${a("이용 안내 자세히 보기 →", "/citizen/guide", "text-link")}</section><div class="citizen-service-note">${icon("help", 17)}<p>이 사이트에 등록한 민원은 <b>시연용으로 저장</b>되며, 청주시 공식 민원으로 접수되지 않습니다.</p></div></aside></div>`;
+    )}${a("이용 안내 자세히 보기 →", "/citizen/guide", "text-link")}</section></aside></div>`;
 }
 
 /**

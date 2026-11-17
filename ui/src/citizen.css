@@ -2712,3 +2712,15 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 8px;
   }
 }
+
+/* 홈의 주 행동은 헤더 '직접 작성'(모바일은 하단 접수 버튼)이므로, 상담 입력 줄의 접수 시작은 보조 스타일로 둡니다. */
+.citizen-askbar .citizen-ask-go {
+  background: #fff;
+  color: #2f6fed;
+  box-shadow: inset 0 0 0 1.5px #2f6fed;
+}
+
+/* 묶음 안으로 옮긴 글쓰기 라벨도 기존 라벨 색을 유지합니다. */
+.citizen-shell .write-group > label {
+  color: #495b77;
+}

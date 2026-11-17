@@ -306,7 +306,7 @@ export function labPage(form = {}) {
       (label, index) =>
         `<span class="${index === step ? "active" : ""}"><b>${index + 1}</b> ${label}</span>${index < 2 ? "<i></i>" : ""}`,
     )
-    .join("")}</div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 검사기</b>입니다. 실제 개인정보를 입력하지 마세요. 민원은 저장되지 않으며 청주시 공식 접수로 연결되지 않습니다.</span></div><section class="panel lab-examples-panel"><div class="section-title"><h2>시험용 예시</h2><span>내용을 채운 뒤 바로 실행합니다</span></div><div class="lab-examples">${labExamples
+    .join("")}</div><section class="panel lab-examples-panel"><div class="section-title"><h2>시험용 예시</h2><span>내용을 채운 뒤 바로 실행합니다</span></div><div class="lab-examples">${labExamples
     .map(
       (item) =>
         `<button type="button" class="lab-example" data-action="lab-example" data-id="${esc(item.id)}"><b>${esc(item.title)}</b><span>${esc(item.query)}</span></button>`,
@@ -326,7 +326,7 @@ export function labPage(form = {}) {
     )
     .join(
       "",
-    )}</select></div></div><label for="lab-body">상세 내용 <em>*</em></label><textarea id="lab-body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(body)}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 첨부파일은 후속 지원 예정입니다.</span><span id="lab-body-count">${body.length}/2,000</span></div>${engineSelector()}<div class="form-footer">${buttonWait()}</div></form><div id="lab-result-panel">${livePanel()}${
+    )}</select></div></div><label for="lab-body">상세 내용 <em>*</em></label><textarea id="lab-body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(body)}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 실제 개인정보는 입력하지 마세요. 첨부파일은 후속 지원 예정입니다.</span><span id="lab-body-count">${body.length}/2,000</span></div>${engineSelector()}<div class="form-footer">${buttonWait()}</div></form><div id="lab-result-panel">${livePanel()}${
     labError
       ? `<div class="panel empty"><h2>실행에 실패했습니다</h2><p>${esc(labError)}</p></div>`
       : ""

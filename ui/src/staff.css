@@ -2436,3 +2436,70 @@ body[data-site="staff"] #toast {
   cursor: pointer;
   list-style-position: inside;
 }
+
+/* 담당자 필터: 자주 쓰는 4개만 보이고 나머지는 더보기로 접습니다. */
+.staff-filter-more {
+  margin: 8px 0 4px;
+}
+.staff-filter-more > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #41506b;
+  list-style: none;
+  padding: 4px 2px;
+  display: inline-block;
+}
+.staff-filter-more > summary::-webkit-details-marker {
+  display: none;
+}
+.staff-filter-more > summary span {
+  color: #2f6fed;
+}
+.staff-filter-more[open] > summary {
+  margin-bottom: 6px;
+}
+.write-group {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e3eaf5;
+}
+.write-group > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 750;
+}
+.write-group > h3 > b {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2f6fed;
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+}
+.write-group-confirm .form-footer {
+  margin-top: 18px;
+}
+
+/* 글쓰기 묶음 안의 라벨·입력란이 원래 폼 직접 자식 규칙을 그대로 받도록 맞춥니다. */
+.complaint-form .write-group > label {
+  display: block;
+  font-size: 12px;
+  margin: 16px 0 10px;
+}
+.complaint-form .write-group > h3 + label {
+  margin-top: 12px;
+}
+.complaint-form .write-group > input {
+  width: 100%;
+}
+.complaint-form > .section-title + .write-group {
+  border-top: 0;
+  margin-top: 6px;
+  padding-top: 0;
+}
