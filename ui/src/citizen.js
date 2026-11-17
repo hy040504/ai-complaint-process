@@ -176,8 +176,9 @@ function noticeRows() {
  *
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-function serviceButtons() {
+function serviceButtons(limit = Infinity) {
   return citizenServices
+    .slice(0, limit)
     .map(
       ([name, label, prompt]) =>
         `<button class="citizen-service" data-action="citizen-service" data-prompt="${e(prompt)}"><span>${serviceIcon(name)}</span><b>${label}</b></button>`,
@@ -192,7 +193,7 @@ function serviceButtons() {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function citizenHome(data) {
-  return `<div class="citizen-home-layout"><div class="citizen-home-main"><section class="citizen-welcome"><div><span>청주시 AI 스마트 민원</span><h1>작은 불편도, 궁금한 일도<br><em>청주톡톡</em>에 남겨주세요.</h1><p>부서를 몰라도 괜찮아요. 평소 말하듯 시작해 보세요.</p></div><span class="citizen-welcome-symbol" aria-hidden="true">${icon("chat", 42)}<i>톡!</i></span></section><section class="citizen-news-section citizen-reveal"><div class="citizen-section-label"><h2>우리 동네 소식 <span>시연 이용 안내</span></h2>${a("전체보기 ›", "/citizen/news")}</div>${noticeRows()}</section><section class="citizen-services-section citizen-reveal"><div class="citizen-section-label"><h2>자주 찾는 서비스</h2>${a("전체 보기 ›", "/citizen/services")}</div><div class="citizen-service-rail" aria-label="자주 찾는 서비스, 가로로 넘겨보세요" tabindex="0">${serviceButtons()}</div><p class="citizen-rail-hint">${icon("arrow", 12)} 옆으로 넘겨 더 많은 서비스를 찾아보세요</p></section><section class="citizen-ask-zone citizen-reveal"><h2>궁금한 건 <em>말하듯이</em> 물어보세요</h2><a class="citizen-askbar" href="#/citizen/assistant"><span class="citizen-ask-icon">${icon("chat", 24)}</span><span class="citizen-ask-copy"><b>여기를 눌러 대화를 시작하세요</b><span>예) 우리집 앞 가로등이 깜빡거려요</span></span><span class="citizen-ask-go">접수 시작 ${icon("arrow", 15)}</span></a><p>${icon("spark", 13)} 상담 흐름 시연 · 실제 AI는 아직 연결되지 않았어요</p></section><div class="citizen-mobile-status">${summary(data)}</div></div><aside class="citizen-home-aside"><div class="citizen-desktop-status">${summary(data)}</div><section class="citizen-how-card"><div class="citizen-section-label"><h2>이렇게 이용하세요</h2>${icon("shield", 18)}</div>${[
+  return `<div class="citizen-home-layout"><div class="citizen-home-main"><section class="citizen-welcome"><div><span>청주시 AI 스마트 민원</span><h1>작은 불편도, 궁금한 일도<br><em>청주톡톡</em>에 남겨주세요.</h1><p>부서를 몰라도 괜찮아요. 평소 말하듯 시작해 보세요.</p></div><span class="citizen-welcome-symbol" aria-hidden="true">${icon("chat", 42)}<i>톡!</i></span></section><section class="citizen-news-section citizen-reveal"><div class="citizen-section-label"><h2>우리 동네 소식 <span>시연 이용 안내</span></h2>${a("전체보기 ›", "/citizen/news")}</div>${noticeRows()}</section><section class="citizen-services-section citizen-reveal"><div class="citizen-section-label"><h2>자주 찾는 서비스</h2>${a("전체 보기 ›", "/citizen/services")}</div><div class="citizen-service-grid" aria-label="자주 찾는 서비스 8개">${serviceButtons(8)}</div><p class="citizen-rail-hint">${icon("arrow", 12)} 나머지 서비스는 전체 보기에서 찾을 수 있어요</p></section><section class="citizen-ask-zone citizen-reveal"><h2>궁금한 건 <em>말하듯이</em> 물어보세요</h2><a class="citizen-askbar" href="#/citizen/assistant"><span class="citizen-ask-icon">${icon("chat", 24)}</span><span class="citizen-ask-copy"><b>여기를 눌러 대화를 시작하세요</b><span>예) 우리집 앞 가로등이 깜빡거려요</span></span><span class="citizen-ask-go">접수 시작 ${icon("arrow", 15)}</span></a><p>${icon("spark", 13)} 상담 흐름 시연 · 실제 AI는 아직 연결되지 않았어요</p></section><div class="citizen-mobile-status">${summary(data)}</div></div><aside class="citizen-home-aside"><div class="citizen-desktop-status">${summary(data)}</div><section class="citizen-how-card"><div class="citizen-section-label"><h2>이렇게 이용하세요</h2>${icon("shield", 18)}</div>${[
     [
       "01",
       "말하듯 편하게",
