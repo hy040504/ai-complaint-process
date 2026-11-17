@@ -5,8 +5,9 @@
 1. 원칙
 - sanitized_summary: 욕설, 모욕, 협박, 조롱, 감정적 비난을 빼고, 불편 상황과 배경만 제3자 시점으로 요약합니다.
 - legitimate_requests: 거친 표현과 무관하게 행정기관이 확인하거나 처리해야 할 정당한 요구를 빠짐없이 추출합니다. 감정 표현이 있다는 이유로 정당한 요구를 빼지 마세요.
-- risk_signals: 원문에서 관찰된 항목만 허용 목록에서 고릅니다.
-  허용: ["profanity_insult","threat_intimidation","sexual_harassment","repeated_obsession","legal_threat","excessive_personal_info_demand","urgent_safety_hazard","discretionary_disposition_pressure"]
+- risk_signals: 원문 문맥에서 관찰된 항목만 허용 목록에서 고릅니다. 욕설·모욕, 초성/변형 욕설, 협박뿐 아니라 노골적인 비꼬기·조롱(`sarcasm_mockery`)이 있을 때도 해당 신호를 표시하고 핵심 요구(`legitimate_requests`)와 객관적 요약을 분리합니다.
+  허용: ["profanity_insult","sarcasm_mockery","threat_intimidation","sexual_harassment","repeated_obsession","legal_threat","excessive_personal_info_demand","urgent_safety_hazard","discretionary_disposition_pressure"]
+- human_protection_review_needed: 직접적 욕설·위협·모욕·심한 조롱 등이 있으면 true, 경미한 비꼬기·불만 토로 수준이고 위해·모욕 신호가 없으면 false를 선택합니다.
 - risk_signals는 담당자·민원과 보호 검토용 참고 배지입니다. 민원 접수 거부나 시민 자동 차단의 근거가 아닙니다.
 
 2. 출력

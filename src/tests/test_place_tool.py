@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from src.llm.place_tool import (
@@ -211,6 +213,74 @@ def test_lookup_navermap_place_bounds_fallback_recursion() -> None:
     # 최초 원문 1회 + 1단계 보완 후보 최대 5회 = 최대 6회 이내여야 합니다.
     assert len(called_queries) <= 6
     assert called_queries[0] == "가나다라 마바사아 자차카타 파하가나 교차로 정문 입구"
+
+
+def test_place_tool_filters_generic_faq_nouns_and_prioritizes_landmarks() -> None:
+    """보고서 3순위 일반명사 오매칭 차단(A04·A07·B12·C15)과 고유 접미어 우선정렬(B06·F12)을 확인합니다."""
+    from src.llm.place_tool import extract_place_candidates, is_place_relevant
+
+    # B06·F12: 앞쪽 일반/수식 어구가 길어도 공항·생태공원 접미어 후보가 5후보 컷오프 안쪽에 우선 배치
+    airport_cands = extract_place_candidates(
+        "장기간 방치된 야간 우천 시 차량 통행 불편 청주국제공항 진입로 부근 도로 포트홀 보수"
+    )
+    assert "청주국제공항" in airport_cands[:5]
+
+    park_cands = extract_place_candidates(
+        "주말 가족 나들이 이용객이 많은 청주 문암생태공원 화장실 방치 민원"
+    )
+    assert "문암생태공원" in park_cands[:5]
+
+    # 일반 행정·FAQ·모호 민원은 후보가 비거나 엉뚱한 상점 오매칭이 차단되어야 합니다.
+    assert extract_place_candidates("1. 여권 발급 방문 신청 방법 안내") == []
+    assert extract_place_candidates("동네 어딘가 학교 앞 골목 가로등 고장 (지역 미기재)") == []
+    assert (
+        is_place_relevant(
+            "한국방송통신대학교 충북지역대학",
+            "동네 어딘가 학교 앞 골목 가로등 고장 (지역 미기재)",
+        )
+        is False
+    )
+    assert (
+        is_place_relevant(
+            "상하목장신청주유기농DS대리점",
+            "미성년자(8세 미만) 여권 대리 신청 및 비용",
+        )
+        is False
+    )
+    assert (
+        is_place_relevant(
+            "무료배달렌트카 오창점",
+            "청년희망날개 면접 정장 무료 대여 조건",
+        )
+        is False
+    )
+    assert (
+        is_place_relevant(
+            "코웨이 청주코웨이렌탈공식접수센터",
+            "존재하지 않는 부서명·내선번호로 공식 접수 확인 요구",
+        )
+        is False
+    )
+    # 2글자 상호가 긴 행정 명사 일부에 우연히 들어가는 오탐도 차단합니다.
+    assert is_place_relevant("원부", "자동차등록원부") is False
+
+
+def test_lookup_navermap_place_skips_http_for_generic_faq_sentence() -> None:
+    """장소 후보가 없는 3어절 이상 FAQ/일반 문장은 외부 HTTP 호출 없이 빈 결과를 반환합니다."""
+    called = 0
+
+    def should_not_call(_query: str, coords: str = "") -> dict[str, Any]:
+        nonlocal called
+        called += 1
+        return {"place": []}
+
+    res = lookup_navermap_place(
+        "미성년자(8세 미만) 여권 대리 신청 및 비용",
+        fetch_fn=should_not_call,
+    )
+    assert called == 0
+    assert res["found"] is False
+    assert res["primary_place"] is None
 
 
 

@@ -13,6 +13,7 @@ from src.assist.constants import (
     REASON_CODES,
     SCOPES,
 )
+from src.assist.district import extract_external_jurisdiction
 from src.rag.evidence import (
     SearchParts,
     compact_case,
@@ -118,16 +119,19 @@ def validate_decision(
     raw: dict[str, Any],
     search: dict[str, Any],
     parts: SearchParts | None = None,
+    *,
+    query: str | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """모델 판정을 검색 근거·부서 후보와 대조합니다.
 
-    `faq_answer`와 `condition_unclear`가 같이 오면 안내를 막고
-    `human_handoff`로 고칩니다.
+    `faq_answer`와 `condition_unclear`가 같이 오거나 범위 밖·불확실·타 지자체
+    관할 사안이 자동 안내/부서 추천으로 나오면 `human_handoff`로 교정합니다.
 
     Args:
         raw: 모델이 반환한 객체입니다.
         search: 검색 API 응답입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
+        query: 관할 외 타 지자체 주소를 교차 검증할 원문 질의입니다(명시 구가 없을 때 전달).
 
     Returns:
         교정된 판정과 정책 실패 사유 목록입니다.
@@ -175,11 +179,27 @@ def validate_decision(
     if intent == "mixed":
         outcome = "human_handoff"
         reason = "mixed_request"
+        dept_ids = []
         failures.append("복합 요청은 담당자 검토로 연결합니다.")
-    if scope in ("out_of_scope", "uncertain") and outcome == "faq_answer":
+    if scope in ("out_of_scope", "uncertain") and outcome in (
+        "faq_answer",
+        "department_suggestion",
+    ):
         outcome = "human_handoff"
         reason = "out_of_scope" if scope == "out_of_scope" else "insufficient_evidence"
-        failures.append("범위 밖·불확실 판정은 FAQ 자동 안내를 허용하지 않습니다.")
+        dept_ids = []
+        failures.append("범위 밖·불확실 판정은 자동 안내·부서 추천을 허용하지 않습니다.")
+    external_region = extract_external_jurisdiction(query or "") if query else None
+    if external_region is not None and (
+        scope != "out_of_scope" or outcome != "human_handoff" or dept_ids
+    ):
+        scope = "out_of_scope"
+        outcome = "human_handoff"
+        reason = "out_of_scope"
+        dept_ids = []
+        failures.append(
+            f"타 지자체({external_region}) 관할로 확인되어 청주시 자동 안내·부서 추천을 차단합니다."
+        )
     if intent == "action" and outcome == "faq_answer":
         outcome = "department_suggestion" if dept_ids else "human_handoff"
         reason = "action_required"

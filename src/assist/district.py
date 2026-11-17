@@ -63,12 +63,123 @@ _SORTED_AREAS = sorted(_AREA_TO_DISTRICT.keys(), key=len, reverse=True)
 # 4대 구 패턴: '상당구', '서원구', '흥덕구', '청원구'
 _DISTRICT_PATTERN = re.compile(r"(상당구|서원구|흥덕구|청원구)")
 
-# 동·읍·면 패턴: 앞뒤 단어 경계(공백, 문장부호 등)와 결합 조사 고려
+# 동·읍·면 패턴: 앞뒤 경계(공백, 문장부호, '청주'/'청주시' 접두)와 결합 조사 및 뒤쪽 숫자·방위 접미 허용
 _AREA_PATTERN = re.compile(
-    r"(?:(?<=[\s\(\[\{<\"'.,~·/!?-])|^)("
+    r"(?:(?<=[\s\(\[\{<\"'.,~·/!?-])|(?<=청주시)|(?<=청주)|^)("
     + "|".join(re.escape(a) for a in _SORTED_AREAS)
-    + r")(?:에서|으로|[은는이가을를의에로와과도만]?)(?=\s|[^\w가-힣]|$)"
+    + r")(?:에서|으로|[은는이가을를의에로와과도만]?)(?=[0-9]|\s|[^\w가-힣]|$|근처|부근|주변|인근|일대)"
 )
+
+# 읍 단위('오송읍'·'오창읍'·'내수읍')는 띄어쓰기 없이 시설명이 바로 이어져도 오탐 위험이 없어 별도 매칭합니다.
+_EUP_UNSPACED_PATTERN = re.compile(r"(오송읍|오창읍|내수읍)")
+
+# 외부 장소 API 실패·절단에도 오탐 위험 없이 단일 구가 확정되는 대표 시설·관광지 매핑입니다.
+# (경계·버스 노선 방면으로 자주 쓰이는 대학·공항 약칭·사거리 등은 네이버 장소 검색에 맡깁니다.)
+_LANDMARK_TO_DISTRICT: Final[dict[str, str]] = {
+    "청주국제공항": "청원구",
+    "오창호수공원": "청원구",
+    "초정행궁": "청원구",
+    "내수시장": "청원구",
+    "문암생태공원": "흥덕구",
+    "청주고인쇄박물관": "흥덕구",
+    "고인쇄박물관": "흥덕구",
+    "청남대": "상당구",
+}
+
+_SORTED_LANDMARKS = sorted(_LANDMARK_TO_DISTRICT.keys(), key=len, reverse=True)
+_LANDMARK_PATTERN = re.compile(
+    r"(?:(?<=[\s\(\[\{<\"'.,~·/!?-])|(?<=청주시)|(?<=청주)|^)("
+    + "|".join(re.escape(name) for name in _SORTED_LANDMARKS)
+    + r")(?:에서|으로|[은는이가을를의에로와과도만]?)(?=[0-9]|\s|[^\w가-힣]|$)"
+)
+
+# 타 시·도 및 타 시·군 관할 행정구역 공통 정규식 조각입니다.
+_EXT_METRO_GU_PART = (
+    r"(?:서울(?:특별시)?|부산(?:광역시)?|대구(?:광역시)?|인천(?:광역시)?|"
+    r"광주(?:광역시)?|대전(?:광역시)?|울산(?:광역시)?)\s+[가-힣]{1,5}[구군]"
+    r"|세종(?:특별자치시|시)\s+[가-힣]{1,6}(?:읍|면|동)"
+)
+_EXT_DO_PART = (
+    r"(?:경기도|강원(?:도|특별자치도)?|충청남도|충남|전북(?:특별자치도)?|"
+    r"전라남도|전남|경상북도|경북|경상남도|경남|제주(?:도|특별자치도)?)\s+"
+    r"(?!청주시)[가-힣]{1,6}(?:시|군)"
+)
+_EXT_CHUNGBUK_OTHERS = (
+    r"(?:충주시|제천시|보은군|옥천군|영동군|증평군|진천군|괴산군|음성군|단양군)"
+)
+_EXT_OTHER_CITIES = (
+    r"(?:충주시|제천시|보은군|옥천군|영동군|증평군|진천군|괴산군|음성군|단양군|"
+    r"수원시|성남시|용인시|고양시|창원시|천안시|아산시|공주시|전주시|포항시|구미시)"
+)
+
+# '대전 유성구 봉명동', '서울 종로구 사직동'처럼 청주시와 같은 동명이인 지명이
+# 타 지자체 주소에 포함되어 있을 때 청주시 관할 구로 오인식하지 않도록 선별합니다.
+_EXTERNAL_PREFIX_RE = re.compile(
+    rf"(?:{_EXT_METRO_GU_PART}"
+    rf"|{_EXT_DO_PART}(?:\s+[가-힣]{{1,5}}[구군])?"
+    rf"|(?:충청북도|충북)\s+{_EXT_CHUNGBUK_OTHERS}(?:\s+[가-힣]{{1,6}}(?:읍|면|동))?"
+    rf"|{_EXT_OTHER_CITIES}(?:\s+[가-힣]{{1,5}}구)?)"
+)
+
+# 코드 차원에서 명백한 타 지자체 관할로 확정할 수 있는 2단계 이상 외부 주소 패턴입니다.
+_EXTERNAL_CODE_REJECT_RE = re.compile(
+    rf"(?:{_EXT_METRO_GU_PART}"
+    rf"|{_EXT_DO_PART}\s+[가-힣]{{1,6}}(?:구|읍|면|동)"
+    rf"|(?:충청북도|충북)\s+{_EXT_CHUNGBUK_OTHERS}\s+[가-힣]{{1,6}}(?:읍|면|동)"
+    rf"|{_EXT_OTHER_CITIES}\s+[가-힣]{{1,6}}(?:구|읍|면|동))"
+)
+
+
+def _has_external_prefix_before(text: str, pos: int) -> bool:
+    """매칭된 읍·면·동 바로 앞에 타 지자체 상위 주소가 붙었는지 확인합니다.
+
+    Args:
+        text: 민원 원문 문자열입니다.
+        pos: `_AREA_PATTERN`이 매칭을 시작한 문자 인덱스입니다.
+
+    Returns:
+        타 지자체 행정구역 접두어 뒤에 이어진 동명이인 지명이면 True입니다.
+    """
+    window = text[max(0, pos - 28) : pos]
+    matches = list(_EXTERNAL_PREFIX_RE.finditer(window))
+    if not matches:
+        return False
+    tail = window[matches[-1].end() :]
+    return "청주" not in tail and _DISTRICT_PATTERN.search(tail) is None
+
+
+def extract_external_jurisdiction(
+    text: str,
+    *,
+    cheongju_area_found: bool | None = None,
+) -> str | None:
+    """명백한 타 지자체 관할 주소가 청주 지명 없이 단독으로 적혔는지 판별합니다.
+
+    '서울 쓰레기를 왜 청주시에서'나 '청주시 711번 진천여객'처럼 청주시와 연계된
+    민원은 배제하지 않고, 순수 타 시·군·구 주소만 있을 때 해당 지명을 돌려줍니다.
+
+    Args:
+        text: 민원 제목과 본문을 합친 문자열입니다.
+        cheongju_area_found: 호출자가 이미 `_find_regex_district`를 실행해
+            청주시 구·동 일치 여부를 알고 있으면 전달해 중복 정규식 탐색을 생략합니다.
+
+    Returns:
+        감지된 타 지자체 주소 표기 또는 `None`입니다.
+    """
+    if not text:
+        return None
+    match = _EXTERNAL_CODE_REJECT_RE.search(text)
+    if not match:
+        return None
+    if "청주" in text or _DISTRICT_PATTERN.search(text):
+        return None
+    if cheongju_area_found is True:
+        return None
+    if cheongju_area_found is None:
+        cheongju_area, conflicted = _find_regex_district(text)
+        if cheongju_area is not None or conflicted:
+            return None
+    return match.group(0)
 
 
 def normalize_district(raw: str | None) -> str | None:
@@ -131,11 +242,28 @@ def _find_regex_district(text: str) -> tuple[str | None, bool]:
         if len(found_districts) > 1:
             return None, True
 
-    # 2. 읍·면·동 지명 탐색
+    # 2. 읍·면·동 지명 탐색 (직전에 타 지자체 행정구역 접두가 있으면 동명이인 오인 방지)
     for match in _AREA_PATTERN.finditer(text):
+        if _has_external_prefix_before(text, match.start()):
+            continue
         area_name = match.group(1)
         if area_name in _AREA_TO_DISTRICT:
             found_districts.add(_AREA_TO_DISTRICT[area_name])
+            if len(found_districts) > 1:
+                return None, True
+
+    for match in _EUP_UNSPACED_PATTERN.finditer(text):
+        eup_name = match.group(1)
+        if eup_name in _AREA_TO_DISTRICT:
+            found_districts.add(_AREA_TO_DISTRICT[eup_name])
+            if len(found_districts) > 1:
+                return None, True
+
+    # 3. 검증된 청주 주요 랜드마크·캠퍼스 탐색 (외부 API 컷오프/누락 보완)
+    for match in _LANDMARK_PATTERN.finditer(text):
+        landmark = match.group(1)
+        if landmark in _LANDMARK_TO_DISTRICT:
+            found_districts.add(_LANDMARK_TO_DISTRICT[landmark])
             if len(found_districts) > 1:
                 return None, True
 
@@ -191,6 +319,9 @@ def extract_district(text: str) -> str | None:
         return None
     if regex_district:
         return regex_district
+
+    if extract_external_jurisdiction(text, cheongju_area_found=False) is not None:
+        return None
 
     # 정규식으로 감지되지 않은 경우 네이버 지도 장소 검색을 통한 2차 지명 추론을 시도합니다.
     primary = _lookup_cheongju_place(text)
@@ -248,17 +379,24 @@ def resolve_district_and_place(
     Returns:
         `(적용할 구 이름, 본문에서 자동 추론되었는지 여부, 청주시 장소 정보)` 튜플입니다.
     """
-    place = _lookup_cheongju_place(text)
     normalized = normalize_district(explicit_district)
     if normalized:
+        place = _lookup_cheongju_place(text)
         return normalized, False, place
 
     regex_district, conflicted = _find_regex_district(text)
     if conflicted:
+        place = _lookup_cheongju_place(text)
         return None, False, place
     if regex_district:
+        place = _lookup_cheongju_place(text)
         return regex_district, True, place
 
+    # 청주시 지명이 없고 명백한 타 지자체 관할 주소만 있으면 네이버 지도 오매칭을 막기 위해 조회를 건너뜁니다.
+    if extract_external_jurisdiction(text, cheongju_area_found=False) is not None:
+        return None, False, None
+
+    place = _lookup_cheongju_place(text)
     inferred_gu = place.get("gu") if place else None
     if isinstance(inferred_gu, str) and inferred_gu:
         return inferred_gu, True, place

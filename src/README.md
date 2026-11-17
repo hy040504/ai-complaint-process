@@ -190,6 +190,8 @@ npm --prefix ui run check
 npm --prefix ui test
 ```
 
+2026-11-17(후속 보완, `CASE-100`) `CASE-097`·112건 상세 분석 보고서에서 도출된 3대 한계와 타 지자체 동명이인 방어를 반영해 `PREFIX-01` 문맥 `sanitize_needed`·`PREFIX-04` `sarcasm_mockery`·`followup.py` `should_run_sanitize()`, `district.py` 동+숫자 경계·단일구 시설 8종·타 지자체 접두(`_EXTERNAL_PREFIX_RE`) 동명이인 배제 및 `extract_external_jurisdiction()`, `policy.py` `out_of_scope`·`uncertain`·타 지자체 부서 추천 코드 차단, `place_tool.py` 서술어 어미 배제·불용어 보강·고유 접미어 우선 정렬·짧은 상호 오매칭 차단을 적용하고 `pytest src/tests` **163 passed**, `rag/tests` **49 passed(3 skipped)**, `mypy` **7개 수정 모듈 0오류**, `ui check` **17개**·`ui test` **19/19**, `:5010` 라이브 프로브(`B06`·`B12`·`B17`·`F12`·`대전 유성구 봉명동`·`서울특별시 종로구 사직동`)를 확인했다. [CASE-100](../docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md)
+
 2026-11-17(실증 평가, `CASE-097`) 단독 검사기(`:5010`) 청주 한정 110건 포함 총 112건 5대 축(`codex_cli` 102건 0오류 평균 23.27s + `exaone_api` 10건 교차) 실측으로 FAQ(20/20)·환각 방어(23/23)·탈옥 차단(20/20) 및 3대 개선 과제(`SANITIZE_HINTS`·숫자 경계·장소 일반명사)를 식별하고, `departments.py` `_fallback_department_names` 캐시·docstring `Returns:` 보완 후 전수 회귀(`pytest 156`, `mypy 31`, `ui 18/18`)를 재확인했다. [CASE-097](../docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md)
 
 2026-11-16(최종 점검, `CASE-096`) `departments.py` 원격 부서 디렉터리 60초 TTL 캐시·`repository.py` 기본 템플릿 불필요 검증/지연 import 제거·`service.py` `change()` `_require_staff()` 재사용·Google Python docstring/JSDoc 보완·[`업무DB_실행설계.md`](../docs/harness/업무DB_실행설계.md) 4테이블 정합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **156개 통과**, **31개 모듈** `mypy` 오류 없음, `npm --prefix ui run check` **17개**·`test` **18개 통과**, Edge E2E·다크 24/24(0건)를 확인했다. [CASE-096](../docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md)

@@ -2,6 +2,10 @@
 
 ## 2026-11-17
 
+- **112건 실측 식별 3대 코드 한계(문맥 기반 순화·동+숫자 경계·장소 추론 오매칭) 보완 ([CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md)):**
+  - **문맥 기반 욕설·비꼬기·우회 표현 순화 (`PREFIX-01.txt`·`PREFIX-04.txt`, `src/assist/followup.py`·`pipeline.py`):** 1차 판정기 JSON에 `sanitize_needed` 문맥 플래그를 추가하고 `RISK_SIGNALS`에 `sarcasm_mockery`(비꼬기·조롱)를 편입했으며, `should_run_sanitize()`로 1차 LLM 판단 우선 + 명백 욕설/폭력 인젝션 안전망 + 시설 소등/침하(`꺼져`)·가로수 고사(`죽어`)·`시발점`·`전염병` 배제 휴리스틱을 결합했습니다.
+  - **지명·장소 추론 및 타 지자체 관할 방어 보완 (`src/assist/district.py`, `policy.py`, `constants.py`, `src/llm/place_tool.py`, `src/lab_web/static/app.js`):** `_AREA_PATTERN` 뒤쪽 숫자 lookahead·`청주` 접두·`_EUP_UNSPACED_PATTERN`·단일 구 8대 시설 매핑으로 `B17`(`봉명동1349`)·`B06`·`F12`를 보완하고, `place_tool.py`에 서술어 어미(`_PREDICATE_SUFFIXES`) 배제·일반명사 불용어(`지역`·`접수`·`공식`·`신청`·`무료`·`청주페이` 등)·고유 장소 접미어 5후보 최우선 정렬·짧은 상호 부분일치 하한을 적용했습니다. 또한 `_EXTERNAL_PREFIX_RE`·`extract_external_jurisdiction()`으로 `대전 유성구 봉명동`·`서울 종로구 사직동` 등 동명이인 타지역의 구 오인·네이버 조회를 차단하고 `policy.py`에서 `out_of_scope`·`uncertain`·타 지자체 입력의 부서 추천까지 `human_handoff`로 강제해 `src/tests` **163 passed**·`rag/tests` **49 passed(3 skipped)**·`:5010` 라이브 프로브를 검증했습니다.
+
 - **청주 민원 `:5010` 112건 실증 시각화 상세 분석 보고서 추가 및 `docs/test/` 전용 폴더 배치 ([CASE-099](docs/cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) · [보고서 MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf) · [안내](docs/test/README.md)):**
   - 원자료 112건 정식 통합([`rag/reports/lab-5010-eval-112-20261117.json`](rag/reports/lab-5010-eval-112-20261117.json)) 및 재현 스크립트([`scripts/상세분석보고서_112건_생성.py`](scripts/상세분석보고서_112건_생성.py)) 구축: SVG 차트 4종(`docs/assets/eval-112-axis-breakdown.svg` · `outcome-reason.svg` · `latency-engines.svg` · `district-and-gaps.svg`), 축별 심층 분석, 3대 코드 한계 및 개선안, 112건 전수 결과표를 Markdown 및 6쪽 PDF로 생성해 [`docs/test/`](docs/test/README.md) 전용 폴더에 배치했습니다.
   - **주석·코드 최적화·README 디자인 개선:** 공용 브라우저·PDF 인쇄 모듈 [`scripts/보고서_공통.py`](scripts/보고서_공통.py)로 `업무보고_20261116_pdf_생성.py`·`상세분석보고서_112건_생성.py` 간 인쇄 코드 중복을 제거하고 `_extract_report_cells()`로 MD/PDF 표 행 생성을 통합했으며, [`README.md`](README.md) 상단 `Test-112_Analysis_6Pages` 배지 및 `검증 근거` 5대 축 SVG 차트를 추가했습니다.

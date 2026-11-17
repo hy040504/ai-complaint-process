@@ -38,32 +38,124 @@ _DONG_RE = re.compile(r"([가-힣\d]+(?:동|읍|면|가))\b")
 _STOP_SUFFIXES: tuple[str, ...] = (
     "근처에서", "근처에", "근처", "부근에서", "부근에", "부근",
     "주변에서", "주변에", "주변", "인근에서", "인근에", "인근",
-    "앞에서", "앞에", "에서", "으로", "에는", "에", "이", "가",
+    "맞은편에서", "맞은편에", "맞은편", "건너편에서", "건너편에", "건너편",
+    "앞쪽에서", "앞쪽에", "앞쪽", "앞에서", "앞에", "에서", "으로", "에는", "에", "이", "가",
     "을", "를", "은", "는", "도", "쪽", "방면",
-    "했습니다", "났습니다", "있습니다", "합니다", "됩니다", "입니다",
-    "해주세요", "바랍니다", "드립니다", "이에요", "예요", "하네요",
+)
+
+# 서술어·종결어미로 끝나는 어절은 어간만 잘라 장소를 찾으면('궁금합니다'→'궁금'→'궁금해아트')
+# 엉뚱한 상호를 검색하게 되므로 후보에서 통째로 제외합니다.
+_PREDICATE_SUFFIXES: tuple[str, ...] = (
+    "겠습니다", "었습니다", "았습니다", "했습니다", "하겠습니다", "되었습니다",
+    "합니다", "됩니다", "입니다", "있습니다", "없습니다", "바랍니다", "드립니다",
+    "습니다", "ㅂ니다", "해주세요", "알려주세요", "부탁합니다", "주십시오",
+    "원합니다", "싶습니다", "궁금해", "하네요", "인가요", "되나요", "하나요",
+    "할까요", "일까요", "있나요", "없나요", "거든요", "는데요", "어요", "아요", "네요",
 )
 
 _STOP_WORDS: frozenset[str] = frozenset({
     "청주", "청주시", "충북", "충청북도",
-    "시내", "도로", "도로에", "골목", "차도", "인도", "보도", "보도블럭", "횡단보도",
+    "시내", "도로", "도로에", "골목", "차도", "인도", "보도", "보도블럭", "보도블록", "횡단보도",
     "신호등", "가로등", "가로등이", "가로수", "포트홀", "싱크홀",
     "나무가", "나무", "쓰러짐", "파손", "고장", "고장났어요", "수리", "공사", "발생", "소음", "악취", "냄새",
-    "쓰레기", "폐기물", "불법주정차", "불법주차", "주정차", "단속", "신고", "요청", "문의", "부탁드립니다",
+    "쓰레기", "폐기물", "대형폐기물", "종량제", "종량제봉투", "봉투", "불법주정차", "불법주차", "주정차",
+    "단속", "신고", "요청", "문의", "질문", "부탁드립니다",
     "주세요", "알려주세요", "해결해주세요", "있어요", "있나요", "없나요", "안됩니다", "때문에", "어디",
-    "공무원", "불친절", "안내", "답변", "처리", "확인", "점검", "안녕하세요", "감사합니다",
-    "문제", "민원", "상태", "상황", "현장", "조치", "건의", "불편", "불편합니다", "사항", "위험해요",
+    "공무원", "불친절", "안내", "답변", "처리", "확인", "점검", "안녕하세요", "감사합니다", "수고하십니다",
+    "문제", "민원", "민원위치", "상태", "상황", "현장", "조치", "건의", "불편", "불편합니다", "사항", "위험해요",
+    # FAQ·일반 행정 서술 및 보고서 3순위 식별 일반명사 오매칭 방지 불용어
+    "지역", "접수", "공식", "신청", "신청서", "무료", "유료", "방문", "발급", "재발급", "등록",
+    "방법", "대상", "조건", "기준", "규격", "기간", "처리기간", "수수료", "비용", "환불", "할인", "현금",
+    "본인", "대리", "세대원", "전입신고", "미성년자", "미만", "이상", "여권", "자동차", "차량",
+    "온라인", "인터넷", "사이트", "자동이체", "번호", "내선번호", "연락처", "전화", "과태료",
+    "버스", "시내버스", "노선", "정기권", "동물", "사체", "로드킬", "신고처", "재난문자", "알림", "해지",
+    "관련", "인한", "대한", "따른", "개선", "보수", "교체", "설치", "제거", "관리", "청소", "정비",
+    "시간", "일원", "현재", "오늘", "최근", "어제", "계속", "자꾸", "너무", "정말", "진짜", "제발",
+    "동네", "어딘가", "학교", "미기재", "부서", "부서명", "담당", "담당자", "시민", "주민",
+    "편의점", "원룸", "원룸촌", "화장실", "공중화장실", "벤치", "볼라드", "맨홀", "배수로", "빗물받이",
+    "면접", "정장", "대여", "준비", "서류", "구비서류", "여부", "가능", "존재하지", "않는",
+    "청주페이", "qr코드", "QR코드", "가맹점", "결제", "지원사업", "자전거", "부과", "재교부", "현황",
+    "배출", "수거", "궁금", "필요", "부탁", "알고",
+    "무단", "불법", "투기", "무단투기", "무단배출", "적치", "침하", "누수", "막힘", "소등",
 })
+
+# 고유 장소·시설 접미어를 가진 후보는 5후보 컷오프 시 앞쪽 일반 조합보다 우선 정렬합니다.
+_PLACE_PRIORITY_SUFFIXES: tuple[str, ...] = (
+    "국제공항", "공항", "생태공원", "공원", "종합시장", "시장", "박물관", "기념관",
+    "도서관", "미술관", "전망대", "행궁", "산성", "터미널", "역", "출구",
+    "초등학교", "중학교", "고등학교", "대학교", "대학", "초교", "중교", "고교",
+    "병원", "보건소", "행정복지센터", "주민센터", "구청", "시청", "법원", "우체국",
+    "사거리", "오거리", "삼거리", "교차로", "네거리", "아파트", "휴게소", "캠핑장",
+    "체육관", "백화점", "마트", "아울렛", "대교", "매표소", "호수", "정문", "후문", "중문",
+)
 
 # 긴 문장 보완 검색 시 과도한 외부 HTTP 호출을 막기 위한 후보 상한입니다.
 _MAX_FALLBACK_CANDIDATES = 5
+
+# 토큰 정제·장소명 대조에서 반복 호출되는 정규식을 모듈 로드 시 1회 컴파일합니다.
+_CLEAN_PUNCT_RE = re.compile(r"[()\[\]{}<>\"'·~!,?]")
+_NORM_TITLE_RE = re.compile(r"[\s\-_()\[\]]")
+_ALPHA_HANGUL_RE = re.compile(r"[가-힣A-Za-z]")
+_PLACE_COUNTER_RE = re.compile(
+    r"^\d+(?:세|살|명|개|건|회|원|만원|천원|억|분|초|시간|일|주|개월|년|kg|km|cm|mm|%)$"
+)
+
+
+def _has_place_suffix(token: str) -> bool:
+    """토큰이 구체적인 장소·시설 고유 접미어로 끝나는지 확인합니다.
+
+    Args:
+        token: 정제된 단일 단어 또는 2단어 조합 문자열입니다.
+
+    Returns:
+        고유 장소·시설 접미어가 포함되어 있으면 True입니다.
+    """
+    return any(token.endswith(suffix) for suffix in _PLACE_PRIORITY_SUFFIXES)
+
+
+def _clean_query_tokens(text: str) -> list[str]:
+    """문장에서 조사·문장부호·일반 불용어를 걸러 장소 비교용 핵심 토큰을 추출합니다.
+
+    Args:
+        text: 민원 원문 또는 검색어 문자열입니다.
+
+    Returns:
+        장소 관련성 판별과 후보 생성에 사용할 정제 단어 목록입니다.
+    """
+    cleaned = _CLEAN_PUNCT_RE.sub(" ", text)
+    refined_words: list[str] = []
+    for raw_word in cleaned.split():
+        word = raw_word.strip(".,:;~/-")
+        if (
+            not word
+            or word in _STOP_WORDS
+            or word in _STOP_SUFFIXES
+            or word.endswith(_PREDICATE_SUFFIXES)
+        ):
+            continue
+        cur = word
+        for suf in _STOP_SUFFIXES:
+            if cur.endswith(suf) and len(cur) > len(suf):
+                cur = cur[: -len(suf)].strip(".,:;~/-")
+                break
+        if (
+            not cur
+            or cur in _STOP_WORDS
+            or cur in _STOP_SUFFIXES
+            or len(cur) < 2
+            or not _ALPHA_HANGUL_RE.search(cur)
+            or _PLACE_COUNTER_RE.match(cur)
+        ):
+            continue
+        refined_words.append(cur)
+    return refined_words
 
 
 def is_place_relevant(title: str, query: str) -> bool:
     """검색 결과의 장소 제목이 검색어 키워드와 실제 일치하는지 검증합니다.
 
     청주시에 위치한 무관한 식당이나 일반 상점이 우연히 검색되는 문제를
-    방지하기 위해, 장소 제목에 검색어의 핵심 키워드가 포함되어 있는지 확인합니다.
+    방지하기 위해, 일반 행정 불용어를 제외한 핵심 키워드만 장소 제목과 대조합니다.
 
     Args:
         title: 네이버 지도 장소 제목입니다.
@@ -74,24 +166,32 @@ def is_place_relevant(title: str, query: str) -> bool:
     """
     if not title or not query:
         return False
-    norm_title = re.sub(r"[\s\-_()\[\]]", "", title.lower())
+    norm_title = _NORM_TITLE_RE.sub("", title.lower())
     if not norm_title or len(norm_title) < 2:
         return False
-    words = [
-        w for w in re.sub(r"[\(\)\[\]\{\}<>\"'·~!,?]", " ", query).split()
-        if len(w) >= 2 and w not in _STOP_WORDS
-    ]
+    words = _clean_query_tokens(query)
     if not words:
         return False
-    return any(w.lower() in norm_title or norm_title in w.lower() for w in words)
+    return any(
+        w.lower() in norm_title
+        or (
+            norm_title not in _STOP_WORDS
+            and (
+                len(norm_title) >= 4
+                or (len(norm_title) >= 3 and len(norm_title) >= len(w) * 0.6)
+            )
+            and norm_title in w.lower()
+        )
+        for w in words
+    )
 
 
 def extract_place_candidates(text: str) -> list[str]:
     """긴 문장이나 복합 민원에서 장소명 후보 키워드 목록을 추출합니다.
 
     '청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐' 같은 문장에서
-    조사, 서술어, 지역 접두어를 정제하여 ['서원대학교 후문', '서원대학교', ...]
-    같은 검색 가능한 장소 후보를 생성합니다.
+    조사·일반 불용어를 제거한 뒤 공항·공원·시장·역·병원 등 고유 장소 접미어
+    후보를 최우선으로 배치해 5후보 절단 시에도 핵심 랜드마크가 남도록 구성합니다.
 
     Args:
         text: 민원 문장 또는 검색어입니다.
@@ -99,32 +199,39 @@ def extract_place_candidates(text: str) -> list[str]:
     Returns:
         우선순위가 높은 장소명 후보 문자열 목록입니다.
     """
-    cleaned = re.sub(r"[\(\)\[\]\{\}<>\"'·~!,?]", " ", text)
-    words = cleaned.split()
+    refined_words = _clean_query_tokens(text)
+    if not refined_words:
+        return []
 
-    refined_words: list[str] = []
-    for w in words:
-        if w in _STOP_WORDS or w in _STOP_SUFFIXES:
-            continue
-        cur = w
-        for suf in _STOP_SUFFIXES:
-            if cur.endswith(suf) and len(cur) > len(suf):
-                cur = cur[: -len(suf)]
-                break
-        if cur and cur not in _STOP_WORDS and cur not in _STOP_SUFFIXES and len(cur) >= 2:
-            refined_words.append(cur)
+    tier_combo_priority: list[str] = []
+    tier_single_priority: list[str] = []
+    tier_combo_general: list[str] = []
+    tier_single_general: list[str] = []
 
-    candidates: list[str] = []
-    # 2단어 조합 우선 (예: '서원대학교 후문', '육거리시장 입구')
     for i in range(len(refined_words) - 1):
-        combo = f"{refined_words[i]} {refined_words[i+1]}"
-        if combo not in candidates:
-            candidates.append(combo)
-    # 1단어 단독 (예: '서원대학교', '창신초등학교')
+        left, right = refined_words[i], refined_words[i + 1]
+        combo = f"{left} {right}"
+        if _has_place_suffix(left) or _has_place_suffix(right) or right.endswith("점"):
+            tier_combo_priority.append(combo)
+        else:
+            tier_combo_general.append(combo)
+
     for w in refined_words:
-        if w not in candidates:
-            candidates.append(w)
-    return candidates
+        if _has_place_suffix(w):
+            tier_single_priority.append(w)
+        else:
+            tier_single_general.append(w)
+
+    return list(
+        dict.fromkeys(
+            [
+                *tier_combo_priority,
+                *tier_single_priority,
+                *tier_combo_general,
+                *tier_single_general,
+            ]
+        )
+    )
 
 
 def extract_cheongju_district(address: str | None) -> str | None:
@@ -250,6 +357,18 @@ def lookup_navermap_place(
     if fetch_fn is None and cache_key in _PLACE_CACHE:
         return _PLACE_CACHE[cache_key]
 
+    # 일반 행정·FAQ 등 3어절 이상 문장에서 장소 후보가 전혀 없으면 불필요한 외부 검색을 건너뜁니다.
+    fallback_candidates = extract_place_candidates(text) if _allow_fallback else []
+    if _allow_fallback and len(text.split()) >= 3 and not fallback_candidates:
+        return {
+            "query": text,
+            "coords": center_coords,
+            "found": False,
+            "total": 0,
+            "primary_place": None,
+            "places": [],
+        }
+
     fetcher = fetch_fn or fetch_navermap_instant_search
     try:
         raw_data = fetcher(text, coords=center_coords)
@@ -310,8 +429,7 @@ def lookup_navermap_place(
 
     # 청주시 장소를 찾지 못했거나 결과가 없으면 장소 후보 키워드로 1회만 보완 검색합니다.
     if _allow_fallback and (primary is None or not primary.get("is_cheongju")):
-        candidates = extract_place_candidates(text)[:_MAX_FALLBACK_CANDIDATES]
-        for cand in candidates:
+        for cand in fallback_candidates[:_MAX_FALLBACK_CANDIDATES]:
             if cand == text:
                 continue
             cand_res = lookup_navermap_place(

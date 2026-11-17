@@ -412,3 +412,40 @@ def test_empty_openai_api_key_is_not_configured(monkeypatch: object) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "   ")
     assert llm_settings()["token"] is None
     assert llm_configured() is False
+
+
+def test_out_of_scope_blocks_department_suggestion_and_external_city() -> None:
+    """out_of_scope와 명백한 타 지자체 주소는 부서 추천·FAQ 안내를 코드에서 강제 차단합니다."""
+    downgraded, failures = validate_decision(
+        {
+            "scope": "out_of_scope",
+            "intent": "action",
+            "outcome": "department_suggestion",
+            "reason_code": "action_required",
+            "evidence_refs": [{"corpus": "routing", "source_id": "case-1"}],
+            "department_ids": ["dept-1"],
+        },
+        sample_search(),
+    )
+    assert downgraded["outcome"] == "human_handoff"
+    assert downgraded["reason_code"] == "out_of_scope"
+    assert downgraded["department_ids"] == []
+    assert any("부서 추천" in item for item in failures)
+
+    ext_blocked, ext_failures = validate_decision(
+        {
+            "scope": "in_scope",
+            "intent": "action",
+            "outcome": "department_suggestion",
+            "reason_code": "action_required",
+            "evidence_refs": [{"corpus": "routing", "source_id": "case-1"}],
+            "department_ids": ["dept-1"],
+        },
+        sample_search(),
+        query="대전 유성구 봉명동 도로 포트홀 보수 요청",
+    )
+    assert ext_blocked["scope"] == "out_of_scope"
+    assert ext_blocked["outcome"] == "human_handoff"
+    assert ext_blocked["reason_code"] == "out_of_scope"
+    assert ext_blocked["department_ids"] == []
+    assert any("대전 유성구" in item for item in ext_failures)

@@ -1,5 +1,9 @@
 """지명 정규화 및 본문 자치구 추론 모듈(src.assist.district) 단위 테스트입니다."""
 
+from __future__ import annotations
+
+import pytest
+
 from src.assist.district import (
     DISTRICT_AREAS,
     DISTRICTS,
@@ -153,4 +157,83 @@ def test_resolve_district_and_place_single_lookup(monkeypatch) -> None:
     assert inferred2 is False
     assert place2 is not None and place2["title"] == "창신초등학교"
     assert len(calls) == 2
+
+
+def test_extract_district_no_space_numbers_and_landmarks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """동+숫자 붙여쓰기(B17·코퍼스)와 주요 랜드마크(B06·F12)를 외부 API 없이 추론합니다."""
+    import src.llm.place_tool as place_tool
+
+    # 외부 네이버 검색이 비어 있어도 정규식·내장 랜드마크로 정확히 판별되어야 합니다.
+    monkeypatch.setattr(
+        place_tool,
+        "lookup_navermap_place",
+        lambda query, **_kwargs: {
+            "query": query,
+            "found": False,
+            "total": 0,
+            "primary_place": None,
+            "places": [],
+        },
+    )
+
+    assert extract_district("봉명동1349근처빗물받이막힘청소요청") == "흥덕구"
+    assert extract_district("송정동70-60 앞 도로 파손 신고") == "흥덕구"
+    assert extract_district("분평동4거리 신호등 고장 점검") == "서원구"
+    assert extract_district("가경동2270 인근 불법주차 단속") == "흥덕구"
+    assert extract_district("청주시봉명동1349 도로 침하") == "흥덕구"
+
+    assert extract_district("청주국제공항 진입로 부근 도로 포트홀 보수") == "청원구"
+    assert extract_district("청주 문암생태공원 화장실 방치 민원") == "흥덕구"
+    assert extract_district("내수읍내수시장옆골목불법소각신고") == "청원구"
+    assert extract_district("청주고인쇄박물관 맞은편 인도 보수 요청") == "흥덕구"
+    assert extract_district("청남대 매표소 입구 근처 도로 가로등 파손 점검") == "상당구"
+    assert extract_district("북이면 초정행궁 근처 도로변 불법현수막") == "청원구"
+
+    # 다중 구 충돌(오송읍 ↔ 오창읍, 상당구 ↔ 서원구 무심천)은 단일 구로 강제하지 않습니다.
+    assert extract_district("상당구와 서원구 경계 무심천 자전거도로 점검") is None
+    assert extract_district("오송읍에서 오창읍으로 가는 버스 배차 문의") is None
+    assert (
+        extract_district("동네 어딘가 학교 앞 골목 가로등 고장 (지역 미기재)") is None
+    )
+
+
+def test_external_jurisdiction_prevents_homonym_dong_and_place_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """타 지자체 주소에 청주와 동명이인 동('봉명동'·'사직동'·'중앙동')이 있어도 오인하지 않습니다."""
+    from src.assist.district import (
+        extract_external_jurisdiction,
+        resolve_district_and_place,
+    )
+    import src.llm.place_tool as place_tool
+
+    called = 0
+
+    def fail_if_called(query: str, **_kwargs: object) -> dict[str, object]:
+        nonlocal called
+        called += 1
+        return {"query": query, "found": False, "total": 0, "primary_place": None, "places": []}
+
+    monkeypatch.setattr(place_tool, "lookup_navermap_place", fail_if_called)
+
+    assert extract_district("대전 유성구 봉명동 123 도로 포트홀 보수") is None
+    assert extract_district("서울특별시 종로구 사직동 가로등 수리 요청") is None
+    assert extract_district("대구 수성구 중앙동 불법주정차 단속") is None
+    assert extract_district("천안시 동남구 봉명동 인도 침하") is None
+
+    assert extract_external_jurisdiction("대전 유성구 봉명동 도로 파손") == "대전 유성구"
+    assert extract_external_jurisdiction("세종시 조치원읍 가로등 수리") == "세종시 조치원읍"
+    # 청주시 연계 민원은 타 지자체가 함께 언급되어도 제외하지 않고 청주 구를 정상 인식합니다.
+    assert extract_external_jurisdiction("서울 쓰레기를 왜 청주시에서 처리하나요?") is None
+    assert extract_district("서울 강남에서 온 물품 관련 청주시 서원구 사직동 문의") == "서원구"
+
+    dist, inferred, place = resolve_district_and_place(
+        None, "대전 유성구 봉명동 도로 포트홀 보수"
+    )
+    assert dist is None
+    assert inferred is False
+    assert place is None
+    assert called == 0
 

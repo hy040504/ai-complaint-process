@@ -1,11 +1,13 @@
 """PREFIX-03 담당자 초안과 PREFIX-04 순화 요약을 검사·조립합니다.
 
 시민 세 갈래 판정을 바꾸지 않습니다. 민원 CRUD 테이블에도 쓰지 않습니다.
-PREFIX-04는 검색 도구를 부르지 않으며, 원문 힌트가 있을 때만 호출합니다.
+PREFIX-04는 검색 도구를 부르지 않으며, 1차 판정기의 문맥 판단(`sanitize_needed`)
+또는 규칙 기반 문맥 휴리스틱이 순화 필요로 판단할 때만 호출합니다.
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from src.assist.constants import CORPORA
@@ -14,6 +16,7 @@ from src.rag.evidence import SearchParts
 
 RISK_SIGNALS = (
     "profanity_insult",
+    "sarcasm_mockery",
     "threat_intimidation",
     "sexual_harassment",
     "repeated_obsession",
@@ -23,6 +26,7 @@ RISK_SIGNALS = (
     "discretionary_disposition_pressure",
 )
 
+# 구형 호출(sanitize_needed 미반환) 호환용 참고 목록입니다. 실제 판별은 아래 문맥 정규식이 담당합니다.
 SANITIZE_HINTS = (
     "씨발",
     "시발",
@@ -38,18 +42,110 @@ SANITIZE_HINTS = (
     "병신",
 )
 
+_FACILITY_OFF_RE = re.compile(
+    r"(?:"
+    r"(?:움푹|푹|깊게|깊이)\s*꺼져(?!라)"
+    r"|"
+    r"(?:가로등|보안등|신호등|전등|조명|전기|전원|불빛?|보도\s*블[록럭]|블[록럭]|타일|"
+    r"인도|도로|차도|바닥|땅|지반|아스팔트|노면|맨홀|배수로)"
+    r"(?:[은는이가도만에서의]|\s)*"
+    r"(?:어젯밤부터|오늘부터|며칠째|한\s*달째|몇\s*달째|오래|계속|자꾸|자주|매번|"
+    r"모두|전부|다|아예|갑자기|많이|심하게|움푹|깊게|\d+개[가이도]?|\s)*"
+    r"꺼져(?!라)"
+    r")"
+)
+
+_LIVING_DYING_RE = re.compile(
+    r"(?:나무|가로수|소나무|벚나무|식물|꽃|잔디|풀|물고기|생물|작물|농작물|초목)"
+    r"(?:[가이도만들은는]|\s)*(?:말라|시들어|다|모두|점점|계속|\s)*죽어"
+)
+
+_UNAMBIGUOUS_ABUSE_RE = re.compile(
+    r"(?:"
+    r"(?<![가-힣])씨발"
+    r"|(?<![가-힣])씨[\s\d\W_]+발(?:[놈년넘련색새것야아들]|(?![가-힣]))"
+    r"|(?<![가-힣])시발(?!(?:점|지|역|지점))"
+    r"|(?<![가-힣])시[\s\d\W_]+발(?:[놈년넘련색새것야아들]|(?![가-힣]))"
+    r"|(?<![\d가-힣])개[\s\d\W_]*새[\s\d\W_]*끼"
+    r"|(?<![가-힣])병[\s\d\W_]*신(?:[같놈년들짓아야이]|(?![가-힣]))"
+    r"|(?<![가-힣])미[\s\d\W_]*친\s*(?:놈|년|새끼|것들|공무원)"
+    r"|(?<![가-힣])미쳤(?:냐|네|나|어|소)"
+    r"|(?<![가-힣])존[\s\W_]*나(?:게|많|싫|짜|화|웃|어이|느|(?![가-힣]))"
+    r"|(?<![가-힣])지[\s\W_]*랄"
+    r"|(?<![가-힣])염[\s\W_]*병"
+    r"|(?<![ㄱ-ㅎㅏ-ㅣ])(?:[ㅅㅆ][\s._\-]*ㅂ|ㅂ[\s._\-]*ㅅ|ㅈ[\s._\-]*ㄴ|ㅁ[\s._\-]*ㅊ)(?![ㄱ-ㅎㅏ-ㅣ])"
+    r"|패\s*죽|죽여\s*버린|쳐\s*죽|(?<![가-힣])조져\s*(?:버린|놓)"
+    r"|죽어라|뒤져라"
+    r"|가만\s*안\s*(?:둔다|둬|두겠)"
+    r"|찾아가(?:서)?\s*(?:엎|뒤엎|부수|죽|패)"
+    r")"
+)
+
+_FALLBACK_HOSTILE_OR_SARCASM_RE = re.compile(
+    r"(?:"
+    r"꺼져라|꺼지라|(?:니들이|너나|다|그냥|혼자|눈앞에서)\s*꺼져|꺼져"
+    r"|(?:너나|니들이|다|공무원[^.!?\n]{0,8})\s*죽어"
+    r"|쓰레기\s*같은|협박|고발하겠다|(?<![가-힣])조져"
+    r"|참\s*잘\s*(?:한다|하네|돌아간다|하십니다)"
+    r"|세금(?:이)?\s*(?:아깝|아까워|녹는다|줄줄|살살)"
+    r"|혈세\s*(?:낭비|도둑)|월급\s*루팡|앵무새\s*(?:처럼|복붙|답변)|탁상\s*행정|일\s*좀\s*해라"
+    r")"
+)
+
 
 def needs_sanitize(query: str) -> bool:
-    """원문에 순화 호출을 켤 표현이 있는지 봅니다.
+    """원문 문맥 휴리스틱으로 순화 호출이 필요한지 봅니다.
+
+    "보도블록이 꺼져서"·"가로등이 꺼져"·"가로수가 죽어가요" 같은 시설물·생태 서술은
+    제외하고, 명백한 욕설·초성/변형 욕설·보복 협박·노골적 비꼬기 표현만 감지합니다.
 
     Args:
         query: 민원 원문입니다.
 
     Returns:
-        힌트 문자열이 하나라도 있으면 True입니다.
+        문맥상 순화가 필요하면 True입니다.
     """
     text = query or ""
-    return any(hint in text for hint in SANITIZE_HINTS)
+    if not text.strip():
+        return False
+    if _UNAMBIGUOUS_ABUSE_RE.search(text):
+        return True
+    cleaned = _FACILITY_OFF_RE.sub(" ", text)
+    cleaned = _LIVING_DYING_RE.sub(" ", cleaned)
+    return bool(_FALLBACK_HOSTILE_OR_SARCASM_RE.search(cleaned))
+
+
+def should_run_sanitize(
+    query: str,
+    raw_decision: dict[str, Any] | None = None,
+    decision: dict[str, Any] | None = None,
+) -> bool:
+    """1차 판정기 문맥 판단과 안전 휴리스틱을 합쳐 PREFIX-04 호출 여부를 정합니다.
+
+    1차 판정기(`PREFIX-01`)가 `sanitize_needed`를 불리언으로 주면 그 문맥 판단을 우선
+    따릅니다. 다만 모델이 `false`를 주더라도 명백한 욕설·폭력 협박이 원문에 있으면
+    프롬프트 인젝션 등을 막기 위해 순화를 켭니다. 판정 필드가 없으면
+    `needs_sanitize(query)` 휴리스틱으로 폴백합니다.
+
+    Args:
+        query: 민원 원문입니다.
+        raw_decision: 1차 판정기 원시 JSON 딕셔너리입니다.
+        decision: 검증된 판정 딕셔너리입니다(호환용).
+
+    Returns:
+        PREFIX-04 순화를 호출해야 하면 True입니다.
+    """
+    text = query or ""
+    flag: bool | None = None
+    for source in (raw_decision, decision):
+        if isinstance(source, dict) and isinstance(source.get("sanitize_needed"), bool):
+            flag = source["sanitize_needed"]
+            break
+    if flag is True:
+        return True
+    if flag is False:
+        return bool(_UNAMBIGUOUS_ABUSE_RE.search(text))
+    return needs_sanitize(text)
 
 
 def sanitize_payload(query: str) -> dict[str, Any]:

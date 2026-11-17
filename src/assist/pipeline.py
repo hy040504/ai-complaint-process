@@ -24,8 +24,8 @@ from src.assist.prompts import (
     STAFF_DRAFT_SYSTEM,
 )
 from src.assist.followup import (
-    needs_sanitize,
     sanitize_payload,
+    should_run_sanitize,
     staff_draft_payload,
     validate_sanitize,
     validate_staff_draft,
@@ -421,7 +421,12 @@ def iter_assist(
                 raw_decision = parse_json_object(raw_reply)
                 stages.append(stage("판정", started, True))
                 checked = time.perf_counter()
-                decision, failures = validate_decision(raw_decision, search, parts)
+                decision, failures = validate_decision(
+                    raw_decision,
+                    search,
+                    parts,
+                    query=text if not effective_district else None,
+                )
                 stages.append(stage("정책검사", checked, not failures))
             except (ValueError, json.JSONDecodeError, OSError) as exc:
                 stages.append(stage("판정", started, False))
@@ -473,7 +478,11 @@ def iter_assist(
         )
 
     sanitize: dict[str, Any] | None = None
-    if chat is not None and not decision_call_failed and needs_sanitize(text):
+    if (
+        chat is not None
+        and not decision_call_failed
+        and should_run_sanitize(text, raw_decision, decision)
+    ):
         yield progress("sanitize")
         started = time.perf_counter()
         sanitize_user = sanitize_payload(text)
