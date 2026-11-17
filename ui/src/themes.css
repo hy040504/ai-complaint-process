@@ -1495,3 +1495,12 @@ body[data-theme="dark"][data-site="staff"] .staff-filter-more > summary {
 body[data-theme="dark"][data-site="staff"] .staff-filter-more > summary span {
   color: #84acff;
 }
+
+/* 담당자 작업 영역·터치 버튼의 다크 전용 색 */
+body[data-theme="dark"][data-site="staff"] .detail-grid.staff-detail > aside {
+  background: #15223a;
+  border-color: #2c4167;
+}
+body[data-theme="dark"][data-site="staff"] .detail-grid.staff-detail > aside::before {
+  color: #84acff;
+}

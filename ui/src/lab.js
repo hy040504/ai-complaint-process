@@ -306,12 +306,12 @@ export function labPage(form = {}) {
       (label, index) =>
         `<span class="${index === step ? "active" : ""}"><b>${index + 1}</b> ${label}</span>${index < 2 ? "<i></i>" : ""}`,
     )
-    .join("")}</div><section class="panel lab-examples-panel"><div class="section-title"><h2>시험용 예시</h2><span>내용을 채운 뒤 바로 실행합니다</span></div><div class="lab-examples">${labExamples
+    .join("")}</div><details class="panel lab-examples-panel"><summary class="section-title"><h2>시험용 예시 불러오기</h2><span>펼쳐서 고르면 입력란에 채워집니다</span></summary><div class="lab-examples">${labExamples
     .map(
       (item) =>
         `<button type="button" class="lab-example" data-action="lab-example" data-id="${esc(item.id)}"><b>${esc(item.title)}</b><span>${esc(item.query)}</span></button>`,
     )
-    .join("")}</div></section><form id="assist-form" class="panel complaint-form"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="lab-title">제목 <em>*</em></label><input id="lab-title" name="title" required maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(title)}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="lab-title-count">${title.length}/120</span></div><div class="form-grid"><div><label for="lab-category">민원 분야 <em>*</em></label><select id="lab-category" name="category" required>${categories
+    .join("")}</div></details><form id="assist-form" class="panel complaint-form"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="lab-title">제목 <em>*</em></label><input id="lab-title" name="title" required maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(title)}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="lab-title-count">${title.length}/120</span></div><div class="form-grid"><div><label for="lab-category">민원 분야 <em>*</em></label><select id="lab-category" name="category" required>${categories
     .map(
       (name) =>
         `<option ${name === category ? "selected" : ""}>${name}</option>`,

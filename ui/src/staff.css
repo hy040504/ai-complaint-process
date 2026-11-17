@@ -2503,3 +2503,98 @@ body[data-site="staff"] #toast {
   margin-top: 6px;
   padding-top: 0;
 }
+
+/* 터치 목표 크기: 아이콘 버튼 최소 40px, 터치 기기는 44px로 맞춥니다. 측정값은 34px였습니다. */
+.icon-btn.icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+@media (pointer: coarse) {
+  .icon-btn.icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+.staff-assign-btn {
+  min-width: 76px;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.staff-queue-panel .staff-filter-form > .icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* 담당자 상세: 오른쪽 작업 영역을 같은 면으로 묶어 시민 쪽 정보와 구분합니다 (근접성). */
+.detail-grid.staff-detail > aside {
+  background: #f1f6ff;
+  border: 1px solid #d6e3fb;
+  border-radius: 16px;
+  padding: 14px;
+}
+.detail-grid.staff-detail > aside::before {
+  content: "담당자 작업 영역";
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  color: #2f6fed;
+  margin: 0 2px 10px;
+}
+
+/* 응대 검사기 시험용 예시 접힘 상자: 접힌 상태에서는 여백 없이 제목 줄만 남기고 펼침 표시를 붙입니다. */
+.lab-examples-panel > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+}
+.lab-examples-panel > summary::-webkit-details-marker {
+  display: none;
+}
+.lab-examples-panel > summary::after {
+  content: "펼치기 ▾";
+  font-size: 12px;
+  font-weight: 700;
+  color: #2f6fed;
+  white-space: nowrap;
+}
+.lab-examples-panel[open] > summary {
+  margin-bottom: 16px;
+}
+.lab-examples-panel[open] > summary::after {
+  content: "접기 ▴";
+}
+.lab-examples-panel:not([open]) {
+  padding-bottom: 18px;
+}
+.lab-examples-panel:not([open]) {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.lab-examples-panel:not([open]) > summary .section-title,
+.lab-examples-panel > summary.section-title {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+body[data-site="lab"] .lab-examples-panel:not([open]) > .lab-examples {
+  display: none;
+}
+body[data-site="lab"] .lab-examples-panel > summary {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+body[data-site="lab"] .lab-examples-panel[open] > summary {
+  margin-bottom: 16px;
+}
+body[data-site="lab"] .lab-shell .lab-examples-panel > summary.section-title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+body[data-site="lab"] .lab-shell .lab-examples-panel[open] > summary.section-title {
+  margin-bottom: 16px;
+}
