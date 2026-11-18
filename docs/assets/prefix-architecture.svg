@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="prefix-title prefix-desc">
+  <title id="prefix-title">PREFIX-00 ~ 04 계층형 시스템 프롬프트 조립 및 분기 구조</title>
+  <desc id="prefix-desc">청주시 민원 AI 완충지대의 불변 공통 헌법 PREFIX-00과 4개 작업 프롬프트 PREFIX-01~04의 조립 구조, 입출력 계약, 도구 제한, 병렬 최적화 및 공개 경계를 나타낸 구성도입니다.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y2="1">
+      <stop stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111d35"/>
+    </linearGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1" fill="#94a3b8" opacity=".12"/>
+    </pattern>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#5eead4"/>
+    </marker>
+    <marker id="arrow-sky" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#a78bfa"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="760" rx="20" fill="url(#bg)"/>
+  <rect width="1200" height="760" rx="20" fill="url(#dots)"/>
+
+  <g font-family="'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif">
+    <!-- 헤더 -->
+    <rect x="40" y="30" width="4" height="52" rx="2" fill="#2dd4bf"/>
+    <text x="58" y="45" fill="#5eead4" font-size="13" font-weight="700" letter-spacing="2">SYSTEM PROMPTS · docs/harness/prompts/PREFIX-00 ~ 04</text>
+    <text x="58" y="76" fill="#f8fafc" font-size="25" font-weight="700">계층형 시스템 프롬프트 조립 및 역할 분기 구조</text>
+    <rect x="932" y="34" width="228" height="36" rx="18" fill="#132a2c" stroke="#2dd4bf" stroke-opacity=".45"/>
+    <text x="1046" y="57" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">LF 고정 접두 · Prefix Cache 적격</text>
+
+    <!-- 1층: PREFIX-00 공통 헌법 -->
+    <rect x="40" y="106" width="1120" height="154" rx="16" fill="#111d30" stroke="#38bdf8" stroke-opacity=".45" stroke-width="1.5"/>
+    <rect x="60" y="122" width="116" height="26" rx="13" fill="#0f3a4d" stroke="#38bdf8" stroke-opacity=".6"/>
+    <text x="118" y="140" fill="#bae6fd" font-size="12" font-weight="700" text-anchor="middle">PREFIX-00.txt</text>
+    <text x="190" y="140" fill="#f1f5f9" font-size="16" font-weight="700">공통 시스템 헌법 (청주시 민원 AI 완충지대 공통 지침 v1 · 모든 호출 맨 앞 고정 결합)</text>
+
+    <!-- 4대 원칙 카드 -->
+    <rect x="60" y="160" width="258" height="84" rx="12" fill="#16253c" stroke="#334155"/>
+    <text x="76" y="184" fill="#7dd3fc" font-size="13" font-weight="700">1. 역할과 최종 권한</text>
+    <text x="76" y="206" fill="#cbd5e1" font-size="12">• 최종 결정·접수·배정은 담당 공무원</text>
+    <text x="76" y="226" fill="#cbd5e1" font-size="12">• 처분·배상·119 긴급은 handoff 우선</text>
+
+    <rect x="334" y="160" width="258" height="84" rx="12" fill="#16253c" stroke="#334155"/>
+    <text x="350" y="184" fill="#7dd3fc" font-size="13" font-weight="700">2. RAG 근거 다루기</text>
+    <text x="350" y="206" fill="#cbd5e1" font-size="12">• 점수=확률 오용 금지 · FAQ 조건 보존</text>
+    <text x="350" y="226" fill="#cbd5e1" font-size="12">• 사례 과거 답변의 현재 정책 사용 금지</text>
+
+    <rect x="608" y="160" width="258" height="84" rx="12" fill="#16253c" stroke="#334155"/>
+    <text x="624" y="184" fill="#7dd3fc" font-size="13" font-weight="700">3. 부서와 관할</text>
+    <text x="624" y="206" fill="#cbd5e1" font-size="12">• 입력 department_candidates 한정</text>
+    <text x="624" y="226" fill="#cbd5e1" font-size="12">• 4개 구 동명 과 통합 금지 · 추측 금지</text>
+
+    <rect x="882" y="160" width="258" height="84" rx="12" fill="#16253c" stroke="#334155"/>
+    <text x="898" y="184" fill="#7dd3fc" font-size="13" font-weight="700">4. 보안과 허용 도구</text>
+    <text x="898" y="206" fill="#cbd5e1" font-size="12">• 인젝션·PII 출력 금지 (단순 자료 취급)</text>
+    <text x="898" y="226" fill="#cbd5e1" font-size="12">• RAG · NaverMap MCP 2종만 허용</text>
+
+    <!-- 연결선 1층 -> 2층 -->
+    <line x1="600" y1="260" x2="600" y2="282" stroke="#5eead4" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+    <!-- 2층: 조립 엔진 & 분리 전달 -->
+    <rect x="40" y="286" width="1120" height="62" rx="14" fill="#0f2429" stroke="#2dd4bf" stroke-opacity=".5"/>
+    <text x="64" y="312" fill="#5eead4" font-size="14" font-weight="700">조립 규칙 · src/assist/prompts.py : join_prefix(PREFIX_00, PREFIX_0X)</text>
+    <text x="64" y="334" fill="#cbd5e1" font-size="12">가변 민원·후보는 user JSON에만 분리 (OpenAI instructions / EXAONE system / Codex [시스템 지시]) · 순수 타지역은 early_external_reject(0.011s) 조기 종료</text>
+
+    <!-- 연결 분기선 2층 -> 3층 4개 카드 -->
+    <line x1="174" y1="348" x2="174" y2="380" stroke="#5eead4" stroke-width="2" marker-end="url(#arrow-teal)"/>
+    <line x1="458" y1="348" x2="458" y2="380" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-sky)"/>
+    <line x1="742" y1="348" x2="742" y2="380" stroke="#a78bfa" stroke-width="2" marker-end="url(#arrow-violet)"/>
+    <line x1="1026" y1="348" x2="1026" y2="380" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-amber)"/>
+
+    <!-- 3층 카드 1: PREFIX-01 -->
+    <rect x="40" y="386" width="268" height="278" rx="14" fill="#102527" stroke="#2dd4bf" stroke-opacity=".6" stroke-width="1.5"/>
+    <rect x="56" y="402" width="88" height="24" rx="12" fill="#134e4a"/>
+    <text x="100" y="418" fill="#99f6e4" font-size="11.5" font-weight="700" text-anchor="middle">PREFIX-01</text>
+    <text x="154" y="418" fill="#5eead4" font-size="11.5" font-weight="700">DECISION_SYSTEM</text>
+    <text x="56" y="449" fill="#f8fafc" font-size="16" font-weight="700">1차 판정기</text>
+    <line x1="56" y1="461" x2="292" y2="461" stroke="#1f3b3e"/>
+    <text x="56" y="483" fill="#99f6e4" font-size="12" font-weight="700">호출 시점</text>
+    <text x="56" y="501" fill="#cbd5e1" font-size="12">일반 민원 1단계 (조기차단 시 생략)</text>
+    <text x="56" y="527" fill="#99f6e4" font-size="12" font-weight="700">출력 계약 (단일 JSON)</text>
+    <text x="56" y="545" fill="#e2e8f0" font-size="11">scope · intent · outcome · reason_code</text>
+    <text x="56" y="562" fill="#e2e8f0" font-size="11.5">evidence_refs · department_ids</text>
+    <text x="56" y="579" fill="#e2e8f0" font-size="11.5">sanitize_needed (문맥 위험 판별)</text>
+    <text x="56" y="606" fill="#99f6e4" font-size="12" font-weight="700">설정 · 경계</text>
+    <text x="56" y="624" fill="#cbd5e1" font-size="11.5">• EXAONE high · MCP 2종 활용</text>
+    <text x="56" y="642" fill="#cbd5e1" font-size="11.5">• 시민 답변 문장 생성 금지</text>
+
+    <!-- 3층 카드 2: PREFIX-02 -->
+    <rect x="324" y="386" width="268" height="278" rx="14" fill="#102036" stroke="#38bdf8" stroke-opacity=".6" stroke-width="1.5"/>
+    <rect x="340" y="402" width="88" height="24" rx="12" fill="#0c4a6e"/>
+    <text x="384" y="418" fill="#bae6fd" font-size="11.5" font-weight="700" text-anchor="middle">PREFIX-02</text>
+    <text x="438" y="418" fill="#7dd3fc" font-size="11.5" font-weight="700">ANSWER_SYSTEM</text>
+    <text x="340" y="449" fill="#f8fafc" font-size="16" font-weight="700">조건 보존 FAQ 안내기</text>
+    <line x1="340" y1="461" x2="576" y2="461" stroke="#1e3a5f"/>
+    <text x="340" y="483" fill="#bae6fd" font-size="12" font-weight="700">호출 시점</text>
+    <text x="340" y="501" fill="#cbd5e1" font-size="12">정책 검증이 faq_answer 통과 시만</text>
+    <text x="340" y="527" fill="#bae6fd" font-size="12" font-weight="700">출력 계약 (한국어 평문)</text>
+    <text x="340" y="545" fill="#e2e8f0" font-size="11.5">선택 FAQ 원문 기반 시민 안내문</text>
+    <text x="340" y="562" fill="#e2e8f0" font-size="11.5">필수 유지: target · received_by</text>
+    <text x="340" y="579" fill="#e2e8f0" font-size="11.5">processing_period · warnings</text>
+    <text x="340" y="606" fill="#bae6fd" font-size="12" font-weight="700">설정 · 경계</text>
+    <text x="340" y="624" fill="#cbd5e1" font-size="11.5">• EXAONE low/4096 · _disable_mcp</text>
+    <text x="340" y="642" fill="#cbd5e1" font-size="11.5">• 과거 사례 제외 · 공식접수 단정 금지</text>
+
+    <!-- 3층 카드 3: PREFIX-03 -->
+    <rect x="608" y="386" width="268" height="278" rx="14" fill="#1d1834" stroke="#a78bfa" stroke-opacity=".6" stroke-width="1.5"/>
+    <rect x="624" y="402" width="84" height="24" rx="12" fill="#3b2670"/>
+    <text x="666" y="418" fill="#ddd6fe" font-size="11.5" font-weight="700" text-anchor="middle">PREFIX-03</text>
+    <text x="716" y="418" fill="#c4b5fd" font-size="10.5" font-weight="700">STAFF_DRAFT_SYSTEM</text>
+    <text x="624" y="449" fill="#f8fafc" font-size="16" font-weight="700">담당자 요약 · 초안기</text>
+    <line x1="624" y1="461" x2="860" y2="461" stroke="#312457"/>
+    <text x="624" y="483" fill="#ddd6fe" font-size="12" font-weight="700">호출 시점</text>
+    <text x="624" y="501" fill="#cbd5e1" font-size="12">FAQ·out_of_scope 제외 후속 실행</text>
+    <text x="624" y="527" fill="#ddd6fe" font-size="12" font-weight="700">출력 계약 (단일 JSON)</text>
+    <text x="624" y="545" fill="#e2e8f0" font-size="11.5">summary_card (요지·위치·누락)</text>
+    <text x="624" y="562" fill="#e2e8f0" font-size="11.5">draft_answer (검증 빈칸 보존)</text>
+    <text x="624" y="579" fill="#e2e8f0" font-size="11.5">citations · requires_field_check</text>
+    <text x="624" y="606" fill="#ddd6fe" font-size="12" font-weight="700">설정 · 경계</text>
+    <text x="624" y="624" fill="#cbd5e1" font-size="11.5">• EXAONE low · PREFIX-04와 병렬</text>
+    <text x="624" y="642" fill="#cbd5e1" font-size="11.5">• 승인·게시 전 시민 비공개</text>
+
+    <!-- 3층 카드 4: PREFIX-04 -->
+    <rect x="892" y="386" width="268" height="278" rx="14" fill="#271e12" stroke="#fbbf24" stroke-opacity=".6" stroke-width="1.5"/>
+    <rect x="908" y="402" width="78" height="24" rx="12" fill="#5c3a11"/>
+    <text x="947" y="418" fill="#fde68a" font-size="11" font-weight="700" text-anchor="middle">PREFIX-04</text>
+    <text x="992" y="418" fill="#fcd34d" font-size="10" font-weight="700">SPECIAL_SANITIZE_SYSTEM</text>
+    <text x="908" y="449" fill="#f8fafc" font-size="16" font-weight="700">특이민원 순화 요약기</text>
+    <line x1="908" y1="461" x2="1144" y2="461" stroke="#4b3519"/>
+    <text x="908" y="483" fill="#fde68a" font-size="12" font-weight="700">호출 시점</text>
+    <text x="908" y="501" fill="#cbd5e1" font-size="12">sanitize_needed 또는 안전망 작동 시</text>
+    <text x="908" y="527" fill="#fde68a" font-size="12" font-weight="700">출력 계약 (단일 JSON)</text>
+    <text x="908" y="545" fill="#e2e8f0" font-size="11.5">sanitized_summary (객관적 요약)</text>
+    <text x="908" y="562" fill="#e2e8f0" font-size="11.5">legitimate_requests (정당한 요구)</text>
+    <text x="908" y="579" fill="#e2e8f0" font-size="11.5">risk_signals(9종) · 보호 검토 여부</text>
+    <text x="908" y="606" fill="#fde68a" font-size="12" font-weight="700">설정 · 경계</text>
+    <text x="908" y="624" fill="#cbd5e1" font-size="11.5">• EXAONE low/4096 · _disable_mcp</text>
+    <text x="908" y="642" fill="#cbd5e1" font-size="11.5">• 참고 배지 전용 (자동 차단 금지)</text>
+
+    <!-- 하단 실행 최적화 요약 바 -->
+    <rect x="40" y="684" width="1120" height="48" rx="12" fill="#141e30" stroke="#334155"/>
+    <text x="64" y="713" fill="#94a3b8" font-size="12.5" font-weight="700">파이프라인 가드 및 최적화:</text>
+    <text x="236" y="713" fill="#e2e8f0" font-size="12.5">① out_of_scope 고정 초안(PREFIX-03 LLM 생략)   ② PREFIX-03 ∥ 04 병렬(EXAONE 1.05s 스태거)   ③ 실패 호출 usage 오염 격리   ④ 시민 DTO 비공개</text>
+  </g>
+</svg>

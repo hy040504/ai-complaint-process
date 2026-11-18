@@ -4,6 +4,8 @@
 
 이 폴더의 `.txt`가 **불변 시스템 접두의 원본**입니다. `src/assist/prompts.py`가 기동 시 UTF-8·LF로 읽어 조립합니다. 런타임에 날짜·민원·검색 결과를 끼워 넣지 않습니다.
 
+<img src="../../assets/prefix-architecture.svg" width="100%" alt="PREFIX-00 ~ 04 계층형 시스템 프롬프트 조립 및 역할 분기 구조" />
+
 | 파일 | 결합 | 현재 호출 |
 | --- | --- | --- |
 | [`PREFIX-00.txt`](PREFIX-00.txt) | 모든 작업 맨 앞 | 공통 |
