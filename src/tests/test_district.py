@@ -214,7 +214,13 @@ def test_external_jurisdiction_prevents_homonym_dong_and_place_lookup(
     def fail_if_called(query: str, **_kwargs: object) -> dict[str, object]:
         nonlocal called
         called += 1
-        return {"query": query, "found": False, "total": 0, "primary_place": None, "places": []}
+        return {
+            "query": query,
+            "found": False,
+            "total": 0,
+            "primary_place": None,
+            "places": [],
+        }
 
     monkeypatch.setattr(place_tool, "lookup_navermap_place", fail_if_called)
 
@@ -223,11 +229,21 @@ def test_external_jurisdiction_prevents_homonym_dong_and_place_lookup(
     assert extract_district("대구 수성구 중앙동 불법주정차 단속") is None
     assert extract_district("천안시 동남구 봉명동 인도 침하") is None
 
-    assert extract_external_jurisdiction("대전 유성구 봉명동 도로 파손") == "대전 유성구"
-    assert extract_external_jurisdiction("세종시 조치원읍 가로등 수리") == "세종시 조치원읍"
+    assert (
+        extract_external_jurisdiction("대전 유성구 봉명동 도로 파손") == "대전 유성구"
+    )
+    assert (
+        extract_external_jurisdiction("세종시 조치원읍 가로등 수리")
+        == "세종시 조치원읍"
+    )
     # 청주시 연계 민원은 타 지자체가 함께 언급되어도 제외하지 않고 청주 구를 정상 인식합니다.
-    assert extract_external_jurisdiction("서울 쓰레기를 왜 청주시에서 처리하나요?") is None
-    assert extract_district("서울 강남에서 온 물품 관련 청주시 서원구 사직동 문의") == "서원구"
+    assert (
+        extract_external_jurisdiction("서울 쓰레기를 왜 청주시에서 처리하나요?") is None
+    )
+    assert (
+        extract_district("서울 강남에서 온 물품 관련 청주시 서원구 사직동 문의")
+        == "서원구"
+    )
 
     dist, inferred, place = resolve_district_and_place(
         None, "대전 유성구 봉명동 도로 포트홀 보수"
@@ -237,3 +253,78 @@ def test_external_jurisdiction_prevents_homonym_dong_and_place_lookup(
     assert place is None
     assert called == 0
 
+
+def test_single_gu_roads_closing_bracket_external_shortnames_and_residence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """닫는 괄호·단일구 도로명·광역시 약칭·운수예외·거주지 문맥 분리를 검증합니다."""
+    from src.assist.district import (
+        extract_external_jurisdiction,
+        resolve_district_and_place,
+    )
+    import src.llm.place_tool as place_tool
+
+    looked_up: list[str] = []
+
+    def fake_lookup(query: str, **_kwargs: object) -> dict[str, object]:
+        """서원대 질의에만 청주 장소 응답을 돌려주는 가짜 지도 조회기입니다."""
+        looked_up.append(query)
+        if "서원대" in query:
+            return {
+                "query": query,
+                "found": True,
+                "total": 1,
+                "primary_place": {
+                    "title": "서원대학교후문",
+                    "road_address": "충청북도 청주시 서원구 무심서로 377-3",
+                    "jibun_address": "충청북도 청주시 서원구 모충동 243-18",
+                    "gu": "서원구",
+                    "dong": "모충동",
+                    "is_cheongju": True,
+                },
+                "places": [],
+            }
+        return {
+            "query": query,
+            "found": False,
+            "total": 0,
+            "primary_place": None,
+            "places": [],
+        }
+
+    monkeypatch.setattr(place_tool, "lookup_navermap_place", fake_lookup)
+
+    # 닫는 괄호 경계 및 공개 사례 검증 단일구 순수 도로명
+    assert extract_district("긴급)복대동 영조2차 아파트 앞 가로수") == "흥덕구"
+    assert extract_district("오송생명14로 283 주변 불법주차") == "흥덕구"
+    assert extract_district("충청대로 233 볼록거울 설치") == "청원구"
+    assert extract_district("성안길 상가 앞 보도블록 점검") == "상당구"
+
+    # 광역시 '~시' 약칭 및 외부 도로명 주소 차단 + 지도 검색 0회
+    for ext_text in (
+        "서울시 종로구 사직동 도로 포트홀 보수",
+        "대전시 유성구 봉명동 가로등 고장",
+        "경기도 화성시 동탄대로 123 보도블록 파손",
+    ):
+        assert extract_external_jurisdiction(ext_text) is not None
+        d, inf, p = resolve_district_and_place(None, ext_text)
+        assert (d, inf, p) == (None, False, None)
+    assert looked_up == []
+
+    # 청주시 시내버스 운수사는 인접 시·군 운행 구간 표기만으로 차단하지 않음 (사례 913 유형)
+    transit_text = "충북 증평군 증평읍 북부두름길 80 청신운수 109 급행버스 난폭운전"
+    assert extract_external_jurisdiction(transit_text) is None
+
+    # 타지 주소 직후 '이사/사는데' 거주 술어가 있으면 청주시 현 거주지·뒷부분 장소를 정상 추론
+    moved_text = "서울 강남구 역삼동에서 이사왔는데 여기 봉명동1349 앞 가로등 고장"
+    d_moved, inf_moved, _ = resolve_district_and_place(None, moved_text)
+    assert d_moved == "흥덕구"
+    assert inf_moved is True
+    assert looked_up[-1].startswith("여기 봉명동1349")
+
+    residence_text = "대전 유성구 봉명동 사는데 서원대 후문 앞에 쓰레기가 많아요"
+    d_res, inf_res, p_res = resolve_district_and_place(None, residence_text)
+    assert d_res == "서원구"
+    assert inf_res is True
+    assert p_res is not None and p_res["title"] == "서원대학교후문"
+    assert "대전 유성구" not in looked_up[-1]

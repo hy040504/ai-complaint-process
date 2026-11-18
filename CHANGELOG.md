@@ -1,6 +1,18 @@
 # 변경 이력
 
+## 2026-11-19
+
+- **`CASE-103` 후속 정규식 중복 최적화·신규 테스트 docstring 정비·하네스 6종 및 README 최종 동기화 ([CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md)):**
+  - **중복 탐색·정규화 제거 (`src/assist/district.py`, `pipeline.py`):** `_split_external_residence_clause()` 헬퍼로 `has_external_residence_context`·`_strip_external_residence_clause`·`extract_district`·`resolve_district_and_place`의 3회 중복 탐색을 1회로 통합하고 `extract_external_jurisdiction()` 선두 `cheongju_area_found is True` 조기 반환을 앞당겼으며, `iter_assist()`의 중복 `normalize_district(district)` 호출을 제거했습니다.
+  - **주석·하네스·문서 정비 및 최종 재검증 (`src/tests/`, `docs/harness/`, `README.md`, `docs/cases/`):** 신규 테스트 내부 헬퍼 8종 한국어 docstring 보완(`11개` 수정 `.py` 신규·운영 docstring 누락 0건), 하네스 6종(`LLM_완충지대_하네스.md`·`AI_정보전달과_응답_하네스.md`·`시스템_프롬프트와_프리픽스_캐싱_지침.md`·`architecture.md`·`prompts/README.md`·`docs/harness/README.md`) 및 `README.md` 동기화를 마쳤습니다. 최종 `black --check`(11개), `mypy`(9모듈 0오류), `회귀검증_112건_규칙.py`(112건 실패 0·5,015건 적중 `751`·외부 오탐 `0`), `RUN_PG_TESTS=1 pytest src/tests` **168 passed**(`24.63s`), `rag/tests` **49 passed(3 skipped)** + `rag.verify` **`passed: true`**, `ui check 19` · `ui test 22/22`, 재기동 `:5010`(`0.011s` `early_external_reject`) · `:5000` `/api/v1/health` 200 및 15개 문서 상대 링크 깨짐 0건을 확인했습니다.
+
 ## 2026-11-18
+
+- **112건 실측·5,015건 사례 기반 잔여 한계 분석 및 도로·번지·거주지 예외·EXAONE 차등 추론·조기 차단 패치 ([CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md)):**
+  - **도로명+번지·정밀 지명·오탐 방어 보완 (`src/llm/place_tool.py`, `src/assist/district.py`, `followup.py`):** `_extract_road_number_pairs()`로 숫자가 탈락하던 도로+번지 쌍(`오송생명14로 283`, `2순환로 1374` 등 93건)을 최우선 후보로 보존하고, 문자 결합 하이픈(`은행나무-바닥에`) 분리(번지 하이픈 `16-19` 보존)·원인조사(`사고로` 등) 불용어를 추가했습니다. `district.py`에는 닫는 괄호/콜론(`)]}>:`) 경계(`긴급)복대동`)와 실사례 100% 검증 단일구 도로(`성안길`·`충청대로`·`팔결신대로`·`오송생명\d*로` 등, 구 적중 `697→751`·추가 오분류 `0`)를 반영하고, `followup.py` `_FACILITY_OFF_RE` 간격 확장으로 `B14`(`"가로등 여러 개가 동시에 꺼져"`) 오탐을 해소했습니다.
+  - **광역시 `~시` 약칭 차단·거주지·청주 운수 예외 (`district.py`):** `서울시 종로구 사직동`·`대전시 유성구 봉명동`·`경기도 화성시 동탄대로 123`을 외부 관할로 정확히 차단하면서도, 청주시 시내버스 운수사(사례 913 `청신운수 109` 등 5,015건 외부 오탐 `0`) 및 타지역 거주·이사 술어 뒤 청주 본문(`"대전 유성구 봉명동 사는데 서원대 후문..."`)은 거주지 제거 후 정상 추론하도록 분리했습니다.
+  - **EXAONE 지연/타임아웃·토큰·버그 개선 (`src/llm/settings.py`, `complete.py`, `pipeline.py`, `.env.example`):** `settings_for_role()`로 EXAONE 추론 강도를 단계별 차등(`decision=high`, `faq_answer`/`sanitize`/`staff_draft=low`, 정형 단계 `max_tokens` 4096 상한) 적용하고, `codex_cli` `faq_answer`/`sanitize` 단계의 불필요한 MCP 기동(`_disable_mcp`)을 제거했으며, ① 순수 타지역 `early_external_reject`(0.02~0.07s) ② `out_of_scope` 판정 시 `PREFIX-03` 생략 및 고정 초안 ③ `PREFIX-04`∥`PREFIX-03` `ThreadPoolExecutor` 병렬 실행(EXAONE `1.05s` 스태거) ④ 호출 시작 시 `usage_box` 선초기화로 실패 단계 직전 토큰 오염 제거를 적용했습니다.
+  - **검증 및 회귀 자동화 (`scripts/회귀검증_112건_규칙.py`, `src/tests/`):** 112건 결정론적 규칙 회귀 **실패 0건**, 공개 사례 `5,015`건 오탐 **0건**, `src/tests` **168 passed**, `mypy` 8모듈 **0오류**, `rag/tests` **49 passed(3 skipped)**, `ui` 19/22 통과 및 실서버 `:5010` 타지역 조기차단(`0.02s`)·거주지 예외(`27.06s`→`서원구`)·`B14`(`25.82s`→`sanitize=False`) 확인.
 
 - **Swagger 포털·11/17 보고서 후속 한국어 주석·코드 최적화·접근성 대비·README 디자인 최종 점검 ([CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md)):**
   - **주석·docstring·JSDoc 및 f-string 교정 (`src/complaints/swagger_page.py`, `scripts/업무보고_20261117_pdf_생성.py`, `ui/src/api-docs.js`):** 인라인 JS 함수 JSDoc의 Python f-string 중괄호(`{{...}}`) 이스케이프 교정과 보고서 생성기 전 함수 Google docstring(`Args:`/`Returns:`/`Raises:`) 보완을 마쳤습니다.

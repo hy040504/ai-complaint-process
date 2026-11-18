@@ -160,7 +160,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_LLM_PROVIDER` | `exaone_api`, `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `EXAONE_API_KEY` | `exaone_api` 선택 시 LG AI연구원 EXAONE 무료 API 키. `.env`에만 보관 |
 | `EXAONE_URL` · `EXAONE_MODEL` | 기본 `https://api.exaone.ai/v1/chat/completions` · `k-exaone_v2.5` |
-| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 추론 강도 기본 `max`(`low`/`high`/`max`) · 최대 토큰 기본 `16384` |
+| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 전역 추론 강도(기본 `max`)·최대 토큰(`16384`). 미지정 시 `EXAONE_DECISION_REASONING_EFFORT`(`high`)·`EXAONE_FAST_REASONING_EFFORT`(`low`, `faq_answer`/`sanitize` 상한 `4096`)로 단계별 차등 적용 |
 | `EXAONE_TEMPERATURE` · `EXAONE_TOP_P` | 생성 다양성 기본 `0.7` · `0.95` |
 | `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
 | `COMPLAINT_LLM_MODEL` · `COMPLAINT_LLM_REASONING_EFFORT` | 기본 `gpt-6-luna` · `medium` |

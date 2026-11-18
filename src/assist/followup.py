@@ -47,10 +47,8 @@ _FACILITY_OFF_RE = re.compile(
     r"(?:움푹|푹|깊게|깊이)\s*꺼져(?!라)"
     r"|"
     r"(?:가로등|보안등|신호등|전등|조명|전기|전원|불빛?|보도\s*블[록럭]|블[록럭]|타일|"
-    r"인도|도로|차도|바닥|땅|지반|아스팔트|노면|맨홀|배수로)"
-    r"(?:[은는이가도만에서의]|\s)*"
-    r"(?:어젯밤부터|오늘부터|며칠째|한\s*달째|몇\s*달째|오래|계속|자꾸|자주|매번|"
-    r"모두|전부|다|아예|갑자기|많이|심하게|움푹|깊게|\d+개[가이도]?|\s)*"
+    r"인도|도로|차도|바닥|땅|지반|아스팔트|노면|맨홀|배수로|지붕|교각|산책로|자전거도로)"
+    r"(?:(?!(?:너|니|니들|야|놈|년))[^\n.!?,]){0,24}"
     r"꺼져(?!라)"
     r")"
 )
@@ -218,7 +216,9 @@ def staff_draft_payload(
     Returns:
         판정 갈래와 검색 후보를 담은 딕셔너리입니다.
     """
-    payload = decision_payload(query, district, search, parts, inferred_place=inferred_place)
+    payload = decision_payload(
+        query, district, search, parts, inferred_place=inferred_place
+    )
     result = {
         "query": payload["query"],
         "district": payload["district"],

@@ -13,10 +13,16 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable
 
 from src.assist.constants import PROGRESS_LABELS
-from src.assist.district import resolve_district_and_place
+from src.assist.district import (
+    extract_external_jurisdiction,
+    has_external_residence_context,
+    normalize_district,
+    resolve_district_and_place,
+)
 from src.assist.prompts import (
     ANSWER_SYSTEM,
     DECISION_SYSTEM,
@@ -24,6 +30,7 @@ from src.assist.prompts import (
     STAFF_DRAFT_SYSTEM,
 )
 from src.assist.followup import (
+    needs_sanitize,
     sanitize_payload,
     should_run_sanitize,
     staff_draft_payload,
@@ -48,6 +55,7 @@ from src.llm.settings import (
     llm_configured,
     llm_settings,
     settings_for_provider,
+    settings_for_role,
 )
 from src.rag import (
     SearchParts,
@@ -142,6 +150,8 @@ def resolve_chat(
     def chat(system: str, user: str) -> str:
         """설정을 고정한 채 모델 호출을 1회 실행하고 토큰 사용량을 기록합니다.
 
+        호출 시작 시 이전 사용량을 비워 실패한 호출에 직전 토큰이 남지 않게 합니다.
+
         Args:
             system: 조립된 시스템 프롬프트입니다.
             user: 직렬화된 사용자 민원·검색 후보 JSON입니다.
@@ -149,11 +159,227 @@ def resolve_chat(
         Returns:
             모델이 반환한 응답 문자열입니다.
         """
+        usage_box[0] = None
         result = complete_result(system, user, settings=bound)
         usage_box[0] = result.usage
         return result.text
 
     return chat
+
+
+def _call_role(
+    llm_fn: object,
+    bound_meta: dict[str, str | None] | None,
+    role: str,
+    system: str,
+    user: str,
+) -> tuple[str, CompleteUsage | None]:
+    """단계(role)에 맞게 조정된 설정으로 모델을 호출하고 해당 호출만의 사용량을 반환합니다.
+
+    Args:
+        llm_fn: `USE_ENV_LLM` 또는 테스트용 `(system, user) -> str` 콜백입니다.
+        bound_meta: `_resolve_bound_settings`가 구한 공급자 기본 설정입니다.
+        role: `decision`, `faq_answer`, `sanitize`, `staff_draft` 중 하나입니다.
+        system: 조립된 PREFIX 시스템 지시입니다.
+        user: 직렬화된 사용자 JSON입니다.
+
+    Returns:
+        `(응답 문자열, 해당 호출 토큰 사용량 또는 None)` 튜플입니다.
+    """
+    if llm_fn is USE_ENV_LLM:
+        role_cfg = settings_for_role(bound_meta, role)
+        result = complete_result(system, user, settings=role_cfg)
+        return result.text, result.usage
+    if callable(llm_fn):
+        return llm_fn(system, user), None
+    raise ValueError("호출 가능한 LLM 함수가 없습니다.")
+
+
+def _out_of_scope_staff_draft(
+    text: str, external_region: str | None = None
+) -> dict[str, Any]:
+    """청주시 관할 외·자동 응대 범위 밖 사안에 대한 고정 담당자 참고 초안을 만듭니다.
+
+    불필요한 PREFIX-03 LLM 호출(및 추론 토큰)을 생략하면서도 담당자 화면이
+    필요한 요약 카드와 검토 초안 형식을 보존합니다.
+
+    Args:
+        text: 민원 원문 문자열입니다.
+        external_region: 감지된 외부 지자체 주소입니다. 없으면 일반 관할 외 문구를 씁니다.
+
+    Returns:
+        `StaffDraft` 계약을 만족하는 고정 초안 딕셔너리입니다.
+    """
+    target = external_region or "청주시 관할 외 또는 자동 응대 범위 밖"
+    return {
+        "summary_card": {
+            "core_summary": "청주시 소관 범위 밖이거나 자동 응대 기준을 벗어난 요청으로 담당자 검토가 필요합니다.",
+            "citizen_request": text[:160].strip(),
+            "location_or_target": target,
+            "missing_info": ["청주시 관할 여부 또는 실제 소관 기관 확인 필요"],
+        },
+        "draft_answer": (
+            "[담당자 확인 필요: 관할 여부 확인 후 소관 기관 안내 또는 종결 처리] "
+            "제출하신 내용은 청주시 자동 안내 범위에서 확인하기 어려워 담당자가 소관 및 처리 가능 여부를 검토하겠습니다."
+        ),
+        "citations": [],
+        "requires_field_check": True,
+    }
+
+
+def _record_codex_call(
+    role: str,
+    system_label: str,
+    system_text: str,
+    user_obj: dict[str, Any],
+    sent: bool,
+    user_json: str | None = None,
+    usage: CompleteUsage | None = None,
+    disable_tools: bool = False,
+) -> dict[str, Any]:
+    """모델에 넣은 사용자 JSON과 Codex stdin 전문을 한 칸에 담습니다.
+
+    Args:
+        role: 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
+        system_label: PREFIX 조합 이름입니다.
+        system_text: 실제로 넣은 PREFIX 본문입니다.
+        user_obj: 사용자 JSON 객체입니다.
+        sent: 모델에 실제로 넣었으면 True입니다.
+        user_json: `complete_result`에 넣은 사용자 문자열입니다. 생략하면 다시 직렬화합니다.
+        usage: 해당 호출이 반환한 토큰 사용량입니다.
+        disable_tools: True이면 비도구 단계용 도구 미사용 stdin 형식을 기록합니다.
+
+    Returns:
+        검사기 `assist.codex` 한 칸입니다.
+    """
+    dumped = (
+        user_json
+        if user_json is not None
+        else json.dumps(user_obj, ensure_ascii=False, indent=2)
+    )
+    prompt = format_codex_stdin(
+        system_text,
+        dumped,
+        allowed_tools=() if disable_tools else None,
+    )
+    item: dict[str, Any] = {
+        "role": role,
+        "system": system_label,
+        "user": user_obj,
+        "sent": sent,
+        "prompt": prompt,
+    }
+    if sent and usage is not None:
+        item["usage"] = usage
+    return item
+
+
+def _run_sanitize_step(
+    text: str,
+    llm_fn: object,
+    bound_meta: dict[str, str | None] | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any], dict[str, Any], str | None]:
+    """PREFIX-04 순화 요약을 1회 실행하고 검증 결과·단계·호출 기록을 반환합니다.
+
+    Args:
+        text: 민원 원문 문자열입니다.
+        llm_fn: LLM 실행 대상(`USE_ENV_LLM` 또는 콜백)입니다.
+        bound_meta: 기본 공급자 설정입니다.
+
+    Returns:
+        `(순화 결과, 단계 기록, codex 기록, 오류 메시지 또는 None)` 튜플입니다.
+    """
+    started = time.perf_counter()
+    sanitize_user = sanitize_payload(text)
+    sanitize_json = json.dumps(sanitize_user, ensure_ascii=False, indent=2)
+    call_usage: CompleteUsage | None = None
+    sanitize: dict[str, Any] | None = None
+    err: str | None = None
+    try:
+        raw_text, call_usage = _call_role(
+            llm_fn, bound_meta, "sanitize", SPECIAL_SANITIZE_SYSTEM, sanitize_json
+        )
+        sanitize = validate_sanitize(parse_json_object(raw_text))
+        if sanitize is None:
+            raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
+        step_stage = stage("순화", started, True)
+    except (ValueError, json.JSONDecodeError, OSError) as exc:
+        step_stage = stage("순화", started, False)
+        err = str(exc)
+        sanitize = None
+    codex_entry = _record_codex_call(
+        "sanitize",
+        "PREFIX-00 + PREFIX-04",
+        SPECIAL_SANITIZE_SYSTEM,
+        sanitize_user,
+        True,
+        sanitize_json,
+        usage=call_usage,
+        disable_tools=True,
+    )
+    return sanitize, step_stage, codex_entry, err
+
+
+def _run_staff_draft_step(
+    text: str,
+    effective_district: str | None,
+    search: dict[str, Any],
+    decision: dict[str, Any],
+    parts: SearchParts,
+    inferred_place: dict[str, Any] | None,
+    llm_fn: object,
+    bound_meta: dict[str, str | None] | None,
+    *,
+    delay_seconds: float = 0.0,
+) -> tuple[dict[str, Any] | None, dict[str, Any], dict[str, Any], str | None]:
+    """PREFIX-03 담당자 초안을 1회 실행하고 검증 결과·단계·호출 기록을 반환합니다.
+
+    Args:
+        text: 민원 원문 문자열입니다.
+        effective_district: 결정된 관할 구입니다.
+        search: 검색 응답입니다.
+        decision: 정책 검사를 거친 판정입니다.
+        parts: 파싱된 검색 조각입니다.
+        inferred_place: 추론된 장소 객체입니다.
+        llm_fn: LLM 실행 대상입니다.
+        bound_meta: 기본 공급자 설정입니다.
+        delay_seconds: 순화와 병렬 시작 시 초당 한도 회피용 스태거 대기(초)입니다.
+
+    Returns:
+        `(초안 결과, 단계 기록, codex 기록, 오류 메시지 또는 None)` 튜플입니다.
+    """
+    if delay_seconds > 0:
+        time.sleep(delay_seconds)
+    started = time.perf_counter()
+    draft_user = staff_draft_payload(
+        text, effective_district, search, decision, parts, inferred_place=inferred_place
+    )
+    draft_json = json.dumps(draft_user, ensure_ascii=False, indent=2)
+    call_usage: CompleteUsage | None = None
+    staff_draft: dict[str, Any] | None = None
+    err: str | None = None
+    try:
+        raw_text, call_usage = _call_role(
+            llm_fn, bound_meta, "staff_draft", STAFF_DRAFT_SYSTEM, draft_json
+        )
+        staff_draft = validate_staff_draft(parse_json_object(raw_text), parts)
+        if staff_draft is None:
+            raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
+        step_stage = stage("담당자초안", started, True)
+    except (ValueError, json.JSONDecodeError, OSError) as exc:
+        step_stage = stage("담당자초안", started, False)
+        err = str(exc)
+        staff_draft = None
+    codex_entry = _record_codex_call(
+        "staff_draft",
+        "PREFIX-00 + PREFIX-03",
+        STAFF_DRAFT_SYSTEM,
+        draft_user,
+        True,
+        draft_json,
+        usage=call_usage,
+    )
+    return staff_draft, step_stage, codex_entry, err
 
 
 def progress(key: str) -> dict[str, str]:
@@ -288,15 +514,14 @@ def iter_assist(
         district, text
     )
     llm_on, bound_meta = _resolve_bound_settings(llm_fn, provider)
-    resolved_provider = (
-        bound_meta.get("provider") if bound_meta else (provider or None)
-    )
+    resolved_provider = bound_meta.get("provider") if bound_meta else (provider or None)
     if not llm_on and not provider and resolved_provider == "legacy":
         resolved_provider = None
     resolved_model = (
         bound_meta.get("model") if bound_meta and resolved_provider else None
     )
     yield progress("read")
+    read_started = time.perf_counter()
     if not text or len(text) > 2000:
         decision = empty_decision("invalid_model_output")
         decision["reason_code"] = "condition_unclear"
@@ -313,6 +538,65 @@ def iter_assist(
                 llm_on=llm_on,
                 district_inferred=district_inferred,
                 inferred_place=inferred_place,
+                llm_provider=resolved_provider,
+                llm_model=resolved_model,
+            ),
+        }
+        return
+
+    has_cheongju_place = bool(
+        effective_district or (inferred_place and inferred_place.get("is_cheongju"))
+    )
+    early_external = (
+        extract_external_jurisdiction(text, cheongju_area_found=False)
+        if not has_cheongju_place
+        else None
+    )
+    if early_external is not None and not has_external_residence_context(text):
+        # 순수 타 지자체 주소는 검색 API·판정·초안 LLM 호출 없이 즉시 담당자 검토(out_of_scope)로 연결합니다.
+        stages.append(stage("관할검증", read_started, True))
+        early_decision = {
+            "scope": "out_of_scope",
+            "intent": "unclear",
+            "outcome": "human_handoff",
+            "reason_code": "out_of_scope",
+            "evidence_refs": [],
+            "department_ids": [],
+        }
+        early_failures = [
+            f"타 지자체({early_external}) 관할로 확인되어 청주시 검색·자동 응대를 건너뛰고 담당자 검토로 연결합니다."
+        ]
+        early_sanitize: dict[str, Any] | None = None
+        early_codex: list[dict[str, Any]] = []
+        if llm_on and needs_sanitize(text):
+            yield progress("sanitize")
+            early_sanitize, san_stage, san_codex, san_err = _run_sanitize_step(
+                text, llm_fn, bound_meta
+            )
+            stages.append(san_stage)
+            early_codex.append(san_codex)
+            if san_err:
+                early_failures.append(san_err)
+        yield {
+            "type": "done",
+            "result": build_result(
+                query=text,
+                district=None,
+                search={
+                    "retrieval_only": True,
+                    "decision": "requires_gate",
+                    "pipeline": "early_external_reject",
+                },
+                decision=early_decision,
+                failures=early_failures,
+                generated=None,
+                stages=stages,
+                llm_on=llm_on,
+                codex=early_codex,
+                staff_draft=_out_of_scope_staff_draft(text, early_external),
+                sanitize=early_sanitize,
+                district_inferred=False,
+                inferred_place=None,
                 llm_provider=resolved_provider,
                 llm_model=resolved_model,
             ),
@@ -350,52 +634,16 @@ def iter_assist(
 
     yield progress("review")
     parts = search_parts(search)
-    user_payload = decision_payload(text, effective_district, search, parts, inferred_place=inferred_place)
+    user_payload = decision_payload(
+        text, effective_district, search, parts, inferred_place=inferred_place
+    )
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
-    usage_box: list[CompleteUsage | None] = [None]
-    chat: Callable[[str, str], str] | None = resolve_chat(llm_fn, provider, usage_box)
-
-    def record_call(
-        role: str,
-        system_label: str,
-        system_text: str,
-        user_obj: dict[str, Any],
-        sent: bool,
-        user_json: str | None = None,
-    ) -> dict[str, Any]:
-        """모델에 넣은 사용자 JSON과 Codex stdin 전문을 한 칸에 담습니다.
-
-        Args:
-            role: 판정·FAQ 안내·담당자 초안·순화 중 하나입니다.
-            system_label: PREFIX 조합 이름입니다.
-            system_text: 실제로 넣은 PREFIX 본문입니다.
-            user_obj: 사용자 JSON 객체입니다.
-            sent: 모델에 넣었으면 True입니다.
-            user_json: `chat`에 넣은 사용자 문자열입니다. 생략하면 다시 직렬화합니다.
-
-        Returns:
-            검사기 `assist.codex` 한 칸입니다.
-        """
-        dumped = (
-            user_json
-            if user_json is not None
-            else json.dumps(user_obj, ensure_ascii=False, indent=2)
-        )
-        item: dict[str, Any] = {
-            "role": role,
-            "system": system_label,
-            "user": user_obj,
-            "sent": sent,
-            "prompt": format_codex_stdin(system_text, dumped),
-        }
-        if sent and usage_box[0] is not None:
-            item["usage"] = usage_box[0]
-        return item
 
     raw_decision: dict[str, Any] | None = None
     decision_call_failed = False
+    decision_usage: CompleteUsage | None = None
     started = time.perf_counter()
-    if chat is None:
+    if not llm_on:
         stages.append(stage("판정", started, False))
         decision = empty_decision("llm_unavailable")
         unavailable_reason = (
@@ -409,7 +657,9 @@ def iter_assist(
         ]
     else:
         try:
-            raw_reply = chat(DECISION_SYSTEM, decision_user)
+            raw_reply, decision_usage = _call_role(
+                llm_fn, bound_meta, "decision", DECISION_SYSTEM, decision_user
+            )
         except (ValueError, OSError) as exc:
             # 외부 API(429·연결 오류)나 CLI 실패면 후속 LLM 호출을 연달아 보내지 않습니다.
             decision_call_failed = True
@@ -421,11 +671,12 @@ def iter_assist(
                 raw_decision = parse_json_object(raw_reply)
                 stages.append(stage("판정", started, True))
                 checked = time.perf_counter()
+                policy_query = text if not has_cheongju_place else None
                 decision, failures = validate_decision(
                     raw_decision,
                     search,
                     parts,
-                    query=text if not effective_district else None,
+                    query=policy_query,
                 )
                 stages.append(stage("정책검사", checked, not failures))
             except (ValueError, json.JSONDecodeError, OSError) as exc:
@@ -434,17 +685,18 @@ def iter_assist(
                 failures = [str(exc)]
 
     codex_calls: list[dict[str, Any]] = [
-        record_call(
+        _record_codex_call(
             "decision",
             "PREFIX-00 + PREFIX-01",
             DECISION_SYSTEM,
             user_payload,
-            chat is not None,
+            llm_on,
             decision_user,
+            usage=decision_usage,
         )
     ]
     generated: str | None = None
-    if decision["outcome"] == "faq_answer" and chat is not None:
+    if decision["outcome"] == "faq_answer" and llm_on:
         yield progress("write")
         started = time.perf_counter()
         selected = [
@@ -454,8 +706,12 @@ def iter_assist(
         ]
         faq_user = {"query": text, "faq": selected}
         faq_json = json.dumps(faq_user, ensure_ascii=False, indent=2)
+        faq_usage: CompleteUsage | None = None
         try:
-            generated = chat(ANSWER_SYSTEM, faq_json).strip()
+            generated_raw, faq_usage = _call_role(
+                llm_fn, bound_meta, "faq_answer", ANSWER_SYSTEM, faq_json
+            )
+            generated = generated_raw.strip()
             if len(generated) < 20:
                 raise ValueError("FAQ 답변이 너무 짧습니다.")
             stages.append(stage("답변생성", started, True))
@@ -467,82 +723,90 @@ def iter_assist(
             failures.append(str(exc))
             generated = None
         codex_calls.append(
-            record_call(
+            _record_codex_call(
                 "faq_answer",
                 "PREFIX-00 + PREFIX-02",
                 ANSWER_SYSTEM,
                 faq_user,
                 True,
                 faq_json,
+                usage=faq_usage,
+                disable_tools=True,
             )
         )
 
-    sanitize: dict[str, Any] | None = None
-    if (
-        chat is not None
+    need_sanitize = (
+        llm_on
         and not decision_call_failed
         and should_run_sanitize(text, raw_decision, decision)
-    ):
-        yield progress("sanitize")
-        started = time.perf_counter()
-        sanitize_user = sanitize_payload(text)
-        sanitize_json = json.dumps(sanitize_user, ensure_ascii=False, indent=2)
-        try:
-            sanitize = validate_sanitize(
-                parse_json_object(chat(SPECIAL_SANITIZE_SYSTEM, sanitize_json))
-            )
-            if sanitize is None:
-                raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
-            stages.append(stage("순화", started, True))
-        except (ValueError, json.JSONDecodeError, OSError) as exc:
-            stages.append(stage("순화", started, False))
-            failures.append(str(exc))
-            sanitize = None
-        codex_calls.append(
-            record_call(
-                "sanitize",
-                "PREFIX-00 + PREFIX-04",
-                SPECIAL_SANITIZE_SYSTEM,
-                sanitize_user,
-                True,
-                sanitize_json,
-            )
-        )
-
-    staff_draft: dict[str, Any] | None = None
-    if (
-        chat is not None
+    )
+    need_draft = (
+        llm_on
         and not decision_call_failed
         and decision["outcome"] != "faq_answer"
-    ):
+        and decision["scope"] != "out_of_scope"
+    )
+
+    sanitize: dict[str, Any] | None = None
+    staff_draft: dict[str, Any] | None = None
+
+    if need_sanitize and need_draft:
+        yield progress("sanitize")
         yield progress("draft")
-        started = time.perf_counter()
-        draft_user = staff_draft_payload(
-            text, effective_district, search, decision, parts, inferred_place=inferred_place
-        )
-        draft_json = json.dumps(draft_user, ensure_ascii=False, indent=2)
-        try:
-            staff_draft = validate_staff_draft(
-                parse_json_object(chat(STAFF_DRAFT_SYSTEM, draft_json)),
+        stagger = 1.05 if resolved_provider == "exaone_api" else 0.0
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            san_future = pool.submit(_run_sanitize_step, text, llm_fn, bound_meta)
+            draft_future = pool.submit(
+                _run_staff_draft_step,
+                text,
+                effective_district,
+                search,
+                decision,
                 parts,
+                inferred_place,
+                llm_fn,
+                bound_meta,
+                delay_seconds=stagger,
             )
-            if staff_draft is None:
-                raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
-            stages.append(stage("담당자초안", started, True))
-        except (ValueError, json.JSONDecodeError, OSError) as exc:
-            stages.append(stage("담당자초안", started, False))
-            failures.append(str(exc))
-            staff_draft = None
-        codex_calls.append(
-            record_call(
-                "staff_draft",
-                "PREFIX-00 + PREFIX-03",
-                STAFF_DRAFT_SYSTEM,
-                draft_user,
-                True,
-                draft_json,
+            sanitize, san_stage, san_codex, san_err = san_future.result()
+            staff_draft, draft_stage, draft_codex, draft_err = draft_future.result()
+        stages.extend([san_stage, draft_stage])
+        codex_calls.extend([san_codex, draft_codex])
+        for err in (san_err, draft_err):
+            if err:
+                failures.append(err)
+    else:
+        if need_sanitize:
+            yield progress("sanitize")
+            sanitize, san_stage, san_codex, san_err = _run_sanitize_step(
+                text, llm_fn, bound_meta
             )
-        )
+            stages.append(san_stage)
+            codex_calls.append(san_codex)
+            if san_err:
+                failures.append(san_err)
+        if need_draft:
+            yield progress("draft")
+            staff_draft, draft_stage, draft_codex, draft_err = _run_staff_draft_step(
+                text,
+                effective_district,
+                search,
+                decision,
+                parts,
+                inferred_place,
+                llm_fn,
+                bound_meta,
+            )
+            stages.append(draft_stage)
+            codex_calls.append(draft_codex)
+            if draft_err:
+                failures.append(draft_err)
+        elif (
+            not decision_call_failed
+            and decision["scope"] == "out_of_scope"
+            and decision["outcome"] != "faq_answer"
+        ):
+            staff_draft = _out_of_scope_staff_draft(text, early_external)
 
     yield {
         "type": "done",
@@ -554,7 +818,7 @@ def iter_assist(
             failures=failures,
             generated=generated,
             stages=stages,
-            llm_on=chat is not None,
+            llm_on=llm_on,
             raw_decision=raw_decision,
             parts=parts,
             codex=codex_calls,

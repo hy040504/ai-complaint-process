@@ -18,6 +18,8 @@ _LLM_ENV_KEYS = frozenset(
         "EXAONE_URL",
         "EXAONE_MODEL",
         "EXAONE_REASONING_EFFORT",
+        "EXAONE_DECISION_REASONING_EFFORT",
+        "EXAONE_FAST_REASONING_EFFORT",
         "EXAONE_MAX_TOKENS",
         "EXAONE_TEMPERATURE",
         "EXAONE_TOP_P",
@@ -35,11 +37,15 @@ DEFAULT_REASONING_EFFORT = "medium"
 
 EXAONE_COMPLETIONS_URL = "https://api.exaone.ai/v1/chat/completions"
 DEFAULT_EXAONE_MODEL = "k-exaone_v2.5"
-# 공식 기본 추론 강도입니다. low·high·max만 허용합니다.
+# 공식 기본 추론 강도(max)는 장시간 추론 타임아웃(180s+)을 유발할 수 있어 역할별로 차등 적용합니다.
 DEFAULT_EXAONE_REASONING_EFFORT = "max"
+DEFAULT_EXAONE_DECISION_REASONING_EFFORT = "high"
+DEFAULT_EXAONE_FAST_REASONING_EFFORT = "low"
 EXAONE_REASONING_EFFORTS = frozenset({"low", "high", "max"})
-# max_tokens에는 내부 추론 토큰이 함께 계산되므로 판정 JSON보다 넉넉히 둡니다.
+_EXAONE_EFFORT_RANK = {"low": 0, "high": 1, "max": 2}
+# max_tokens에는 내부 추론 토큰이 함께 계산되므로 판정 JSON보다 넉넉히 두되 정형 후속 단계는 상한을 제한합니다.
 DEFAULT_EXAONE_MAX_TOKENS = 16384
+DEFAULT_EXAONE_FAST_MAX_TOKENS = 4096
 # 공식 권장 1.0보다 낮춰 판정 JSON 형식을 안정적으로 유지합니다.
 DEFAULT_EXAONE_TEMPERATURE = 0.7
 DEFAULT_EXAONE_TOP_P = 0.95
@@ -157,7 +163,11 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
         해당 공급자의 설정 딕셔너리입니다. 생략 시 프로세스 기본값을 읽습니다.
     """
     load_llm_env_file()
-    prov = (provider or os.environ.get("COMPLAINT_LLM_PROVIDER") or "legacy").strip().lower()
+    prov = (
+        (provider or os.environ.get("COMPLAINT_LLM_PROVIDER") or "legacy")
+        .strip()
+        .lower()
+    )
     if prov == "openai_api":
         return luna_settings(
             prov,
@@ -167,13 +177,10 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
         )
     if prov == "exaone_api":
         configured_model = optional_env("COMPLAINT_LLM_MODEL")
-        model = (
-            optional_env("EXAONE_MODEL")
-            or (
-                configured_model
-                if configured_model and configured_model != DEFAULT_LUNA_MODEL
-                else DEFAULT_EXAONE_MODEL
-            )
+        model = optional_env("EXAONE_MODEL") or (
+            configured_model
+            if configured_model and configured_model != DEFAULT_LUNA_MODEL
+            else DEFAULT_EXAONE_MODEL
         )
         return {
             "provider": prov,
@@ -242,6 +249,73 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
         "auth": "token",
         "reasoning_effort": None,
     }
+
+
+def settings_for_role(
+    settings: dict[str, str | None] | None, role: str
+) -> dict[str, str | None] | None:
+    """호출 단계(role)에 맞춰 추론 강도·토큰 상한·도구 허용 힌트를 조정한 설정 사본을 만듭니다.
+
+    EXAONE은 판정(high)·후속 정형 작업(low)으로 추론 강도를 낮춰 180~200초
+    타임아웃을 예방하고, Codex CLI의 비도구 단계(`faq_answer`·`sanitize`)에는
+    불필요한 MCP 서버 기동을 생략하도록 표시합니다.
+
+    Args:
+        settings: `settings_for_provider()`가 만든 기본 공급자 설정입니다.
+        role: `decision`, `faq_answer`, `sanitize`, `staff_draft` 중 하나입니다.
+
+    Returns:
+        단계별로 최적화된 설정 딕셔너리 사본 또는 `None`입니다.
+    """
+    if settings is None:
+        return None
+    adjusted = dict(settings)
+    prov = (adjusted.get("provider") or "").strip().lower()
+    if prov == "exaone_api":
+        base_effort = (
+            str(adjusted.get("reasoning_effort") or DEFAULT_EXAONE_REASONING_EFFORT)
+            .strip()
+            .lower()
+        )
+        if base_effort not in EXAONE_REASONING_EFFORTS:
+            base_effort = DEFAULT_EXAONE_REASONING_EFFORT
+        if role == "decision":
+            env_effort = optional_env("EXAONE_DECISION_REASONING_EFFORT")
+            target_effort = (
+                env_effort.lower()
+                if env_effort and env_effort.lower() in EXAONE_REASONING_EFFORTS
+                else (
+                    DEFAULT_EXAONE_DECISION_REASONING_EFFORT
+                    if base_effort == "max"
+                    else base_effort
+                )
+            )
+        else:
+            env_effort = optional_env("EXAONE_FAST_REASONING_EFFORT")
+            target_effort = (
+                env_effort.lower()
+                if env_effort and env_effort.lower() in EXAONE_REASONING_EFFORTS
+                else DEFAULT_EXAONE_FAST_REASONING_EFFORT
+            )
+            # 사용자가 전역 추론 강도를 더 낮게(low) 제한했으면 그 상한을 넘지 않습니다.
+            if (
+                not env_effort
+                and _EXAONE_EFFORT_RANK[base_effort]
+                < _EXAONE_EFFORT_RANK[target_effort]
+            ):
+                target_effort = base_effort
+        adjusted["reasoning_effort"] = target_effort
+        if role in ("faq_answer", "sanitize"):
+            try:
+                cur_max = int(
+                    str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)
+                )
+            except (TypeError, ValueError):
+                cur_max = DEFAULT_EXAONE_MAX_TOKENS
+            adjusted["max_tokens"] = str(min(cur_max, DEFAULT_EXAONE_FAST_MAX_TOKENS))
+    elif prov == "codex_cli" and role in ("faq_answer", "sanitize"):
+        adjusted["_disable_mcp"] = "1"
+    return adjusted
 
 
 def llm_settings() -> dict[str, str | None]:

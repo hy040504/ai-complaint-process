@@ -448,7 +448,11 @@ def codex_mcp_args(python: str, root: str) -> list[str]:
     return args
 
 
-def format_codex_stdin(system: str, user: str) -> str:
+def format_codex_stdin(
+    system: str,
+    user: str,
+    allowed_tools: tuple[str, ...] | None = None,
+) -> str:
     """Codex CLI `exec -`에 넣는 표준 입력 본문을 만듭니다.
 
     `complete_codex_cli`가 실제로 보내는 문자열과 같습니다. 순서는
@@ -457,12 +461,16 @@ def format_codex_stdin(system: str, user: str) -> str:
     Args:
         system: PREFIX를 조립한 시스템 지시입니다.
         user: 들여 쓴 사용자 JSON 문자열입니다.
+        allowed_tools: 이번 호출에 허용할 도구 이름 튜플입니다. `None`이면
+            기본 `CODEX_ALLOWED_TOOLS`를, `()`이면 도구 미사용을 알립니다.
 
     Returns:
         Codex 표준 입력 전문입니다.
     """
+    tools = CODEX_ALLOWED_TOOLS if allowed_tools is None else allowed_tools
     return (
-        codex_tool_instruction() + f"[시스템 지시]\n{system}\n\n[사용자 입력]\n{user}"
+        codex_tool_instruction(tools)
+        + f"[시스템 지시]\n{system}\n\n[사용자 입력]\n{user}"
     )
 
 
@@ -473,9 +481,9 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
     인자 대신 표준 입력으로 보냅니다. npm `codex.cmd`는 `cmd.exe`를 거치지
     않도록 `node`와 `codex.js`로 풀어 실행합니다. 본문 순서는 고정 실행
     래퍼 → `[시스템 지시]` → `[사용자 입력]`입니다. 하위 프로세스에는
-    `OPENAI_API_KEY`를 전달하지 않습니다. 도구는 `search_complaint_rag`만
-    MCP로 붙이고, 사용자 설정의 다른 MCP 서버는 읽지 않습니다. MCP Python은
-    `-u`로 띄워 줄 단위 JSON-RPC 핸드셰이크가 버퍼에 묶이지 않게 합니다.
+    `OPENAI_API_KEY`를 전달하지 않습니다. `settings["_disable_mcp"]`가
+    없으면 검색·장소 도구 MCP를 붙이고, 비도구 단계(`faq_answer`·`sanitize`)는
+    MCP 기동을 생략합니다.
 
     Args:
         settings: `llm_settings()`가 만든 공급자 설정입니다.
@@ -489,7 +497,13 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
         ValueError: 실행 파일이 없거나 종료 코드·본문이 실패한 경우 발생합니다.
     """
     command = os.environ.get("COMPLAINT_CODEX_COMMAND", "codex")
-    prompt = format_codex_stdin(system, user)
+    disable_mcp = bool(settings.get("_disable_mcp"))
+    prompt = format_codex_stdin(system, user, allowed_tools=() if disable_mcp else None)
+    mcp_flags = (
+        ["--ignore-user-config"]
+        if disable_mcp
+        else codex_mcp_args(sys.executable, str(_REPO_ROOT))
+    )
     environment = os.environ.copy()
     environment.pop("OPENAI_API_KEY", None)
     with tempfile.TemporaryDirectory(prefix="cheongju-assist-codex-") as workspace:
@@ -498,7 +512,7 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
                 *resolve_codex_argv(command),
                 "exec",
                 "--skip-git-repo-check",
-                *codex_mcp_args(sys.executable, str(_REPO_ROOT)),
+                *mcp_flags,
                 "--sandbox",
                 "read-only",
                 "--color",

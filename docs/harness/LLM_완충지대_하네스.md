@@ -2,9 +2,9 @@
 
 [하네스 안내](README.md) · [실제 프리픽스](prompts/README.md) · [입출력 계약](AI_정보전달과_응답_하네스.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [판정 정책](decision-policy.md)
 
-**기준: 2026-11-13 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
+**기준: 2026-11-19 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
 
-> **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/응대_비교.py`가 한다. 민원 CRUD의 LLM 연결·SSE·공식 이관은 미구현이다.
+> **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/응대_비교.py`가 한다. 민원 CRUD 비동기 AI 워커·담당자 참고(`aiAssist`)·`#/lab`(`CASE-093`)까지 연결했으며, 담당자 실시간 SSE 푸시(현재 1.5초 폴링)·운영 인증·공식 이관은 미구현이다.
 
 ---
 
@@ -59,11 +59,12 @@ AI는 공식 접수 창구가 아니고, 배정 확정 권한도 없다. 검색 
 
 | 호출 | 시스템 접두 | 모델이 반환할 것 | 서버가 이어서 하는 일 |
 | --- | --- | --- | --- |
-| 1차 판정 | PREFIX-00 + PREFIX-01 | 설명 없는 판정 JSON 한 개 | `validate_decision` 후 갈래 결정 |
-| FAQ 안내 | PREFIX-00 + PREFIX-02 | 조건이 남은 한국어 평문 | 20자 미만이면 담당자 검토 |
+| 사전 관할 검증 | (모델 호출 없음) | 호출하지 않음 | 순수 타 지자체 주소(거주지·청주 운수 예외 제외)는 `:8007`·`PREFIX-01`·`PREFIX-03` 생략 (`early_external_reject`), 명백 위험 시에만 `PREFIX-04` 단독 호출 |
+| 1차 판정 | PREFIX-00 + PREFIX-01 | 설명 없는 판정 JSON 한 개 | `exaone_api` 기본 `high` 추론. `validate_decision` 후 갈래 결정 |
+| FAQ 안내 | PREFIX-00 + PREFIX-02 | 조건이 남은 한국어 평문 | `exaone_api` `low`/`max_tokens<=4096`, `codex_cli` 비도구(`_disable_mcp`). 20자 미만이면 담당자 검토 |
 | 부서 추천·담당자 검토 | (모델 자유 문장 없음) | 호출하지 않음 | 코드 템플릿으로 시민 문구 구성 |
-| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | FAQ가 아니면 호출. 시민 안내 미게시 |
-| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | `PREFIX-01` `sanitize_needed` 문맥 판단 또는 안전 휴리스틱 시에만. 자동 차단 아님 |
+| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | FAQ·`out_of_scope`가 아니면 호출(`out_of_scope`는 고정 템플릿). `PREFIX-04`와 동시 필요 시 병렬 실행(`ThreadPoolExecutor`). 시민 안내 미게시 |
+| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | `PREFIX-01` `sanitize_needed` 문맥 판단 또는 안전 휴리스틱 시에만(`exaone_api` `low`/`<=4096`, `codex_cli` `_disable_mcp`). 자동 차단 아님 |
 
 판정 JSON 필드: `scope`, `intent`, `outcome`, `reason_code`, `evidence_refs`, `department_ids`, `sanitize_needed`(문맥 기반 순화 트리거). 허용 값은 [`src/assist/constants.py`](../../src/assist/constants.py)와 같다.
 
@@ -91,9 +92,9 @@ flowchart LR
 | 경로 | 서버 응답 | LLM과의 관계 |
 | --- | --- | --- |
 | `POST /api/v1/assist`, `/assist/stream`, `src/lab_web` `:5010`, `민원-응대.cmd` | 안내문 또는 검토 사유, 검색 근거, `assist.codex`, `automaticTransfer: false`. 민원을 **저장하지 않음** | 위 4절 파이프라인 |
-| `GET /api/v1/health` | `assistSearch`·`assistLlm`은 검색·토큰 여부. `aiConnected`는 민원 CRUD AI 미연결 | CRUD에 LLM을 붙이지 않음 |
-| 시민 CRUD `/#/citizen` | 저장된 글·게시된 답변만. 미게시 초안 없음 | 현재 LLM 미연결 |
-| 담당자 `/#/staff` | 초안·게시·이력. 단계 시연은 명시적 | 현재 LLM 미연결 |
+| `GET /api/v1/health` | `assistSearch`·`assistLlm`은 검색·토큰 여부. `aiConnected`는 CRUD 비동기 워커 연결 상태(`iter_assist_fn`) | `testing=True` 등 미연결 시 false |
+| 시민 CRUD `/#/citizen` | 저장된 글·게시된 답변만. 미게시 초안(`aiDraft`/`staffDraft`)·AI 원본 미노출 | 등록 시 비동기 분석, 미게시 초안 비공개 |
+| 담당자 `/#/staff` | `aiAssist` 참고 카드·초안·게시·이력·배정. 1.5초 폴링 | 분석 결과 참고·초안 채우기 (SSE 미구현) |
 | 검색 `POST /search` | `retrieval_only` / `requires_gate`만 | 판정 JSON 없음 |
 
 시민 공개 응답에는 미게시 초안, `model_raw`, `policy_failures`, 시스템 프롬프트, 담당자 개인 연락처를 넣지 않는다. 검사기·CLI는 디버그 필드(`decision`, `stages`)를 더 보여줄 수 있으나 공식 접수번호·이관 완료로 표시하지 않는다.

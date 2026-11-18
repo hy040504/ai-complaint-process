@@ -161,13 +161,19 @@ def test_is_place_relevant() -> None:
     from src.llm.place_tool import is_place_relevant
 
     assert is_place_relevant("서원대학교후문", "서원대학교 후문") is True
-    assert is_place_relevant("모모랩 청주시내성안길본점", "시내 도로에 신호등이 고장 났습니다") is False
+    assert (
+        is_place_relevant(
+            "모모랩 청주시내성안길본점", "시내 도로에 신호등이 고장 났습니다"
+        )
+        is False
+    )
     assert is_place_relevant("창신초등학교", "창신초") is True
     assert is_place_relevant("", "서원대학교") is False
 
 
 def test_lookup_navermap_place_fallback_candidates() -> None:
     """문장형 검색 시 1차 결과가 없으면 후보 키워드로 fallback 검색하여 청주시 장소를 반환합니다."""
+
     def mock_fetch(query: str, coords: str = "") -> dict:
         # 문장 전체 검색 시에는 일치 장소 없음
         if "나무가" in query or len(query.split()) > 3:
@@ -188,7 +194,9 @@ def test_lookup_navermap_place_fallback_candidates() -> None:
             }
         return {"place": []}
 
-    res = lookup_navermap_place("청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐", fetch_fn=mock_fetch)
+    res = lookup_navermap_place(
+        "청주 서원대학교 후문 편의점근처에서 나무가 쓰러짐", fetch_fn=mock_fetch
+    )
     assert res["found"] is True
     assert res["primary_place"] is not None
     assert res["primary_place"]["title"] == "서원대학교후문"
@@ -232,7 +240,10 @@ def test_place_tool_filters_generic_faq_nouns_and_prioritizes_landmarks() -> Non
 
     # 일반 행정·FAQ·모호 민원은 후보가 비거나 엉뚱한 상점 오매칭이 차단되어야 합니다.
     assert extract_place_candidates("1. 여권 발급 방문 신청 방법 안내") == []
-    assert extract_place_candidates("동네 어딘가 학교 앞 골목 가로등 고장 (지역 미기재)") == []
+    assert (
+        extract_place_candidates("동네 어딘가 학교 앞 골목 가로등 고장 (지역 미기재)")
+        == []
+    )
     assert (
         is_place_relevant(
             "한국방송통신대학교 충북지역대학",
@@ -270,6 +281,7 @@ def test_lookup_navermap_place_skips_http_for_generic_faq_sentence() -> None:
     called = 0
 
     def should_not_call(_query: str, coords: str = "") -> dict[str, Any]:
+        """외부 지도 API가 호출되지 않아야 함을 검증하는 가짜 조회 함수입니다."""
         nonlocal called
         called += 1
         return {"place": []}
@@ -283,4 +295,23 @@ def test_lookup_navermap_place_skips_http_for_generic_faq_sentence() -> None:
     assert res["primary_place"] is None
 
 
+def test_road_number_pairs_and_hyphen_splitting() -> None:
+    """도로명+번지 결합 후보 최우선 배치, 문자 하이픈 분리 및 원인조사 불용어 배제를 확인합니다."""
+    from src.llm.place_tool import extract_place_candidates
 
+    road_num = extract_place_candidates("주말 주차단속 차량 소리 오송생명14로 283 앞")
+    assert road_num[0] == "오송생명14로 283"
+
+    ring_road = extract_place_candidates("2순환로 1374 버스정류승강장 하차문제")
+    assert ring_road[0] == "2순환로 1374"
+
+    sub_num = extract_place_candidates("호미로201번길 16-19 무단방치 차량 신고")
+    assert sub_num[0] == "호미로201번길 16-19"
+
+    hyphen_split = extract_place_candidates(
+        "은행나무-바닥에은행에너무많이떨어져악취심함"
+    )
+    assert all(len(c) < 25 for c in hyphen_split)
+
+    cause_words = extract_place_candidates("잦은 사고로 반사경 설치 해주세요")
+    assert "사고로" not in cause_words

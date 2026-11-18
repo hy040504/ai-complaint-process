@@ -227,3 +227,87 @@ def test_run_assist_sanitize_then_staff_draft() -> None:
         "staff_draft",
     ]
     assert len(calls) == 3
+
+
+def test_b14_facility_off_early_external_reject_and_oos_skip_draft() -> None:
+    """B14 시설 소등 비오탐, 순수 타지역 조기 차단 및 out_of_scope 초안 LLM 생략을 검증합니다."""
+    assert (
+        needs_sanitize(
+            "상당구와 서원구 구간 무심천 자전거도로를 따라 내려가는 길에 가로등 여러 개가 동시에 꺼져 있습니다."
+        )
+        is False
+    )
+
+    search_calls = 0
+    llm_calls: list[str] = []
+
+    def fail_search(*_args: object) -> dict:
+        """호출 횟수를 기록하는 가짜 검색 함수입니다."""
+        nonlocal search_calls
+        search_calls += 1
+        return _search()
+
+    def track_llm(system: str, _user: str) -> str:
+        """호출된 시스템 프롬프트를 수집하는 가짜 LLM 함수입니다."""
+        llm_calls.append(system)
+        return "{}"
+
+    # 1. 순수 타 지자체 주소(서울시 약칭): 검색 API 0회 + LLM 0회 + 고정 초안 반환
+    ext_res = run_assist(
+        "서울시 종로구 사직동 도로 포트홀 보수 요청합니다.",
+        search_fn=fail_search,
+        llm_fn=track_llm,
+    )
+    assert search_calls == 0
+    assert llm_calls == []
+    assert ext_res["outcome"] == "human_handoff"
+    assert ext_res["reason_code"] == "out_of_scope"
+    assert ext_res["retrieval"]["pipeline"] == "early_external_reject"
+    assert ext_res["staff_draft"] is not None
+    assert "관할" in ext_res["staff_draft"]["draft_answer"]
+
+    # 2. 타 지자체라도 명백 욕설 포함 시 PREFIX-04 순화만 1회 호출
+    san_calls: list[str] = []
+
+    def san_only_llm(system: str, _user: str) -> str:
+        """PREFIX-04 순화 단계 응답만 흉내 내는 가짜 LLM 함수입니다."""
+        san_calls.append(system)
+        return (
+            '{"sanitized_summary":"가로등 수리를 요청하는 민원입니다.",'
+            '"legitimate_requests":["가로등 수리"],'
+            '"risk_signals":["profanity_insult"],'
+            '"human_protection_review_needed":true}'
+        )
+
+    ext_abuse = run_assist(
+        "대전시 유성구 봉명동 씨발 가로등 고쳐라",
+        search_fn=fail_search,
+        llm_fn=san_only_llm,
+    )
+    assert search_calls == 0
+    assert len(san_calls) == 1
+    assert [c["role"] for c in ext_abuse["codex"]] == ["sanitize"]
+    assert ext_abuse["sanitize"] is not None
+
+    # 3. 1차 판정이 out_of_scope로 나오면 불필요한 PREFIX-03 초안 LLM을 호출하지 않음
+    oos_calls: list[str] = []
+
+    def oos_llm(system: str, _user: str) -> str:
+        """out_of_scope 판정만 반환하고 초안 호출 시 실패하는 가짜 LLM 함수입니다."""
+        oos_calls.append(system)
+        if "판정기" in system:
+            return (
+                '{"scope":"out_of_scope","intent":"unclear",'
+                '"outcome":"human_handoff","reason_code":"out_of_scope",'
+                '"evidence_refs":[],"department_ids":[]}'
+            )
+        raise AssertionError("out_of_scope에서 PREFIX-03을 호출하면 안 됩니다.")
+
+    oos_res = run_assist(
+        "청주시 중구청에 문의합니다.",
+        search_fn=lambda *_args: _search(),
+        llm_fn=oos_llm,
+    )
+    assert len(oos_calls) == 1
+    assert [c["role"] for c in oos_res["codex"]] == ["decision"]
+    assert oos_res["staff_draft"] is not None

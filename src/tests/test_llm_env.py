@@ -368,9 +368,9 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
         return FakeOkResponse()
 
     monkeypatch.setattr(rag_http.urllib.request, "urlopen", fake_urlopen)
-    assert rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1}) == {
-        "ok": True
-    }
+    assert rag_http.http_json(
+        "https://api.exaone.ai/v1/chat/completions", {"a": 1}
+    ) == {"ok": True}
     assert attempts["count"] == 2
     assert len(sleeps) == 1
     assert 0.6 <= sleeps[0] <= 0.75
@@ -411,7 +411,9 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
 
     monkeypatch.setattr(rag_http.urllib.request, "urlopen", timeout_urlopen)
     try:
-        rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1}, timeout=12)
+        rag_http.http_json(
+            "https://api.exaone.ai/v1/chat/completions", {"a": 1}, timeout=12
+        )
         raise AssertionError("시간 초과 예외가 발생해야 합니다.")
     except ValueError as exc:
         assert "요청 시간 초과" in str(exc)
@@ -441,3 +443,100 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
         assert "EXAONE_REASONING_EFFORT=low" in text
 
 
+def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
+    monkeypatch: object,
+) -> None:
+    """역할별 EXAONE 추론 차등화, Codex 비도구 MCP 생략, 실패 시 직전 usage 격리를 확인합니다."""
+    from types import SimpleNamespace
+    from src.assist import pipeline
+    from src.llm import complete
+
+    monkeypatch.delenv("EXAONE_DECISION_REASONING_EFFORT", raising=False)
+    monkeypatch.delenv("EXAONE_FAST_REASONING_EFFORT", raising=False)
+    exaone_base = {
+        "provider": "exaone_api",
+        "url": "https://api.exaone.ai/v1/chat/completions",
+        "model": "k-exaone_v2.5",
+        "token": "test-key",
+        "auth": "bearer",
+        "reasoning_effort": "max",
+        "max_tokens": "16384",
+    }
+    dec_cfg = settings.settings_for_role(exaone_base, "decision")
+    fast_cfg = settings.settings_for_role(exaone_base, "sanitize")
+    draft_cfg = settings.settings_for_role(exaone_base, "staff_draft")
+    assert dec_cfg is not None and dec_cfg["reasoning_effort"] == "high"
+    assert fast_cfg is not None and fast_cfg["reasoning_effort"] == "low"
+    assert fast_cfg["max_tokens"] == "4096"
+    assert draft_cfg is not None and draft_cfg["reasoning_effort"] == "low"
+    assert draft_cfg["max_tokens"] == "16384"
+
+    # Codex CLI 비도구 단계(_disable_mcp)는 MCP 서버 플래그와 도구 안내를 제외합니다.
+    monkeypatch.setattr(
+        "src.llm.complete.shutil.which", lambda cmd: "C:/tools/codex.exe"
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        """subprocess.run 인자와 stdin을 기록하는 가짜 실행기입니다."""
+        captured["args"] = args
+        captured["input"] = kwargs.get("input")
+        return SimpleNamespace(returncode=0, stdout='{"ok": true}', stderr="")
+
+    monkeypatch.setattr(complete.subprocess, "run", fake_run)
+    codex_cfg = settings.settings_for_role(
+        {
+            "provider": "codex_cli",
+            "url": None,
+            "model": "gpt-6-luna",
+            "token": None,
+            "auth": "codex",
+            "reasoning_effort": "medium",
+        },
+        "sanitize",
+    )
+    assert codex_cfg is not None and codex_cfg.get("_disable_mcp") == "1"
+    complete.complete_result("순화지시", "원문", settings=codex_cfg)
+    assert not any("rag_mcp" in str(a) for a in captured["args"])  # type: ignore[attr-defined]
+    assert "허용한 도구가 없습니다" in str(captured["input"])
+
+    # 판정 성공 후 순화가 실패하더라도 순화 codex 기록에 직전 판정의 usage가 남지 않아야 합니다.
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "exaone_api")
+    monkeypatch.setenv("EXAONE_API_KEY", "test-key")
+    call_idx = {"n": 0}
+
+    def mock_complete_result(system: str, user: str, settings: dict | None = None):
+        """역할별로 성공 또는 429 예외를 모사하는 가짜 complete_result입니다."""
+        call_idx["n"] += 1
+        if "판정기" in system:
+            return complete.CompleteResult(
+                '{"scope":"in_scope","intent":"action","outcome":"human_handoff",'
+                '"reason_code":"action_required","evidence_refs":[],"department_ids":[]}',
+                {"input_tokens": 500, "output_tokens": 50, "cached_tokens": None},
+            )
+        if "순화" in system:
+            raise ValueError("API 429: rate_limit_exceeded")
+        return complete.CompleteResult(
+            '{"summary_card":{"core_summary":"가로등 수리 요청","citizen_request":"수리",'
+            '"location_or_target":"흥덕구","missing_info":[]},'
+            '"draft_answer":"점검 후 조치하겠습니다.","citations":[],"requires_field_check":true}',
+            {"input_tokens": 300, "output_tokens": 40, "cached_tokens": None},
+        )
+
+    monkeypatch.setattr(pipeline, "complete_result", mock_complete_result)
+    res = pipeline.run_assist(
+        "쓰레기같은 가로등 고쳐주세요",
+        district="흥덕구",
+        search_fn=lambda *_args: {
+            "retrieval_only": True,
+            "decision": "requires_gate",
+            "results": {
+                "faq_knowledge": {"hits": []},
+                "routing_cases": {"hits": [], "department_candidates": []},
+            },
+        },
+    )
+    by_role = {c["role"]: c for c in res["codex"]}
+    assert by_role["decision"]["usage"]["input_tokens"] == 500
+    assert "usage" not in by_role["sanitize"]
+    assert by_role["staff_draft"]["usage"]["input_tokens"] == 300

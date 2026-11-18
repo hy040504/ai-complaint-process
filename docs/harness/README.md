@@ -4,7 +4,7 @@
 
 이 묶음은 **(A) 민원 AI 완충지대에서 LLM이 따를 계약**과 **(B) 사람·개발 도구가 코드를 고칠 때 쓸 운영 하네스**를 나눈다. 응대 모델은 (A)를 먼저 읽고, 검색 엔진·Flask·적재를 고칠 때는 (B)를 읽는다.
 
-계획 갱신 기준일은 **2026-11-07 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
+계획 갱신 기준일은 **2026-11-19 UTC**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
 
 현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `민원-응대.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 모델 선정·실측 평가·시민 챗봇 실연결·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 
@@ -55,8 +55,8 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 검색 실행 | 네이티브 PostgreSQL·Python, 적재, 하이브리드 검색 CLI/API 구현 | 처리량·지연 측정 확대 |
 | 데이터 검증 | 입력 검증, 원자적 색인 갱신, 원본/DB 대조 구현 | FAQ 현행성·부서 업무분장 검증 기록 |
 | 테스트 | 코드·격리 DB·화면 테스트 27개, 기존 검색 회귀 예제 10개, 초안 응대 평가셋 29건(개발 26/26·보류 3/3) | 400문항 검수, 운영 임계값 |
-| 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04를 `src/assist`가 조립, 코드 정책 검사, 조립 적격·초안 갈래 평가 | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록·웹 CRUD AI |
-| 시연 웹·업무 서버 | Flask·Swagger·PostgreSQL `complaint_app`·시민/담당자 UI 연결 구현 | 운영 인증·실제 AI·SSE와 통합 시연 |
+| 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04 조립(`early_external_reject`·병렬 `03∥04`·EXAONE 차등 추론), 코드 정책 검사, `회귀검증_112건_규칙.py`·초안 평가셋(26/26·3/3) | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록 |
+| 시연 웹·업무 서버 | Flask·Swagger·PostgreSQL `complaint_app`·시민/담당자 UI·비동기 CRUD AI 워커(`CASE-093`) 연결 구현 | 담당자 실시간 SSE·운영 인증·공식 이관 |
 | 실행 기록 | 적재 메타데이터, 검색 시간, 기존 보고서 | 요청 단위 추적, 설정·정책 버전, 민감정보 제외 |
 | 사례 기록 | 번호별 색인·양식, 구축·설계 이력과 미해결 데이터 사례 | 변경마다 사례 상태·근거와 현재 기준 문서 갱신 |
 | 자동화 | 수동 실행 명령 존재 | 가벼운 CI와 별도 모델 평가 작업 |

@@ -2,11 +2,11 @@
 
 [하네스 안내](README.md) · [판정 정책](decision-policy.md) · [시스템 프롬프트·프리픽스 캐싱](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [AI 안전·보안 가드레일](AI_안전_보안_가드레일.md)
 
-**기준: 2026-11-05 UTC · 상태: 로컬 응대 계층(`src/assist`) 구현 + 기획서 통합 지침.**
+**기준: 2026-11-19 UTC · 상태: 로컬 응대 계층(`src/assist`) + 시연 웹 비동기 CRUD AI(`CASE-093`) 구현 + 기획서 통합 지침.**
 이 문서는 현재 프로젝트 구현([`src/assist`](../../src/README.md), [`src/rag`](../../src/README.md), [`src/llm`](../../src/README.md))과 두 기획서 분석 자료([`민원AI_계획서_상세분석.md`](../../plan/민원AI_계획서_상세분석.md), [`VoteLab_AI민원_상세기획안_상세분석.md`](../../plan/VoteLab_AI민원_상세기획안_상세분석.md)), 그리고 웹 MVP 상세설계([`민원_웹_MVP_상세설계와_분야별_작업계획.md`](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md))를 종합하여 **AI(LLM)에게 어떤 정보를 어떻게 보내고(Input), AI로부터 어떤 응답을 받아 어떻게 검증·제공할지(Output)** 정의한다.
 
 > [!IMPORTANT]
-> **구현 범위와 기획안의 구분:** 현재 코드로 구현된 AI 경로는 검색(`POST /search`) 뒤의 1차 판정 JSON 호출, 코드 정책 검사(`validate_decision`), 조건부 FAQ 안내 생성(`run_assist`, `/#/lab`, `민원-응대.cmd`)이다. 민원 게시판 CRUD(`complaint_app`)와의 실시간 작업자·SSE 연결, 개인정보 자동 마스킹 필터, 특이민원 순화 요약, 공식 행정 이관은 **후속 구현 범위**이며 완료된 기능으로 표시하지 않는다.
+> **구현 범위와 기획안의 구분:** 현재 코드로 구현된 AI 경로는 사전 관할·장소 추적(`resolve_district_and_place`, 순수 타지역 `early_external_reject`), 검색(`POST /search`) 뒤 1차 판정 JSON(`PREFIX-01`), 코드 정책 검사(`validate_decision`), 조건부 FAQ 안내(`PREFIX-02`), 담당자 초안(`PREFIX-03`, `out_of_scope` 시 LLM 생략)·특이민원 순화(`PREFIX-04`, 필요 시 `PREFIX-03`과 병렬 실행)이며, 민원 게시판 CRUD(`complaint_app`)에는 비동기 백그라운드 워커 + 1.5초 폴링(`CASE-093`)까지 연결했습니다. 담당자 실시간 SSE 푸시, 개인정보 자동 마스킹 필터, 공식 행정 이관은 **후속 구현 범위**이며 완료된 기능으로 표시하지 않는다.
 
 ---
 
@@ -20,27 +20,29 @@
 | **판정·라우팅 주체** | VoteLab 원안은 `TAXO` 규칙 점수(`conf >= 0.70`) 중심 배정 + LLM 보조; 초기 계획은 Jev 게이트 포함 | **초기 MVP는 Jev·TAXO 없는 범용 LLM + RAG + 코드 정책 검증**으로 구현. 검색 점수·LLM 자기 보고 `confidence`를 자동 처리 확률로 쓰지 않음 | 로컬 구현 · Jev는 후속 비교 |
 | **3가지 처리 경로** | ① 즉시 종결형(FAQ·절차) ② AI 보조 배정형(일반 신고·부서 추천) ③ 전문가 즉시 이관형(법령·처분·긴급·고위험) | `outcome`을 `faq_answer` / `department_suggestion` / `human_handoff` 세 갈래로 고정하고 코드에서 교차 검증 | 로컬 구현 |
 | **근거 중심 생성** | 조례·편람·FAQ 등 공식 근거가 없으면 답변을 렌더링하지 않으며 출처·수정일을 함께 표시 | 검색된 FAQ 후보(`evidence_refs`)에 실제 존재하는 `source_id`만 허용. 대상·접수 조건·처리기간·주의사항 누락 금지 | 로컬 구현 · 현행성 허용 목록은 후속 |
-| **익명 안내 vs 공식 답변** | 익명 상담의 FAQ 자기 안내와 접수번호가 발급된 민원의 공식 답변(결재·승인 필수)을 엄격히 분리 | 검사기(`/#/lab`)·CLI의 `faq_answer`는 일반 정보 안내로 고지. 웹 민원(`complaint_app`)은 담당자 게시(`publish`) 전까지 시민에게 초안 비노출 | 분리 구현 · 웹 CRUD의 LLM 연결은 후속 |
-| **제로터치 진행 안내** | 내부 업무 이벤트를 시민 친화적 문구(`cz`)로 변환하고 내부 메모(`int`)는 숨김 | 검사기는 짧은 4단계 진행 문구만 노출(`read`→`search`→`review`→`write`). 시민 API DTO에서 초안·AI 원본·내부 실패 사유 제거 | 로컬 구현 · 담당자 실시간 SSE는 후속 |
-| **개인정보·보안·직원 보호** | 전송 전 PII 마스킹, 프롬프트 인젝션 방어, 긴급(119·112) 최우선 안내, 특이민원 8대 신호 순화 요약·정당한 요구 분리 | 입력·문서 내 지시문 실행 금지, 읽기 전용 샌드박스(`codex_cli`), 비밀키 격리. 마스킹·긴급·특이민원 순화는 프롬프트·가드레일 규격으로 정의 | 샌드박스·격리 구현 · 자동 마스킹/순화는 후속 |
+| **익명 안내 vs 공식 답변** | 익명 상담의 FAQ 자기 안내와 접수번호가 발급된 민원의 공식 답변(결재·승인 필수)을 엄격히 분리 | 검사기(`/#/lab`)·CLI의 `faq_answer`는 일반 정보 안내로 고지. 웹 민원(`complaint_app`)은 비동기 분석 후 담당자 게시(`publish`) 전까지 시민에게 초안 비노출 | 분리 구현 · `CASE-093` 비동기 연결 |
+| **제로터치 진행 안내** | 내부 업무 이벤트를 시민 친화적 문구(`cz`)로 변환하고 내부 메모(`int`)는 숨김 | 검사기는 짧은 진행 문구만 노출(`read`→`search`→`review`→`write`). 시민 API DTO에서 초안·AI 원본·내부 실패 사유 제거 | 로컬 구현 · 1.5초 폴링(SSE는 후속) |
+| **개인정보·보안·직원 보호** | 전송 전 PII 마스킹, 프롬프트 인젝션 방어, 긴급(119·112) 최우선 안내, 특이민원 8대 신호 순화 요약·정당한 요구 분리 | 입력·문서 내 지시문 실행 금지, 읽기 전용 샌드박스(`codex_cli`), 비밀키 격리, `PREFIX-01` `sanitize_needed`+휴리스틱 순화(`PREFIX-04`) 구현 | 샌드박스·격리·순화 구현 · PII 자동 마스킹은 후속 |
 
 ---
 
 ## 2. 전체 정보 전달·응답 파이프라인
 
-검색 API는 언제나 `retrieval_only=true`, `decision="requires_gate"`만 반환한다. AI 응대 계층(`src/assist`)은 검색 결과를 한 번 분해(`search_parts`)한 뒤 **최대 2회의 LLM 호출**과 **코드 정책 검사**로 응답을 완성한다.
+검색 API는 언제나 `retrieval_only=true`, `decision="requires_gate"`만 반환한다. AI 응대 계층(`src/assist`)은 사전 관할 검증에서 순수 타 지자체 주소를 조기 분리(`early_external_reject`)한 뒤, 일반 민원은 검색 결과를 한 번 분해(`search_parts`)하고 1차 판정(`PREFIX-01`) → 코드 정책 검사(`validate_decision`) → 조건부 FAQ 안내(`PREFIX-02`) 또는 담당자 초안(`PREFIX-03`, `out_of_scope` 생략)·특이민원 순화(`PREFIX-04`, 동시 필요 시 병렬 실행)로 응답을 완성한다.
 
 ```mermaid
 flowchart TD
-    U[시민 민원 입력: query, district] --> V1[1. 입력 길이·공백·안전 사전 검사]
-    V1 -->|위반| H0[담당자 검토: condition_unclear]
-    V1 -->|정상| S["2. 하이브리드 검색 API (/search)<br/>FAQ·사례 별도 검색, requires_gate 유지"]
+    U[시민 민원 입력: query, district] --> V1["1. 입력 길이·공백 및 사전 관할/장소 추적<br/>(resolve_district_and_place)"]
+    V1 -->|길이·공백 위반| H0[담당자 검토: condition_unclear]
+    V1 -->|순수 타 지자체 주소| E0["조기 타지역 차단 (early_external_reject)<br/>검색·PREFIX-01·03 생략 / 필요 시 PREFIX-04만"]
+    V1 -->|청주 또는 관할 미정| S["2. 하이브리드 검색 API (/search)<br/>FAQ·사례 별도 검색, requires_gate 유지"]
     S -->|검색 장애| H1[담당자 검토: search_failed]
-    S -->|검색 성공| P1["3. 1차 LLM 호출 (판정기)<br/>고정 판정 프리픽스 + 검색 후보 JSON"]
+    S -->|검색 성공| P1["3. 1차 LLM 호출 (판정기: PREFIX-01)<br/>exaone_api high / 판정 JSON+sanitize_needed"]
     P1 --> C{"4. 코드 정책 검사<br/>(validate_decision)"}
-    C -->|faq_answer 허용| P2["5. 2차 LLM 호출 (조건부 FAQ 생성기)<br/>고정 답변 프리픽스 + 선택된 FAQ 원문"]
-    C -->|department_suggestion 허용| D[부서 후보 안내 템플릿 구성]
-    C -->|불확실·조치·복합·처분·검증 실패| H2[담당자 검토 안내 템플릿 구성]
+    C -->|faq_answer 허용| P2["5a. 2차 LLM 호출 (FAQ 생성: PREFIX-02)<br/>exaone low / codex _disable_mcp"]
+    C -->|department_suggestion| D["5b. 부서 후보 템플릿 + 필요 시 PREFIX-03∥04 병렬"]
+    C -->|out_of_scope| HO["5c. 고정 담당자 검토 초안 (PREFIX-03 LLM 생략)<br/>+ 필요 시 PREFIX-04 순화"]
+    C -->|불확실·조치·복합·처분·검증 실패| H2["5d. 담당자 검토 + 필요 시 PREFIX-03∥04 병렬"]
     P2 --> V2{6. 생성 답변 검증}
     V2 -->|통과| F[시민용 FAQ 안내문 + 출처 반환]
     V2 -->|길이 미달·오류| H3[담당자 검토: faq_generation_failed]
@@ -58,7 +60,7 @@ AI에게 정보를 보낼 때는 **시스템 프롬프트(Static Prefix)**와 **
 | --- | --- | --- | --- |
 | **1차 호출: 판정기**<br>(`decision_prompt`) | `query`, `district`, `faq_candidates`, `case_candidates`, `department_candidates`, (`inferred_place`) | - `query`: 민원 원문 문자열<br>- `district`: 관할 구 또는 `null`<br>- `faq_candidates`: `corpus`, `source_id`, `title`, `source_url`, `detail`(`target`, `processing_period`, `received_by`, `main_content`, `warnings`)<br>- `case_candidates`: `corpus`, `source_id`, `title`, `source_url`, `summary`, `routing_eligible`, `department_status`, `department_id`, `department_name`, `duty_status`<br>- `department_candidates`: `department_id`, `canonical_name`, `district`, `duty_status`, `jurisdiction_status`, `supporting_case_ids`<br>- `inferred_place`: 네이버 지도 사전 추적 장소(`title`, `road_address`, `jibun_address`, `gu`, `dong`, `is_cheongju`, 선택 필드) | 범위(`scope`), 의도(`intent`), 처리 갈래(`outcome`), 사유(`reason_code`), 근거 ID(`evidence_refs`), 부서 ID(`department_ids`)만 판단. **시민 답변 문장은 생성하지 않음** |
 | **2차 호출: FAQ 생성기**<br>(`ANSWER_SYSTEM`) | `query`, `faq` | - `query`: 민원 원문 문자열<br>- `faq`: 1차 판정의 `evidence_refs`에서 선택되고 코드 검증을 통과한 `corpus="faq"` 후보의 `compact_faq` 배열 | 선택된 FAQ 원문만 사용하여 조건이 보존된 한국어 안내문 작성. **선택되지 않은 FAQ와 공개 사례(`routing`)는 전달하지 않음** |
-| **담당자 초안·특이민원 순화**<br>(`PREFIX-03`·`04`, 검사기·CLI 구현) | `query`, `district`, `selected_evidence`, `department_info`, `task_mode` | - 검증된 조례·편람·FAQ 근거 칩 정보<br>- 특이민원 신호 유무 및 순화 요약 요청 구분 | 담당자 검토용 초안(`staff_draft`) 또는 감정 표현을 분리한 순화 요약(`sanitize`) 생성. **시민에게 직접 노출하지 않음 (민원 CRUD 연계는 미구현)** |
+| **담당자 초안·특이민원 순화**<br>(`PREFIX-03`·`04`, 검사기·CLI·워커 구현) | `query`, `district`, `selected_evidence`, `department_info`, `task_mode` | - 검증된 조례·편람·FAQ 근거 칩 정보<br>- 특이민원 신호 유무(`sanitize_needed`) 및 순화 요약 요청 구분 | 담당자 검토용 초안(`staff_draft`, `out_of_scope` 시 고정 템플릿) 또는 감정 표현을 분리한 순화 요약(`sanitize`) 생성(동시 필요 시 병렬 실행). **시민에게 직접 노출하지 않으며 CRUD 편집 초안을 덮어쓰지 않음** |
 
 ### 3.2 AI에게 보내지 말아야 할 정보 (차단·정제 규칙)
 
