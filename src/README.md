@@ -31,14 +31,15 @@ py -3.12 -m venv .venv-web
 | http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정. 기록은 `.rag-cache/lab-runs` |
 | http://127.0.0.1:5010/api/v1/lab/complaints/stream | `POST` 같은 처리의 진행 안내 NDJSON 뒤 `done` 결과 스트리밍 |
 | http://127.0.0.1:5010/api/v1/lab/runs | `GET` 기록 목록 · `DELETE` 모두 삭제 |
-| http://127.0.0.1:5000/#/citizen | 시민·담당자 민원 웹 기본 화면 (`#/staff`, `#/lab` 전환 지원) |
+| http://127.0.0.1:5000/#/citizen | 시민·담당자 민원 웹 기본 화면 (`#/staff`, `#/staff/api`, `#/lab` 전환 지원) |
 | http://127.0.0.1:5000/design/ui04 | `ui/minwon-toktok-ui04.html` 목업 + `ui04-adapter.js` 연동 |
+| http://127.0.0.1:5000/#/staff/api | 담당자 콘솔 내 백엔드 API · Swagger UI 콘솔(헬스 요약·태그/키워드 색인·임베드 Swagger UI) |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |
-| http://127.0.0.1:5000/docs | Swagger UI · `/swagger`도 동일. 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
+| http://127.0.0.1:5000/docs | 한국어 대화형 Swagger UI 포털 · `/swagger`도 동일(`?embed=1`·다크 테마·세션 원클릭 전환 지원). 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf) |
 | http://127.0.0.1:5000/openapi/openapi.json | 자동 생성 OpenAPI 3.1 · `/openapi.json`은 이 주소로 이동 |
 | http://127.0.0.1:5000/api/v1/health | 상태·저장 방식·실제 AI 연결 여부 |
 
-Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"staff"}`를 실행한 뒤 필요한 API를 호출한다. 보고용 인쇄본은 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf)이며, OpenAPI가 바뀌면 저장소 루트에서 `python docs/tools/export_swagger_pdf.py`로 다시 만든다. 검색 API `:8007/docs`는 이 파일에 넣지 않는다. 같은 출처의 서명 세션 쿠키가 요청에 전달된다. UI 상단 역할 선택도 같은 API를 사용한다. 시민·담당자 탭이 같은 쿠키를 공유하므로 역할을 바꾼 뒤 이전 탭을 사용할 때는 해당 화면을 다시 불러온다.
+`/docs`·`/swagger` 상단의 원클릭 버튼 또는 Swagger의 `POST /api/v1/session`에서 `{"role":"citizen"}` 또는 `{"role":"staff"}`를 실행한 뒤 필요한 API를 호출한다(`#/staff/api` 임베드 화면에서는 현재 담당자 쿠키 세션을 바로 재사용). 보고용 인쇄본은 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf)이며, OpenAPI가 바뀌면 저장소 루트에서 `PYTHONPATH=. python docs/tools/export_swagger_pdf.py`로 다시 만든다. 검색 API `:8007/docs`는 이 파일에 넣지 않는다. 같은 출처의 서명 세션 쿠키가 요청에 전달된다. UI 상단 역할 선택도 같은 API를 사용한다. 시민·담당자 탭이 같은 쿠키를 공유하므로 역할을 바꾼 뒤 이전 탭을 사용할 때는 해당 화면을 다시 불러온다.
 
 ## 정적 타입과 구성
 
@@ -65,7 +66,7 @@ flowchart LR
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
-| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, Swagger, `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 시민·담당자·`/design/ui04` 화면 |
+| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON·프롬프트 전문, `llmProvider`·`llmModel`에 실제 사용 엔진 기록. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |

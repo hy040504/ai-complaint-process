@@ -485,3 +485,37 @@ def test_staff_answer_templates_crud_and_reset(
     restored = staff.post("/api/v1/templates/reset")
     assert restored.status_code == 200
     assert any(item["id"] == "TPL-DEF-2" for item in restored.json["templates"])
+
+
+def test_korean_swagger_portal_and_embed_mode(app: OpenAPI) -> None:
+    """한국어 Swagger 포털(/docs, /swagger), 임베드 모드 및 UI 정적 자산 경계를 검증합니다."""
+    client = app.test_client()
+
+    for endpoint in ("/docs", "/swagger"):
+        page = client.get(endpoint)
+        assert page.status_code == 200
+        assert "text/html" in page.content_type
+        html = page.get_data(as_text=True)
+        assert "청주톡톡 민원 업무 백엔드 API · Swagger UI" in html
+        assert "/openapi/openapi.json" in html
+        assert "/openapi/swagger/js/swagger-ui-bundle.js" in html
+        assert "SwaggerUIBundle" in html
+        assert "standalone-mode" in html
+        assert "data-session-role" in html
+        assert "CheongjuSwaggerPlugin" in html
+        assert "opsFilter" in html
+        assert "unpkg.com" not in html and "cdn.jsdelivr.net" not in html
+
+    embed = client.get("/swagger?embed=1")
+    assert embed.status_code == 200
+    embed_html = embed.get_data(as_text=True)
+    assert "embed-mode" in embed_html
+    assert "SwaggerUIBundle" in embed_html
+
+    assert client.get("/src/api-docs.js").status_code == 200
+    assert client.get("/src/complaints/swagger_page.py").status_code == 404
+
+    spec = client.get("/openapi/openapi.json").json
+    validate(spec)
+    tag_names = {item["name"] for item in spec.get("tags", [])}
+    assert {"민원", "담당자 답변", "AI 작업 · 단계 시연", "응대 검사기"} <= tag_names

@@ -81,13 +81,17 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         name="시연 세션",
         description="로컬 역할 체험용 세션입니다. 운영용 본인인증이 아닙니다.",
     )
-    complaints = Tag(name="민원", description="시민 원문·조회·추가 문의·철회")
+    complaints = Tag(
+        name="민원",
+        description="시민 민원 등록·목록 조회·상세·수정·추가 문의·철회·삭제",
+    )
     answers = Tag(
-        name="담당자 답변", description="초안은 시민 API 응답에서 제외합니다."
+        name="담당자 답변",
+        description="초안 저장·검토·게시·부서 배정·답변 템플릿(미게시 초안은 시민 API 응답에서 제외)",
     )
     jobs = Tag(
-        name="AI 단계 시연",
-        description="실제 LLM·검색·공식 이관과 연결하지 않는 서버 시뮬레이션",
+        name="AI 작업 · 단계 시연",
+        description="비동기 RAG+LLM 초안·근거 생성 작업(미연결 또는 testing=True 환경에서는 서버 단계 시연으로 동작)",
     )
     assist = Tag(
         name="응대 검사기",
@@ -180,9 +184,7 @@ def create_api(service: ComplaintService) -> APIBlueprint:
                     provider=body.provider,
                 )
                 if body.provider is not None
-                else iter_web_assist(
-                    body.query, body.district, body.limit, body.rerank
-                )
+                else iter_web_assist(body.query, body.district, body.limit, body.rerank)
             )
             for event in stream:
                 if event.get("type") == "done":

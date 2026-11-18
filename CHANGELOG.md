@@ -1,6 +1,18 @@
 # 변경 이력
 
+## 2026-11-18
+
+- **Swagger 포털·11/17 보고서 후속 한국어 주석·코드 최적화·접근성 대비·README 디자인 최종 점검 ([CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md)):**
+  - **주석·docstring·JSDoc 및 f-string 교정 (`src/complaints/swagger_page.py`, `scripts/업무보고_20261117_pdf_생성.py`, `ui/src/api-docs.js`):** 인라인 JS 함수 JSDoc의 Python f-string 중괄호(`{{...}}`) 이스케이프 교정과 보고서 생성기 전 함수 Google docstring(`Args:`/`Returns:`/`Raises:`) 보완을 마쳤습니다.
+  - **중복 제거·성능 최적화 (`swagger_page.py`, `업무보고_20261117_pdf_생성.py`, `ui/src/api-docs.js`·`app.js`):** 공용 `updateSession(method, role)` 헬퍼 및 `_build_ui_item_card_html` 단일 `capture_blocks` 루프 통합, `citizen.js` `escapeHTML` 재사용, `searchText` 사전 계산·`openApiSummary` 캐싱(`renderApiEndpointListHtml`/`backendSwaggerPage`)으로 `#/staff/api` 중복 명세 파싱·문자열 재할당을 제거했습니다.
+  - **`#/staff/api` 다크/라이트 WCAG 대비 및 `README.md` 디자인 개선 (`ui/src/themes.css`·`staff.css`, `README.md`):** 다크 색인 표 `td:nth-child(4) strong`(`1.05→#f8fafc`)·활성 태그 칩(`3.49→>8.5`)·라이트 `M-05`/안내 배너 대비를 교정하고, `README.md` 상단 배지를 3행 균형 배치로 개편했으며 최종 테스트(`src/tests` **164 passed**, `ui check` **19**·`ui test` **22/22**, `rag/tests` **49 passed/3 skipped**, `rag.verify` 통과, `mypy` 37모듈 0오류, Edge CDP `lowContrast: []`)를 검증했습니다.
+
 ## 2026-11-17
+
+- **민원 웹(:5000) 한국어 백엔드 Swagger 포털 및 담당자 콘솔 API 문서 페이지(`#/staff/api`) 구현 ([CASE-101](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md)):**
+  - **자체 호스팅 한국어 Swagger UI 포털 (`src/complaints/swagger_page.py`·`pages.py`·`api.py`):** 외부 CDN 없이 `flask-openapi3` 로컬 정적 자산(`/openapi/swagger/*`)과 `/openapi/openapi.json`을 재사용해 `/docs`·`/swagger`에서 실시간 `/api/v1/health` 상태 배지, 원클릭 시연 세션 전환(`staff`/`citizen`/해제), 라이트·다크 테마 동기화(`minwon-ui-theme` + `postMessage` + `resolveInitialTheme()`), `?embed=1` 임베드 모드 및 `:8007/docs` 링크를 제공합니다. 또한 `CheongjuSwaggerPlugin`으로 빈 `securitySchemes`에 의해 나타나던 무기능 `Authorize` 모달을 제거하고 경로·메서드·태그·설명 통합 `opsFilter` 및 라이트·다크 WCAG 4.5+ 대비(배지·OAS 3.1 스키마·클립보드 복사 아이콘 포함)를 적용했으며, `api.py`의 `민원`·`담당자 답변`·`AI 작업 · 단계 시연` 태그 설명을 최신 구현에 맞게 정정하고 [`청주톡톡_민원_업무_API_Swagger.pdf`](docs/청주톡톡_민원_업무_API_Swagger.pdf)(22경로·1,060,653바이트)를 재생성했습니다.
+  - **담당자 콘솔 통합 백엔드 문서 화면 (`ui/src/api-docs.js`·`staff.js`·`app.js`·`icons.js`·`staff.css`·`themes.css`):** 담당자 사이드바(`BACKEND` → `API 문서 · Swagger`)와 모바일 빠른 메뉴에 `#/staff/api` 경로를 추가해 저장소·검색·LLM 헬스 요약 카드, `cleanDocText()` HTML 정리 및 태그·키워드 검색 기반 **엔드포인트 빠른 색인** 탭, 임베드 Swagger UI 탭을 구축했고, `src/tests` **164 passed**·`ui check` **19개**·`ui test` **22/22**·headless Edge 스크린샷·WCAG `< 4.5` **0건** 및 `401→200` `Try it out` 검증을 마쳤습니다.
+  - **11/17 종합 업무보고 PDF 생성 (`docs/report/업무보고_20261117.pdf` · `scripts/업무보고_20261117_pdf_생성.py`):** 11/17 서버·AI·Swagger 주요 작업(`CASE-098~101`) 1쪽 업무보고 + [별첨 1] 개선 요약·차트·실서버 캡처(2~4쪽) + [별첨 2] `UI_수정_보고_2026-11-17.pdf` 전체 10건·이미지 21장을 원문 내용 무수정으로 기존 보고서 양식에 맞춰 12쪽 PDF로 통합했습니다.
 
 - **112건 실측 식별 3대 코드 한계(문맥 기반 순화·동+숫자 경계·장소 추론 오매칭) 보완 ([CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md)):**
   - **문맥 기반 욕설·비꼬기·우회 표현 순화 (`PREFIX-01.txt`·`PREFIX-04.txt`, `src/assist/followup.py`·`pipeline.py`):** 1차 판정기 JSON에 `sanitize_needed` 문맥 플래그를 추가하고 `RISK_SIGNALS`에 `sarcasm_mockery`(비꼬기·조롱)를 편입했으며, `should_run_sanitize()`로 1차 LLM 판단 우선 + 명백 욕설/폭력 인젝션 안전망 + 시설 소등/침하(`꺼져`)·가로수 고사(`죽어`)·`시발점`·`전염병` 배제 휴리스틱을 결합했습니다.

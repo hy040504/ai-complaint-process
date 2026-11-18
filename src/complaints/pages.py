@@ -1,9 +1,10 @@
 """시민·담당자 정적 화면과 API 문서 진입 경로를 제공합니다."""
 
 from pathlib import Path
-from flask import Blueprint, Response, send_from_directory
+from flask import Blueprint, Response, request, send_from_directory
 from src.complaints.config import ROOT
 from src.complaints.errors import AppError
+from src.complaints.swagger_page import render_swagger_html
 
 web = Blueprint("web", __name__)
 
@@ -75,12 +76,16 @@ def design_ui04_adapter() -> Response:
 @web.route("/docs")
 @web.route("/swagger")
 def docs() -> Response:
-    """Swagger UI의 고정 진입 주소를 제공합니다.
+    """청주톡톡 백엔드 API 전용 한국어 Swagger UI 포털을 제공합니다.
+
+    쿼리 `?embed=1`을 전달하면 담당자 콘솔(`#/staff/api`) 내부 iframe용으로
+    상단 포털 헤더를 숨긴 본문만 반환합니다.
 
     Returns:
-        `/openapi/swagger`로 보내는 302 응답입니다.
+        한국어 Swagger UI HTML 문서입니다.
     """
-    return Response(status=302, headers={"Location": "/openapi/swagger"})
+    html = render_swagger_html(embed=request.args.get("embed") == "1")
+    return Response(html, mimetype="text/html")
 
 
 @web.route("/openapi.json")

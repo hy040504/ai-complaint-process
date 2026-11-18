@@ -1,6 +1,11 @@
 import { icon } from "./icons.js";
 import { THEME_KEY, readTheme, getTheme, setTheme } from "./theme.js";
 import {
+  backendSwaggerPage,
+  renderApiEndpointListHtml,
+  summarizeOpenApiSpec,
+} from "./api-docs.js";
+import {
   staffShell,
   staffQueue,
   staffProcess,
@@ -101,6 +106,51 @@ async function loadStaffDepartments(force = false) {
   const res = await api("/departments");
   staffDepartments = Array.isArray(res?.departments) ? res.departments : [];
   return staffDepartments;
+}
+
+let backendHealth = null;
+let openApiSpec = null;
+let openApiSummary = null;
+let apiDocsLoading = false;
+let apiDocsError = "";
+let apiDocsTab = "swagger";
+let apiDocsTag = "";
+let apiDocsQuery = "";
+
+/**
+ * 담당자 API 문서 화면용 헬스 상태와 OpenAPI 3.1 명세를 불러옵니다.
+ *
+ * @param {boolean} [force=false] 캐시된 OpenAPI 명세를 무시하고 다시 조회할지 여부입니다.
+ * @returns {Promise<void>} 명세·상태 로딩 완료 프로미스입니다.
+ */
+async function loadBackendApiDocs(force = false) {
+  apiDocsLoading = true;
+  apiDocsError = "";
+  try {
+    const [healthRes, specRes] = await Promise.all([
+      api("/health").catch(() => null),
+      !force && openApiSpec
+        ? Promise.resolve(openApiSpec)
+        : fetch("/openapi/openapi.json", { credentials: "same-origin" }).then(
+            async (res) => {
+              if (!res.ok)
+                throw new Error(`OpenAPI 명세 조회 실패 (${res.status})`);
+              return res.json();
+            },
+          ),
+    ]);
+    if (healthRes) backendHealth = healthRes;
+    if (specRes) {
+      if (force || specRes !== openApiSpec || !openApiSummary) {
+        openApiSummary = summarizeOpenApiSpec(specRes);
+      }
+      openApiSpec = specRes;
+    }
+  } catch (err) {
+    apiDocsError = err?.message || "API 명세를 불러오지 못했습니다.";
+  } finally {
+    apiDocsLoading = false;
+  }
 }
 
 /**
@@ -289,6 +339,9 @@ async function loadScreen() {
             loadLabFields().catch(() => null),
             loadStaffDepartments().catch(() => null),
             loadAnswerTemplates().catch(() => null),
+            ...(route.path === "/staff/api"
+              ? [loadBackendApiDocs().catch(() => null)]
+              : []),
           ])
         : Promise.resolve(),
     ]);
@@ -612,6 +665,27 @@ function dashboard() {
   return staffQueue(data, route.params, { landing: true });
 }
 /**
+ * 담당자 콘솔에서 백엔드 API · Swagger UI 페이지를 구성합니다.
+ *
+ * @returns {string} 렌더링할 HTML 문자열입니다.
+ */
+function swaggerDocs() {
+  const host = window.location.hostname || "127.0.0.1";
+  const ragDocsUrl = `${window.location.protocol}//${host}:8007/docs`;
+  return backendSwaggerPage({
+    health: backendHealth,
+    spec: openApiSpec,
+    summary: openApiSummary,
+    loading: apiDocsLoading,
+    error: apiDocsError,
+    tab: apiDocsTab,
+    tag: apiDocsTag,
+    query: apiDocsQuery,
+    theme: getTheme(),
+    ragDocsUrl,
+  });
+}
+/**
  * monitor 화면 동작을 구성합니다.
  *
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
@@ -769,6 +843,7 @@ function render() {
   else if (/^\/(citizen|staff)\/detail\//.test(route.path)) content = detail();
   else if (route.path === "/staff") content = dashboard();
   else if (route.path === "/staff/monitor") content = monitor();
+  else if (route.path === "/staff/api") content = swaggerDocs();
   else if (route.path === "/citizen/assistant") content = assistant();
   else if (route.path === "/citizen/guide") content = guide();
   else if (route.path === "/citizen/services") content = citizenServicesPage();
@@ -996,7 +1071,34 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (action === "theme-toggle") {
-    setTheme(getTheme() === "dark" ? "light" : "dark");
+    const next = getTheme() === "dark" ? "light" : "dark";
+    setTheme(next);
+    $("#staff-swagger-frame")?.contentWindow?.postMessage(
+      { type: "minwon-theme", theme: next },
+      location.origin,
+    );
+    return;
+  }
+  if (action === "api-docs-tab") {
+    apiDocsTab = target.dataset.tab === "index" ? "index" : "swagger";
+    render();
+    return;
+  }
+  if (action === "api-docs-tag") {
+    apiDocsTag = target.dataset.tag || "";
+    render();
+    return;
+  }
+  if (action === "api-docs-reset") {
+    apiDocsTag = "";
+    apiDocsQuery = "";
+    render();
+    return;
+  }
+  if (action === "api-docs-refresh") {
+    await loadBackendApiDocs(true);
+    render();
+    toast("백엔드 OpenAPI 명세와 서버 상태를 새로고침했습니다.");
     return;
   }
   if (action === "staff-menu-toggle" || action === "staff-menu-close") {
@@ -1532,6 +1634,19 @@ document.addEventListener("input", (event) => {
     $("#lab-title-count").textContent = event.target.value.length + "/120";
   if (event.target.id === "lab-body")
     $("#lab-body-count").textContent = event.target.value.length + "/2,000";
+  if (event.target.id === "api-docs-search") {
+    apiDocsQuery = event.target.value;
+    const list = $("#api-docs-endpoint-list");
+    const count = $("#api-docs-count");
+    if (list) {
+      const result = renderApiEndpointListHtml(openApiSummary || openApiSpec, {
+        tag: apiDocsTag,
+        query: apiDocsQuery,
+      });
+      list.innerHTML = result.html;
+      if (count) count.textContent = String(result.count);
+    }
+  }
 });
 document.addEventListener("click", (event) => {
   if (event.target.closest("#modal a[href]")) modal.close();
@@ -1574,7 +1689,8 @@ setInterval(async () => {
     if (
       !modal.open &&
       !$("#complaint-form") &&
-      !$("#followup-form textarea:focus")
+      !$("#followup-form textarea:focus") &&
+      currentRoute().path !== "/staff/api"
     )
       render();
   } catch (error) {

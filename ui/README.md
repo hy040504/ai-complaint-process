@@ -62,14 +62,15 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | `src/llm-meta.js` | 공급자 배지·제목(`resolveLlmMeta`), 장소 포맷, 4구·읍·면·동·엔진 `<option>` 조립, 판정·사유 라벨 공유 |
 | `src/lab.js`, `src/lab.css` | RAG·LLM 응대 검사기(`/#/lab`). 엔진 선택/잠금, 읍·면·동 선택, `rerank: false`, 데이터 ↑·프롬프트 ↓ 표시 |
 | `minwon-toktok-ui04.html`, `adapters/ui04-adapter.js` | `/design/ui04` 목업 원본과 `/api/v1` 연결 시연 어댑터 |
-| `src/app.js` | 경로(`#/citizen` 기본·`#/staff`·`#/lab`)·화면·편집기 문구/단축키/AI 엔진 실행/후보 채우기·이력 트레이스·폴링·입력 보존 |
+| `src/app.js` | 경로(`#/citizen` 기본·`#/staff`·`#/staff/api`·`#/lab`)·화면·편집기 문구/단축키/AI 엔진 실행/후보 채우기·이력 트레이스·폴링·입력 보존 |
 | `src/citizen.js`, `src/citizen.css`, `src/citizen-brand.css` | 시민 전용 구성·모션·바텀시트·예시 원본 CI 이미지. 담당자 스타일과 분리 |
-| `src/staff.js`, `src/staff.css` | 민원과 참고 담당자 콘솔·업무 큐·필터·처리 단계·`aiAssist` 검토 카드·반응형 사이드 메뉴 |
+| `src/staff.js`, `src/staff.css` | 민원과 참고 담당자 콘솔·업무 큐·필터·처리 단계·`aiAssist` 검토 카드·반응형 사이드 메뉴·API 문서 메뉴 |
+| `src/api-docs.js` | 담당자 콘솔 `#/staff/api` 백엔드 API · Swagger UI 콘솔(헬스 요약·태그/키워드 색인·임베드 `/swagger?embed=1` 연동) |
 | `src/service-icons.js`, `assets/service-icons/`, `scripts/export-service-icons.mjs` | 직접 제작한 서비스 SVG 12개와 개별 파일 내보내기 |
 | `src/store.js` | API 호출·역할 선택·조회 캐시·서버 오류 처리 |
 | `src/icons.js`, `src/styles.css`, `src/readability.css` | 로컬 SVG·반응형 디자인·가독성 |
 | `server.mjs` | 루트 src의 Flask 서버를 실행하는 npm 편의 실행기 |
-| `tests/store.test.mjs`, `tests/lab.test.mjs` | API 실패·역할 전환 캐시 제거 및 검사기·메타·담당자 참고 카드 회귀 |
+| `tests/store.test.mjs`, `tests/lab.test.mjs`, `tests/api-docs.test.mjs` | API 실패·역할 전환 캐시 제거, 검사기·담당자 참고 카드 및 `#/staff/api` Swagger 문서 회귀 |
 
 ```powershell
 npm --prefix ui run check
@@ -78,4 +79,4 @@ npm --prefix ui test
 
 2026-10-31 첫 UI의 브라우저 저장 검증은 [CASE-013](../docs/cases/사례-013-시민과-담당자-웹-UI-구현-2026-10-31.md)에 보존한다. 이후 Flask 연결로 변경하고 문법 검사·JS 클라이언트 테스트 3개, 서버 회귀 18개·엄격한 타입 검사를 통과했다. Chrome DevTools MCP로 등록·초안 저장·시민 API/HTML 비노출·게시·추가 문의·서버 단계 조회·입력 보존과 PC·모바일 화면을 확인했다. [현재 검증·한계](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
-2026-11-16에는 `CASE-094` 다크 테마 투명 청주시 로고·서비스 SVG·호버·양쪽 검사기 UI 다듬기·담당자 폰트 확대·시민 삭제와 후속 `CASE-095` 담당자 다른 부서 배정(127개 부서)·답변 템플릿 커스텀 추가·삭제·복원, `CASE-096` 부서/템플릿 세션 캐시 최적화·JSDoc 보완·최종 점검 반영 후 JS 문법 17개·단위 테스트 18/18·헤드리스 Edge 다크 대비(`:5000` 24/24·`:5010` 0오류)·부서/템플릿 E2E를 통과했다. [CASE-094](../docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md) · [CASE-095](../docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) · [CASE-096](../docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md)
+2026-11-16에는 `CASE-094` 다크 테마 투명 청주시 로고·서비스 SVG·호버·양쪽 검사기 UI 다듬기·담당자 폰트 확대·시민 삭제와 후속 `CASE-095` 담당자 다른 부서 배정(127개 부서)·답변 템플릿 커스텀 추가·삭제·복원, `CASE-096` 부서/템플릿 세션 캐시 최적화·JSDoc 보완·최종 점검 반영 후 JS 문법 17개·단위 테스트 18/18·헤드리스 Edge 다크 대비(`:5000` 24/24·`:5010` 0오류)·부서/템플릿 E2E를 통과했다. 2026-11-17에는 `CASE-101`로 담당자 콘솔 내 백엔드 Swagger 화면(`#/staff/api`, `api-docs.js`)을 추가하고 JS 문법 19개·단위 테스트 22/22·headless Edge 검증(`28` 오퍼레이션·다크 테마 실시간 동기화)을 통과했다. [CASE-094](../docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md) · [CASE-095](../docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) · [CASE-096](../docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md) · [CASE-101](../docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md)
