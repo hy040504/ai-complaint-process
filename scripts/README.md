@@ -21,7 +21,7 @@
 | [`검색덤프_복원.sh`](검색덤프_복원.sh) · [`restore-dump.sh`](restore-dump.sh) | dump 복원 또는 스키마만 적용 | 우분투 |
 | [`검색서비스_실행.sh`](검색서비스_실행.sh) · [`serve-search.sh`](serve-search.sh) | `python -m rag serve` | 우분투 `.venv` |
 | [`검색서비스_설치.sh`](검색서비스_설치.sh) · [`install-search-service.sh`](install-search-service.sh) | systemd 사용자 서비스 | 우분투 |
-| [`업무보고_pdf_생성.py`](업무보고_pdf_생성.py) · [`업무보고_20261110_pdf_생성.py`](업무보고_20261110_pdf_생성.py) · [`업무보고_20261111_pdf_생성.py`](업무보고_20261111_pdf_생성.py) · [`업무보고_20261116_pdf_생성.py`](업무보고_20261116_pdf_생성.py) · [`업무보고_20261117_pdf_생성.py`](업무보고_20261117_pdf_생성.py) | 일자별 업무보고 PDF([`docs/report/`](../docs/report/README.md)) 생성·병합 | `.venv-web` + Chrome/Edge |
+| [`업무보고_pdf_생성.py`](업무보고_pdf_생성.py) · [`업무보고_20261110_pdf_생성.py`](업무보고_20261110_pdf_생성.py) · [`업무보고_20261111_pdf_생성.py`](업무보고_20261111_pdf_생성.py) · [`업무보고_20261116_pdf_생성.py`](업무보고_20261116_pdf_생성.py) · [`업무보고_20261117_pdf_생성.py`](업무보고_20261117_pdf_생성.py) · [`업무보고_20261118_pdf_생성.py`](업무보고_20261118_pdf_생성.py) | 일자별 업무보고 PDF([`docs/report/`](../docs/report/README.md)) 생성·병합 | `.venv-web` + Chrome/Edge |
 | [`상세분석보고서_112건_생성.py`](상세분석보고서_112건_생성.py) | 112건 원자료 JSON 기반 SVG 차트 4종·[`docs/test/`](../docs/test/README.md) 분석 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 | [`회귀검증_112건_규칙.py`](회귀검증_112건_규칙.py) | LLM 없이 112건 원자료 및 공개 사례 5,015건 규칙(지명·순화·장소·타지역) 1초 내 검증 | `.venv-web` |
 | [`보고서_공통.py`](보고서_공통.py) | 보고서 스크립트가 공유하는 브라우저 탐색·PDF 인쇄 유틸리티. 직접 실행하지 않음 | 표준 라이브러리 |
