@@ -2598,3 +2598,36 @@ body[data-site="lab"] .lab-shell .lab-examples-panel > summary.section-title {
 body[data-site="lab"] .lab-shell .lab-examples-panel[open] > summary.section-title {
   margin-bottom: 16px;
 }
+
+/* UI 법칙 검토 반영: 상세 필터 접기, 44px 아이콘 버튼 */
+.staff-workspace .icon-btn {
+  width: 44px;
+  height: 44px;
+}
+.staff-filter-form {
+  flex-wrap: wrap;
+}
+.staff-filter-form > .search-field {
+  flex: 1 1 260px;
+}
+.staff-adv-filters {
+  order: 9;
+  flex-basis: 100%;
+}
+.staff-adv-filters > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 0;
+}
+.staff-adv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+@media (max-width: 720px) {
+  .staff-adv-grid {
+    grid-template-columns: 1fr;
+  }
+}

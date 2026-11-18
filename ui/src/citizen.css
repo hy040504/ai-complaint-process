@@ -1,19 +1,28 @@
+/* 시민 화면 색 토큰: 값은 기존 색과 같아 라이트 화면은 그대로이며, 다크 테마는 기존 선택자가 덮어씁니다. */
+:root {
+  --c-brand: #2f6fed;
+  --c-surface: #fff;
+  --c-tint: #edf3ff;
+  --c-line: #e0e6f0;
+  --c-ink: #16203a;
+  --c-muted: #5d6c86;
+}
 /* 예시 시민 웹의 파랑·남색·밝은 카드와 모바일 접수 경험을 재현합니다. */
 body[data-site="citizen"] {
   background: #f4f6fa;
   color: #1b2233;
 }
 .citizen-shell {
-  --teal: #2f6fed;
+  --teal: var(--c-brand);
   --teal-dark: #2258c6;
-  --teal-soft: #edf3ff;
+  --teal-soft: var(--c-tint);
   --ink: #1b2233;
   --muted: #738097;
   --line: #e3e8f0;
   --bg: #f7f9fc;
   max-width: none;
   padding-bottom: 24px;
-  background: linear-gradient(180deg, #fff 0, #f7f9fc 240px, #f4f6fa 100%);
+  background: linear-gradient(180deg, var(--c-surface) 0, #f7f9fc 240px, #f4f6fa 100%);
   min-height: calc(100dvh - 36px);
   font-size: 14px;
 }
@@ -56,16 +65,16 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 28px;
   font-weight: 850;
   letter-spacing: -1px;
-  color: #16203a;
+  color: var(--c-ink);
   line-height: 1.25;
   white-space: nowrap;
 }
 .citizen-slogan > span {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-slogan small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 450;
   letter-spacing: 0.4px;
   color: #8691a4;
@@ -98,11 +107,11 @@ body[data-site="citizen"] .role-switch a.selected {
   white-space: nowrap;
 }
 .citizen-desktop-nav a.active {
-  color: #2f6fed;
-  border-color: #2f6fed;
+  color: var(--c-brand);
+  border-color: var(--c-brand);
 }
 .citizen-desktop-nav a:hover {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-header-actions {
   display: flex;
@@ -120,7 +129,7 @@ body[data-site="citizen"] .role-switch a.selected {
   border-radius: 10px;
   font-size: 13px;
   padding: 12px 17px;
-  border-color: #e0e6f0;
+  border-color: var(--c-line);
   color: #536078;
   transition:
     background 0.16s,
@@ -128,9 +137,9 @@ body[data-site="citizen"] .role-switch a.selected {
     box-shadow 0.16s;
 }
 .citizen-shell .btn.primary {
-  background: #2f6fed;
-  border-color: #2f6fed;
-  color: #fff;
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  color: var(--c-surface);
   box-shadow: 0 4px 12px #2f6fed18;
 }
 .citizen-shell .btn.primary:hover {
@@ -146,14 +155,14 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-shell a:focus-visible,
 .citizen-shell button:focus-visible,
 .citizen-service-rail:focus-visible {
-  outline: 3px solid #2f6fed;
+  outline: 3px solid var(--c-brand);
   outline-offset: 4px;
 }
 .citizen-shell :is(input, textarea, select):focus {
   outline-color: #86adff;
 }
 .citizen-shell :is(input, textarea, select) {
-  border-color: #e0e6f0;
+  border-color: var(--c-line);
   color: #26334b;
   font-size: 13px;
   border-radius: 10px;
@@ -170,7 +179,7 @@ body[data-site="citizen"] .role-switch a.selected {
   word-break: keep-all;
 }
 .citizen-shell .text-link {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-shell .page-content {
   max-width: 1180px;
@@ -184,8 +193,8 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-bottom: 26px;
 }
 .citizen-shell .page-heading h1 {
-  font-size: 27px;
-  color: #16203a;
+  font-size: 24px;
+  color: var(--c-ink);
 }
 .citizen-shell .page-heading p {
   color: #77849a;
@@ -194,7 +203,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .eyebrow {
   color: #667fa9;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1.6px;
 }
 .citizen-shell .panel {
@@ -205,7 +214,7 @@ body[data-site="citizen"] .role-switch a.selected {
     0 7px 20px #16203a03;
 }
 .citizen-shell .info-banner {
-  background: #edf3ff;
+  background: var(--c-tint);
   border-color: #dce7fb;
   color: #526e9c;
   font-size: 12px;
@@ -223,7 +232,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .field-hint {
   color: #7f8ba0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .citizen-shell .back-link {
   color: #6887bc;
@@ -248,7 +257,7 @@ body[data-site="citizen"] .role-switch a.selected {
   padding: 12px 0 29px;
 }
 .citizen-welcome > div > span {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: 0.6px;
   color: #6d81a5;
@@ -262,7 +271,7 @@ body[data-site="citizen"] .role-switch a.selected {
   letter-spacing: -1.2px;
 }
 .citizen-welcome h1 em {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-welcome p {
   font-size: 12px;
@@ -278,7 +287,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: grid;
   place-items: center;
   border-radius: 28px 28px 28px 8px;
-  color: #2f6fed;
+  color: var(--c-brand);
   margin-right: 20px;
   transform: rotate(-6deg);
 }
@@ -288,8 +297,8 @@ body[data-site="citizen"] .role-switch a.selected {
   top: -8px;
   font-size: 13px;
   font-style: normal;
-  background: #16203a;
-  color: #fff;
+  background: var(--c-ink);
+  color: var(--c-surface);
   display: grid;
   place-items: center;
   width: 35px;
@@ -314,24 +323,24 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 9px;
 }
 .citizen-section-label h2 > span {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
-  color: #92a0b7;
+  color: #5d6c86;
   border: 1px solid #e1e7f1;
   border-radius: 5px;
   padding: 2px 5px;
-  background: #fff;
+  background: var(--c-surface);
 }
 .citizen-section-label > a {
-  font-size: 11px;
-  color: #2f6fed;
+  font-size: 12px;
+  color: var(--c-brand);
   font-weight: 650;
   white-space: nowrap;
 }
 .citizen-news-list {
-  border: 1px solid #e0e6f0;
+  border: 1px solid var(--c-line);
   border-radius: 17px;
-  background: #fff;
+  background: var(--c-surface);
   overflow: hidden;
   box-shadow:
     0 2px 3px #16203a05,
@@ -364,7 +373,7 @@ body[data-site="citizen"] .role-switch a.selected {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: #2f6fed;
+  background: var(--c-brand);
 }
 .citizen-news-icon {
   height: 39px;
@@ -373,7 +382,7 @@ body[data-site="citizen"] .role-switch a.selected {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  font-size: 21px;
+  font-size: 20px;
   background: #e9f4ef;
   border: 1px solid #d7eae2;
 }
@@ -382,9 +391,9 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #f7e4c9;
 }
 .citizen-news-icon.blue {
-  background: #edf3ff;
+  background: var(--c-tint);
   border-color: #d7e5ff;
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-news-icon.green {
   background: #eaf7f1;
@@ -411,11 +420,11 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 8px;
   margin-top: 5px;
   color: #98a5ba;
-  font-size: 10px;
+  font-size: 12px;
   flex-wrap: wrap;
 }
 .citizen-news-copy em {
-  font-size: 10px;
+  font-size: 12px;
   font-style: normal;
   color: #7587a6;
   padding: 1px 6px;
@@ -424,13 +433,13 @@ body[data-site="citizen"] .role-switch a.selected {
   line-height: 1.5;
 }
 .citizen-news-copy small {
-  font-size: 10px;
+  font-size: 12px;
   color: #8e9cb4;
 }
 .citizen-news-copy i {
-  font-size: 9px;
+  font-size: 12px;
   font-style: normal;
-  color: #2f6fed;
+  color: var(--c-brand);
   border-radius: 4px;
   font-weight: 650;
 }
@@ -460,8 +469,8 @@ body[data-site="citizen"] .role-switch a.selected {
   width: 88px;
   min-height: 89px;
   flex-shrink: 0;
-  border: 1px solid #e0e6f0;
-  background: #fff;
+  border: 1px solid var(--c-line);
+  background: var(--c-surface);
   border-radius: 13px;
   padding: 13px 6px;
   scroll-snap-align: start;
@@ -490,7 +499,7 @@ body[data-site="citizen"] .role-switch a.selected {
   transform: translateY(-1px);
 }
 .citizen-service > b {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 550;
   color: #465675;
   white-space: nowrap;
@@ -506,7 +515,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   justify-content: flex-end;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   color: #a3aec0;
   margin: 4px 0 0;
 }
@@ -517,13 +526,13 @@ body[data-site="citizen"] .role-switch a.selected {
   background: linear-gradient(180deg, #2f6fed00, #2f6fed0a);
 }
 .citizen-ask-zone h2 {
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -0.8px;
   line-height: 1.7;
   font-weight: 800;
 }
 .citizen-ask-zone h2 em {
-  color: #2f6fed;
+  color: var(--c-brand);
   font-style: normal;
   border-bottom: 3px solid #2f6fed45;
   padding-bottom: 2px;
@@ -532,8 +541,8 @@ body[data-site="citizen"] .role-switch a.selected {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff;
-  border: 1.5px solid #2f6fed;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-brand);
   border-radius: 17px;
   padding: 17px;
   margin-top: 13px;
@@ -551,11 +560,11 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-ask-icon {
   display: grid;
   place-items: center;
-  background: #edf3ff;
+  background: var(--c-tint);
   border-radius: 11px;
   width: 41px;
   height: 41px;
-  color: #2f6fed;
+  color: var(--c-brand);
   flex-shrink: 0;
 }
 .citizen-ask-copy {
@@ -564,8 +573,8 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-ask-copy b {
   display: block;
-  font-size: 11px;
-  color: #2f6fed;
+  font-size: 12px;
+  color: var(--c-brand);
   line-height: 1.7;
   font-weight: 700;
 }
@@ -583,8 +592,8 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  background: #2f6fed;
-  color: #fff;
+  background: var(--c-brand);
+  color: var(--c-surface);
   font-size: 12px;
   font-weight: 750;
   padding: 13px 16px;
@@ -597,7 +606,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   gap: 5px;
   color: #8292af;
-  font-size: 10px;
+  font-size: 12px;
   margin: 13px 3px 0;
   line-height: 1.8;
 }
@@ -608,9 +617,9 @@ body[data-site="citizen"] .role-switch a.selected {
   min-width: 0;
 }
 .citizen-status-card {
-  border: 1px solid #e0e6f0;
+  border: 1px solid var(--c-line);
   border-radius: 16px;
-  background: #fff;
+  background: var(--c-surface);
   padding: 20px;
   box-shadow: 0 2px 4px #16203a03;
 }
@@ -632,21 +641,21 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-counts strong {
   font-size: 28px;
   line-height: 1.4;
-  color: #16203a;
+  color: var(--c-ink);
   font-weight: 750;
 }
 .citizen-counts strong small {
-  font-size: 10px;
+  font-size: 12px;
   margin-left: 3px;
   color: #a1adc0;
   font-weight: 400;
 }
 .citizen-counts > a:nth-child(2) strong {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-counts > a > span {
   color: #8390a7;
-  font-size: 10px;
+  font-size: 12px;
 }
 .citizen-recent {
   display: flex;
@@ -659,12 +668,12 @@ body[data-site="citizen"] .role-switch a.selected {
   width: 40px;
   height: 40px;
   border: 3px solid #dce8ff;
-  border-top-color: #2f6fed;
-  border-right-color: #2f6fed;
+  border-top-color: var(--c-brand);
+  border-right-color: var(--c-brand);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #2f6fed;
+  color: var(--c-brand);
   flex-shrink: 0;
 }
 .citizen-recent > div {
@@ -673,7 +682,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-recent b {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -683,7 +692,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-recent small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #8f9ab0;
   margin-top: 5px;
 }
@@ -691,8 +700,8 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #aebdd5;
 }
 .citizen-how-card {
-  border: 1px solid #e0e6f0;
-  background: #fff;
+  border: 1px solid var(--c-line);
+  background: var(--c-surface);
   border-radius: 16px;
   padding: 21px;
 }
@@ -708,13 +717,13 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-bottom: 23px;
 }
 .citizen-how-step > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #6e91ca;
   width: 27px;
   height: 27px;
   display: grid;
   place-items: center;
-  background: #edf3ff;
+  background: var(--c-tint);
   border-radius: 8px;
   flex-shrink: 0;
 }
@@ -724,21 +733,21 @@ body[data-site="citizen"] .role-switch a.selected {
   font-weight: 650;
 }
 .citizen-how-step p {
-  font-size: 11px;
+  font-size: 12px;
   color: #7e8ba2;
   line-height: 1.9;
   margin-top: 5px;
 }
 .citizen-how-card > .text-link {
-  font-size: 11px;
-  color: #2f6fed;
+  font-size: 12px;
+  color: var(--c-brand);
 }
 .citizen-service-note {
   display: flex;
   align-items: flex-start;
   gap: 9px;
   color: #8b98ad;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
   padding: 0 7px;
 }
@@ -779,7 +788,7 @@ body[data-site="citizen"] .role-switch a.selected {
   justify-content: center;
   flex-direction: column;
   gap: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 550;
   color: #95a3ba;
   min-width: 0;
@@ -792,7 +801,7 @@ body[data-site="citizen"] .role-switch a.selected {
   background: #f4f7fe;
 }
 .citizen-bottom-nav > a.active {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .bottom-icon {
   display: grid;
@@ -803,7 +812,7 @@ body[data-site="citizen"] .role-switch a.selected {
   height: 47px;
   width: 47px;
   color: white;
-  background: #2f6fed;
+  background: var(--c-brand);
   border-radius: 15px;
   box-shadow: 0 5px 16px #2f6fed4d;
   margin-top: -23px;
@@ -834,7 +843,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-shell .table-meta,
 .citizen-shell .pagination {
   color: #8693a9;
-  font-size: 11px;
+  font-size: 12px;
 }
 .citizen-shell .row-title {
   color: #334766;
@@ -850,8 +859,8 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 12px;
 }
 .citizen-shell .list-tabs button.active {
-  color: #2f6fed;
-  border-color: #2f6fed;
+  color: var(--c-brand);
+  border-color: var(--c-brand);
 }
 .citizen-shell table th {
   background: #f5f7fc;
@@ -863,12 +872,12 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #edf1f7;
 }
 .citizen-shell .filters select {
-  background: #fff;
+  background: var(--c-surface);
 }
 /* 처리 상태 색: 사용자 UI 명세(철회 흰색 → 접수 회색 → 검토 중 노랑 → 답변 완료 초록) */
 .citizen-shell .badge.withdrawn {
   color: #5e665f;
-  background: #fff;
+  background: var(--c-surface);
   box-shadow: inset 0 0 0 1px #cfd6cc;
 }
 .citizen-shell .badge.submitted {
@@ -909,7 +918,7 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #111111;
 }
 .citizen-shell .detail-heading {
-  background: linear-gradient(135deg, #16203a, #253b61);
+  background: linear-gradient(135deg, var(--c-ink), #253b61);
   padding: 26px 27px;
   border-radius: 16px;
   border: 1px solid #213552;
@@ -946,7 +955,7 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #2b855d;
 }
 .citizen-receipt p {
-  font-size: 10px;
+  font-size: 12px;
   color: #77a68c;
   margin-top: 4px;
   overflow-wrap: anywhere;
@@ -956,8 +965,8 @@ body[data-site="citizen"] .role-switch a.selected {
   padding: 5px;
 }
 .citizen-shell .detail-heading h1 {
-  color: #fff;
-  font-size: 25px;
+  color: var(--c-surface);
+  font-size: 24px;
 }
 .citizen-shell .detail-heading .eyebrow {
   color: #9fb4d7;
@@ -983,7 +992,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .answer-person .avatar {
   color: #5473a8;
-  background: #edf3ff;
+  background: var(--c-tint);
 }
 .citizen-shell .answer-person b span {
   color: #8b9ab2;
@@ -1013,9 +1022,9 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-shell .progress-list li > span {
   height: 28px;
   width: 28px;
-  background: #fff;
+  background: var(--c-surface);
   border: 2px solid #e3e9f3;
-  font-size: 11px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 .citizen-shell .progress-list li.done {
@@ -1029,11 +1038,11 @@ body[data-site="citizen"] .role-switch a.selected {
   background: #84cba9;
 }
 .citizen-shell .progress-list li.current {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-shell .progress-list li.current > span {
-  background: #2f6fed;
-  border-color: #2f6fed;
+  background: var(--c-brand);
+  border-color: var(--c-brand);
   box-shadow: 0 0 0 4px #2f6fed17;
   animation: citizen-step-pulse 2.4s ease-in-out 3;
 }
@@ -1042,7 +1051,7 @@ body[data-site="citizen"] .role-switch a.selected {
   line-height: 1.7;
 }
 .citizen-shell .progress-list small {
-  font-size: 11px;
+  font-size: 12px;
   color: #8b99af;
   line-height: 1.8;
   margin-top: 3px;
@@ -1052,16 +1061,16 @@ body[data-site="citizen"] .role-switch a.selected {
   padding-bottom: 0;
 }
 .citizen-shell .progress-panel > .muted {
-  font-size: 11px;
+  font-size: 12px;
   color: #94a1b6;
 }
 .citizen-shell .timeline b {
   color: #7f90ad;
-  font-size: 11px;
+  font-size: 12px;
 }
 .citizen-shell .timeline time {
   color: #9aa8bd;
-  font-size: 10px;
+  font-size: 12px;
 }
 .citizen-shell .timeline li {
   border-color: #dde6f5;
@@ -1075,10 +1084,10 @@ body[data-site="citizen"] .role-switch a.selected {
   box-shadow: 0 6px 24px #2f6fed08;
 }
 .citizen-shell .form-steps .active {
-  color: #2f6fed;
+  color: var(--c-brand);
 }
 .citizen-shell .form-steps .active b {
-  background: #2f6fed;
+  background: var(--c-brand);
 }
 .citizen-shell .form-steps > span {
   color: #97a4ba;
@@ -1088,7 +1097,7 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #8191ac;
 }
 .citizen-shell .radio-cards > label {
-  border-color: #e0e6f0;
+  border-color: var(--c-line);
 }
 .citizen-shell .radio-cards > label:has(input:checked) {
   border-color: #83a8f4;
@@ -1110,8 +1119,8 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 12px;
 }
 .citizen-shell .guide-step .quick-icon {
-  background: #edf3ff;
-  color: #2f6fed;
+  background: var(--c-tint);
+  color: var(--c-brand);
 }
 .citizen-shell .assistant-page {
   max-width: 850px;
@@ -1133,8 +1142,8 @@ body[data-site="citizen"] .role-switch a.selected {
   border-radius: 13px;
   display: grid;
   place-items: center;
-  color: #2f6fed;
-  background: #edf3ff;
+  color: var(--c-brand);
+  background: var(--c-tint);
   flex-shrink: 0;
 }
 .citizen-shell .chat-heading h1 {
@@ -1148,7 +1157,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   gap: 5px;
   color: #8b9bb5;
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 4px;
 }
 .citizen-shell .chat-heading small i {
@@ -1180,8 +1189,8 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .chat-bubble.ai {
   color: #4c6080;
-  border-color: #e0e6f0;
-  background: #fff;
+  border-color: var(--c-line);
+  background: var(--c-surface);
   box-shadow:
     0 2px 3px #16203a05,
     0 5px 18px #16203a05;
@@ -1192,13 +1201,13 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #23385b;
 }
 .citizen-shell .chat-bubble.me {
-  background: #2f6fed;
+  background: var(--c-brand);
   box-shadow: 0 4px 12px #2f6fed18;
-  color: #fff;
+  color: var(--c-surface);
 }
 .citizen-shell .chat-bubble small {
   color: #8f9fb9;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .citizen-shell .suggestions {
@@ -1211,7 +1220,7 @@ body[data-site="citizen"] .role-switch a.selected {
   background: #f3f7ff;
   color: #3f77dc;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   padding: 8px 12px;
   white-space: normal;
   text-align: left;
@@ -1223,7 +1232,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 8px;
   padding: 11px 21px;
   border-top: 1px solid #edf1f8;
-  background: #fff;
+  background: var(--c-surface);
   flex-wrap: wrap;
 }
 .citizen-chat-tools button,
@@ -1232,7 +1241,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   gap: 5px;
   color: #6b81a4;
-  font-size: 10px;
+  font-size: 12px;
   padding: 4px 8px;
   border: 1px solid #e3eaf6;
   border-radius: 15px;
@@ -1242,14 +1251,14 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #8a9ab1;
 }
 .citizen-chat-tools > a {
-  font-size: 10px;
-  color: #2f6fed;
+  font-size: 12px;
+  color: var(--c-brand);
   margin-left: auto;
 }
 .citizen-shell .chat-input {
   padding: 16px 22px;
   border-top: 1px solid #e7edf7;
-  background: #fff;
+  background: var(--c-surface);
   gap: 9px;
 }
 .citizen-shell .chat-input input {
@@ -1269,7 +1278,7 @@ body[data-site="citizen"] .role-switch a.selected {
   box-shadow: none;
 }
 .citizen-shell .chat-disclaimer {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
   align-items: flex-start;
   color: #93a2bb;
@@ -1287,7 +1296,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
   color: #a28334;
   background: #b8902a0c;
@@ -1296,7 +1305,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-ai-card header > span {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
 }
 .citizen-ai-card dl {
@@ -1314,7 +1323,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-ai-card dt {
   width: 53px;
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
   color: #9d8038;
   padding-top: 2px;
@@ -1351,7 +1360,7 @@ body[data-site="citizen"] .role-switch a.selected {
   animation-delay: 0.32s;
 }
 .citizen-typing span {
-  font-size: 10px;
+  font-size: 12px;
   color: #91a0b9;
   margin-left: 8px;
 }
@@ -1404,7 +1413,7 @@ body[data-site="citizen"] .role-switch a.selected {
   overflow-wrap: anywhere;
 }
 .citizen-update-row small {
-  font-size: 10px;
+  font-size: 12px;
   color: #9baac0;
   margin-top: 5px;
   display: block;
@@ -1418,7 +1427,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 14px;
   border: 1px solid #dce5f6;
   border-radius: 15px;
-  background: #fff;
+  background: var(--c-surface);
   padding: 23px;
 }
 .citizen-profile-card > span {
@@ -1426,8 +1435,8 @@ body[data-site="citizen"] .role-switch a.selected {
   height: 49px;
   display: grid;
   place-items: center;
-  background: #16203a;
-  color: #fff;
+  background: var(--c-ink);
+  color: var(--c-surface);
   border-radius: 50%;
 }
 .citizen-profile-card b {
@@ -1436,12 +1445,12 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #34496b;
 }
 .citizen-profile-card b > em {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   padding: 3px 7px;
   margin-left: 5px;
   border-radius: 4px;
-  background: #edf3ff;
+  background: var(--c-tint);
   color: #6f92cb;
 }
 .citizen-profile-card p {
@@ -1450,9 +1459,9 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-top: 4px;
 }
 .citizen-profile-menu {
-  border: 1px solid #e0e6f0;
+  border: 1px solid var(--c-line);
   border-radius: 15px;
-  background: #fff;
+  background: var(--c-surface);
   overflow: hidden;
   margin: 18px 0 22px;
 }
@@ -1531,9 +1540,9 @@ body[data-site="citizen"] .modal-content .btn {
   padding: 12px 16px;
 }
 body[data-site="citizen"] .modal-content .btn.primary {
-  background: #2f6fed;
-  border-color: #2f6fed;
-  color: #fff;
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  color: var(--c-surface);
 }
 body[data-site="citizen"] .modal-content .compare-box {
   background: #f7f9ff;
@@ -1548,15 +1557,15 @@ body[data-site="citizen"] .modal-content .compare-box {
   margin: 0 0 21px;
 }
 .citizen-sheet-tags > span {
-  font-size: 10px;
+  font-size: 12px;
   padding: 3px 8px;
   border-radius: 6px;
   background: #edf1f7;
   color: #6d80a1;
 }
 .citizen-sheet-tags > em {
-  font-size: 10px;
-  color: #2f6fed;
+  font-size: 12px;
+  color: var(--c-brand);
   font-style: normal;
 }
 .citizen-sheet-note {
@@ -1564,7 +1573,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   border-radius: 10px;
   padding: 13px;
   color: #8799b5;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .citizen-reveal {
@@ -1588,7 +1597,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   align-items: center;
   justify-content: center;
   gap: 15px;
-  background: #fff;
+  background: var(--c-surface);
   pointer-events: none;
   transition: opacity 0.23s;
   animation: citizen-intro-in 0.3s ease;
@@ -1608,16 +1617,16 @@ body[data-site="citizen"] .modal-content .compare-box {
   margin: 8px 0;
 }
 .citizen-intro > b {
-  font-size: 23px;
+  font-size: 20px;
   letter-spacing: -0.8px;
-  color: #16203a;
+  color: var(--c-ink);
 }
 .citizen-intro > p {
   font-size: 13px;
   color: #7889a6;
 }
 .citizen-intro > small {
-  font-size: 10px;
+  font-size: 12px;
   color: #a5b1c4;
   margin-top: 20px;
 }
@@ -1714,7 +1723,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 20px;
   }
   .citizen-slogan {
-    font-size: 26px;
+    font-size: 24px;
   }
   .citizen-city-logo {
     width: 81px;
@@ -1729,7 +1738,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 17px;
   }
   .citizen-welcome h1 {
-    font-size: 26px;
+    font-size: 24px;
   }
   .citizen-welcome-symbol {
     width: 60px;
@@ -1743,11 +1752,11 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-welcome-symbol > i {
     height: 26px;
     width: 26px;
-    font-size: 10px;
+    font-size: 12px;
     border-radius: 9px;
   }
   .citizen-welcome p {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-news-row {
     padding: 16px 14px;
@@ -1761,11 +1770,11 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 10px;
   }
   .citizen-ask-copy > span {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-ask-go {
     padding: 12px 13px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-how-card {
     padding: 20px 17px;
@@ -1825,7 +1834,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     padding: 6px 0 25px;
   }
   .citizen-welcome h1 {
-    font-size: 27px;
+    font-size: 24px;
   }
   .citizen-welcome-symbol {
     height: 70px;
@@ -1858,7 +1867,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     margin-top: 19px;
   }
   .citizen-ask-zone h2 {
-    font-size: 22px;
+    font-size: 20px;
   }
   .citizen-askbar {
     padding: 16px;
@@ -1904,7 +1913,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     top: 13px;
   }
   .citizen-shell .progress-list small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .progress-list b {
     font-size: 12px;
@@ -1918,7 +1927,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   body[data-site="citizen"] .demo-bar {
     height: 32px;
     padding-inline: 15px;
-    font-size: 9px;
+    font-size: 12px;
   }
   body[data-site="citizen"] .demo-bar > div:first-child > span:last-child {
     font-size: 0;
@@ -1928,16 +1937,16 @@ body[data-site="citizen"] .modal-content .compare-box {
     > div:first-child
     > span:last-child:before {
     content: "공식 접수 미연동 · 시연";
-    font-size: 9px;
+    font-size: 12px;
     color: #acbad3;
   }
   body[data-site="citizen"] .demo-bar .demo-label {
-    font-size: 8px;
+    font-size: 12px;
     color: #e4c877;
   }
   body[data-site="citizen"] .role-switch a {
     padding-inline: 8px;
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-shell {
     padding-bottom: 84px;
@@ -1955,12 +1964,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 18px;
   }
   .citizen-slogan {
-    font-size: 25px;
+    font-size: 24px;
     letter-spacing: -0.9px;
     text-align: right;
   }
   .citizen-slogan small {
-    font-size: 8px;
+    font-size: 12px;
     letter-spacing: 0.4px;
     margin-top: 5px;
   }
@@ -1989,12 +1998,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 7px;
   }
   .citizen-section-label h2 > span {
-    font-size: 8px;
+    font-size: 12px;
     padding: 1px 4px;
     color: #9aa8be;
   }
   .citizen-section-label > a {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
   }
   .citizen-news-list {
@@ -2022,10 +2031,10 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-news-copy em,
   .citizen-news-copy small {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-news-copy i {
-    font-size: 8px;
+    font-size: 12px;
   }
   .citizen-news-row > svg {
     width: 12px;
@@ -2059,7 +2068,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     height: 36px;
   }
   .citizen-service > b {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 550;
   }
   .citizen-rail-hint {
@@ -2089,11 +2098,11 @@ body[data-site="citizen"] .modal-content .compare-box {
     width: 20px;
   }
   .citizen-ask-copy b {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: -0.2px;
   }
   .citizen-ask-copy > span {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.7;
     letter-spacing: -0.4px;
     margin-top: 2px;
@@ -2101,13 +2110,13 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-ask-go {
     padding: 12px 11px;
     border-radius: 10px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-ask-go > svg {
     display: none;
   }
   .citizen-ask-zone > p {
-    font-size: 9px;
+    font-size: 12px;
     gap: 4px;
     margin-top: 11px;
     align-items: flex-start;
@@ -2130,23 +2139,23 @@ body[data-site="citizen"] .modal-content .compare-box {
     margin: 16px 0 18px;
   }
   .citizen-counts strong {
-    font-size: 27px;
+    font-size: 24px;
   }
   .citizen-counts strong small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-counts > a > span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-recent {
     padding-top: 14px;
     gap: 10px;
   }
   .citizen-recent b {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-recent small {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-ring {
     height: 38px;
@@ -2174,7 +2183,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     background: #fffffffa;
   }
   .citizen-bottom-nav > a {
-    font-size: 10px;
+    font-size: 12px;
     gap: 4px;
     padding-bottom: 0;
   }
@@ -2191,13 +2200,13 @@ body[data-site="citizen"] .modal-content .compare-box {
     margin: 0 18px;
     padding: 17px 0 14px;
     gap: 8px;
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-shell > footer > span:first-child {
     font-size: 12px;
   }
   .citizen-shell > footer b {
-    font-size: 8px;
+    font-size: 12px;
     margin-left: 8px;
   }
   .citizen-shell .page-content {
@@ -2205,7 +2214,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     min-height: calc(100dvh - 290px);
   }
   .citizen-shell .page-heading h1 {
-    font-size: 23px;
+    font-size: 20px;
     line-height: 1.6;
   }
   .citizen-shell .page-heading p {
@@ -2213,12 +2222,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     line-height: 1.9;
   }
   .citizen-shell .page-heading > .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 9px 10px;
     margin-top: 23px;
   }
   .citizen-shell .info-banner {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.9;
     padding: 12px;
   }
@@ -2227,12 +2236,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     padding: 11px 14px;
   }
   .citizen-shell .filters .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 9px 11px;
   }
   .citizen-shell .filters input,
   .citizen-shell .filters select {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-shell .filters select {
     appearance: none;
@@ -2247,10 +2256,10 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 20px;
   }
   .citizen-shell .list-tabs button {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-shell .table-meta {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .list-panel .row-title {
     font-size: 12px;
@@ -2258,22 +2267,22 @@ body[data-site="citizen"] .modal-content .compare-box {
     color: #344e77;
   }
   .citizen-shell .list-panel .row-sub {
-    font-size: 10px;
+    font-size: 12px;
     color: #8a9bb6;
   }
   .citizen-shell .list-panel .badge {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-shell .pagination {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .pagination .btn {
-    font-size: 11px;
+    font-size: 12px;
     padding: 7px 9px;
   }
   .citizen-shell .list-panel td:nth-child(3),
   .citizen-shell .list-panel td:nth-child(5) {
-    font-size: 10px;
+    font-size: 12px;
     color: #8b9bb2;
   }
   .citizen-shell .detail-heading {
@@ -2282,22 +2291,22 @@ body[data-site="citizen"] .modal-content .compare-box {
     margin-bottom: 19px;
   }
   .citizen-shell .detail-heading h1 {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1.6;
     overflow-wrap: anywhere;
   }
   .citizen-shell .detail-heading .eyebrow {
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 0.2px;
   }
   .citizen-shell .detail-heading p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .detail-heading > .badge {
     bottom: 18px;
     left: 18px;
     margin: 0;
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .detail-grid .panel {
     padding: 20px 17px;
@@ -2309,7 +2318,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 13px;
   }
   .citizen-shell .detail-note {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .progress-list {
     display: block;
@@ -2331,14 +2340,14 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 13px;
   }
   .citizen-shell .progress-list small {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.8;
   }
   .citizen-shell .progress-list li:last-child {
     padding-bottom: 0;
   }
   .citizen-shell .progress-panel > .muted {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .progress-panel > .muted br {
     display: none;
@@ -2347,10 +2356,10 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 13px;
   }
   .citizen-shell .waiting-answer p {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-shell .followup .form-footer .btn {
-    font-size: 11px;
+    font-size: 12px;
     padding: 10px 12px;
   }
   .citizen-shell .complaint-form {
@@ -2364,7 +2373,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 12px;
   }
   .citizen-shell .field-hint {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.9;
   }
   .citizen-shell .radio-cards {
@@ -2374,25 +2383,25 @@ body[data-site="citizen"] .modal-content .compare-box {
     padding: 13px 9px;
   }
   .citizen-shell .radio-cards b {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-shell .radio-cards small {
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1.8;
   }
   .citizen-shell .form-steps > span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .consent label {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.9;
   }
   .citizen-shell .form-footer .btn {
-    font-size: 11px;
+    font-size: 12px;
     padding: 11px 12px;
   }
   .citizen-shell .back-link {
-    font-size: 11px;
+    font-size: 12px;
     margin-bottom: 17px;
   }
   .citizen-shell .assistant-page {
@@ -2414,12 +2423,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 17px;
   }
   .citizen-shell .chat-heading small {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.8;
     align-items: baseline;
   }
   .citizen-shell .chat-heading .mini-chip {
-    font-size: 8px;
+    font-size: 12px;
     margin-left: auto;
     white-space: nowrap;
   }
@@ -2447,14 +2456,14 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 13px;
   }
   .citizen-shell .chat-bubble small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .suggestions {
     padding: 0 14px 17px;
     gap: 7px;
   }
   .citizen-shell .suggestions .btn {
-    font-size: 10px;
+    font-size: 12px;
     padding: 7px 10px;
     line-height: 1.7;
   }
@@ -2464,11 +2473,11 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-chat-tools > span,
   .citizen-chat-tools button {
-    font-size: 9px;
+    font-size: 12px;
     padding: 4px 7px;
   }
   .citizen-chat-tools > a {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-shell .chat-input {
     padding: 13px 14px;
@@ -2483,32 +2492,32 @@ body[data-site="citizen"] .modal-content .compare-box {
     width: 43px;
   }
   .citizen-shell .chat-disclaimer {
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1.9;
     margin: 14px 18px 0;
     gap: 5px;
   }
   .citizen-ai-card header {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 10px;
   }
   .citizen-ai-card dl > div {
-    font-size: 11px;
+    font-size: 12px;
     padding: 9px 10px;
     gap: 8px;
   }
   .citizen-ai-card dt {
-    font-size: 9px;
+    font-size: 12px;
     width: 44px;
   }
   .citizen-ai-card > .btn {
-    font-size: 11px;
+    font-size: 12px;
     margin: 10px;
     width: calc(100% - 20px);
     padding: 10px;
   }
   .citizen-typing span {
-    font-size: 9px;
+    font-size: 12px;
     margin-left: 5px;
   }
   .citizen-all-services {
@@ -2520,7 +2529,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 11px;
   }
   .citizen-all-services > .citizen-service > b {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-all-services .citizen-service > span {
     width: 42px;
@@ -2541,7 +2550,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-size: 12px;
   }
   .citizen-update-row p {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.8;
   }
   .citizen-profile-card {
@@ -2553,7 +2562,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   body[data-site="citizen"] #toast {
     bottom: calc(85px + env(safe-area-inset-bottom));
-    font-size: 11px;
+    font-size: 12px;
     padding: 12px 17px;
     max-width: calc(100vw - 30px);
     line-height: 1.8;
@@ -2593,7 +2602,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     min-height: 42px;
   }
   .citizen-sheet-note {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-sheet-tags {
     gap: 6px;
@@ -2601,18 +2610,18 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-sheet-tags > span,
   .citizen-sheet-tags > em {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-intro {
     inset: 32px 0 0;
   }
   .citizen-intro > b {
-    font-size: 21px;
+    font-size: 20px;
   }
 }
 @media (max-width: 360px) {
   .citizen-slogan {
-    font-size: 23px;
+    font-size: 20px;
     letter-spacing: -0.8px;
   }
   .citizen-city-logo {
@@ -2626,13 +2635,13 @@ body[data-site="citizen"] .modal-content .compare-box {
     padding-inline: 11px;
   }
   .citizen-news-copy > b {
-    font-size: 11px;
+    font-size: 12px;
   }
   .citizen-news-copy > span {
     gap: 5px;
   }
   .citizen-news-copy small {
-    font-size: 8px;
+    font-size: 12px;
   }
   .citizen-ask-zone h2 {
     font-size: 17px;
@@ -2642,32 +2651,32 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 8px;
   }
   .citizen-ask-copy b {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-ask-copy > span {
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-ask-go {
     padding: 11px 9px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-ask-icon {
     height: 30px;
     width: 30px;
   }
   .citizen-shell .chat-heading small {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-chat-tools > span {
-    font-size: 8px;
+    font-size: 12px;
     padding: 4px;
   }
   .citizen-chat-tools > a {
-    font-size: 9px;
+    font-size: 12px;
   }
   .citizen-shell .form-footer .btn {
     padding-inline: 9px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .citizen-shell .list-tabs {
     gap: 16px;
@@ -2715,12 +2724,24 @@ body[data-site="citizen"] .modal-content .compare-box {
 
 /* 홈의 주 행동은 헤더 '직접 작성'(모바일은 하단 접수 버튼)이므로, 상담 입력 줄의 접수 시작은 보조 스타일로 둡니다. */
 .citizen-askbar .citizen-ask-go {
-  background: #fff;
-  color: #2f6fed;
-  box-shadow: inset 0 0 0 1.5px #2f6fed;
+  background: var(--c-surface);
+  color: var(--c-brand);
+  box-shadow: inset 0 0 0 1.5px var(--c-brand);
 }
 
 /* 묶음 안으로 옮긴 글쓰기 라벨도 기존 라벨 색을 유지합니다. */
 .citizen-shell .write-group > label {
   color: #495b77;
+}
+
+/* UI 법칙 검토 반영: 44px 터치 영역, 모바일에서 중복 CTA 숨김 */
+.citizen-header .icon-btn,
+.citizen-header-actions .icon-btn {
+  width: 44px;
+  height: 44px;
+}
+@media (max-width: 820px) {
+  .citizen-header-actions > a.btn {
+    display: none;
+  }
 }
