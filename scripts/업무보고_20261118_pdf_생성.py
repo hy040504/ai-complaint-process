@@ -1,10 +1,10 @@
 """11월 18일 종합 업무보고 PDF 생성 스크립트입니다.
 
-1페이지: '업무보고_20261111.pdf' 틀을 바탕에 둔 11/18 업무보고 메인 표
-         (112건 잔여 한계 해결·EXAONE 차등/병렬/조기차단·백엔드 API·Swagger 점검·UI 통합 확인)
-2~4페이지: [별첨 1] 11/18 백엔드 API 변경/누적 현황표, PREFIX 구조도, 최종 검증표 및
-           라이브 Swagger 포털·담당자 API 콘솔·검색 API Swagger 캡처 4종
-5~끝 페이지: [별첨 2] 'UI_수정_보고_2026-11-18.pdf' 원문 내용 및 고유 캡처 14장 무수정·기존 양식 수록
+1페이지: '업무보고_20261111.pdf' 틀을 바탕에 두고, 내부 코드·함수 용어를 풀어서 정리한
+         11/18 업무보고 메인 표
+2~4페이지: [별첨 1] 11/18 백엔드 API 변경/누적 현황표(쉬운 기능 중심), AI 처리 흐름도,
+           점검 결과 요약 및 라이브 Swagger 페이지 실서버 캡처 4종
+5~10페이지: [별첨 2] 'UI_수정_보고_2026-11-18.pdf' 원문 내용 및 고유 캡처 14장 무수정 수록
 """
 
 from __future__ import annotations
@@ -30,7 +30,6 @@ DEFAULT_UI_PDF = Path(
 DEFAULT_SCENES_DIR = Path(
     r"C:\Users\user\.gemini\antigravity-cli\brain\3197986d-ee70-477b-9852-28bbba3b7616\scratch"
 )
-DEFAULT_PREFIX_SVG = ROOT_DIR / "docs" / "assets" / "prefix-architecture.svg"
 OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "report" / "업무보고_20261118.pdf"
 
 
@@ -57,7 +56,7 @@ class UiFixItem:
 
 @dataclass(frozen=True)
 class WorkSceneSpec:
-    """11/18 백엔드 API 및 Swagger UI 실서버 캡처 한 건의 메타데이터입니다."""
+    """11/18 백엔드 Swagger UI 실서버 캡처 한 건의 메타데이터입니다."""
 
     filename: str
     caption: str
@@ -252,30 +251,30 @@ UI_FIX_PAGE_GROUPS: tuple[tuple[str, ...], ...] = (
 WORK_SCENES_PAGE_3: tuple[WorkSceneSpec, ...] = (
     WorkSceneSpec(
         filename="rep18_swagger_light.png",
-        caption="1. 민원 웹 백엔드 Swagger UI (:5000/swagger) — 라이트 테마 포털 및 API 분류 목록",
-        description="자체 호스팅 한국어 Swagger 포털(/docs·/swagger)에서 실시간 DB·:8007·LLM 상태 배지, 원클릭 담당자/시민 세션 전환, 통합 필터(opsFilter) 및 '서버 상태'·'응대 검사기' 경로가 정상 렌더링된 실제 화면입니다.",
-        alt="민원 웹 백엔드 Swagger UI 라이트 테마 화면",
+        caption="1. 민원 업무 백엔드 API 문서 (Swagger) — 기본 라이트 화면",
+        description="브라우저에서 22종 민원 업무 API의 분류와 설명을 한국어로 확인하고, 상단 버튼을 눌러 담당자·시민 체험 상태를 바꿔 가며 바로 시험해 볼 수 있는 실제 화면입니다.",
+        alt="민원 업무 백엔드 API 문서 기본 라이트 화면",
     ),
     WorkSceneSpec(
         filename="rep18_swagger_dark_assist.png",
-        caption="2. 민원 웹 백엔드 Swagger UI (:5000/swagger) — 다크 테마 및 POST /api/v1/assist 스키마",
-        description="다크 테마에서 POST /api/v1/assist(조기 타지역 차단·병렬 PREFIX-03∥04·EXAONE 차등 추론 연계)의 Parameters·Request body 예시·Try it out이 WCAG 4.5+ 대비로 선명하게 표시되는 실제 화면입니다.",
-        alt="민원 웹 백엔드 Swagger UI 다크 테마 POST /api/v1/assist 상세",
+        caption="2. 민원 업무 백엔드 API 문서 (Swagger) — 다크 모드 및 AI 응대 요청 상세",
+        description="어두운 화면에서도 글자가 선명히 읽히도록 명암 대비를 보완했으며, AI 민원 응대 API(/api/v1/assist)의 입력 항목과 바로 실행(Try it out) 기능을 확인할 수 있는 화면입니다.",
+        alt="민원 업무 백엔드 API 문서 다크 모드 AI 응대 상세 화면",
     ),
 )
 
 WORK_SCENES_PAGE_4: tuple[WorkSceneSpec, ...] = (
     WorkSceneSpec(
         filename="rep18_staff_api_dark.png",
-        caption="3. 담당자 콘솔(#/staff/api) — 실시간 상태 카드 및 엔드포인트 빠른 색인 (28개 오퍼레이션)",
-        description="담당자 포털 M-05 API 문서 화면에서 PostgreSQL(complaint_app)·검색 :8007·비동기 RAG+LLM 워커 활성 상태와 OpenAPI 22경로/28개 오퍼레이션 빠른 색인(다크 표 대비·openApiSummary 캐싱 적용)을 확인한 화면입니다.",
-        alt="담당자 콘솔 엔드포인트 빠른 색인 다크 테마 화면",
+        caption="3. 담당자 사이트 내 백엔드 API 현황 및 전체 기능 목록 화면",
+        description="담당자 포털 안에서 데이터베이스·검색·AI 연결 상태를 한눈에 살펴보고, 총 28개 세부 백엔드 기능을 분류와 검색어로 빠르게 찾을 수 있는 화면입니다.",
+        alt="담당자 사이트 내 백엔드 API 현황 및 전체 기능 목록 화면",
     ),
     WorkSceneSpec(
         filename="rep18_rag_8007_docs.png",
-        caption="4. 검색 백엔드 FastAPI Swagger (:8007/docs) — 청주 민원 근거 검색(/health · /search)",
-        description="민원 백엔드·검사기가 호출하는 RAG 근거 검색 서버(:8007) Swagger UI로, POST /search(query·collection·limit·district·rerank) 요청 규격 및 retrieval_only/requires_gate 계약을 확인한 화면입니다.",
-        alt="검색 백엔드 8007 포트 FastAPI Swagger UI 화면",
+        caption="4. 청주 민원 근거 검색 서버 API 문서 (Swagger)",
+        description="민원 내용과 비슷한 자주 묻는 민원·과거 사례를 찾아 주는 별도 검색 서버(:8007/docs)의 API 문서 화면으로, 검색 요청 형식과 응답 기준을 확인할 수 있습니다.",
+        alt="청주 민원 근거 검색 서버 API 문서 화면",
     ),
 )
 
@@ -293,8 +292,8 @@ _REPORT_CSS = """
     color: #111;
     margin: 0;
     padding: 0;
-    font-size: 8.5pt;
-    line-height: 1.38;
+    font-size: 8.6pt;
+    line-height: 1.40;
     letter-spacing: -0.3px;
     -webkit-print-color-adjust: exact;
   }
@@ -308,7 +307,7 @@ _REPORT_CSS = """
     text-align: center;
     font-size: 19pt;
     font-weight: 800;
-    margin: 0 0 8px 0;
+    margin: 0 0 9px 0;
     letter-spacing: 3px;
   }
   h1.sub-title {
@@ -326,7 +325,7 @@ _REPORT_CSS = """
   table.report-table th,
   table.report-table td {
     border: 1px solid #333;
-    padding: 4.3px 7.5px;
+    padding: 4.5px 8px;
   }
   .label-cell {
     width: 14%;
@@ -334,7 +333,7 @@ _REPORT_CSS = """
     font-weight: bold;
     vertical-align: middle;
     background-color: #ffffff;
-    line-height: 1.32;
+    line-height: 1.35;
   }
   .header-label {
     width: 14%;
@@ -352,15 +351,15 @@ _REPORT_CSS = """
   }
   .section-title {
     font-weight: bold;
-    margin-top: 2.5px;
-    margin-bottom: 1px;
+    margin-top: 3px;
+    margin-bottom: 1.2px;
     color: #000;
   }
   .section-title:first-child {
     margin-top: 0;
   }
   .bullet-item {
-    margin: 1px 0;
+    margin: 1.3px 0;
     padding-left: 10px;
     text-indent: -10px;
     word-break: keep-all;
@@ -373,9 +372,9 @@ _REPORT_CSS = """
   /* 별첨 공통 헤더 */
   .att-header {
     text-align: center;
-    margin-bottom: 7px;
+    margin-bottom: 8px;
     border-bottom: 1.5px solid #222;
-    padding-bottom: 4.5px;
+    padding-bottom: 5px;
   }
   .att-header h2 {
     font-size: 14pt;
@@ -389,9 +388,9 @@ _REPORT_CSS = """
   }
   .att-sec-title {
     text-align: left;
-    font-size: 10.2pt;
+    font-size: 10.3pt;
     font-weight: 800;
-    margin: 8px 0 4px 0;
+    margin: 9px 0 4.5px 0;
     color: #111;
   }
 
@@ -401,19 +400,19 @@ _REPORT_CSS = """
     border-collapse: collapse;
     border: 1.2px solid #222;
     margin-top: 3px;
-    font-size: 7.9pt;
-    line-height: 1.35;
+    font-size: 8pt;
+    line-height: 1.38;
   }
   table.diff-table th {
     background-color: #f3f5f8;
     border: 1px solid #333;
-    padding: 4px 6px;
+    padding: 4.5px 6.5px;
     text-align: center;
     font-weight: bold;
   }
   table.diff-table td {
     border: 1px solid #333;
-    padding: 4px 6.5px;
+    padding: 4.5px 7px;
     vertical-align: middle;
     word-break: keep-all;
   }
@@ -423,10 +422,85 @@ _REPORT_CSS = """
   }
   code {
     font-family: Consolas, "Courier New", monospace;
-    font-size: 7.6pt;
+    font-size: 7.7pt;
     background: #f1f5f9;
     padding: 0.5px 3px;
     border-radius: 2px;
+  }
+
+  /* 2쪽 쉬운 흐름 다이어그램 */
+  .flow-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    padding: 8px 10px;
+    margin-top: 4px;
+  }
+  .flow-grid {
+    display: grid;
+    grid-template-columns: 1fr 18px 1fr 18px 1fr 18px 1fr;
+    align-items: stretch;
+    gap: 3px;
+  }
+  .flow-step {
+    background: #ffffff;
+    border: 1px solid #94a3b8;
+    border-radius: 4px;
+    padding: 6px 7px;
+  }
+  .flow-step-num {
+    font-size: 7.4pt;
+    font-weight: 800;
+    color: #0f766e;
+    margin-bottom: 2px;
+  }
+  .flow-step-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 3px;
+  }
+  .flow-step-desc {
+    font-size: 7.6pt;
+    color: #334155;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11pt;
+    font-weight: 800;
+    color: #0f766e;
+  }
+  .flow-branches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .flow-branch {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 3px solid #2563eb;
+    border-radius: 3px;
+    padding: 4.5px 7px;
+    font-size: 7.6pt;
+    color: #1e293b;
+    word-break: keep-all;
+  }
+  .flow-branch.warn {
+    border-left-color: #d97706;
+  }
+  .flow-branch.safe {
+    border-left-color: #0f766e;
+  }
+  .flow-branch b {
+    display: block;
+    font-size: 7.9pt;
+    margin-bottom: 1.5px;
+    color: #0f172a;
   }
 
   /* 실서버 캡처 장면 */
@@ -459,21 +533,6 @@ _REPORT_CSS = """
     max-height: 103mm;
     object-fit: contain;
     object-position: top center;
-    display: block;
-    margin: 0 auto;
-  }
-  .svg-wrap {
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    background: #0b1220;
-    padding: 3px;
-    margin-top: 4px;
-    text-align: center;
-  }
-  .svg-wrap img {
-    width: 100%;
-    max-height: 76mm;
-    object-fit: contain;
     display: block;
     margin: 0 auto;
   }
@@ -590,9 +649,6 @@ def encode_file(path: Path) -> str:
 def extract_unique_ui_images(ui_pdf_path: Path) -> list[bytes]:
     """원본 `UI_수정_보고_2026-11-18.pdf`에서 XObject 중복을 제거한 고유 PNG 14장을 추출합니다.
 
-    PDF Form XObject 공유로 인해 페이지 객체상 반복 참조되는 동일 이미지는
-    SHA-256 해시로 첫 등장 순서(`그림 1` ~ `그림 14`)만 한 번씩 보존합니다.
-
     Args:
         ui_pdf_path: 원본 UI 수정 보고서 PDF 파일 경로입니다.
 
@@ -613,7 +669,7 @@ def extract_unique_ui_images(ui_pdf_path: Path) -> list[bytes]:
 
 
 def _build_page1_main_report_html() -> str:
-    """1페이지: `업무보고_20261111.pdf` 틀을 계승한 11/18 종합 업무보고 메인 표를 반환합니다.
+    """1페이지: `업무보고_20261111.pdf` 틀을 바탕으로 쉽고 명확히 정리한 11/18 메인 표를 반환합니다.
 
     Returns:
         1페이지 업무보고 메인 표 HTML 문자열입니다.
@@ -636,58 +692,59 @@ def _build_page1_main_report_html() -> str:
   </tr>
   <tr>
     <td class="header-label">목적(목표)</td>
-    <td colspan="3">112건 실측 잔여 한계 해결·EXAONE 추론 차등/병렬·조기 차단 패치, 백엔드 API·Swagger 포털 점검 및 기민 님 11/18 UI 수정 통합 확인</td>
+    <td colspan="3">실전 테스트에서 남은 주소·지명 인식 및 AI 응답 지연 문제 개선, 백엔드 API·문서 페이지(Swagger) 점검 및 기민 님 11/18 UI 수정 통합 확인</td>
   </tr>
   <tr>
     <td class="header-label">주제</td>
-    <td colspan="3">산학공동프로젝트 서버·AI 최적화, 백엔드 API·Swagger 점검 및 UI 수정 통합 보고 (11/18)</td>
+    <td colspan="3">산학공동프로젝트 민원 주소·응답 속도 개선, 백엔드 API·문서(Swagger) 점검 및 UI 수정 통합 보고 (11/18)</td>
   </tr>
   <tr>
     <td class="label-cell">담당 업무<br>(전체)</td>
     <td colspan="3" class="full-val">
-      <div class="section-title">1. 서버 &amp; 검색 DB</div>
-      <div class="bullet-item">- 청주시 민원 데이터(FAQ 94건, 공개 민원 사례 5,015건, 부서 127개) 기반 하이브리드 검색 API(:8007) 구축 및 운영</div>
-      <div class="bullet-item">- 민원 CRUD·담당자 배정·템플릿·비동기 AI 워커·한국어 Swagger 포털(:5000 /docs·/swagger) 백엔드 설계 및 개발</div>
-      <div class="section-title">2. AI &amp; 테스트 웹</div>
-      <div class="bullet-item">- RAG 검색 근거 기반 AI 판정·FAQ 안내·담당자 초안·특이민원 순화(PREFIX-00~04) 및 네이버 지도 장소 추적 로직 구현</div>
-      <div class="bullet-item">- 단독 응대 검사기(:5010) 및 민원 웹 검사기(#/lab) 구축, 실측 성능 평가·회귀 검증 수행 (마감 2026-11-27)</div>
+      <div class="section-title">1. 서버 &amp; 검색 기능</div>
+      <div class="bullet-item">- 청주시 민원 자료(자주 묻는 민원 94건, 공개 민원 사례 5,015건, 부서 127개)를 바탕으로 비슷한 민원과 근거를 찾아주는 검색 서버 구축 및 운영</div>
+      <div class="bullet-item">- 민원 접수·조회·답변 관리 및 백엔드 API 안내 화면(Swagger) 개발과 연동 유지</div>
+      <div class="section-title">2. AI &amp; 테스트 화면</div>
+      <div class="bullet-item">- 검색 자료를 바탕으로 AI가 답변 안내·부서 추천·거친 표현 순화를 판단하는 응대 로직과 지도 기반 장소 찾기 기능 개발</div>
+      <div class="bullet-item">- AI 응답 결과를 바로 시험해 볼 수 있는 검사기 화면 및 민원 웹 연동 관리 (마감 2026-11-27)</div>
     </td>
   </tr>
   <tr>
     <td class="label-cell">진행 내용<br>(11/18)</td>
     <td colspan="3" class="full-val">
-      <div class="section-title">1. 112건·5,015건 실사례 기반 지명/장소 추적·타지역 예외·오탐 보완 (CASE-103·104)</div>
-      <div class="bullet-item">- <span class="highlight-tag">도로+번지 보존 및 불용어 정제(place_tool.py)</span> : 숫자 단독 토큰 탈락(93건 누락 원인)을 해결하는 _extract_road_number_pairs() 신설('오송생명14로 283', '2순환로 1374' 최우선 배치), 문자 결합 하이픈 분리(번지 '16-19' 유지) 및 원인조사 불용어('사고로'·'주차로' 등) 보강</div>
-      <div class="bullet-item">- <span class="highlight-tag">단일구 도로 확장·광역시 약칭·거주지/운수 예외(district.py)</span> : 닫는 괄호 경계(')]}>:')와 100% 검증 단일구 도로 11종+(구 적중 697→751 +54건, 추가 오분류 0건) 추가, 광역시 '~시' 약칭('서울시'·'대전시')·외부 도로명 차단, 청주 시내버스(사례 913 '청신운수')·타지 거주지 서술('대전 유성구 봉명동 사는데 서원대 후문...') 분리 및 _split_external_residence_clause() 단일 패스 통합</div>
-      <div class="bullet-item">- <span class="highlight-tag">다어절 소등 비오탐 교정(followup.py)</span> : _FACILITY_OFF_RE 간격을 0~24자로 확장해 B14('가로등 여러 개가 동시에 꺼져') 정상 민원 오탐 해소</div>
-      <div class="section-title">2. 백엔드 응대 API 지연·타임아웃·병렬·토큰 오염 개선 (pipeline.py·settings.py·complete.py)</div>
-      <div class="bullet-item">- <span class="highlight-tag">조기 차단·초안 생략·병렬 처리</span> : 순수 타지역 민원은 early_external_reject(:8007·PREFIX-01·03 생략, 0.011s)로 즉시 담당자 검토 연결, out_of_scope 시 PREFIX-03 생략(고정 초안), PREFIX-03∥04 ThreadPoolExecutor 병렬 실행(EXAONE 1.05s 스태거) 적용</div>
-      <div class="bullet-item">- <span class="highlight-tag">EXAONE 추론 차등 및 버그 수정</span> : settings_for_role()로 1차 판정 high / 빠른 단계 low(4096 상한) 차등화, Codex 비도구 _disable_mcp, 실패 호출 시 직전 usage_box 토큰 오염 버그 제거 및 POST /api/v1/assist·/lab/complaints·비동기 워커 반영</div>
-      <div class="section-title">3. 백엔드 API·Swagger 포털 품질 점검 및 문서/회귀 자동화 (CASE-102·103·104)</div>
-      <div class="bullet-item">- <span class="highlight-tag">Swagger 포털·콘솔 최종 점검</span> : :5000 OpenAPI 22경로(28개 오퍼레이션) 다크 표 대비 교정(1.05→#f8fafc)·태그 칩 대비 상향·openApiSummary 캐싱·빈 Authorize 모달 제거 유지 확인, :5000/swagger 라이트/다크·#/staff/api·:8007/docs 4종 실서버 캡처 ([별첨 1] 수록)</div>
-      <div class="bullet-item">- <span class="highlight-tag">규칙 회귀·README·하네스 정비</span> : 112건·5,015건 1초 규칙 회귀(회귀검증_112건_규칙.py) 구축, PREFIX-00~04 계층 구조 SVG 신설 및 하네스 6종·README 가독성 개편</div>
+      <div class="section-title">1. 민원 주소·장소 인식 및 오탐 개선</div>
+      <div class="bullet-item">- <span class="highlight-tag">도로명과 번지 번호 함께 인식</span> : '오송생명14로 283', '2순환로 1374'처럼 도로명 뒤에 붙은 번지 숫자가 지도 검색에서 빠지던 문제를 고치고, '사고로'·'주차로' 같은 일반 표현이 장소 이름으로 잘못 잡히지 않게 걸러냄</div>
+      <div class="bullet-item">- <span class="highlight-tag">청주 지역 판별 확대 및 타 지역·예외 분리</span> : 괄호 뒤 지명('긴급)복대동')과 청주 단일 구 주요 도로명을 반영해 관할 구 판별 건수를 높이고(697→751건), '서울시'·'경기도 화성시 동탄대로' 등 타 지역은 정확히 차단하되 타지 거주 후 청주 시설을 신고하거나 청주 시내버스를 이용하는 민원은 정상 처리되도록 분리함</div>
+      <div class="bullet-item">- <span class="highlight-tag">시설 고장 신고 오탐 해소</span> : '가로등 여러 개가 동시에 꺼져 있습니다'처럼 시설 고장을 알리는 평범한 문장이 거친 표현으로 잘못 분류되던 판단 기준을 손봄</div>
+      <div class="section-title">2. AI 응답 지연·시간 초과 개선 및 백엔드 효율화</div>
+      <div class="bullet-item">- <span class="highlight-tag">타 지역 민원 즉시 검토 연결</span> : 명백한 타 지역 관할 민원으로 확인되면 검색과 불필요한 AI 분석 단계를 건너뛰고 즉시(약 0.01초) 담당자 검토로 넘기도록 단축함</div>
+      <div class="bullet-item">- <span class="highlight-tag">단계별 추론 최적화 및 동시 처리</span> : AI의 깊은 생각(추론)은 핵심 1차 판정에만 적용하고 안내·요약·순화 단계는 빠르고 가볍게 조정했으며, 담당자 초안과 순화 요약을 동시에 실행하고 관할 외 민원은 불필요한 초안 생성을 생략해 대기 시간을 크게 줄임</div>
+      <div class="bullet-item">- <span class="highlight-tag">오류 시 사용량 섞임 수정</span> : 순화 단계가 실패했을 때 앞선 판정 단계의 사용량 기록이 남아 잘못 기록되던 오류를 바로잡음</div>
+      <div class="section-title">3. 백엔드 API 정리·Swagger 페이지 점검 및 검증·문서 정비</div>
+      <div class="bullet-item">- <span class="highlight-tag">API 정리 및 Swagger 화면 확인</span> : 민원 업무 백엔드(22종 API)와 검색 서버 API 동작을 점검하고, 다크 모드 글씨 대비 개선·중복 계산 축소·실서버 Swagger 화면 4종 캡처를 정리함 ([별첨 1] 수록)</div>
+      <div class="bullet-item">- <span class="highlight-tag">자동 규칙 점검 및 안내 문서 개편</span> : 유료·원격 AI 호출 없이도 1초 내로 지명·오탐 규칙을 검증할 수 있는 도구를 마련하고, 프로젝트 소개 문서(README)에 AI 지시문 구조 그림과 읽기 쉬운 요약표를 추가함</div>
       <div class="section-title">4. 기민 님 11/18 UI 수정 사항 통합 확인 (UI_수정_보고_2026-11-18.pdf)</div>
-      <div class="bullet-item">- <span class="highlight-tag">접근성·사용성·다크 대비 점검</span> : WCAG 1.4.3/1.4.4(12px·4.5:1 대비), 색 토큰 6개, 상담 바 우선 배치, Hick/Fitts/Nielsen 휴리스틱, 담당자 상세 필터 접기, 민원 철회 분리, 응대 검사기 다크 보조 글자 61개 흰색 전환 등 확인 ([별첨 2] 원문·이미지 14장 그대로 수록)</div>
+      <div class="bullet-item">- <span class="highlight-tag">접근성·사용성·다크 대비 점검</span> : 시민 화면 글자 크기 확대(12px 이상)·명암 대비 개선, 색 기준 6종 정리, 상담 입력창 상단 이동, 담당자 상세 필터 접기, 민원 철회 영역 분리, 검사기 다크 모드 보조 글자 61곳 흰색 전환 확인 ([별첨 2] 원문 그대로 수록)</div>
     </td>
   </tr>
   <tr>
     <td class="label-cell">진행 결과</td>
     <td colspan="3" class="full-val">
-      <div class="bullet-item">- <span class="highlight-tag">백엔드·RAG·UI 통합 검증</span> : PG 격리 포함 백엔드 <strong>168/168 통과</strong>(24.63s), 112건 결정론적 규칙 회귀 <strong>실패 0건 · 5,015건 외부오탐 0건</strong>, 검색 <strong>49 passed</strong>(3 skip)·rag.verify 통과, UI 문법 19·단위 <strong>22/22 통과</strong>, mypy·black 오류 0건</div>
-      <div class="bullet-item">- <span class="highlight-tag">실서버 API·Swagger 동작</span> : :5000(/api/v1/health·/docs·/swagger·#/staff/api), :8007(/docs), :5010 순수 타지역 early_external_reject <strong>0.011s</strong> 응답 확인</div>
+      <div class="bullet-item">- <span class="highlight-tag">전체 기능 및 규칙 재확인 통과</span> : 백엔드·DB 기능 시험 <strong>168건 전부 통과</strong>, 112건 민원 규칙 재점검 <strong>실패 0건 · 타 지역 오탐 0건</strong>, 검색·화면 동작 시험 및 문법 검사 모두 이상 없이 통과함</div>
+      <div class="bullet-item">- <span class="highlight-tag">실서버 API·Swagger 동작 확인</span> : 민원 업무 서버·담당자 API 목록·검색 서버(Swagger)가 정상 작동하며, 타 지역 민원 조기 분리 기능이 <strong>0.011초</strong> 만에 즉시 응답함을 확인함</div>
     </td>
   </tr>
   <tr>
     <td class="label-cell">남은 일</td>
     <td colspan="3" class="full-val">
-      <div class="bullet-item">- EXAONE_API_KEY 한도 확보 후 112건 실원격 일괄 재실측 및 담당자 실시간 SSE 알림·최종 발표 시나리오 정리 (마감 2026-11-27)</div>
+      <div class="bullet-item">- 외부 AI 모델 사용 한도 확보 후 112건 실서버 재측정 진행, 담당자 실시간 알림 및 최종 발표 자료 정리 (마감 2026-11-27)</div>
     </td>
   </tr>
   <tr>
     <td class="label-cell">참고 사항</td>
     <td colspan="3" class="full-val">
-      <div class="bullet-item">- 역할 분담 : 기민 님 / UI·접근성·디자인 토큰 개선([별첨 2]), 연승현 / 백엔드 API·Swagger 포털·AI 파이프라인/지명/병렬 최적화([별첨 1])</div>
-      <div class="bullet-item">- <strong>[별첨 1: 2~4쪽]</strong> 11/18 백엔드 API 변경/체계표·PREFIX 구조도·검증표·Swagger 4종 캡처, <strong>[별첨 2: 5~10쪽]</strong> 'UI 수정 보고서(2026-11-18)' 원문·고유 이미지 14장 무수정 수록</div>
+      <div class="bullet-item">- 역할 분담 : 기민 님 / 화면 사용성·접근성 개선([별첨 2]), 연승현 / 백엔드 API·Swagger·AI 응답 품질 및 속도 개선([별첨 1])</div>
+      <div class="bullet-item">- 구성 : <strong>[별첨 1: 2~4쪽]</strong> 백엔드 API 정리·AI 처리 흐름·점검 결과 및 Swagger 캡처 4종, <strong>[별첨 2: 5~10쪽]</strong> 'UI 수정 보고서(2026-11-18)' 원문·고유 이미지 14장 무수정 수록</div>
     </td>
   </tr>
 </table>
@@ -695,90 +752,127 @@ def _build_page1_main_report_html() -> str:
 
 
 def _build_att1_summary_page_html() -> str:
-    """2페이지: [별첨 1] 11/18 백엔드 API 변경/누적 현황표, PREFIX 구조도 및 최종 검증표를 반환합니다.
+    """2페이지: [별첨 1] 쉬운 한국어 중심의 백엔드 API 정리표, AI 처리 흐름도 및 점검 결과표를 반환합니다.
 
     Returns:
         2페이지 HTML 문자열입니다.
     """
-    prefix_svg_uri = encode_file(DEFAULT_PREFIX_SVG)
-    return f"""<div class="page-break">
+    return """<div class="page-break">
   <div class="att-header">
-    <h2>[별첨 1] 11/18 백엔드 API 변경 · AI 파이프라인 최적화 및 검증 요약</h2>
-    <p class="att-meta">작성자: 연승현 · 기준일: 2026-11-18 (CASE-102 ~ CASE-104 백엔드·API·AI 최적화 반영)</p>
+    <h2>[별첨 1] 11/18 백엔드 API 변경 요약 · AI 처리 흐름 및 점검 결과</h2>
+    <p class="att-meta">작성자: 연승현 · 기준일: 2026-11-18 (기술·코드 세부명 대신 기능과 효과 중심으로 정리)</p>
   </div>
 
-  <div class="att-sec-title">1. 백엔드 API 수정 · 개선 및 누적 엔드포인트 체계 (:5000 22경로/28오퍼레이션 · :5010 · :8007)</div>
+  <div class="att-sec-title">1. 백엔드 API 수정·개선 및 전체 API 구성 (민원 업무 22종 · 검사기 · 검색 서버)</div>
   <table class="diff-table">
     <thead>
       <tr>
-        <th style="width: 24%;">대상 API · 모듈</th>
-        <th style="width: 48%;">11/18 수정 · 최적화 내용</th>
-        <th style="width: 28%;">응답·계약 변화 및 비고</th>
+        <th style="width: 24%;">API 영역 · 경로</th>
+        <th style="width: 47%;">11/18 수정 및 개선 내용</th>
+        <th style="width: 29%;">기대 효과 및 동작 변화</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><code>POST /api/v1/assist</code><br><code>POST /api/v1/assist/stream</code><br><code>POST /api/v1/lab/complaints</code><br>(<code>pipeline.py</code>·<code>district.py</code>)</td>
-        <td>① 순수 타 지자체 주소 감지 시 <code>:8007</code> 검색·<code>PREFIX-01</code>·<code>PREFIX-03</code> 생략 후 즉시 <code>out_of_scope</code> 반환<br>② <code>out_of_scope</code> 시 고정 초안 반환 / <code>PREFIX-03∥04</code> 병렬 실행<br>③ 실패 단계 직전 <code>usage_box</code> 오염 버그 제거</td>
-        <td><code>retrieval.pipeline="early_external_reject"</code> (<strong>0.011s</strong> 응답), 거주지 서술·청주 시내버스 예외 분리, <code>codex[].usage</code> 정확성 보장</td>
+        <td><strong>AI 민원 응대 · 검사기 API</strong><br><code>POST /api/v1/assist</code><br><code>POST /api/v1/assist/stream</code><br>(단독 검사기 <code>:5010</code> 포함)</td>
+        <td>① 명백한 타 지역 민원은 검색과 AI 호출을 건너뛰고 즉시 담당자 검토로 넘김<br>② 관할 외 민원의 불필요한 초안 생성을 생략하고, 담당자 초안·순화 요약을 동시에 처리해 대기 시간을 줄임<br>③ 단계 오류 시 직전 사용량 기록이 섞이던 문제 수정</td>
+        <td>순수 타 지역 민원 약 <strong>0.011초</strong> 즉시 응답, 타지 거주 후 청주 신고·청주 시내버스 예외 정확 구분, 토큰 기록 신뢰성 확보</td>
       </tr>
       <tr>
-        <td><code>POST /api/v1/complaints</code><br>비동기 AI 워커 연동<br>(<code>settings.py</code>·<code>complete.py</code>)</td>
-        <td>① <code>settings_for_role()</code>로 EXAONE 1차 판정 <code>high</code> / 빠른 단계(02·03·04) <code>low</code> 및 4096 상한 자동 적용<br>② <code>codex_cli</code> 비도구 단계 <code>_disable_mcp</code> 적용</td>
-        <td><code>POST /complaints</code> 등록 후 비동기 분석 지연·타임아웃 대폭 완화, 미게시 초안 시민 비노출 유지</td>
+        <td><strong>민원 등록 · 비동기 AI 연계</strong><br><code>POST /api/v1/complaints</code></td>
+        <td>① 민원 접수 후 뒤에서 동작하는 AI 분석에서 핵심 1차 판정에만 깊은 추론을 쓰고 나머지 단계는 빠르게 처리하도록 조정<br>② 도구가 필요 없는 안내·순화 단계의 불필요한 외부 도구 호출 비활성화</td>
+        <td>접수 후 AI 분석 대기·시간 초과 오류 감소, 담당자가 게시하기 전까지 시민 화면 비노출 유지</td>
       </tr>
       <tr>
-        <td><code>GET /docs</code> · <code>/swagger</code><br><code>#/staff/api</code> 포털 &amp; API<br>(<code>swagger_page.py</code>·<code>api.py</code>)</td>
-        <td>자체 호스팅 한국어 Swagger 포털 다크 대비(1.05→#f8fafc)·태그 칩 대비 수정, <code>openApiSummary</code> 캐싱, 빈 <code>Authorize</code> 모달 제거·태그 설명 정정(<code>CASE-101·102</code>)</td>
-        <td>22경로(28오퍼레이션) OpenAPI 3.1 명세, 원클릭 <code>staff</code>/<code>citizen</code> 세션 전환, Try it out 정상 동작</td>
+        <td><strong>Swagger 문서 · API 콘솔</strong><br><code>GET /docs</code> · <code>/swagger</code><br>(담당자 화면 API 메뉴)</td>
+        <td>한국어 API 안내 화면의 다크 모드 글씨 명암 대비(4.5 이상) 보완, API 목록 재계산 중복 축소, 무기능 빈 로그인(Authorize) 창 제거 유지</td>
+        <td>22종 API 경로(28개 세부 기능) 한국어 제공, 담당자·시민 체험 클릭 전환 및 바로 시험(Try it out) 지원</td>
       </tr>
       <tr>
-        <td>누적 업무 API 전체 구성<br>(<code>src/complaints/api.py</code>)</td>
-        <td><strong>시연 세션</strong>(<code>/session</code>) · <strong>민원 CRUD</strong>(<code>/complaints</code>·<code>/delete</code>·<code>/retract</code>·<code>/messages</code>) · <strong>담당자</strong>(<code>/departments</code> 127개·<code>/assignment</code>·<code>/templates</code>·<code>/draft</code>·<code>/publish</code>) · <strong>AI·검사기</strong>(<code>/assist</code>·<code>/jobs</code>·<code>:5010</code>·<code>:8007</code>)</td>
-        <td><code>GET /api/v1/health</code> 200 OK (<code>postgresql</code>, <code>assistSearch=True</code>, <code>aiConnected=True</code>)</td>
+        <td><strong>백엔드 API 누적 전체 구성</strong><br>(<code>:5000</code> 업무 · <code>:8007</code> 검색)</td>
+        <td>체험 세션 전환 · 민원 등록/조회/수정/철회/영구 삭제 · 청주시 127개 부서 배정 · 답변 템플릿 추가/삭제 · AI 분석 · 서버 상태 점검 및 검색 API(<code>/health</code>·<code>/search</code>)</td>
+        <td>상태 확인(<code>/api/v1/health</code>) 기준 DB·검색·AI 워커 모두 정상 연결, 자동 이관 안 함 원칙 유지</td>
       </tr>
     </tbody>
   </table>
 
-  <div class="att-sec-title" style="margin-top: 7px;">2. 계층형 시스템 프롬프트(PREFIX-00 ~ 04) 조립 및 최적화 구조</div>
-  <div class="svg-wrap">
-    <img src="{prefix_svg_uri}" alt="PREFIX-00 ~ 04 계층형 시스템 프롬프트 조립 및 분기 구조">
+  <div class="att-sec-title" style="margin-top: 9px;">2. 개선된 AI 민원 응대 처리 흐름 (한눈에 보기)</div>
+  <div class="flow-box">
+    <div class="flow-grid">
+      <div class="flow-step">
+        <div class="flow-step-num">1단계 · 사전 확인</div>
+        <div class="flow-step-title">지명 · 장소 · 관할 분리</div>
+        <div class="flow-step-desc">도로+번지·거주지 서술·시내버스 예외를 가려내고, 순수 타 지역이면 0.01초 만에 즉시 검토로 보냄</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">2단계 · 근거 검색</div>
+        <div class="flow-step-title">FAQ · 유사 사례 분리 검색</div>
+        <div class="flow-step-desc">청주 공식 자주 묻는 민원 94건과 과거 부서 사례 5,015건을 섞지 않고 따로 검색</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">3단계 · 1차 판정</div>
+        <div class="flow-step-title">처리 갈래 · 문맥 판단</div>
+        <div class="flow-step-desc">안내 가능·부서 추천·담당자 검토 여부를 가리고, 시설 고장과 실제 욕설·비꼬기를 구분</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">4단계 · 결과 생성</div>
+        <div class="flow-step-title">갈래별 안내 · 초안 작성</div>
+        <div class="flow-step-desc">핵심 정책 검증 통과 후 시민 안내문이나 담당자 초안·순화 요약을 빠르게 생성</div>
+      </div>
+    </div>
+    <div class="flow-branches">
+      <div class="flow-branch safe">
+        <b>① FAQ 안내 (빠른 경량 모드)</b>
+        공식 FAQ 대상·기한·주의사항을 빠뜨리지 않고 정중한 안내문 생성
+      </div>
+      <div class="flow-branch">
+        <b>② 담당자 초안 ∥ 순화 동시 처리</b>
+        현장 조치가 필요할 때 답변 초안과 거친 표현 정리를 동시에 실행해 대기 시간 단축
+      </div>
+      <div class="flow-branch warn">
+        <b>③ 관할 외 조기 처리</b>
+        타 지역 사안은 불필요한 초안 AI 호출 없이 고정 안내문만 달아 담당자에게 전달
+      </div>
+    </div>
   </div>
 
-  <div class="att-sec-title" style="margin-top: 7px;">3. 최종 코드 · 회귀 · 실서버 검증 결과 (2026-11-18 ~ 19 최종 점검 기준)</div>
+  <div class="att-sec-title" style="margin-top: 9px;">3. 최종 점검 및 시험 결과 (2026-11-18 ~ 19 기준)</div>
   <table class="diff-table">
     <thead>
       <tr>
-        <th style="width: 24%;">검증 항목</th>
-        <th style="width: 30%;">실행 명령 · 대상</th>
-        <th style="width: 19%;">결과</th>
-        <th style="width: 27%;">비고 및 확인 범위</th>
+        <th style="width: 24%;">점검 항목</th>
+        <th style="width: 31%;">확인 대상 및 내용</th>
+        <th style="width: 17%;">결과</th>
+        <th style="width: 28%;">주요 수치 및 비고</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>백엔드 PG 격리 테스트</strong></td>
-        <td><code>RUN_PG_TESTS=1 pytest src/tests</code></td>
-        <td class="col-center"><strong>168 passed</strong> (24.63s)</td>
-        <td>0 실패 · 0 건너뜀 (신규 지명/병렬/토큰 격리 포함)</td>
+        <td><strong>백엔드 · DB 기능 시험</strong></td>
+        <td>민원 등록·조회·권한·AI 처리·API 응답 전수 시험</td>
+        <td class="col-center"><strong>168건 전부 통과</strong></td>
+        <td>실패 0건 · 신규 지명/병렬 시험 포함</td>
       </tr>
       <tr>
-        <td><strong>112건·5,015건 규칙 회귀</strong></td>
-        <td><code>scripts/회귀검증_112건_규칙.py</code></td>
+        <td><strong>주소 · 오탐 규칙 점검</strong></td>
+        <td>실증 112건 및 공개 사례 5,015건 기준 규칙 재확인</td>
         <td class="col-center"><strong>112건 실패 0건</strong></td>
-        <td>5,015건 구 적중 697→<strong>751</strong>(+54) · 외부 오탐 <strong>0건</strong></td>
+        <td>구 적중 697→<strong>751건</strong>(+54) · 외부 오탐 <strong>0건</strong></td>
       </tr>
       <tr>
-        <td><strong>RAG · 무결성 · UI · 타입</strong></td>
-        <td><code>rag/tests</code>·<code>rag.verify</code>·<code>ui check/test</code>·<code>mypy</code>·<code>black</code></td>
+        <td><strong>검색 · 화면 · 문법 점검</strong></td>
+        <td>검색 단위 시험, DB 원본 대조, 화면·문법 검사</td>
         <td class="col-center"><strong>전체 통과</strong></td>
-        <td>RAG 49 pass(3 skip)·<code>rag.verify</code> true·UI 22/22·0 오류</td>
+        <td>검색 49건(원본 대조 일치) · 화면 시험 22건 · 오류 0건</td>
       </tr>
       <tr>
-        <td><strong>라이브 API · Swagger 확인</strong></td>
-        <td><code>:5000/swagger</code>·<code>#/staff/api</code>·<code>:8007/docs</code>·<code>:5010</code></td>
-        <td class="col-center"><strong>200 OK · 0.011s</strong></td>
-        <td>타지역 <code>early_external_reject</code> 0.011s, Swagger 4종 캡처</td>
+        <td><strong>실서버 API · Swagger 확인</strong></td>
+        <td>업무 서버 Swagger · 담당자 API · 검색 서버 · 검사기</td>
+        <td class="col-center"><strong>정상 동작 확인</strong></td>
+        <td>타 지역 조기 분류 <strong>0.011초</strong> · Swagger 4종 캡처 첨부</td>
       </tr>
     </tbody>
   </table>
@@ -791,7 +885,7 @@ def _build_att1_scenes_page_html(
     title: str,
     subtitle: str,
 ) -> str:
-    """3~4페이지: [별첨 1] 백엔드 Swagger 포털 · 담당자 콘솔 · 검색 API 실서버 캡처 2종씩을 생성합니다.
+    """3~4페이지: [별첨 1] 백엔드 Swagger 페이지 실서버 캡처 2종씩을 배치합니다.
 
     Args:
         scenes_dir: 캡처 PNG 파일이 저장된 폴더 경로입니다.
@@ -1003,15 +1097,15 @@ def build_report_html(scenes_dir: Path, ui_pdf_path: Path) -> str:
 {_build_att1_scenes_page_html(
     scenes_dir,
     WORK_SCENES_PAGE_3,
-    "[별첨 1] 백엔드 API Swagger UI 포털 실서버 확인 (라이트 · 다크)",
-    ":5000 자체 호스팅 한국어 Swagger UI (/swagger) — 세션 연동 · 통합 검색 · /api/v1/assist 스키마",
+    "[별첨 1] 민원 웹 백엔드 API 문서 (Swagger) 실서버 확인",
+    "한국어 API 안내 화면 — 체험 세션 전환 · 바로 시험 기능 · 다크 모드 명암 대비 적용",
 )}
 
 {_build_att1_scenes_page_html(
     scenes_dir,
     WORK_SCENES_PAGE_4,
-    "[별첨 1] 담당자 API 콘솔(#/staff/api) · 검색 백엔드 Swagger (:8007/docs)",
-    "엔드포인트 28개 빠른 색인 및 RAG 근거 검색 FastAPI Swagger 실서버 동작 캡처",
+    "[별첨 1] 담당자 API 현황 화면 · 검색 서버 API 문서 (Swagger)",
+    "담당자 포털 내 API 목록 (28개 기능) 및 근거 검색 서버(:8007) API 화면 캡처",
 )}
 
 {_build_att2_ui_cover_html()}
@@ -1027,7 +1121,7 @@ def main() -> None:
     """11월 18일 종합 업무보고 PDF(`docs/report/업무보고_20261118.pdf`)를 생성합니다.
 
     Raises:
-        FileNotFoundError: 원본 UI 보고서 PDF, PREFIX SVG 또는 Swagger 캡처 PNG가 없을 때 발생합니다.
+        FileNotFoundError: 원본 UI 보고서 PDF 또는 Swagger 캡처 PNG가 없을 때 발생합니다.
     """
     ui_pdf = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_UI_PDF
     scenes_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_SCENES_DIR
@@ -1035,8 +1129,6 @@ def main() -> None:
 
     if not ui_pdf.is_file():
         raise FileNotFoundError(f"원본 UI 보고서 PDF가 없습니다: {ui_pdf}")
-    if not DEFAULT_PREFIX_SVG.is_file():
-        raise FileNotFoundError(f"PREFIX 구조도 SVG가 없습니다: {DEFAULT_PREFIX_SVG}")
     for spec in WORK_SCENES_PAGE_3 + WORK_SCENES_PAGE_4:
         if not (scenes_dir / spec.filename).is_file():
             raise FileNotFoundError(

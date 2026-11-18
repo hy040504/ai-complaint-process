@@ -81,7 +81,7 @@
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
 | API 문서 | `http://127.0.0.1:5000/docs` · `/swagger` · `/#/staff/api` | 자체 호스팅 한국어 Swagger 포털(세션 전환·다크 동기화·색인) · [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
-| 업무 보고서 | [11/18 종합 보고서 PDF](docs/report/업무보고_20261118.pdf) · [11/17 PDF](docs/report/업무보고_20261117.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 11/18 서버·AI·API/Swagger(캡처 4종) + `UI 수정 보고서(2026-11-18)` 무수정 10쪽 PDF · [`업무보고_20261118_pdf_생성.py`](scripts/업무보고_20261118_pdf_생성.py) |
+| 업무 보고서 | [11/18 종합 보고서 PDF](docs/report/업무보고_20261118.pdf) · [11/17 PDF](docs/report/업무보고_20261117.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 추상화(쉬운 한국어) 11/18 서버·AI·API/Swagger(캡처 4종) + `UI 수정 보고서(2026-11-18)` 무수정 10쪽 PDF · [`업무보고_20261118_pdf_생성.py`](scripts/업무보고_20261118_pdf_생성.py) |
 | 테스트 보고서 | [112건 상세 분석 (MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md)/[PDF)](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf) · [모음(`docs/test/`)](docs/test/README.md) | 5대 축 SVG 차트 4종·전수 표·한계 진단 · [`상세분석보고서_112건_생성.py`](scripts/상세분석보고서_112건_생성.py) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
