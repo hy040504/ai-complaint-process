@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title description">
   <title id="title">AI Complaint Process</title>
-  <desc id="description">청주 민원 데이터를 근거로 안내와 부서 연결을 지원하는 AI 완충지대. 민원 웹, 검색, LLM, 응대 계층, PREFIX 시스템 접두, Codex 검색 도구, CPU용 e5-small-ko 임베딩, Windows 응대·문장 임베딩 CMD, PostgreSQL 업무 스키마로 구성합니다.</desc>
+  <desc id="description">청주 민원 데이터를 근거로 안내와 부서 연결을 지원하는 AI 완충지대. 민원 웹, 한국어 Swagger 포털, 검색, LLM, 응대 계층, PREFIX-00~04, RAG 및 네이버 지도 MCP 도구, CPU용 e5-small-ko 임베딩, 응대 검사기(:5010), PostgreSQL 업무/검색 분리 스키마로 구성합니다.</desc>
   <defs>
     <linearGradient id="background" x1="0" x2="1" y2="1">
       <stop stop-color="#0b1220"/>
@@ -16,51 +16,72 @@
   </defs>
   <rect width="1200" height="360" rx="20" fill="url(#background)"/>
   <rect width="1200" height="360" rx="20" fill="url(#grid)"/>
-  <circle cx="1030" cy="170" r="290" fill="url(#glow)"/>
-  <rect x="48" y="40" width="4" height="28" rx="2" fill="#2dd4bf"/>
-  <g font-family="Arial, 'Noto Sans KR', sans-serif">
-    <text x="68" y="60" fill="#5eead4" font-size="15" font-weight="700" letter-spacing="3">CHEONGJU · CIVIC AI</text>
-    <text x="48" y="122" fill="#f8fafc" font-size="46" font-weight="700" letter-spacing="-1.5">AI Complaint Process</text>
-    <text x="50" y="164" fill="#cbd5e1" font-size="20">근거를 찾고, 처리 경로를 연결하는 AI 완충지대</text>
-    <rect x="50" y="200" width="118" height="34" rx="17" fill="#163f43" stroke="#2dd4bf" stroke-opacity=".35"/>
-    <text x="109" y="222" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">FAQ 94</text>
-    <rect x="180" y="200" width="140" height="34" rx="17" fill="#1b334f" stroke="#60a5fa" stroke-opacity=".35"/>
-    <text x="250" y="222" fill="#bfdbfe" font-size="13" font-weight="700" text-anchor="middle">사례 5,015</text>
-    <rect x="332" y="200" width="122" height="34" rx="17" fill="#30304b" stroke="#a78bfa" stroke-opacity=".35"/>
-    <text x="393" y="222" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">부서 127</text>
-    <rect x="466" y="200" width="126" height="34" rx="17" fill="#2a1f3d" stroke="#c4b5fd" stroke-opacity=".4"/>
-    <text x="529" y="222" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">PREFIX</text>
-    <rect x="604" y="200" width="168" height="34" rx="17" fill="#12352f" stroke="#2dd4bf" stroke-opacity=".45"/>
-    <text x="688" y="222" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">RAG 도구</text>
-    <rect x="784" y="200" width="132" height="34" rx="17" fill="#111b2e" stroke="#e4c877" stroke-opacity=".45"/>
-    <text x="850" y="222" fill="#fde68a" font-size="13" font-weight="700" text-anchor="middle">Lab :5010</text>
-    <rect x="50" y="248" width="108" height="34" rx="17" fill="#142433" stroke="#38bdf8" stroke-opacity=".4"/>
-    <text x="104" y="270" fill="#bae6fd" font-size="13" font-weight="700" text-anchor="middle">민원 웹</text>
-    <rect x="170" y="248" width="88" height="34" rx="17" fill="#142c28" stroke="#2dd4bf" stroke-opacity=".4"/>
-    <text x="214" y="270" fill="#99f6e4" font-size="13" font-weight="700" text-anchor="middle">검색</text>
-    <rect x="270" y="248" width="80" height="34" rx="17" fill="#2a1f3d" stroke="#c4b5fd" stroke-opacity=".4"/>
-    <text x="310" y="270" fill="#ddd6fe" font-size="13" font-weight="700" text-anchor="middle">LLM</text>
-    <rect x="362" y="248" width="88" height="34" rx="17" fill="#3f2f1c" stroke="#fbbf24" stroke-opacity=".4"/>
-    <text x="406" y="270" fill="#fde68a" font-size="13" font-weight="700" text-anchor="middle">응대</text>
-    <rect x="462" y="248" width="118" height="34" rx="17" fill="#0f2a3a" stroke="#38bdf8" stroke-opacity=".45"/>
-    <text x="521" y="270" fill="#bae6fd" font-size="13" font-weight="700" text-anchor="middle">e5-ko</text>
-    <rect x="592" y="248" width="96" height="34" rx="17" fill="#1a2433" stroke="#94a3b8" stroke-opacity=".45"/>
-    <text x="640" y="270" fill="#e2e8f0" font-size="13" font-weight="700" text-anchor="middle">CMD</text>
-    <rect x="700" y="248" width="108" height="34" rx="17" fill="#152a44" stroke="#60a5fa" stroke-opacity=".45"/>
-    <text x="754" y="270" fill="#bfdbfe" font-size="13" font-weight="700" text-anchor="middle">PG 업무</text>
-    <path d="M918 88V250" stroke="#3a6070" stroke-width="2" stroke-dasharray="4 5"/>
-    <rect x="840" y="36" width="286" height="68" rx="12" fill="#152c3c" stroke="#2e5260"/>
-    <circle cx="870" cy="70" r="7" fill="#2dd4bf"/>
-    <text x="890" y="66" fill="#f1f5f9" font-size="16" font-weight="700">근거 찾기</text>
-    <text x="890" y="86" fill="#94a3b8" font-size="12">FAQ · 하이브리드 검색</text>
-    <rect x="815" y="122" width="286" height="68" rx="12" fill="#172e41" stroke="#365a71"/>
-    <circle cx="845" cy="156" r="7" fill="#60a5fa"/>
-    <text x="865" y="152" fill="#f1f5f9" font-size="16" font-weight="700">부서 후보</text>
-    <text x="865" y="172" fill="#94a3b8" font-size="12">공개 사례 · 부서 사전</text>
-    <rect x="840" y="208" width="286" height="68" rx="12" fill="#242d44" stroke="#4d4c70"/>
-    <circle cx="870" cy="242" r="7" fill="#a78bfa"/>
-    <text x="890" y="238" fill="#f1f5f9" font-size="16" font-weight="700">담당자 연결</text>
-    <text x="890" y="258" fill="#94a3b8" font-size="12">검사기 · 담당자 검토</text>
-    <text x="50" y="328" fill="#64748b" font-size="13">lab_web :5010 · 평가 26/26 · 보류 3/3 · lab-runs JSON · MCP NDJSON · e5-small-ko</text>
+  <circle cx="1010" cy="170" r="290" fill="url(#glow)"/>
+  <rect x="48" y="40" width="4" height="26" rx="2" fill="#2dd4bf"/>
+
+  <g font-family="'Noto Sans KR', 'Malgun Gothic', Arial, sans-serif">
+    <!-- 좌측 타이틀 영역 (x=48..772) -->
+    <text x="66" y="59" fill="#5eead4" font-size="14" font-weight="700" letter-spacing="3">CHEONGJU · CIVIC AI</text>
+    <text x="48" y="118" fill="#f8fafc" font-size="44" font-weight="700" letter-spacing="-1.2">AI Complaint Process</text>
+    <text x="50" y="158" fill="#cbd5e1" font-size="19">근거를 찾고, 처리 경로를 연결하는 AI 완충지대</text>
+
+    <!-- 1행 칩 (x=50..772) -->
+    <rect x="50" y="196" width="96" height="34" rx="17" fill="#163f43" stroke="#2dd4bf" stroke-opacity=".4"/>
+    <text x="98" y="218" fill="#99f6e4" font-size="12.5" font-weight="700" text-anchor="middle">FAQ 94</text>
+
+    <rect x="156" y="196" width="112" height="34" rx="17" fill="#1b334f" stroke="#60a5fa" stroke-opacity=".4"/>
+    <text x="212" y="218" fill="#bfdbfe" font-size="12.5" font-weight="700" text-anchor="middle">사례 5,015</text>
+
+    <rect x="278" y="196" width="102" height="34" rx="17" fill="#30304b" stroke="#a78bfa" stroke-opacity=".4"/>
+    <text x="329" y="218" fill="#ddd6fe" font-size="12.5" font-weight="700" text-anchor="middle">부서 127</text>
+
+    <rect x="390" y="196" width="134" height="34" rx="17" fill="#2a1f3d" stroke="#c4b5fd" stroke-opacity=".45"/>
+    <text x="457" y="218" fill="#ddd6fe" font-size="12.5" font-weight="700" text-anchor="middle">PREFIX-00~04</text>
+
+    <rect x="534" y="196" width="130" height="34" rx="17" fill="#12352f" stroke="#2dd4bf" stroke-opacity=".45"/>
+    <text x="599" y="218" fill="#99f6e4" font-size="12.5" font-weight="700" text-anchor="middle">RAG · 지도 MCP</text>
+
+    <rect x="674" y="196" width="98" height="34" rx="17" fill="#272013" stroke="#e4c877" stroke-opacity=".5"/>
+    <text x="723" y="218" fill="#fde68a" font-size="12.5" font-weight="700" text-anchor="middle">Lab :5010</text>
+
+    <!-- 2행 칩 (x=50..772) -->
+    <rect x="50" y="242" width="114" height="34" rx="17" fill="#142433" stroke="#38bdf8" stroke-opacity=".45"/>
+    <text x="107" y="264" fill="#bae6fd" font-size="12.5" font-weight="700" text-anchor="middle">민원 웹 :5000</text>
+
+    <rect x="174" y="242" width="122" height="34" rx="17" fill="#132e35" stroke="#2dd4bf" stroke-opacity=".45"/>
+    <text x="235" y="264" fill="#99f6e4" font-size="12.5" font-weight="700" text-anchor="middle">Swagger /docs</text>
+
+    <rect x="306" y="242" width="98" height="34" rx="17" fill="#142c28" stroke="#2dd4bf" stroke-opacity=".45"/>
+    <text x="355" y="264" fill="#99f6e4" font-size="12.5" font-weight="700" text-anchor="middle">검색 :8007</text>
+
+    <rect x="414" y="242" width="136" height="34" rx="17" fill="#2a1f3d" stroke="#c4b5fd" stroke-opacity=".45"/>
+    <text x="482" y="264" fill="#ddd6fe" font-size="12.5" font-weight="700" text-anchor="middle">EXAONE · Codex</text>
+
+    <rect x="560" y="242" width="100" height="34" rx="17" fill="#0f2a3a" stroke="#38bdf8" stroke-opacity=".45"/>
+    <text x="610" y="264" fill="#bae6fd" font-size="12.5" font-weight="700" text-anchor="middle">e5-small-ko</text>
+
+    <rect x="670" y="242" width="102" height="34" rx="17" fill="#152a44" stroke="#60a5fa" stroke-opacity=".45"/>
+    <text x="721" y="264" fill="#bfdbfe" font-size="12.5" font-weight="700" text-anchor="middle">PG 업무 DB</text>
+
+    <!-- 우측 3단계 연결 카드 영역 (x=824..1152, 좌측 칩 끝 772와 52px 분리) -->
+    <path d="M988 92V242" stroke="#3a6070" stroke-width="2" stroke-dasharray="4 5"/>
+
+    <rect x="824" y="42" width="328" height="70" rx="12" fill="#152c3c" stroke="#2e5260" stroke-width="1.2"/>
+    <circle cx="854" cy="77" r="7" fill="#2dd4bf"/>
+    <text x="874" y="72" fill="#f1f5f9" font-size="16" font-weight="700">근거 찾기</text>
+    <text x="874" y="93" fill="#94a3b8" font-size="12.5">FAQ · 하이브리드 검색 · 조건 보존</text>
+
+    <rect x="824" y="132" width="328" height="70" rx="12" fill="#172e41" stroke="#365a71" stroke-width="1.2"/>
+    <circle cx="854" cy="167" r="7" fill="#60a5fa"/>
+    <text x="874" y="162" fill="#f1f5f9" font-size="16" font-weight="700">부서 후보</text>
+    <text x="874" y="183" fill="#94a3b8" font-size="12.5">공개 사례 · 지명 추적 · 127개 부서 사전</text>
+
+    <rect x="824" y="222" width="328" height="70" rx="12" fill="#242d44" stroke="#4d4c70" stroke-width="1.2"/>
+    <circle cx="854" cy="257" r="7" fill="#a78bfa"/>
+    <text x="874" y="252" fill="#f1f5f9" font-size="16" font-weight="700">담당자 연결</text>
+    <text x="874" y="273" fill="#94a3b8" font-size="12.5">응대 검사기 · 담당자 검토 · 자동 이관 아님</text>
+
+    <!-- 하단 요약 푸터 -->
+    <text x="50" y="326" fill="#94a3b8" font-size="13">lab_web :5010 · 민원 웹 :5000 (/docs · #/staff/api) · 112건 실증 + 5,015건 회귀 · MCP NDJSON · e5-small-ko</text>
   </g>
 </svg>
