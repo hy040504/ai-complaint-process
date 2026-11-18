@@ -3652,3 +3652,8 @@ dialog::backdrop {
     align-items: stretch;
   }
 }
+
+/* 위험 영역의 철회 버튼: 공통 버튼 글자색을 덮어 빨간 바탕에서 읽히도록 흰색으로 */
+.danger-zone .btn.danger {
+  color: #ffffff;
+}
