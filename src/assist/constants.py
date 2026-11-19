@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.assist.prompts import (
-    ANSWER_SYSTEM,
-    DECISION_SYSTEM,
-    SPECIAL_SANITIZE_SYSTEM,
-    STAFF_DRAFT_SYSTEM,
+    ANSWER_SYSTEM as ANSWER_SYSTEM,
+    DECISION_SYSTEM as DECISION_SYSTEM,
+    SPECIAL_SANITIZE_SYSTEM as SPECIAL_SANITIZE_SYSTEM,
+    STAFF_DRAFT_SYSTEM as STAFF_DRAFT_SYSTEM,
 )
 
 SCOPES = ("in_scope", "out_of_scope", "uncertain")

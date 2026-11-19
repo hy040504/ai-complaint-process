@@ -583,6 +583,24 @@ def _strip_external_residence_clause(text: str) -> str:
     return _split_external_residence_clause(text)[1]
 
 
+def _fallback_district_after_lookup(
+    text: str, place: dict[str, Any] | None
+) -> str | None:
+    """정규식으로 구가 정해지지 않았을 때 지도 결과와 사례 도로+번지 색인에서 구를 찾습니다.
+
+    Args:
+        text: 외부 관할 거주 접두어를 제외한 민원 문자열입니다.
+        place: `_lookup_cheongju_place`가 반환한 청주 장소 정보 또는 None입니다.
+
+    Returns:
+        추론된 청주시 자치구 이름 또는 None입니다.
+    """
+    gu = place.get("gu") if place else None
+    if isinstance(gu, str) and gu:
+        return gu
+    return _lookup_corpus_road_number_district(text)
+
+
 def extract_district(text: str) -> str | None:
     """민원 제목 또는 본문에서 청주시 관할 구를 단일하게 추론합니다.
 
@@ -613,10 +631,7 @@ def extract_district(text: str) -> str | None:
 
     # 정규식으로 감지되지 않은 경우 네이버 지도 → 검증된 사례 도로+번지 색인 순으로 추론합니다.
     primary = _lookup_cheongju_place(lookup_target)
-    gu = primary.get("gu") if primary else None
-    if isinstance(gu, str) and gu:
-        return gu
-    return _lookup_corpus_road_number_district(lookup_target)
+    return _fallback_district_after_lookup(lookup_target, primary)
 
 
 def extract_place_info(text: str) -> dict[str, Any] | None:
@@ -691,12 +706,8 @@ def resolve_district_and_place(
             return None, False, None
 
     place = _lookup_cheongju_place(lookup_base)
-    inferred_gu = place.get("gu") if place else None
-    if isinstance(inferred_gu, str) and inferred_gu:
+    inferred_gu = _fallback_district_after_lookup(lookup_base, place)
+    if inferred_gu:
         return inferred_gu, True, place
-
-    corpus_gu = _lookup_corpus_road_number_district(lookup_base)
-    if corpus_gu:
-        return corpus_gu, True, place
 
     return None, False, place

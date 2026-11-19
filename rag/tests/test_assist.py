@@ -182,6 +182,7 @@ def test_progress_callback_uses_short_labels() -> None:
     seen: list[tuple[str, str]] = []
 
     def on_progress(key: str, label: str) -> None:
+        """진행 콜백으로 전달된 단계 키와 안내 문구를 수집합니다."""
         seen.append((key, label))
 
     run_assist(
@@ -230,6 +231,7 @@ def test_run_assist_faq_path_uses_second_call() -> None:
     calls: list[str] = []
 
     def llm(system: str, user: str) -> str:
+        """판정 단계와 FAQ 답변 단계에 맞는 모의 응답을 순서대로 반환합니다."""
         calls.append(system)
         if "판정기" in system:
             return (
@@ -273,6 +275,7 @@ def test_openai_api_provider_uses_responses_and_medium_effort(
     captured: dict = {}
 
     def fake_http(url: str, payload: dict, headers: dict) -> dict:
+        """OpenAI Responses 요청 매개변수를 기록하고 고정 텍스트 응답을 돌려줍니다."""
         captured.update({"url": url, "payload": payload, "headers": headers})
         return {"output_text": "응답"}
 
@@ -291,6 +294,7 @@ def test_openai_usage_reads_cached_tokens(monkeypatch: object) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     def fake_http(url: str, payload: dict, headers: dict) -> dict:
+        """cached_tokens 필드가 포함된 모의 OpenAI usage 응답을 반환합니다."""
         return {
             "output_text": "응답",
             "usage": {
@@ -328,6 +332,7 @@ def test_codex_cli_provider_uses_read_only_temp_workspace(monkeypatch: object) -
     )
 
     def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        """Codex CLI subprocess 인자와 키워드를 기록하고 성공 출력을 반환합니다."""
         captured.update({"args": args, **kwargs})
         return SimpleNamespace(returncode=0, stdout="CLI 응답\n", stderr="")
 
@@ -373,6 +378,7 @@ def test_windows_codex_cmd_wrapper_runs_node_entry(
     node.write_text("", encoding="utf-8")
 
     def fake_which(name: str) -> str | None:
+        """임시 디렉터리에 만든 codex.cmd·node.exe 경로를 조회합니다."""
         if name == "codex":
             return str(wrapper)
         if name == "node":
@@ -387,6 +393,7 @@ def test_windows_codex_cmd_wrapper_runs_node_entry(
     captured: dict = {}
 
     def fake_run(args: list[str], **kwargs: object) -> SimpleNamespace:
+        """실행 argv만 캡처하고 모의 Codex CLI 출력을 돌려줍니다."""
         captured["args"] = args
         return SimpleNamespace(returncode=0, stdout="CLI 응답\n", stderr="")
 

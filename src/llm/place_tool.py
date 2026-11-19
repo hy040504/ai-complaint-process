@@ -1027,20 +1027,23 @@ def _is_valid_two_word_combo(
     return True
 
 
-def extract_place_candidates(text: str) -> list[str]:
-    """긴 문장이나 복합 민원에서 장소명 후보 키워드 목록을 추출합니다.
-
-    도로명+번지 쌍과 고유 시설 복합어를 최우선으로 배치하고, 단독 일반 시설명
-    (`초등학교`·`아파트`·`시장`·`시청`), 행정구역 단독(`봉명동`), 무번지 다구 도로
-    단독 후보는 제외해 오매칭과 불필요한 외부 호출을 방지합니다.
+def _build_place_candidates(
+    text: str, road_num_pairs: list[str] | None = None
+) -> list[str]:
+    """미리 계산한 도로+번지 목록을 재사용해 장소명 후보 목록을 만듭니다.
 
     Args:
         text: 민원 문장 또는 검색어입니다.
+        road_num_pairs: 미리 추출한 '도로명 번지' 쌍 목록입니다. 생략 시 내부에서 추출합니다.
 
     Returns:
         우선순위가 높은 장소명 후보 문자열 목록입니다.
     """
-    tier_road_num = _extract_road_number_pairs(text)
+    tier_road_num = (
+        road_num_pairs
+        if road_num_pairs is not None
+        else _extract_road_number_pairs(text)
+    )
     refined_words = _clean_query_tokens(text)
     if not tier_road_num and not refined_words:
         return []
@@ -1103,6 +1106,22 @@ def extract_place_candidates(text: str) -> list[str]:
             ]
         )
     )
+
+
+def extract_place_candidates(text: str) -> list[str]:
+    """긴 문장이나 복합 민원에서 장소명 후보 키워드 목록을 추출합니다.
+
+    도로명+번지 쌍과 고유 시설 복합어를 최우선으로 배치하고, 단독 일반 시설명
+    (`초등학교`·`아파트`·`시장`·`시청`), 행정구역 단독(`봉명동`), 무번지 다구 도로
+    단독 후보는 제외해 오매칭과 불필요한 외부 호출을 방지합니다.
+
+    Args:
+        text: 민원 문장 또는 검색어입니다.
+
+    Returns:
+        우선순위가 높은 장소명 후보 문자열 목록입니다.
+    """
+    return _build_place_candidates(text)
 
 
 def extract_cheongju_district(address: str | None) -> str | None:
@@ -1304,6 +1323,33 @@ def _build_place_obj(
     }
 
 
+def _append_unique_place(
+    place_obj: dict[str, Any],
+    places: list[dict[str, Any]],
+    cheongju_places: list[dict[str, Any]],
+    seen_keys: set[tuple[str, str | None, str | None]],
+) -> None:
+    """중복되지 않은 정제 장소 항목을 전체·청주시 목록에 함께 추가합니다.
+
+    Args:
+        place_obj: `_build_place_obj`로 정규화한 장소·주소 딕셔너리입니다.
+        places: 전체 정제 결과를 누적하는 리스트입니다.
+        cheongju_places: 청주시 판정 결과를 누적하는 리스트입니다.
+        seen_keys: `(title, road_address, jibun_address)` 중복 제거용 집합입니다.
+    """
+    key = (
+        place_obj["title"],
+        place_obj["road_address"],
+        place_obj["jibun_address"],
+    )
+    if key in seen_keys:
+        return
+    seen_keys.add(key)
+    places.append(place_obj)
+    if place_obj["is_cheongju"]:
+        cheongju_places.append(place_obj)
+
+
 def _parse_navermap_items(
     raw_data: dict[str, Any], query_text: str
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -1331,27 +1377,15 @@ def _parse_navermap_items(
             title = _clean_text(item.get("title"))
             if not is_place_relevant(title, query_text):
                 continue
-            road_addr = _clean_text(item.get("roadAddress")) or None
-            jibun_addr = _clean_text(item.get("jibunAddress")) or None
             place_obj = _build_place_obj(
                 title=title,
-                road_addr=road_addr,
-                jibun_addr=jibun_addr,
+                road_addr=_clean_text(item.get("roadAddress")) or None,
+                jibun_addr=_clean_text(item.get("jibunAddress")) or None,
                 ctg=_clean_text(item.get("ctg")) or None,
                 x=item.get("x"),
                 y=item.get("y"),
             )
-            key = (
-                place_obj["title"],
-                place_obj["road_address"],
-                place_obj["jibun_address"],
-            )
-            if key in seen_keys:
-                continue
-            seen_keys.add(key)
-            places.append(place_obj)
-            if place_obj["is_cheongju"]:
-                cheongju_places.append(place_obj)
+            _append_unique_place(place_obj, places, cheongju_places, seen_keys)
 
     raw_addresses: list[dict[str, Any]] = []
     if isinstance(raw_data.get("address"), list):
@@ -1368,8 +1402,6 @@ def _parse_navermap_items(
         check_target = full_addr or title
         if not check_target or not _is_address_relevant(check_target, query_text):
             continue
-        gu = extract_cheongju_district(full_addr) or extract_cheongju_district(title)
-        ac_dong = _extract_ac_dong(raw_data, gu)
         place_obj = _build_place_obj(
             title=title,
             road_addr=full_addr or title,
@@ -1377,19 +1409,11 @@ def _parse_navermap_items(
             ctg="도로명주소",
             x=addr_item.get("x"),
             y=addr_item.get("y"),
-            fallback_dong=ac_dong,
         )
-        key = (
-            place_obj["title"],
-            place_obj["road_address"],
-            place_obj["jibun_address"],
-        )
-        if key in seen_keys:
-            continue
-        seen_keys.add(key)
-        places.append(place_obj)
-        if place_obj["is_cheongju"]:
-            cheongju_places.append(place_obj)
+        if place_obj["dong"] is None:
+            gu_hint = place_obj["gu"] or extract_cheongju_district(title)
+            place_obj["dong"] = _extract_ac_dong(raw_data, gu_hint)
+        _append_unique_place(place_obj, places, cheongju_places, seen_keys)
 
     return places, cheongju_places
 
@@ -1426,7 +1450,11 @@ def lookup_navermap_place(
         return _PLACE_CACHE[cache_key]
 
     road_num_pairs = _extract_road_number_pairs(text) if _allow_fallback else []
-    fallback_candidates = extract_place_candidates(text) if _allow_fallback else []
+    fallback_candidates = (
+        _build_place_candidates(text, road_num_pairs=road_num_pairs)
+        if _allow_fallback
+        else []
+    )
     if _allow_fallback and len(text.split()) >= 3 and not fallback_candidates:
         return {
             "query": text,

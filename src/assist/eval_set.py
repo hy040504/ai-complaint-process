@@ -52,7 +52,8 @@ def load_eval_spec(path: Path | None = None) -> dict[str, Any]:
         json.JSONDecodeError: JSON이 아니면 발생합니다.
     """
     target = path or EVAL_PATH
-    return json.loads(target.read_text(encoding="utf-8"))
+    loaded: dict[str, Any] = json.loads(target.read_text(encoding="utf-8"))
+    return loaded
 
 
 def validate_eval_spec(spec: dict[str, Any]) -> list[str]:

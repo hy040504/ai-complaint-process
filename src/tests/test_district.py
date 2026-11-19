@@ -212,6 +212,7 @@ def test_external_jurisdiction_prevents_homonym_dong_and_place_lookup(
     called = 0
 
     def fail_if_called(query: str, **_kwargs: object) -> dict[str, object]:
+        """외부 관할 문장에서 지도 조회가 호출되는지 감시하는 모의 조회 함수입니다."""
         nonlocal called
         called += 1
         return {

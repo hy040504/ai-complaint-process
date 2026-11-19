@@ -110,6 +110,7 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
     import src.llm.complete as complete
 
     def mock_http_json(url: str, body: dict, headers: dict) -> dict:
+        """EXAONE Chat Completions 요청 페이로드를 검증하고 모의 JSON을 반환합니다."""
         assert url == "https://api.exaone.ai/v1/chat/completions"
         assert headers["Authorization"] == "Bearer test-exaone-key"
         assert body["model"] == "k-exaone_v2.5"
@@ -313,6 +314,7 @@ def test_pipeline_unavailable_provider_reason_and_api_429_skip_followup(
     calls: list[str] = []
 
     def failing_api(system: str, user: str) -> str:
+        """429 속도 제한 오류를 발생시키는 모의 LLM 호출 함수입니다."""
         calls.append(system)
         raise ValueError("API 429: rate_limit_exceeded")
 
@@ -343,16 +345,22 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
     attempts = {"count": 0}
 
     class FakeOkResponse:
+        """http_json 재시도 성공 시컨텍스트 매니저로 동작하는 모의 HTTP 응답 객체입니다."""
+
         def __enter__(self) -> FakeOkResponse:
+            """컨텍스트 진입 시 자기 자신을 반환합니다."""
             return self
 
         def __exit__(self, *args: object) -> None:
+            """컨텍스트 종료 시 예외를 억제하지 않고 정리합니다."""
             return None
 
         def read(self) -> bytes:
+            """고정 JSON 바이트 응답을 돌려줍니다."""
             return b'{"ok": true}'
 
     def fake_urlopen(req: object, timeout: int = 180) -> FakeOkResponse:
+        """첫 호출에서는 retry-after-ms 포함 429 예외를 내고 두 번째에 성공합니다."""
         attempts["count"] += 1
         if attempts["count"] == 1:
             hdrs = Message()
@@ -380,6 +388,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
     attempts["count"] = 0
 
     def day_exhausted(req: object, timeout: int = 180) -> FakeOkResponse:
+        """일일 할당량 고갈 헤더가 실린 429 예외를 즉시 발생시킵니다."""
         attempts["count"] += 1
         hdrs = Message()
         hdrs["x-day-rate-limit-remaining"] = "0"
@@ -407,6 +416,7 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
     from src.rag import http as rag_http
 
     def timeout_urlopen(req: object, timeout: int = 180) -> object:
+        """소켓 읽기 시간 초과(TimeoutError)를 재현하는 모의 urlopen입니다."""
         raise TimeoutError("The read operation timed out")
 
     monkeypatch.setattr(rag_http.urllib.request, "urlopen", timeout_urlopen)
@@ -420,6 +430,7 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
         assert "12초" in str(exc)
 
     def raise_429(url: str, body: dict, headers: dict) -> dict:
+        """EXAONE rate_limit_exceeded 429 오류 메시지를 발생시킵니다."""
         raise ValueError('API 429: {"error":{"code":"rate_limit_exceeded"}}')
 
     monkeypatch.setattr(complete, "http_json", raise_429)

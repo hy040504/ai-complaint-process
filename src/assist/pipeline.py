@@ -20,7 +20,6 @@ from src.assist.constants import PROGRESS_LABELS
 from src.assist.district import (
     extract_external_jurisdiction,
     has_external_residence_context,
-    normalize_district,
     resolve_district_and_place,
 )
 from src.assist.prompts import (

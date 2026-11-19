@@ -54,6 +54,7 @@ def test_lookup_navermap_place_with_mock_results() -> None:
     called_count = 0
 
     def mock_fetch(query: str, coords: str) -> dict:
+        """캐시 적중 여부를 검증하기 위해 호출 횟수를 세고 고정 장소 JSON을 반환합니다."""
         nonlocal called_count
         called_count += 1
         return {
@@ -96,6 +97,7 @@ def test_lookup_navermap_place_handles_fetch_exception() -> None:
     """네트워크나 원격 API 오류 발생 시 예외를 던지지 않고 안전한 에러 객체를 반환합니다."""
 
     def failing_fetch(_query: str, coords: str = "") -> dict:
+        """네트워크 연결 실패 상황을 재현하는 모의 검색 함수입니다."""
         raise OSError("네트워크 연결 실패")
 
     res = lookup_navermap_place("없는장소", fetch_fn=failing_fetch)
@@ -111,6 +113,7 @@ def test_lookup_navermap_place_cache_hit() -> None:
     called_count = 0
 
     def mock_fetch(query: str, coords: str = "") -> dict:
+        """검색어 관련성과 무관 장소 필터링 검증용 모의 장소 목록을 반환합니다."""
         nonlocal called_count
         called_count += 1
         return {
@@ -175,6 +178,7 @@ def test_lookup_navermap_place_fallback_candidates() -> None:
     """문장형 검색 시 1차 결과가 없으면 후보 키워드로 fallback 검색하여 청주시 장소를 반환합니다."""
 
     def mock_fetch(query: str, coords: str = "") -> dict:
+        """긴 문장 검색은 비워 두고 정제 후보 검색에만 서원대 후문을 반환합니다."""
         # 문장 전체 검색 시에는 일치 장소 없음
         if "나무가" in query or len(query.split()) > 3:
             return {"place": []}
@@ -209,6 +213,7 @@ def test_lookup_navermap_place_bounds_fallback_recursion() -> None:
     called_queries: list[str] = []
 
     def empty_fetch(query: str, coords: str = "") -> dict:
+        """실제 호출된 후보 검색어를 기록하고 빈 장소 목록을 돌려줍니다."""
         called_queries.append(query)
         return {"place": []}
 

@@ -55,6 +55,13 @@ import {
 
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
+/**
+ * 지정한 범위(기본값 `document`)에서 CSS 선택자에 맞는 첫 요소를 찾습니다.
+ *
+ * @param {string} s CSS 선택자 문자열입니다.
+ * @param {ParentNode} [parent=document] 탐색 기준 루트 노드입니다.
+ * @returns {Element|null} 일치한 첫 번째 요소 또는 null입니다.
+ */
 const $ = (s, parent = document) => parent.querySelector(s);
 /** 서버 연결 전 또는 복원 기준으로 쓰는 기본 답변 템플릿 5종입니다. */
 const FALLBACK_TEMPLATES = [

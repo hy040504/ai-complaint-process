@@ -138,6 +138,7 @@ def test_run_assist_staff_draft_on_handoff() -> None:
     calls: list[str] = []
 
     def llm(system: str, user: str) -> str:
+        """판정·순화·담당자 초안 호출을 기록하고 역할별 모의 응답을 반환합니다."""
         calls.append(system)
         if "판정기" in system:
             return (
@@ -189,6 +190,7 @@ def test_run_assist_sanitize_then_staff_draft() -> None:
     calls: list[str] = []
 
     def llm(system: str, user: str) -> str:
+        """판정·순화·담당자 초안 호출을 기록하고 역할별 모의 응답을 반환합니다."""
         calls.append(system)
         if "판정기" in system:
             return (

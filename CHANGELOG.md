@@ -1,5 +1,13 @@
 # 변경 이력
 
+## 2026-11-20
+
+- **패치 정비 · 한국어 주석/JSDoc · 코드 최적화 · README/하네스 문서 디자인 정비 ([CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md)):**
+  - **중복 추론·미사용 제거 및 타입 강화 (`src/llm/place_tool.py`, `src/assist/district.py`, `eval_set.py`, `constants.py`, `pipeline.py`, `complaints/demo_data.py`):** `_build_place_candidates(text, road_num_pairs=...)`로 `lookup_navermap_place`의 `_extract_road_number_pairs` 중복 정규식 패스를 제거하고 `_append_unique_place()` 공용 헬퍼·`place_obj["gu"]` 재활용으로 `_parse_navermap_items` 중복을 정리했습니다. `district.py`는 `_fallback_district_after_lookup()`으로 지도→사례 색인 fallback을 통합했으며, `eval_set.py` `load_eval_spec` 타입 주석으로 `mypy --strict` `0` 오류를 맞추고 미사용 import(`normalize_district`, `timedelta`, `OpenAPI`) 및 PEP-484 `constants.py` 명시 재내보내기를 정비했습니다.
+  - **주석·docstring·JSDoc 및 깨진 링크 보완 (`src/tests/*`, `rag/tests/test_assist.py`, `ui/src/app.js`, `CASE-065`):** 테스트 내부 모의 헬퍼·클래스 21건 docstring과 `$()` JSDoc을 보완해 점검 대상 누락 0건·비한국어 0건을 확인했고, `CASE-065` 깨진 구 링크(`test_lab_runs.mjs`→`test_lab_runs.py`)를 고쳐 저장소 상대 링크 깨짐 **0건**을 달성했습니다.
+  - **README 디자인·하네스·서버 문서 동기화 (`README.md`, `decision-policy.md`, `architecture.md`, `src/README.md`, `src/lab_web/README.md`):** `README.md` `CASE-104` 잔여 표기·중복 접이식 인덱스를 통합하고 `CASE-100·103·106·107` 전/후 요약표·Mermaid 흐름도·`eval-200` 4종 차트 안내를 정비했으며, 하네스·서버 README를 최신 MCP/예외 가드/`4096` 상한 계약과 일치시켰습니다.
+  - **최종 검증:** `black --check`(수정 12파일), `mypy`(39모듈+`eval_set --strict`+`scripts/` 4종 **0오류**), `회귀검증_112건_규칙.py`(112건 실패 `0` · 5,015건 `exact=762/wrong=17/ext_fp=0`), `RUN_PG_TESTS=1 pytest src/tests` **`171 passed`**, `rag/tests` **`49 passed(3 skipped)`** + `rag.verify` **`passed: true`**, `ui check 19 / test 22/22`, 재기동 `:5010`·`:5000` `/api/v1/health` 200 및 `천안 두정동` `early_external_reject` 스모크 통과.
+
 ## 2026-11-19
 
 - **200건 실증 식별 미통과 10건·장소 노이즈 13건·경계 개선 패치 및 `:5010` 실서버 재검증 ([CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md)):**

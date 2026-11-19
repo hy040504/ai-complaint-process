@@ -160,7 +160,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_LLM_PROVIDER` | `exaone_api`, `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `EXAONE_API_KEY` | `exaone_api` 선택 시 LG AI연구원 EXAONE 무료 API 키. `.env`에만 보관 |
 | `EXAONE_URL` · `EXAONE_MODEL` | 기본 `https://api.exaone.ai/v1/chat/completions` · `k-exaone_v2.5` |
-| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 전역 추론 강도(기본 `max`)·최대 토큰(`16384`). 미지정 시 `EXAONE_DECISION_REASONING_EFFORT`(`high`)·`EXAONE_FAST_REASONING_EFFORT`(`low`, `faq_answer`/`sanitize` 상한 `4096`)로 단계별 차등 적용 |
+| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 전역 추론 강도(기본 `max`)·최대 토큰(`16384`). 미지정 시 `EXAONE_DECISION_REASONING_EFFORT`(`high`)·`EXAONE_FAST_REASONING_EFFORT`(`low`, `faq_answer`/`staff_draft`/`sanitize` 상한 `4096`)로 단계별 차등 적용 |
 | `EXAONE_TEMPERATURE` · `EXAONE_TOP_P` | 생성 다양성 기본 `0.7` · `0.95` |
 | `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
 | `COMPLAINT_LLM_MODEL` · `COMPLAINT_LLM_REASONING_EFFORT` | 기본 `gpt-6-luna` · `medium` |
@@ -176,7 +176,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.
 `COMPLAINT_LLM_PROVIDER=exaone_api`(또는 검사기 화면에서 K-EXAONE 선택)이면 `EXAONE_API_KEY`로 `https://api.exaone.ai/v1/chat/completions`(또는 `EXAONE_URL`) Chat Completions API의 `k-exaone_v2.5`(또는 `EXAONE_MODEL`)를 호출하며, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·`EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 전달해 추론 토큰(`reasoning_tokens`)을 포함한 충분한 토큰 한도와 코드 울타리 정리(`strip_code_fence`)를 적용합니다. 일시적인 HTTP 429(`rate_limit_exceeded`·동시 요청 한도)에는 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도(일일 한도 `x-day-rate-limit-remaining: 0` 시 즉시 종료)하고, 판정 API 실패 시 후속 초안·순화 호출을 연달아 보내지 않습니다. `openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 사전 추적한 `inferred_place`를 사용자 JSON에 실어 보냅니다. MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 `resolve_district_and_place`·네이버 `address`/`ac`(HTTP 400/429 60초 서킷브레이커)·공개 사례 235쌍 도로+번지 색인으로 사전 추적한 지역·`inferred_place`를 사용자 JSON에 실어 보냅니다(`validate_decision`의 `'담당자 연결'` 예외 보류 가드 포함). MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
 다시 실행합니다. 모든 공급자는 검색 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약을 그대로 유지합니다. 민원 CRUD 백그라운드 분석에서도 `aiAssist`·`aiCandidate`·`draft`는 담당자 전용 응답에만 포함하고 시민 응답(`PublicComplaint`·`PublicWorkspace`)에서는 제거하며, `automaticTransfer=False`·자동 게시 금지 원칙을 지킵니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. PREFIX 조립 적격은
 [`src/assist/prefix_cache.py`](assist/prefix_cache.py)가 검사하고, openai_api

@@ -9,7 +9,6 @@ import uuid
 from typing import Any
 
 from flask.testing import FlaskClient
-from flask_openapi3 import OpenAPI
 import psycopg
 from psycopg import sql
 import pytest
