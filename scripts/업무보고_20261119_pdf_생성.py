@@ -22,10 +22,10 @@ if str(_SCRIPTS_DIR) not in sys.path:
 from 보고서_공통 import (  # noqa: E402
     WORK_REPORT_CSS,
     UiFixCapture,
-    encode_binary_data_uri,
     encode_file,
     extract_unique_pdf_images,
     render_html_to_pdf,
+    render_ui_captures_html,
 )
 
 ROOT_DIR = _SCRIPTS_DIR.parent
@@ -432,7 +432,7 @@ def _build_att1_page2_html() -> str:
     <tbody>
       <tr>
         <td><strong>도로명·번지 주소 및<br>외부 지도 제한 대응</strong></td>
-        <td>건물명 없이 도로명·번지만 적힌 주소가 빠지거나, 지도 연속 호출 제한(400) 시 반복 대기로 최대 62초대 지연 발생</td>
+        <td>건물명 없이 도로명·번지만 적힌 주소가 빠지거나, 지도 연속 호출 제한 시 반복 대기로 최대 62초대 지연 발생</td>
         <td>도로·번지 주소 결과와 괄호 동명까지 통합해 읽고, 연속 제한 시 60초 대기 차단기를 적용해 연쇄 지연(<strong>62.7초→24.8초</strong>)을 크게 줄임</td>
       </tr>
       <tr>
@@ -617,22 +617,13 @@ def _build_compare_card_html(item: UiCompareItem, unique_images: list[bytes]) ->
       </tr>"""
             )
     rows_html = "\n".join(rows_html_parts)
-
-    captures_html = ""
-    if item.captures:
-        layout_class = "ui-cap-grid" if item.side_by_side else "ui-cap-stack"
-        capture_blocks = "\n".join(
-            f"""    <div>
-      <div class="ui-cap-label">{html.escape(cap.label)}</div>
-      <div class="ui-img-box">
-        <img src="{encode_binary_data_uri(unique_images[cap.unique_index], 'image/png')}"
-             alt="{html.escape(item.title + ' - ' + cap.label)}"
-             style="max-height: {item.max_img_height_mm}mm;">
-      </div>
-    </div>"""
-            for cap in item.captures
-        )
-        captures_html = f'\n  <div class="{layout_class}">\n{capture_blocks}\n  </div>'
+    captures_html = render_ui_captures_html(
+        item.title,
+        item.captures,
+        unique_images,
+        side_by_side=item.side_by_side,
+        max_img_height_mm=item.max_img_height_mm,
+    )
 
     return f"""  <div class="ui-item-card">
     <h3 class="ui-item-head">{html.escape(item.title)}</h3>

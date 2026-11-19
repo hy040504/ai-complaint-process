@@ -73,6 +73,7 @@ def test_bridge_runs_search_then_llm() -> None:
     calls: list[str] = []
 
     def llm(system: str, user: str) -> str:
+        """판정기 및 FAQ 안내 호출 순서를 기록하고 고정 모의 응답을 반환합니다."""
         calls.append(system)
         if "판정기" in system:
             return (

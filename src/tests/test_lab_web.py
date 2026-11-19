@@ -68,6 +68,7 @@ def app(runs_dir: Path) -> Flask:
     """합성 응대로 검사기 웹을 만듭니다."""
 
     def fake_assist(query: str, district: str | None, limit: int, rerank: bool) -> dict:
+        """기본 `limit=5`·`rerank=False` 전달을 검증하는 모의 응대 함수입니다."""
         assert limit == 5
         assert rerank is False
         return _assist_payload(query, district)
@@ -111,6 +112,7 @@ def test_handle_complaint_runs_assist() -> None:
     seen: list[tuple[str, str | None, int, bool]] = []
 
     def fake(query: str, district: str | None, limit: int, rerank: bool) -> dict:
+        """전달 인자를 기록하고 고정 검사기 페이로드를 반환하는 모의 함수입니다."""
         seen.append((query, district, limit, rerank))
         return _assist_payload(query, district)
 
@@ -390,5 +392,3 @@ def test_fields_and_index_expose_providers_and_badges(client: FlaskClient) -> No
         'id="result-llm"',
     ):
         assert token in html
-
-

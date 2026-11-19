@@ -19,6 +19,7 @@ def test_search_complaint_rag_rejects_empty_or_unknown_district() -> None:
     called = {"n": 0}
 
     def fetch(*_args: object, **_kwargs: object) -> dict:
+        """검색 API 호출 횟수 증가를 방지해야 할 때 쓰는 모의 조회 함수입니다."""
         called["n"] += 1
         return {}
 
@@ -41,6 +42,7 @@ def test_search_complaint_rag_returns_gate_contract() -> None:
     """도구 결과는 판정용 후보이고 검색 전용 계약을 유지합니다."""
 
     def fetch(query: str, district: str | None, **_kwargs: object) -> dict:
+        """정규화된 질의·지역 인자를 검증하고 모의 검색 결과를 반환합니다."""
         assert query == "대형폐기물"
         assert district == "상당구"
         return {

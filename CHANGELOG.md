@@ -2,6 +2,11 @@
 
 ## 2026-11-20
 
+- **11/19 업무보고 PDF 공용화·저장소 전수 주석/JSDoc·`README`/`docs` 가독성 개편 ([CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md)):**
+  - **공용 UI 캡처 헬퍼 통합 (`scripts/보고서_공통.py`, `업무보고_20261118_pdf_생성.py`, `업무보고_20261119_pdf_생성.py`):** `render_ui_captures_html()`로 11/18·11/19 UI 캡처 그리드 조립 중복을 제거하고 11/18 불필요 1줄 래퍼(`extract_unique_ui_images`) 및 11/19 보고서 내 상태 코드 표기`(400)`를 삭제해 8쪽 보고서(`711,758 bytes`)를 재생성했습니다.
+  - **저장소 전수 한국어 docstring · 타입 정리 (`db/load_samples.py`, `scripts/응대_비교.py`, `src/tests/*`):** 추적 중인 114개 `.py`·21개 `.js` 파일 전수 검사 후 `db/load_samples.py`(모듈+7함수 Google docstring·한글화), `scripts/응대_비교.py`(3함수 `Args:`/`Returns:`·`mypy` 2오류 해소), 테스트 내부 모의 헬퍼 6건(`test_assist_api.py`·`test_backend_split.py`·`test_lab_web.py`·`test_rag_tool.py`)을 모두 보완했습니다.
+  - **`docs/README.md` · `README.md` 가독성 개편 및 최종 검증:** 장문 벽돌 문단을 4개 불릿으로 분리하고 `CASE-108`·`11/19 8Pages` 배지 반영 후 `black`·`mypy`·전수 주석/JSDoc·135개 Markdown 링크 깨짐 `0건`·`171`/`49`/`22`/규칙 `112` 검증을 마쳤습니다.
+
 - **패치 정비 · 한국어 주석/JSDoc · 코드 최적화 · README/하네스 문서 디자인 정비 ([CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md)):**
   - **중복 추론·미사용 제거 및 타입 강화 (`src/llm/place_tool.py`, `src/assist/district.py`, `eval_set.py`, `constants.py`, `pipeline.py`, `complaints/demo_data.py`):** `_build_place_candidates(text, road_num_pairs=...)`로 `lookup_navermap_place`의 `_extract_road_number_pairs` 중복 정규식 패스를 제거하고 `_append_unique_place()` 공용 헬퍼·`place_obj["gu"]` 재활용으로 `_parse_navermap_items` 중복을 정리했습니다. `district.py`는 `_fallback_district_after_lookup()`으로 지도→사례 색인 fallback을 통합했으며, `eval_set.py` `load_eval_spec` 타입 주석으로 `mypy --strict` `0` 오류를 맞추고 미사용 import(`normalize_district`, `timedelta`, `OpenAPI`) 및 PEP-484 `constants.py` 명시 재내보내기를 정비했습니다.
   - **주석·docstring·JSDoc 및 깨진 링크 보완 (`src/tests/*`, `rag/tests/test_assist.py`, `ui/src/app.js`, `CASE-065`):** 테스트 내부 모의 헬퍼·클래스 21건 docstring과 `$()` JSDoc을 보완해 점검 대상 누락 0건·비한국어 0건을 확인했고, `CASE-065` 깨진 구 링크(`test_lab_runs.mjs`→`test_lab_runs.py`)를 고쳐 저장소 상대 링크 깨짐 **0건**을 달성했습니다.

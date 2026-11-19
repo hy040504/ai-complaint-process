@@ -4,13 +4,13 @@
 
 처음에는 프로젝트 소개에서 현재 구현 범위를 확인하고, 아래에서 작업에 맞는 문서를 선택합니다. **구현된 기능**, **다음 단계의 설계**, **원래 계획서**를 구분해 읽습니다. 개별 패치의 경위는 [사례 색인](cases/README.md), 날짜별 요약은 [CHANGELOG](../CHANGELOG.md)입니다.
 
-기준일: **2026-11-19 UTC**.
+기준일: **2026-11-20 KST**.
 
 ## 시작점
 
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`)](report/README.md), [테스트 분석 보고서 (`docs/test/`)](test/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`, 11/04~11/19)](report/README.md), [테스트 분석 (`docs/test/`, 200건·112건)](test/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
@@ -34,7 +34,10 @@
 
 ## 현재 구현과 데이터 위치
 
-검색 CLI/API, 시연 웹(시민·담당자 UI, Flask, PostgreSQL `complaint_app`), 응대 CLI/`src/lab_web` `:5010`/`민원-응대.cmd`까지 로컬에서 동작합니다. 판정·FAQ 안내·담당자 초안·순화 시스템 접두는 `docs/harness/prompts/` PREFIX-00~04입니다. Flask `src/`는 민원 웹·검색 클라이언트·LLM·연결 계층으로 나뉩니다. `llm` 브랜치 검사기는 제목·상세로 지명·장소(`resolve_district_and_place`·`lookup_navermap_place`)를 추적하고 검색한 뒤 선택한 공급자로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs` 파일)에서 이전 결과를 고를 수 있습니다. 검사기 UI는 `.env` API 키·실행 파일 상태에 따라 미설정 공급자를 비활성화·흔들림 안내합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`와 `lookup_navermap_place` 도구를 제공하고 `assist.codex`에 사용자 JSON과 프롬프트 정보를, `assist.llmProvider`·`assist.llmModel`에 실제 실행한 LLM 엔진·모델 정보를 실습니다. 응대 검사기 화면에서는 보낸 데이터(JSON)를 상단, 보낸 프롬프트를 하단에 사용한 엔진별로 구분해 표시하며, `.env 기본` 단추에도 해석된 기본 엔진명을 함께 보여 줍니다. LLM은 `K-EXAONE 2.5`(`exaone_api`, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`), `gpt-6-luna`(`openai_api`), 또는 `codex_cli`로 고릅니다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `e5-small`, 기존 dump는 bge-m3입니다. Windows는 `검사기-시작.cmd`로 `:5010`을 열고, `검색-시작.cmd`로 PostgreSQL과 검색 API를 켭니다. 이 호스트의 5,109건은 `e5-small-ko`로 적재했습니다. PREFIX-03/04는 검사기·CLI 후속 호출이다. 검색 예제 10건은 e5-small-ko에서 재평가했다. PREFIX 조립은 캐시 적격이다. 초안 응대 평가셋은 유형별 29건(개발 26/26, 보류 3/3)이다. 400문항은 제안이다. openai_api `cached_tokens`는 키가 없어 건너뛰었다. 시민 챗봇 실연결·담당자 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+- **검색·판정 계층:** 검색 CLI/API, 응대 CLI/`minwon`/`src/lab_web` `:5010`이 로컬에서 동작하며, `docs/harness/prompts/` `PREFIX-00~04`로 판정·조건 보존 FAQ 안내·담당자 초안(`out_of_scope` 고정 템플릿)·순화 요약을 분리 실행(`PREFIX-03∥04` 병렬, 순수 타지역 `early_external_reject`)합니다.
+- **응대 검사기 (`:5010`, `llm` 브랜치 기본):** 제목·상세로 지명·도로명+번지·사례 235쌍 도로 색인·네이버 지도(`address`/`ac`·HTTP 400/429 60초 서킷브레이커)를 추적해 검색하고 선택한 공급자(`K-EXAONE 2.5` 단계별 차등 `high`/`low<=4096`·`GPT-6 Luna`·`Codex CLI`)로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs`) 클릭 시 입력 폼을 복원합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`·`lookup_navermap_place` 2종을 제공합니다(`PREFIX-02`/`04`는 `_disable_mcp`).
+- **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`), Flask, PostgreSQL `complaint_app` 및 비동기 AI 분석 워커를 지원하며, 미게시 초안 비노출·`automaticTransfer=False` 원칙을 지킵니다.
+- **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` + 표적 `12/12` 재검증과 규칙 `112/5,015` 회귀를 통과했습니다. `openai_api` `cached_tokens` 실측·시민 챗봇 실연결·담당자 실시간 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -55,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-108](cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) | 2026-11-20 | 11/19 종합 업무보고 8쪽 PDF([`업무보고_20261119.pdf`](report/업무보고_20261119.pdf)), `보고서_공통.py` UI 캡처 공용화, 저장소 114 Py/21 JS 전수 docstring/JSDoc·`db/load_samples.py`·`응대_비교.py` 정비, `README.md`/`docs/README.md` 가독성 개편 및 최종 검증 | 완료 |
 | [CASE-107](cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) | 2026-11-20 | 패치 정비: `place_tool`/`district` 중복 추론·미사용 import 제거, `eval_set --strict`, 테스트 모의 docstring 21건·JSDoc 보완, `decision-policy`/`architecture`/`README` 정비 및 전수 검증(`171`/`49`/`22`) | 완료 |
 | [CASE-106](cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) | 2026-11-19 | 200건 실증 비통과 10건(`B12·A35·A31·C09·B22~B24·B35·F05·F09`)·장소 노이즈 13건·`C32`/`D20` 경계 패치(`address`/`ac` 파싱, HTTP 400 서킷브레이커, 사례 도로+번지 색인, 일반시설/관공서 필터, `PREFIX-01` 예외/조건 가드, `staff_draft` 4096 상한) 및 `:5010` 표적 12건·`src/tests 171` 통과 | 완료 |
 | [CASE-105](cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) | 2026-11-19 | `:5010` 200건(기존 112건 재측정+신규 88건) 재실증 (`190/200, 95.0%`·D축 100%·EXAONE 14/14·조기차단 0.012s), SourceTrail 스타일 14쪽 PDF·SVG 4종 생성 및 잔여 한계 4과제 식별 | 완료 |

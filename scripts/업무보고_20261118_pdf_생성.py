@@ -267,18 +267,6 @@ WORK_SCENES_PAGE_4: tuple[WorkSceneSpec, ...] = (
 _REPORT_CSS = WORK_REPORT_CSS
 
 
-def extract_unique_ui_images(ui_pdf_path: Path) -> list[bytes]:
-    """원본 `UI_수정_보고_2026-11-18.pdf`에서 XObject 중복을 제거한 고유 PNG 14장을 추출합니다.
-
-    Args:
-        ui_pdf_path: 원본 UI 수정 보고서 PDF 파일 경로입니다.
-
-    Returns:
-        고유 PNG 이미지 바이트 리스트(14장)입니다.
-    """
-    return extract_unique_pdf_images(ui_pdf_path)
-
-
 def _build_page1_main_report_html() -> str:
     """1페이지: `업무보고_20261111.pdf` 틀을 바탕으로 쉽고 명확히 정리한 11/18 메인 표를 반환합니다.
 
@@ -623,7 +611,7 @@ def build_report_html(scenes_dir: Path, ui_pdf_path: Path) -> str:
     Returns:
         인쇄 가능한 완결형 HTML 문자열입니다.
     """
-    unique_images = extract_unique_ui_images(ui_pdf_path)
+    unique_images = extract_unique_pdf_images(ui_pdf_path)
     if len(unique_images) != 14:
         raise ValueError(
             f"UI_수정_보고_2026-11-18.pdf에서 14개 고유 이미지를 예상했으나 {len(unique_images)}개 추출됨"

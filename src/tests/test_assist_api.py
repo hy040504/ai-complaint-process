@@ -111,6 +111,7 @@ def test_assist_stream_sends_progress_then_result(
     def fake_iter(
         query: str, district: str | None, limit: int, rerank: bool
     ) -> Iterator[dict]:
+        """스트림 진행 이벤트와 최종 done 페이로드를 생성하는 모의 이터레이터입니다."""
         yield {
             "type": "progress",
             "key": "search",

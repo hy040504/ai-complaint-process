@@ -520,6 +520,43 @@ def extract_unique_pdf_images(pdf_path: Path) -> list[bytes]:
     return unique
 
 
+def render_ui_captures_html(
+    title: str,
+    captures: tuple[UiFixCapture, ...],
+    unique_images: list[bytes],
+    *,
+    side_by_side: bool,
+    max_img_height_mm: int,
+) -> str:
+    """UI 수정 항목의 전/후 비교 캡처 블록 HTML을 조립합니다.
+
+    Args:
+        title: alt 속성에 사용할 UI 수정 항목 제목입니다.
+        captures: 표시할 고유 캡처 메타데이터 튜플입니다.
+        unique_images: 원본 PDF에서 추출한 고유 PNG 바이트 리스트입니다.
+        side_by_side: 2열 나란히 배치하면 True, 세로 적층이면 False입니다.
+        max_img_height_mm: 캡처 이미지 최대 높이(mm)입니다.
+
+    Returns:
+        캡처 그리드 HTML 문자열입니다. 캡처가 없으면 빈 문자열입니다.
+    """
+    if not captures:
+        return ""
+    layout_class = "ui-cap-grid" if side_by_side else "ui-cap-stack"
+    capture_blocks = "\n".join(
+        f"""    <div>
+      <div class="ui-cap-label">{html.escape(cap.label)}</div>
+      <div class="ui-img-box">
+        <img src="{encode_binary_data_uri(unique_images[cap.unique_index], 'image/png')}"
+             alt="{html.escape(title + ' - ' + cap.label)}"
+             style="max-height: {max_img_height_mm}mm;">
+      </div>
+    </div>"""
+        for cap in captures
+    )
+    return f'\n  <div class="{layout_class}">\n{capture_blocks}\n  </div>'
+
+
 def build_ui_item_card_html(item: UiFixItem, unique_images: list[bytes]) -> str:
     """UI 수정 보고서 개별 항목 카드 HTML을 원문 무수정으로 조립합니다.
 
@@ -542,22 +579,13 @@ def build_ui_item_card_html(item: UiFixItem, unique_images: list[bytes]) -> str:
         if item.rule_note
         else ""
     )
-
-    captures_html = ""
-    if item.captures:
-        layout_class = "ui-cap-grid" if item.side_by_side else "ui-cap-stack"
-        capture_blocks = "\n".join(
-            f"""    <div>
-      <div class="ui-cap-label">{html.escape(cap.label)}</div>
-      <div class="ui-img-box">
-        <img src="{encode_binary_data_uri(unique_images[cap.unique_index], 'image/png')}"
-             alt="{html.escape(item.title + ' - ' + cap.label)}"
-             style="max-height: {item.max_img_height_mm}mm;">
-      </div>
-    </div>"""
-            for cap in item.captures
-        )
-        captures_html = f'\n  <div class="{layout_class}">\n{capture_blocks}\n  </div>'
+    captures_html = render_ui_captures_html(
+        item.title,
+        item.captures,
+        unique_images,
+        side_by_side=item.side_by_side,
+        max_img_height_mm=item.max_img_height_mm,
+    )
 
     return f"""  <div class="ui-item-card">
     <h3 class="ui-item-head">{html.escape(item.title)}</h3>

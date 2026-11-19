@@ -10,6 +10,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -48,15 +49,22 @@ CASES = (
 REPORTS = ROOT / "rag" / "reports"
 
 
-def _run_cases(provider: str) -> dict:
-    """프로세스 공급자를 잠시 바꾸고 고정 예제를 돌립니다."""
+def _run_cases(provider: str) -> dict[str, Any]:
+    """프로세스 공급자를 잠시 바꾸고 고정 예제를 돌립니다.
+
+    Args:
+        provider: 일시 적용할 LLM 공급자 키(`codex_cli`, `openai_api`, `exaone_api`)입니다.
+
+    Returns:
+        공급자·모델 메타와 예제별 실행 요약 딕셔너리입니다.
+    """
     settings = use_provider(provider)
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
     started_all = time.perf_counter()
     for item in CASES:
         started = time.perf_counter()
         result = run_assist(
-            item["query"],
+            str(item["query"]),
             item["district"],
             limit=5,
             rerank=False,
@@ -91,8 +99,15 @@ def _run_cases(provider: str) -> dict:
     }
 
 
-def _probe_prefix_cache(settings: dict) -> dict:
-    """같은 시스템 지시로 두 번 호출해 cached_tokens를 읽습니다."""
+def _probe_prefix_cache(settings: dict[str, Any]) -> dict[str, Any]:
+    """같은 시스템 지시로 두 번 호출해 cached_tokens를 읽습니다.
+
+    Args:
+        settings: `llm_settings()` 호환 공급자 설정 딕셔너리입니다.
+
+    Returns:
+        1차/2차 usage·적중 여부(`hit`)를 담은 결과 딕셔너리입니다.
+    """
     first = complete_result(
         DECISION_SYSTEM,
         json.dumps(
@@ -108,8 +123,8 @@ def _probe_prefix_cache(settings: dict) -> dict:
         ),
         settings=settings,
     )
-    first_cached = (first.usage or {}).get("cached_tokens")
-    second_cached = (second.usage or {}).get("cached_tokens")
+    first_cached = first.usage.get("cached_tokens") if first.usage else None
+    second_cached = second.usage.get("cached_tokens") if second.usage else None
     return {
         "ran": True,
         "first_usage": first.usage,
@@ -126,7 +141,13 @@ def _probe_prefix_cache(settings: dict) -> dict:
     }
 
 
-def _write(path: Path, payload: dict) -> None:
+def _write(path: Path, payload: dict[str, Any]) -> None:
+    """실측 결과 딕셔너리를 지정한 JSON 파일 경로에 들여쓰기 형식으로 저장합니다.
+
+    Args:
+        path: 저장할 JSON 출력 경로입니다.
+        payload: JSON으로 직렬화할 결과 객체입니다.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
