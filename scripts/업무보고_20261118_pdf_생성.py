@@ -9,9 +9,7 @@
 
 from __future__ import annotations
 
-import base64
 from dataclasses import dataclass
-import hashlib
 import html
 from pathlib import Path
 import sys
@@ -21,7 +19,15 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from 보고서_공통 import render_html_to_pdf  # noqa: E402
+from 보고서_공통 import (  # noqa: E402
+    WORK_REPORT_CSS,
+    UiFixCapture,
+    UiFixItem,
+    build_ui_detail_pages_html,
+    encode_file,
+    extract_unique_pdf_images,
+    render_html_to_pdf,
+)
 
 ROOT_DIR = _SCRIPTS_DIR.parent
 DEFAULT_UI_PDF = Path(
@@ -31,27 +37,6 @@ DEFAULT_SCENES_DIR = Path(
     r"C:\Users\user\.gemini\antigravity-cli\brain\3197986d-ee70-477b-9852-28bbba3b7616\scratch"
 )
 OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "report" / "업무보고_20261118.pdf"
-
-
-@dataclass(frozen=True)
-class UiFixCapture:
-    """원본 `UI_수정_보고_2026-11-18.pdf`에 수록된 고유 캡처 이미지 설명입니다."""
-
-    unique_index: int
-    label: str
-
-
-@dataclass(frozen=True)
-class UiFixItem:
-    """원본 `UI_수정_보고_2026-11-18.pdf`의 항목 한 건을 원문 무수정으로 보관합니다."""
-
-    code: str
-    title: str
-    rule_note: str
-    detail_rows: tuple[tuple[str, str], ...]
-    captures: tuple[UiFixCapture, ...] = ()
-    side_by_side: bool = True
-    max_img_height_mm: int = 86
 
 
 @dataclass(frozen=True)
@@ -279,371 +264,7 @@ WORK_SCENES_PAGE_4: tuple[WorkSceneSpec, ...] = (
 )
 
 
-_REPORT_CSS = """
-  @page {
-    size: A4 portrait;
-    margin: 9mm 12mm 9mm 12mm;
-  }
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    font-family: "Malgun Gothic", "맑은 고딕", Dotum, sans-serif;
-    color: #111;
-    margin: 0;
-    padding: 0;
-    font-size: 8.6pt;
-    line-height: 1.40;
-    letter-spacing: -0.3px;
-    -webkit-print-color-adjust: exact;
-  }
-  .page-break {
-    page-break-after: always;
-  }
-  .page-break:last-child {
-    page-break-after: auto;
-  }
-  h1.title {
-    text-align: center;
-    font-size: 19pt;
-    font-weight: 800;
-    margin: 0 0 9px 0;
-    letter-spacing: 3px;
-  }
-  h1.sub-title {
-    text-align: center;
-    font-size: 16.5pt;
-    font-weight: 800;
-    margin: 0 0 6px 0;
-    letter-spacing: 1px;
-  }
-  table.report-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1.2px solid #222;
-  }
-  table.report-table th,
-  table.report-table td {
-    border: 1px solid #333;
-    padding: 4.5px 8px;
-  }
-  .label-cell {
-    width: 14%;
-    text-align: center;
-    font-weight: bold;
-    vertical-align: middle;
-    background-color: #ffffff;
-    line-height: 1.35;
-  }
-  .header-label {
-    width: 14%;
-    text-align: center;
-    font-weight: bold;
-    background-color: #ffffff;
-    white-space: nowrap;
-  }
-  .header-val {
-    width: 36%;
-  }
-  .full-val {
-    width: 86%;
-    vertical-align: top;
-  }
-  .section-title {
-    font-weight: bold;
-    margin-top: 3px;
-    margin-bottom: 1.2px;
-    color: #000;
-  }
-  .section-title:first-child {
-    margin-top: 0;
-  }
-  .bullet-item {
-    margin: 1.3px 0;
-    padding-left: 10px;
-    text-indent: -10px;
-    word-break: keep-all;
-  }
-  .highlight-tag {
-    font-weight: bold;
-    color: #0f766e;
-  }
-
-  /* 별첨 공통 헤더 */
-  .att-header {
-    text-align: center;
-    margin-bottom: 8px;
-    border-bottom: 1.5px solid #222;
-    padding-bottom: 5px;
-  }
-  .att-header h2 {
-    font-size: 14pt;
-    font-weight: 800;
-    margin: 0 0 2px 0;
-  }
-  .att-meta {
-    font-size: 8.2pt;
-    color: #555;
-    margin: 0;
-  }
-  .att-sec-title {
-    text-align: left;
-    font-size: 10.3pt;
-    font-weight: 800;
-    margin: 9px 0 4.5px 0;
-    color: #111;
-  }
-
-  /* 비교표 */
-  table.diff-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1.2px solid #222;
-    margin-top: 3px;
-    font-size: 8pt;
-    line-height: 1.38;
-  }
-  table.diff-table th {
-    background-color: #f3f5f8;
-    border: 1px solid #333;
-    padding: 4.5px 6.5px;
-    text-align: center;
-    font-weight: bold;
-  }
-  table.diff-table td {
-    border: 1px solid #333;
-    padding: 4.5px 7px;
-    vertical-align: middle;
-    word-break: keep-all;
-  }
-  .col-center {
-    text-align: center;
-    white-space: nowrap;
-  }
-  code {
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 7.7pt;
-    background: #f1f5f9;
-    padding: 0.5px 3px;
-    border-radius: 2px;
-  }
-
-  /* 2쪽 쉬운 흐름 다이어그램 */
-  .flow-box {
-    border: 1px solid #cbd5e1;
-    border-radius: 5px;
-    background: #f8fafc;
-    padding: 8px 10px;
-    margin-top: 4px;
-  }
-  .flow-grid {
-    display: grid;
-    grid-template-columns: 1fr 18px 1fr 18px 1fr 18px 1fr;
-    align-items: stretch;
-    gap: 3px;
-  }
-  .flow-step {
-    background: #ffffff;
-    border: 1px solid #94a3b8;
-    border-radius: 4px;
-    padding: 6px 7px;
-  }
-  .flow-step-num {
-    font-size: 7.4pt;
-    font-weight: 800;
-    color: #0f766e;
-    margin-bottom: 2px;
-  }
-  .flow-step-title {
-    font-size: 8.5pt;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 3px;
-  }
-  .flow-step-desc {
-    font-size: 7.6pt;
-    color: #334155;
-    line-height: 1.35;
-    word-break: keep-all;
-  }
-  .flow-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11pt;
-    font-weight: 800;
-    color: #0f766e;
-  }
-  .flow-branches {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin-top: 6px;
-  }
-  .flow-branch {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-left: 3px solid #2563eb;
-    border-radius: 3px;
-    padding: 4.5px 7px;
-    font-size: 7.6pt;
-    color: #1e293b;
-    word-break: keep-all;
-  }
-  .flow-branch.warn {
-    border-left-color: #d97706;
-  }
-  .flow-branch.safe {
-    border-left-color: #0f766e;
-  }
-  .flow-branch b {
-    display: block;
-    font-size: 7.9pt;
-    margin-bottom: 1.5px;
-    color: #0f172a;
-  }
-
-  /* 실서버 캡처 장면 */
-  .scene-block {
-    margin-top: 7px;
-    margin-bottom: 9px;
-  }
-  .scene-cap {
-    font-size: 9pt;
-    font-weight: 700;
-    color: #111;
-    margin: 0 0 2.5px 0;
-  }
-  .scene-sub {
-    font-size: 7.9pt;
-    color: #444;
-    margin: 0 0 4px 0;
-    word-break: keep-all;
-  }
-  .scene-img-wrap {
-    border: 1px solid #94a3b8;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #fff;
-    text-align: center;
-  }
-  .scene-img-wrap img {
-    width: 100%;
-    height: auto;
-    max-height: 103mm;
-    object-fit: contain;
-    object-position: top center;
-    display: block;
-    margin: 0 auto;
-  }
-
-  /* 별첨 2: UI 수정 보고서 카드/표 (원문 무수정 · 기존 양식 통일) */
-  .ui-item-card {
-    border: 1.1px solid #333;
-    border-radius: 4px;
-    padding: 6.5px 8.5px;
-    margin-bottom: 8px;
-    background: #fff;
-    break-inside: avoid;
-  }
-  .ui-item-head {
-    font-size: 10.2pt;
-    font-weight: 800;
-    color: #111;
-    margin: 0 0 4.5px 0;
-    padding-bottom: 3.5px;
-    border-bottom: 1px solid #cbd5e1;
-  }
-  table.ui-meta-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 5px;
-    font-size: 8pt;
-    line-height: 1.36;
-  }
-  table.ui-meta-table th {
-    width: 14%;
-    background: #f3f5f8;
-    border: 1px solid #64748b;
-    padding: 3px 5.5px;
-    text-align: center;
-    font-weight: 700;
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-  table.ui-meta-table td {
-    border: 1px solid #64748b;
-    padding: 3px 6.5px;
-    vertical-align: middle;
-    word-break: keep-all;
-  }
-  .ui-extra-note {
-    margin: 0 0 4.5px 0;
-    padding: 2.5px 6.5px;
-    background: #f8fafc;
-    border-left: 2.5px solid #0f766e;
-    font-size: 7.7pt;
-    color: #334155;
-  }
-  .ui-cap-label {
-    font-size: 7.9pt;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 3.5px 0 2px 0;
-  }
-  .ui-cap-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    align-items: start;
-  }
-  .ui-cap-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .ui-img-box {
-    border: 1px solid #94a3b8;
-    border-radius: 3px;
-    background: #ffffff;
-    overflow: hidden;
-    text-align: center;
-    padding: 2px;
-  }
-  .ui-img-box img {
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto;
-  }
-"""
-
-
-def encode_binary_data_uri(raw: bytes, mime: str) -> str:
-    """바이너리 데이터를 HTML 임베딩용 base64 data URI로 변환합니다.
-
-    Args:
-        raw: 원본 이미지 바이트 열입니다.
-        mime: `image/png` 또는 `image/svg+xml` MIME 형식입니다.
-
-    Returns:
-        `data:...;base64,...` 문자열입니다.
-    """
-    return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
-
-
-def encode_file(path: Path) -> str:
-    """이미지 파일(PNG·SVG)을 base64 data URI로 인코딩합니다.
-
-    Args:
-        path: 읽을 이미지 파일 경로입니다.
-
-    Returns:
-        HTML `<img>` 태그에 넣을 data URI 문자열입니다.
-    """
-    mime = "image/svg+xml" if path.suffix.lower() == ".svg" else "image/png"
-    return encode_binary_data_uri(path.read_bytes(), mime)
+_REPORT_CSS = WORK_REPORT_CSS
 
 
 def extract_unique_ui_images(ui_pdf_path: Path) -> list[bytes]:
@@ -655,17 +276,7 @@ def extract_unique_ui_images(ui_pdf_path: Path) -> list[bytes]:
     Returns:
         고유 PNG 이미지 바이트 리스트(14장)입니다.
     """
-    reader = pypdf.PdfReader(str(ui_pdf_path))
-    seen: set[str] = set()
-    unique: list[bytes] = []
-    for page in reader.pages:
-        for img in page.images:
-            raw = bytes(img.data)
-            digest = hashlib.sha256(raw).hexdigest()
-            if digest not in seen:
-                seen.add(digest)
-                unique.append(raw)
-    return unique
+    return extract_unique_pdf_images(ui_pdf_path)
 
 
 def _build_page1_main_report_html() -> str:
@@ -984,54 +595,6 @@ def _build_att2_ui_cover_html() -> str:
 </div>"""
 
 
-def _build_ui_item_card_html(item: UiFixItem, unique_images: list[bytes]) -> str:
-    """UI 수정 보고서 개별 항목 카드 HTML을 원문 무수정으로 조립합니다.
-
-    Args:
-        item: UI 수정 항목 원문 메타데이터입니다.
-        unique_images: 원본 PDF에서 추출한 고유 PNG 바이트 14장 목록입니다.
-
-    Returns:
-        항목 표·원칙 주석·원본 캡처가 포함된 HTML 카드 문자열입니다.
-    """
-    detail_rows = "\n".join(
-        f"""      <tr>
-        <th>{html.escape(label)}</th>
-        <td>{html.escape(text)}</td>
-      </tr>"""
-        for label, text in item.detail_rows
-    )
-    note_html = (
-        f'  <div class="ui-extra-note">- {html.escape(item.rule_note)}</div>'
-        if item.rule_note
-        else ""
-    )
-
-    captures_html = ""
-    if item.captures:
-        layout_class = "ui-cap-grid" if item.side_by_side else "ui-cap-stack"
-        capture_blocks = "\n".join(
-            f"""    <div>
-      <div class="ui-cap-label">{html.escape(cap.label)}</div>
-      <div class="ui-img-box">
-        <img src="{encode_binary_data_uri(unique_images[cap.unique_index], 'image/png')}"
-             alt="{html.escape(item.title + ' - ' + cap.label)}"
-             style="max-height: {item.max_img_height_mm}mm;">
-      </div>
-    </div>"""
-            for cap in item.captures
-        )
-        captures_html = f'\n  <div class="{layout_class}">\n{capture_blocks}\n  </div>'
-
-    return f"""  <div class="ui-item-card">
-    <h3 class="ui-item-head">{html.escape(item.title)}</h3>
-    <table class="ui-meta-table">
-{detail_rows}
-    </table>
-{note_html}{captures_html}
-  </div>"""
-
-
 def _build_att2_ui_detail_pages_html(unique_images: list[bytes]) -> str:
     """[별첨 2] `UI_수정_보고_2026-11-18.pdf` 상세 항목 2-1~2-9 페이지들을 생성합니다.
 
@@ -1041,27 +604,13 @@ def _build_att2_ui_detail_pages_html(unique_images: list[bytes]) -> str:
     Returns:
         페이지 나눔이 포함된 상세 내역 HTML 문자열입니다.
     """
-    by_code = {item.code: item for item in UI_FIX_ITEMS}
-    pages: list[str] = []
-    for group in UI_FIX_PAGE_GROUPS:
-        cards = "\n".join(
-            _build_ui_item_card_html(by_code[code], unique_images) for code in group
-        )
-        label = (
-            group[0].replace("*", "")
-            if len(group) == 1
-            else f"{group[0].replace('*', '')} ~ {group[-1].replace('*', '')}"
-        )
-        pages.append(
-            f"""<div class="page-break">
-  <div class="att-header">
-    <h2>[별첨 2] UI 수정 보고서 (2026-11-18) · 상세 내역 ({label})</h2>
-    <p class="att-meta">캡처 환경: Chrome 화면, 시험용 데이터(DEMO) · 원본 내용 및 이미지 무수정</p>
-  </div>
-{cards}
-</div>"""
-        )
-    return "\n\n".join(pages)
+    return build_ui_detail_pages_html(
+        UI_FIX_ITEMS,
+        UI_FIX_PAGE_GROUPS,
+        unique_images,
+        report_date="2026-11-18",
+        subtitle="캡처 환경: Chrome 화면, 시험용 데이터(DEMO) · 원본 내용 및 이미지 무수정",
+    )
 
 
 def build_report_html(scenes_dir: Path, ui_pdf_path: Path) -> str:

@@ -32,7 +32,7 @@
   <a href="docs/청주톡톡_민원_업무_API_Swagger.pdf"><img src="https://img.shields.io/badge/Swagger-OpenAPI_PDF-85a329?style=flat-square" alt="Swagger PDF" /></a>
   <a href="#검증-근거"><img src="https://img.shields.io/badge/Eval-200_Live_Runs_(95%25)-0d9488?style=flat-square" alt="Live Eval" /></a>
   <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-171_Py_%C2%B7_49_RAG_%C2%B7_22_UI-0f766e?style=flat-square" alt="Verified" /></a>
-  <a href="docs/report/README.md"><img src="https://img.shields.io/badge/Report-11%2F18_10Pages-b91c1c?style=flat-square" alt="Report" /></a>
+  <a href="docs/report/README.md"><img src="https://img.shields.io/badge/Report-11%2F19_8Pages-b91c1c?style=flat-square" alt="Report" /></a>
   <a href="docs/test/README.md"><img src="https://img.shields.io/badge/Test-200_SourceTrail_14Pages-0369a1?style=flat-square" alt="Test Report" /></a>
   <a href="#현재-구현-상태"><img src="https://img.shields.io/badge/Branch-llm-334155?style=flat-square&logo=github&logoColor=white" alt="Branch" /></a>
 </p>
@@ -81,7 +81,7 @@
 | 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
 | API 문서 | `http://127.0.0.1:5000/docs` · `/swagger` · `/#/staff/api` | 자체 호스팅 한국어 Swagger 포털(세션 전환·다크 동기화·색인) · [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
-| 업무 보고서 | [11/18 종합 보고서 PDF](docs/report/업무보고_20261118.pdf) · [11/17 PDF](docs/report/업무보고_20261117.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 추상화(쉬운 한국어) 11/18 서버·AI·API/Swagger(캡처 4종) + `UI 수정 보고서(2026-11-18)` 무수정 10쪽 PDF · [`업무보고_20261118_pdf_생성.py`](scripts/업무보고_20261118_pdf_생성.py) |
+| 업무 보고서 | [11/19 종합 보고서 PDF](docs/report/업무보고_20261119.pdf) · [11/18 PDF](docs/report/업무보고_20261118.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 추상화(쉬운 한국어) 11/19 200건 실증·취약 10건 보완·배너/AI 구조 그림·검증 결과 + `UI 수정 보고서(2026-11-19)` 12장 무수정 8쪽 PDF · [`업무보고_20261119_pdf_생성.py`](scripts/업무보고_20261119_pdf_생성.py) |
 | 테스트 보고서 | [200건 분석 (MD](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.md)/[PDF)](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.pdf) · [112건 기준](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [모음(`docs/test/`)](docs/test/README.md) | 200건 재실측(95.0%) SourceTrail 14쪽 PDF·SVG 4종·전수 표 · [`상세분석보고서_200건_생성.py`](scripts/상세분석보고서_200건_생성.py) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
@@ -523,7 +523,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | 문서 | 확인할 내용 |
 | --- | --- |
 | [전체 문서 목차](docs/README.md) | 목적별 읽기 순서와 원본 계획서 |
-| [업무보고서 모음](docs/report/README.md) | `docs/report/` 일자별 업무보고 PDF(11/04~11/18) 및 생성 스크립트 안내 |
+| [업무보고서 모음](docs/report/README.md) | `docs/report/` 일자별 업무보고 PDF(11/04~11/19) 및 생성 스크립트 안내 |
 | [테스트 보고서 모음](docs/test/README.md) | `docs/test/` 민원 실증 상세 분석 보고서(200건 SourceTrail 14쪽·112건 MD·PDF·차트 SVG 8종) |
 | [프로젝트 사례 색인](docs/cases/README.md) | 버그·개선·결정·검증 이력, 미해결 과제와 작성 양식 |
 | [변경 이력](CHANGELOG.md) | 데이터·검색·하네스·문서 패치 내용 |
