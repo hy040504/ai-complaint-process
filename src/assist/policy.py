@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from src.assist.constants import (
@@ -115,23 +116,68 @@ def decision_prompt(
     )
 
 
+_STAFF_CONSULT_REQUEST_RE = re.compile(
+    r"담당자(?:\s*(?:와|랑|에게))?\s*(?:직접\s*)?"
+    r"(?:상담\s*(?:연결|요청|문의)|연결\s*(?:해|부탁|요청))"
+)
+_FAQ_HANDOFF_EXCEPTION_RE = re.compile(r"(?:담당자\s*연결|상담\s*처리|상담처리)")
+
+
+def _faq_exception_handoff_needed(
+    citizen_query: str | None,
+    refs: list[dict[str, str]],
+    data: SearchParts,
+) -> bool:
+    """민원인의 담당자 상담 연결 요청과 인용 FAQ의 예외 문구 동시 해당 여부를 봅니다.
+
+    Args:
+        citizen_query: 민원 원문 문자열입니다.
+        refs: 검증된 근거 참조 목록입니다.
+        data: 파싱된 검색 조각 객체입니다.
+
+    Returns:
+        FAQ '담당자 연결/상담처리' 예외에 해당해 담당자 검토가 필요하면 True입니다.
+    """
+    if not citizen_query or not _STAFF_CONSULT_REQUEST_RE.search(citizen_query):
+        return False
+    for ref in refs:
+        if ref.get("corpus") != "faq":
+            continue
+        hit = data.by_key.get(("faq", ref["source_id"]))
+        if not isinstance(hit, dict):
+            continue
+        detail = (hit.get("evidence") or {}).get("detail") or {}
+        if not isinstance(detail, dict):
+            continue
+        body_text = " ".join(
+            str(detail.get(field) or "")
+            for field in ("main_content", "warnings", "received_by")
+        )
+        if _FAQ_HANDOFF_EXCEPTION_RE.search(body_text):
+            return True
+    return False
+
+
 def validate_decision(
     raw: dict[str, Any],
     search: dict[str, Any],
     parts: SearchParts | None = None,
     *,
     query: str | None = None,
+    citizen_query: str | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """모델 판정을 검색 근거·부서 후보와 대조합니다.
 
     `faq_answer`와 `condition_unclear`가 같이 오거나 범위 밖·불확실·타 지자체
-    관할 사안이 자동 안내/부서 추천으로 나오면 `human_handoff`로 교정합니다.
+    관할 사안, 또는 FAQ 내 '담당자 연결/상담처리' 예외 대상의 상담 연결 요청이
+    자동 안내로 나오면 `human_handoff`로 교정합니다.
 
     Args:
         raw: 모델이 반환한 객체입니다.
         search: 검색 API 응답입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
         query: 관할 외 타 지자체 주소를 교차 검증할 원문 질의입니다(명시 구가 없을 때 전달).
+        citizen_query: 관할 유무와 무관하게 FAQ 예외 문구를 검사할 민원 원문입니다.
 
     Returns:
         교정된 판정과 정책 실패 사유 목록입니다.
@@ -188,7 +234,9 @@ def validate_decision(
         outcome = "human_handoff"
         reason = "out_of_scope" if scope == "out_of_scope" else "insufficient_evidence"
         dept_ids = []
-        failures.append("범위 밖·불확실 판정은 자동 안내·부서 추천을 허용하지 않습니다.")
+        failures.append(
+            "범위 밖·불확실 판정은 자동 안내·부서 추천을 허용하지 않습니다."
+        )
     external_region = extract_external_jurisdiction(query or "") if query else None
     if external_region is not None and (
         scope != "out_of_scope" or outcome != "human_handoff" or dept_ids
@@ -216,6 +264,12 @@ def validate_decision(
             outcome = "human_handoff"
             reason = "insufficient_evidence"
             failures.append("FAQ 안내에는 FAQ 근거가 필요합니다.")
+        elif _faq_exception_handoff_needed(citizen_query or query, refs, data):
+            outcome = "human_handoff"
+            reason = "condition_unclear"
+            failures.append(
+                "FAQ 예외 조항(담당자 연결·상담처리) 해당 및 상담 연결 요청으로 담당자 검토로 전환합니다."
+            )
     if outcome == "department_suggestion" and not dept_ids:
         outcome = "human_handoff"
         reason = "department_unverified"

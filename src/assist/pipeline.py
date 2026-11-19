@@ -677,6 +677,7 @@ def iter_assist(
                     search,
                     parts,
                     query=policy_query,
+                    citizen_query=text,
                 )
                 stages.append(stage("정책검사", checked, not failures))
             except (ValueError, json.JSONDecodeError, OSError) as exc:

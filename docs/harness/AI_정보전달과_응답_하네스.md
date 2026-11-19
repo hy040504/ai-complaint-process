@@ -119,8 +119,9 @@ AI에게 정보를 보낼 때는 **시스템 프롬프트(Static Prefix)**와 **
 3. **실제 조치 요청의 안내 종결 차단:** `intent == "action"`인데 모델이 `outcome == "faq_answer"`를 반환하면, 유효한 `department_ids`가 있을 때는 `department_suggestion`으로, 없을 때는 `human_handoff`(`reason_code="action_required"`)로 강제 전환한다.
 4. **복합 민원 부분 종결 차단:** `intent == "mixed"`이면 일부 질문에 FAQ가 맞더라도 전체를 해결한 것처럼 안내하지 않고 `human_handoff`(`reason_code="mixed_request"`)로 전환한다.
 5. **범위 밖·불확실 사안 자동 안내 차단:** `scope`가 `out_of_scope` 또는 `uncertain`이면 `faq_answer`를 허용하지 않고 `human_handoff`로 전환한다.
-6. **근거 없는 FAQ 안내·부서 추천 차단:**
+6. **근거 없는 FAQ 안내·부서 추천 및 예외 종결 차단:**
    - `outcome == "faq_answer"`인데 `intent != "information"`이거나 유효한 `corpus="faq"` 근거가 1개도 없으면 `human_handoff`로 전환한다.
+   - `outcome == "faq_answer"`라도 민원인의 명시적 담당자 상담/연결 요청이 있고 인용된 FAQ 본문·안내에 `'담당자 연결'`·`'상담처리'` 예외 문구가 포함되어 있으면 `human_handoff`(`condition_unclear`)로 전환한다.
    - `outcome == "department_suggestion"`인데 유효한 `department_ids`가 비어 있으면 `human_handoff`(`reason_code="department_unverified"`)로 전환한다.
 
 ### 4.3 2차 호출: 조건부 FAQ 안내문 생성 계약

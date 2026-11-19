@@ -315,3 +315,95 @@ def test_road_number_pairs_and_hyphen_splitting() -> None:
 
     cause_words = extract_place_candidates("잦은 사고로 반사경 설치 해주세요")
     assert "사고로" not in cause_words
+
+
+def test_address_section_ac_dong_adjacent_road_and_generic_place_guards() -> None:
+    """address/ac 파싱, 인접 번지 탐침, 일반 시설·관공서·조사 결합 차단을 검증합니다."""
+    from src.llm.place_tool import extract_place_candidates, is_place_relevant
+
+    # 1. B12·A12·A18·C09·D11·D08 유형 오매칭 후보·관련성 차단
+    b12_cands = extract_place_candidates(
+        "동네 어딘가 학교 앞 골목 가로등 고장 정확한 이름은 기억나지 않는데 우리 동네 초등학교 앞 골목길 가로등이 깜빡거립니다"
+    )
+    assert "초등학교" not in b12_cands
+    assert "우리 초등학교" not in b12_cands
+    assert is_place_relevant("우암초등학교", "우리 초등학교") is False
+    assert is_place_relevant("청주시로컬푸드직매장", "청주시로 전입신고") is False
+    assert is_place_relevant("봉명동내커피 오송점", "흥덕구 봉명동 수도관") is False
+    assert is_place_relevant("육거리종합시장", "용암동 시장") is False
+
+    # 관공서는 청구/비판 문맥에서 제외하되 물리적 현장('앞' 등) 수식이 있으면 허용
+    office_claim = extract_place_candidates(
+        "지난주 대전 도로 파손으로 청주시청에 청구하면 전액 배상된다던데 어디로 내나요"
+    )
+    assert "청주시청" not in office_claim
+    office_near = extract_place_candidates("청주시청 앞 횡단보도 보도블록이 깨졌어요")
+    assert "청주시청" in office_near
+
+    # 2. B23·B24 유형: place=[] 이어도 address + ac 괄호 동명에서 청주시 주소·구·동 추출
+    def address_only_fetch(query: str, coords: str = "") -> dict[str, Any]:
+        """네이버 address 및 ac 섹션만 포함한 모의 검색 응답을 반환합니다."""
+        if "직지대로 874-2" in query:
+            return {
+                "ac": ["충청북도청주시청원구직지대로874-2(우암동)"],
+                "place": [],
+                "address": [
+                    {
+                        "title": "충북 청주시 청원구 직지대로 874-2 상당빌딩",
+                        "fullAddress": "충청북도 청주시 청원구 직지대로 874-2",
+                        "x": "127.4869975",
+                        "y": "36.6504171",
+                    }
+                ],
+            }
+        return {"place": [], "address": []}
+
+    addr_res = lookup_navermap_place(
+        "직지대로 874-2 앞 보행로 보도블록이 침하되고 가로등이 꺼졌어요",
+        fetch_fn=address_only_fetch,
+    )
+    assert addr_res["found"] is True
+    assert addr_res["primary_place"]["gu"] == "청원구"
+    assert addr_res["primary_place"]["dong"] == "우암동"
+    assert addr_res["primary_place"]["category"] == "도로명주소"
+
+    # 3. B22 유형: 원 번지 미등록 시 ±1 인접 번지 탐침으로 관할 구 추적
+    def adjacent_road_fetch(query: str, coords: str = "") -> dict[str, Any]:
+        """인접 번지 '2순환로 1375'에만 청주 결과를 반환하는 모의 검색 함수입니다."""
+        if query == "2순환로 1375":
+            return {
+                "place": [
+                    {
+                        "title": "2순환로1375번길",
+                        "roadAddress": None,
+                        "jibunAddress": "충청북도 청주시 흥덕구 가경동",
+                        "x": "127.43",
+                        "y": "36.62",
+                        "ctg": "도로명칭",
+                    }
+                ]
+            }
+        return {"place": [], "address": []}
+
+    ring_res = lookup_navermap_place(
+        "2순환로 1374 앞 주행차로 차선 도색 및 맨홀 소음 점검 바랍니다",
+        fetch_fn=adjacent_road_fetch,
+    )
+    assert ring_res["found"] is True
+    assert ring_res["primary_place"]["gu"] == "흥덕구"
+    assert ring_res["primary_place"]["dong"] == "가경동"
+
+    # 4. HTTP 400 제한 시 나머지 후보 5회 연쇄 재시도를 즉시 중단합니다.
+    limit_calls: list[str] = []
+
+    def http400_fetch(query: str, coords: str = "") -> dict[str, Any]:
+        """HTTP 400 호출 제한 오류를 모사하는 가짜 검색 함수입니다."""
+        limit_calls.append(query)
+        raise OSError("HTTP Error 400: Bad Request")
+
+    blocked = lookup_navermap_place(
+        "가나다라 사거리 신호등 고장 수리 요청", fetch_fn=http400_fetch
+    )
+    assert blocked["found"] is False
+    assert "error" in blocked
+    assert len(limit_calls) <= 2

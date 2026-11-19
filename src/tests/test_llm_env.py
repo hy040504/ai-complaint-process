@@ -469,7 +469,7 @@ def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
     assert fast_cfg is not None and fast_cfg["reasoning_effort"] == "low"
     assert fast_cfg["max_tokens"] == "4096"
     assert draft_cfg is not None and draft_cfg["reasoning_effort"] == "low"
-    assert draft_cfg["max_tokens"] == "16384"
+    assert draft_cfg["max_tokens"] == "4096"
 
     # Codex CLI 비도구 단계(_disable_mcp)는 MCP 서버 플래그와 도구 안내를 제외합니다.
     monkeypatch.setattr(

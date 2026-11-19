@@ -311,3 +311,57 @@ def test_b14_facility_off_early_external_reject_and_oos_skip_draft() -> None:
     assert len(oos_calls) == 1
     assert [c["role"] for c in oos_res["codex"]] == ["decision"]
     assert oos_res["staff_draft"] is not None
+
+
+def test_faq_exception_handoff_guard_and_sarcasm_backup() -> None:
+    """A35 FAQ 예외('담당자 연결/상담처리') 코드 가드와 D30 은유 조롱 백업 감지를 검증합니다."""
+    from src.assist.policy import validate_decision
+
+    assert needs_sanitize("담당자가 눈 감고 도장만 찍나요 민원 해결하세요") is True
+
+    exception_search = {
+        "results": {
+            "faq_knowledge": {
+                "hits": [
+                    {
+                        "source_id": "1303993",
+                        "title": "도로명주소 부여 신청",
+                        "evidence": {
+                            "detail": {
+                                "main_content": "▶ 2012년 4월 20일 이전 준공된 건축물로서 미부여된 건축물은 담당자 연결하여 상담처리",
+                                "received_by": "지적정보과",
+                            }
+                        },
+                    }
+                ]
+            },
+            "routing_cases": {"hits": [], "department_candidates": []},
+        }
+    }
+    raw_faq = {
+        "scope": "in_scope",
+        "intent": "information",
+        "outcome": "faq_answer",
+        "reason_code": "ok",
+        "evidence_refs": [{"corpus": "faq", "source_id": "1303993"}],
+        "department_ids": [],
+    }
+    guarded, failures = validate_decision(
+        raw_faq,
+        exception_search,
+        query=None,
+        citizen_query="2010년 준공 상당구 단독주택 도로명주소 미부여 담당자 상담 연결 부탁드립니다.",
+    )
+    assert guarded["outcome"] == "human_handoff"
+    assert guarded["reason_code"] == "condition_unclear"
+    assert any("담당자 연결" in f for f in failures)
+
+    # 일반 FAQ 질의는 상담 연결 요청이 없으므로 그대로 faq_answer 유지
+    normal_ok, normal_failures = validate_decision(
+        raw_faq,
+        exception_search,
+        query=None,
+        citizen_query="신축 건물 도로명주소 부여 신청 수수료가 얼마인가요?",
+    )
+    assert normal_ok["outcome"] == "faq_answer"
+    assert normal_failures == []

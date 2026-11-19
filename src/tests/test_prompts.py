@@ -45,6 +45,8 @@ def test_decision_system_starts_with_constitution() -> None:
     assert "본문에 없는 서류" in PREFIX_01
     assert "condition_unclear" in PREFIX_01
     assert "human_handoff여도 검토한 FAQ는 빼지 않습니다" in PREFIX_01
+    assert "담당자 연결" in PREFIX_01
+    assert "개인 상황 미기재" in PREFIX_01
 
 
 def test_answer_system_keeps_faq_conditions() -> None:

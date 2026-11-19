@@ -7,6 +7,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+from functools import lru_cache
+import json
+from pathlib import Path
 import re
 from typing import Any, Final
 
@@ -153,11 +157,21 @@ _LANDMARK_TO_DISTRICT: Final[dict[str, str]] = {
     "오창호수공원": "청원구",
     "초정행궁": "청원구",
     "내수시장": "청원구",
+    "청주대학교": "청원구",
     "문암생태공원": "흥덕구",
     "청주고인쇄박물관": "흥덕구",
     "고인쇄박물관": "흥덕구",
+    "현대백화점": "흥덕구",
+    "지웰시티": "흥덕구",
     "청남대": "상당구",
     "성안길": "상당구",
+    "육거리종합시장": "상당구",
+    "육거리시장": "상당구",
+    "수암골벽화마을": "상당구",
+    "수암골전망대": "상당구",
+    "수암골 벽화마을": "상당구",
+    "서원대학교": "서원구",
+    "서원대": "서원구",
     "용암북로": "상당구",
     "충청대로": "청원구",
     "팔결신대로": "청원구",
@@ -182,16 +196,26 @@ _SINGLE_GU_ROAD_PATTERN = re.compile(
     r"(?:(?<=[\s\(\[\{<\)\]\}>:\"'.,~·/!?-])|(?<=청주시)|(?<=청주)|^)(오송생명\d*로)(?:에서|으로|[은는이가을를의에로와과도만]?)(?=[0-9]|\s|[^\w가-힣]|$)"
 )
 
-# 타 시·도 및 타 시·군 관할 행정구역 공통 정규식 조각입니다. (특별시/광역시 및 '~시' 약칭 포함)
+# 타 시·도 및 타 시·군 관할 행정구역 공통 정규식 조각입니다. (특별시/광역시 및 도+시/군 약칭 포함)
 _EXT_METRO_GU_PART = (
     r"(?:서울(?:특별시|시)?|부산(?:광역시|시)?|대구(?:광역시|시)?|인천(?:광역시|시)?|"
     r"광주(?:광역시|시)?|대전(?:광역시|시)?|울산(?:광역시|시)?)\s+[가-힣]{1,5}[구군]"
     r"|세종(?:특별자치시|시)\s+[가-힣]{1,6}(?:읍|면|동|대로|번길|로|길)"
 )
+_EXT_DO_PREFIX = (
+    r"(?:경기도?|강원(?:도|특별자치도)?|충청북도|충북|충청남도|충남|"
+    r"전북(?:특별자치도)?|전라북도|전라남도|전남|경상북도|경북|경상남도|경남|"
+    r"제주(?:도|특별자치도)?)"
+)
 _EXT_DO_PART = (
     r"(?:경기도?|강원(?:도|특별자치도)?|충청남도|충남|전북(?:특별자치도)?|전라북도|"
     r"전라남도|전남|경상북도|경북|경상남도|경남|제주(?:도|특별자치도)?)\s+"
     r"(?!청주시)[가-힣]{1,6}(?:시|군)"
+)
+_EXT_DO_SHORT_CITIES = (
+    r"(?:천안|아산|공주|논산|당진|서산|보령|계룡|충주|제천|보은|옥천|영동|"
+    r"증평|진천|괴산|음성|단양|수원|성남|용인|화성|평택|안산|부천|남양주|안양|"
+    r"전주|군산|익산|창원|진주|김해|포항|구미|경주|안동|춘천|원주|강릉|제주|서귀포)"
 )
 _EXT_CHUNGBUK_OTHERS = (
     r"(?:충주시|제천시|보은군|옥천군|영동군|증평군|진천군|괴산군|음성군|단양군)"
@@ -202,11 +226,12 @@ _EXT_OTHER_CITIES = (
     r"화성시|평택시|안산시|부천시|남양주시|안양시)"
 )
 
-# '대전 유성구 봉명동', '서울시 종로구 사직동'처럼 청주시와 같은 동명이인 지명이
+# '대전 유성구 봉명동', '서울시 종로구 사직동', '충남 천안 봉명동'처럼 청주시와 같은 동명이인 지명이
 # 타 지자체 주소에 포함되어 있을 때 청주시 관할 구로 오인식하지 않도록 선별합니다.
 _EXTERNAL_PREFIX_RE = re.compile(
     rf"(?:{_EXT_METRO_GU_PART}"
     rf"|{_EXT_DO_PART}(?:\s+[가-힣]{{1,5}}[구군])?"
+    rf"|{_EXT_DO_PREFIX}\s+{_EXT_DO_SHORT_CITIES}(?:\s+[가-힣]{{1,5}}[구군])?"
     rf"|(?:충청북도|충북)\s+{_EXT_CHUNGBUK_OTHERS}(?:\s+[가-힣]{{1,6}}(?:읍|면|동))?"
     rf"|{_EXT_OTHER_CITIES}(?:\s+[가-힣]{{1,5}}구)?)"
 )
@@ -216,6 +241,7 @@ _EXT_SUBLOC_SUFFIX = r"(?:[가-힣]{1,6}(?:구|읍|면|동)|(?!도로(?:\s|$))[�
 _EXTERNAL_CODE_REJECT_RE = re.compile(
     rf"(?:{_EXT_METRO_GU_PART}"
     rf"|{_EXT_DO_PART}\s+{_EXT_SUBLOC_SUFFIX}"
+    rf"|{_EXT_DO_PREFIX}\s+{_EXT_DO_SHORT_CITIES}\s+{_EXT_SUBLOC_SUFFIX}"
     rf"|(?:충청북도|충북)\s+{_EXT_CHUNGBUK_OTHERS}\s+{_EXT_SUBLOC_SUFFIX}"
     rf"|{_EXT_OTHER_CITIES}\s+{_EXT_SUBLOC_SUFFIX})"
 )
@@ -418,14 +444,20 @@ def _find_regex_district(text: str) -> tuple[str | None, bool]:
     return None, False
 
 
-def _lookup_cheongju_place(text: str) -> dict[str, Any] | None:
+def _lookup_cheongju_place(
+    text: str,
+    *,
+    expected_district: str | None = None,
+) -> dict[str, Any] | None:
     """네이버 지도 장소 검색으로 청주시 최우선 장소 정보를 조회합니다.
 
     외부 네트워크 오류가 발생해도 민원 처리 흐름을 중단하지 않도록 예외를 삼키고
-    `None`을 반환합니다.
+    `None`을 반환합니다. 본문에서 이미 단일 구(`expected_district`)가 확정된
+    경우에는 해당 구와 일치하는 후보만 채택해 엉뚱한 구 배지 오매칭을 차단합니다.
 
     Args:
         text: 장소 추론 대상 민원 문자열입니다.
+        expected_district: 본문 정규식으로 이미 확정된 청주시 자치구 이름입니다.
 
     Returns:
         청주시 관할로 판별된 `primary_place` 딕셔너리 또는 `None`입니다.
@@ -436,11 +468,106 @@ def _lookup_cheongju_place(text: str) -> dict[str, Any] | None:
         from src.llm.place_tool import lookup_navermap_place
 
         res = lookup_navermap_place(text)
+        if expected_district:
+            places = res.get("places")
+            if isinstance(places, list):
+                for item in places:
+                    if (
+                        isinstance(item, dict)
+                        and item.get("is_cheongju")
+                        and item.get("gu") == expected_district
+                    ):
+                        return item
         primary = res.get("primary_place")
         if isinstance(primary, dict) and primary.get("is_cheongju"):
+            if expected_district and primary.get("gu") not in (None, expected_district):
+                return None
             return primary
     except Exception:
         pass
+    return None
+
+
+_ROUTING_CORPUS_PATH = (
+    Path(__file__).resolve().parents[2] / "rag" / "origin" / "공개_민원_사례.json"
+)
+_CORPUS_ROAD_PAIR_RE = re.compile(
+    r"([가-힣0-9]{2,14}(?:대로|번길|로|길))\s*(\d+(?:-\d+)?)"
+)
+_CORPUS_ROAD_MULTI_NUM_RE = re.compile(
+    r"([가-힣0-9]{2,14}(?:대로|번길|로|길))\s*\d+(?:\s*,\s*\d+)+"
+)
+
+
+@lru_cache(maxsize=1)
+def _corpus_road_number_index() -> dict[tuple[str, str], str]:
+    """검증된 공개 민원 사례에서 단일 구로 확정되는 `(도로명, 번지)` 색인을 로드합니다.
+
+    외부 네이버 지도 API가 일시 제한(`HTTP 400`) 또는 미등록 번지(`2순환로 1374`)로
+    응답하지 못할 때, 과거 실제 부서(`review_required=False`)가 100% 단일 구로 일치한
+    청주시 도로명+번지 쌍으로 관할 구를 보완합니다.
+
+    Returns:
+        `(도로명, 번지)`를 단일 자치구 이름으로 대응하는 읽기 전용 사전입니다.
+    """
+    if not _ROUTING_CORPUS_PATH.is_file():
+        return {}
+    try:
+        cases = json.loads(_ROUTING_CORPUS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(cases, list):
+        return {}
+
+    pair_districts: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for item in cases:
+        if not isinstance(item, dict) or item.get("review_required"):
+            continue
+        dept = str(item.get("department_current") or "").strip()
+        dept_match = re.match(r"^(?:청주시\s*)?(상당구|서원구|흥덕구|청원구)\b", dept)
+        if not dept_match:
+            continue
+        gu = dept_match.group(1)
+        body = f"{item.get('title') or ''} {item.get('summary') or ''}"
+        for match in _CORPUS_ROAD_PAIR_RE.finditer(body):
+            pair_districts[(match.group(1), match.group(2))].add(gu)
+        for multi in _CORPUS_ROAD_MULTI_NUM_RE.finditer(body):
+            road = multi.group(1)
+            for num in re.findall(r"\d+(?:-\d+)?", multi.group(0)[len(road) :]):
+                pair_districts[(road, num)].add(gu)
+
+    return {
+        pair: next(iter(gus)) for pair, gus in pair_districts.items() if len(gus) == 1
+    }
+
+
+def _lookup_corpus_road_number_district(text: str) -> str | None:
+    """원문 내 `(도로명, 번지)` 쌍이 검증된 공개 사례 단일 구 색인과 일치하면 구를 반환합니다.
+
+    타 지자체 행정구역 접두어가 직전에 있는 동명이인 도로와 다중 구 충돌은 제외합니다.
+
+    Args:
+        text: 민원 제목·상세 문자열입니다.
+
+    Returns:
+        단일하게 일치한 청주시 자치구 이름 또는 `None`입니다.
+    """
+    if not text:
+        return None
+    index = _corpus_road_number_index()
+    if not index:
+        return None
+    matched_districts: set[str] = set()
+    for match in _CORPUS_ROAD_PAIR_RE.finditer(text):
+        if _has_external_prefix_before(text, match.start()):
+            continue
+        gu = index.get((match.group(1), match.group(2)))
+        if gu:
+            matched_districts.add(gu)
+            if len(matched_districts) > 1:
+                return None
+    if len(matched_districts) == 1:
+        return next(iter(matched_districts))
     return None
 
 
@@ -484,10 +611,12 @@ def extract_district(text: str) -> str | None:
         if not has_residence or not lookup_target:
             return None
 
-    # 정규식으로 감지되지 않은 경우 네이버 지도 장소 검색을 통한 2차 지명 추론을 시도합니다.
+    # 정규식으로 감지되지 않은 경우 네이버 지도 → 검증된 사례 도로+번지 색인 순으로 추론합니다.
     primary = _lookup_cheongju_place(lookup_target)
     gu = primary.get("gu") if primary else None
-    return gu if isinstance(gu, str) and gu else None
+    if isinstance(gu, str) and gu:
+        return gu
+    return _lookup_corpus_road_number_district(lookup_target)
 
 
 def extract_place_info(text: str) -> dict[str, Any] | None:
@@ -552,7 +681,7 @@ def resolve_district_and_place(
         place = _lookup_cheongju_place(lookup_base)
         return None, False, place
     if regex_district:
-        place = _lookup_cheongju_place(lookup_base)
+        place = _lookup_cheongju_place(lookup_base, expected_district=regex_district)
         return regex_district, True, place
 
     # 청주시 지명이 없고 순수 타 지자체 관할 주소만 있으면 네이버 지도 오매칭을 막기 위해 조회를 건너뜁니다.
@@ -565,5 +694,9 @@ def resolve_district_and_place(
     inferred_gu = place.get("gu") if place else None
     if isinstance(inferred_gu, str) and inferred_gu:
         return inferred_gu, True, place
+
+    corpus_gu = _lookup_corpus_road_number_district(lookup_base)
+    if corpus_gu:
+        return corpus_gu, True, place
 
     return None, False, place

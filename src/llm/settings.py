@@ -256,9 +256,9 @@ def settings_for_role(
 ) -> dict[str, str | None] | None:
     """호출 단계(role)에 맞춰 추론 강도·토큰 상한·도구 허용 힌트를 조정한 설정 사본을 만듭니다.
 
-    EXAONE은 판정(high)·후속 정형 작업(low)으로 추론 강도를 낮춰 180~200초
-    타임아웃을 예방하고, Codex CLI의 비도구 단계(`faq_answer`·`sanitize`)에는
-    불필요한 MCP 서버 기동을 생략하도록 표시합니다.
+    EXAONE은 판정(high)·후속 정형 작업(faq_answer·sanitize·staff_draft: low,
+    최대 4096 토큰)으로 부하를 낮춰 180~200초 타임아웃을 예방하고, Codex CLI의
+    비도구 단계(`faq_answer`·`sanitize`)에는 불필요한 MCP 서버 기동을 생략합니다.
 
     Args:
         settings: `settings_for_provider()`가 만든 기본 공급자 설정입니다.
@@ -305,7 +305,7 @@ def settings_for_role(
             ):
                 target_effort = base_effort
         adjusted["reasoning_effort"] = target_effort
-        if role in ("faq_answer", "sanitize"):
+        if role in ("faq_answer", "sanitize", "staff_draft"):
             try:
                 cur_max = int(
                     str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)

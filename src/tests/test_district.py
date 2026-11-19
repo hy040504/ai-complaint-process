@@ -328,3 +328,85 @@ def test_single_gu_roads_closing_bracket_external_shortnames_and_residence(
     assert inf_res is True
     assert p_res is not None and p_res["title"] == "서원대학교후문"
     assert "대전 유성구" not in looked_up[-1]
+
+
+def test_province_short_city_new_landmarks_and_place_gu_crosscheck(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """도+시 약칭 외부 관할 차단, 신규 랜드마크 오프라인 추론, 상충 구 장소 배제를 검증합니다."""
+    from src.assist.district import (
+        extract_external_jurisdiction,
+        resolve_district_and_place,
+    )
+    import src.llm.place_tool as place_tool
+
+    calls: list[str] = []
+
+    def conflicting_place_fetch(query: str, **_kwargs: object) -> dict[str, object]:
+        """청원구 민원과 모순되는 상당구 장소를 돌려주는 가짜 조회 함수입니다."""
+        calls.append(query)
+        return {
+            "query": query,
+            "found": True,
+            "total": 1,
+            "primary_place": {
+                "title": "청주중앙공원",
+                "road_address": "충청북도 청주시 상당구 남사로 117",
+                "jibun_address": "충청북도 청주시 상당구 남문로2가",
+                "gu": "상당구",
+                "dong": "남문로2가",
+                "is_cheongju": True,
+            },
+            "places": [],
+        }
+
+    monkeypatch.setattr(place_tool, "lookup_navermap_place", conflicting_place_fetch)
+
+    # 1. C32 유형: 도 접두 + 주요 시 약칭 + 하위 지명 외부 차단 (단독 청주 내 상호는 비차단)
+    assert (
+        extract_external_jurisdiction("충남 천안 두정동 먹자골목 가로등 수리 요청")
+        is not None
+    )
+    assert extract_external_jurisdiction("천안순대 청주시 복대동 주차 민원") is None
+    d_ext, inf_ext, p_ext = resolve_district_and_place(
+        None, "충남 천안 두정동 먹자골목 가로등 수리 요청"
+    )
+    assert (d_ext, inf_ext, p_ext) == (None, False, None)
+    assert calls == []
+
+    # 2. D18 유형: 본문에서 청원구가 확정됐는데 지도 장소가 상당구면 상충 장소 배지 폐기
+    d_d18, inf_d18, p_d18 = resolve_district_and_place(
+        None, "오창읍 중앙공원 앞 쓰레기통 넘친 거 치워주세요"
+    )
+    assert d_d18 == "청원구"
+    assert inf_d18 is True
+    assert p_d18 is None
+
+    # 3. F05·F09·B35 대표 랜드마크는 외부 지도 결과와 무관하게 단일 구 오프라인 추론
+    assert extract_district("육거리시장 먹자골목 쓰레기 적치 정비") == "상당구"
+    assert extract_district("청주 수암골 벽화마을 전망대 난간 보수") == "상당구"
+    assert (
+        extract_district("대전 유성구 봉명동 사는데 서원대 후문 신호등 고장")
+        == "서원구"
+    )
+
+    # 4. B22·B23·B24 유형: 외부 지도가 400/실패해도 검증된 공개 사례 도로+번지 색인으로 구 추론
+    def offline_map(query: str, **_kwargs: object) -> dict[str, object]:
+        """외부 지도 HTTP 400 장애 상황을 모사하는 가짜 조회 함수입니다."""
+        return {
+            "query": query,
+            "found": False,
+            "total": 0,
+            "primary_place": None,
+            "places": [],
+            "error": "HTTP Error 400",
+        }
+
+    monkeypatch.setattr(place_tool, "lookup_navermap_place", offline_map)
+    assert extract_district("2순환로 1374 인근 차선 도색 점검") == "흥덕구"
+    assert extract_district("직지대로 874-2 앞 인도 침하 점검") == "청원구"
+    assert extract_district("호미로201번길 16-19 골목 쓰레기 정비") == "상당구"
+    d_b22, inf_b22, p_b22 = resolve_district_and_place(
+        None, "2순환로 1374 앞 주행차로 맨홀 소음"
+    )
+    assert (d_b22, inf_b22, p_b22) == ("흥덕구", True, None)
