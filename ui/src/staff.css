@@ -1770,7 +1770,7 @@ body[data-site="staff"] #toast {
     flex-shrink: 0;
   }
   .staff-connection {
-    font-size: 9px;
+    font-size: 11px;
     gap: 5px;
   }
   .staff-connection > i {
@@ -1812,7 +1812,7 @@ body[data-site="staff"] #toast {
     scrollbar-width: none;
   }
   .staff-compact-nav > a {
-    font-size: 10px;
+    font-size: 12px;
     white-space: nowrap;
     padding: 13px 8px 12px;
     color: #8d9fbc;
@@ -2354,7 +2354,7 @@ body[data-site="staff"] #toast {
     padding-inline: 8px;
   }
   .staff-compact-nav > a {
-    font-size: 9px;
+    font-size: 12px;
     padding-inline: 6px;
   }
   .staff-crumb {

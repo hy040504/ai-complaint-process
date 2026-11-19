@@ -1,0 +1,88 @@
+/* 2026-11-19 UI 검토 반영
+ * - 담당자 사이드바 숫자 배지는 기본을 회색으로 두고, AI 작업 실패만 빨강으로 강조합니다.
+ * - 접수 후 14일을 넘긴 민원의 경과일만 주황으로 표시합니다. 법정 기한이 아닌 화면 기준입니다.
+ * - 응대 검사기는 넓은 화면에서 입력(왼쪽)과 결과(오른쪽)를 나란히 둡니다.
+ * - 비활성 LLM 엔진 글자는 명암 대비 4.5:1 이상을 유지합니다.
+ * - 시민 홈 질문 예시 칩은 기존 citizen-service 동작을 재사용합니다.
+ */
+
+.staff-sidebar .staff-nav-count {
+  background: #e6ebf3;
+  color: #41506b;
+}
+.staff-sidebar .staff-nav-count.alert {
+  background: #d65750;
+  color: #fff;
+}
+
+.staff-row-age.overdue {
+  color: #b5562b;
+  font-weight: 650;
+}
+
+.staff-filter-more:not([open]) {
+  margin: 0;
+}
+.staff-filter-form:has(> .staff-adv-filters:not([open])) {
+  padding-bottom: 8px;
+}
+.staff-adv-filters:not([open]) > summary {
+  padding: 2px 0;
+}
+.staff-filter-more:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+body[data-site="lab"] .lab-engine-option:disabled {
+  opacity: 1;
+  color: #5f6b80;
+  background: #f3f5f9;
+  border-color: #d5dce8;
+}
+
+@media (min-width: 1100px) {
+  body[data-site="lab"] .page-content.narrow {
+    max-width: 1180px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  body[data-site="lab"] .page-content.narrow > .page-heading,
+  body[data-site="lab"] .page-content.narrow > .form-steps,
+  body[data-site="lab"] .page-content.narrow > .lab-examples-panel {
+    grid-column: 1 / -1;
+  }
+  body[data-site="lab"] #lab-result-panel {
+    position: sticky;
+    top: 96px;
+    display: grid;
+    gap: 16px;
+  }
+}
+
+.citizen-prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.citizen-prompt-chip {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #c9d6ee;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f4fb8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.citizen-prompt-chip:hover {
+  background: #edf3ff;
+}
+body[data-theme="dark"] .citizen-prompt-chip {
+  background: #16203a;
+  color: #9fb8ff;
+  border-color: #2c3c66;
+}
