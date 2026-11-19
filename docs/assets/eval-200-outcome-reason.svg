@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 365" width="100%" height="auto" role="img" aria-label="판정 분기 및 사유 코드 분포">
+  <title>판정 분기 및 사유 코드 분포</title>
+  <style>
+    text { font-family: "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif; }
+  </style>
+  <rect x="0" y="0" width="960" height="365" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="28" y="34" fill="#0f172a" font-size="16.5" font-weight="800">2. 판정 분기(outcome) 및 세부 사유(reasonCode) 분포 (전체 200건)</text>
+  <text x="28" y="55" fill="#475569" font-size="11.5">자동 이관(automaticTransfer=true) 발생 0건 · 순수 타 지자체 13건은 LLM 판정 전 관할검증에서 즉시 out_of_scope 차단</text>
+  <path d="M 148.00 102.00 A 82.0 82.0 0 0 1 222.97 150.78 L 190.06 165.36 A 46.0 46.0 0 0 0 148.00 138.00 Z" fill="#0d9488"/>
+  <path d="M 223.26 151.43 A 82.0 82.0 0 0 1 123.34 262.20 L 134.17 227.87 A 46.0 46.0 0 0 0 190.22 165.73 Z" fill="#2563eb"/>
+  <path d="M 122.66 261.99 A 82.0 82.0 0 0 1 147.28 102.00 L 147.60 138.00 A 46.0 46.0 0 0 0 133.79 227.75 Z" fill="#d97706"/>
+  <text x="148.0" y="180.0" fill="#0f172a" font-size="22" font-weight="800" text-anchor="middle">200</text>
+  <text x="148.0" y="199.0" fill="#64748b" font-size="11" text-anchor="middle">실증 총계</text>
+  <rect x="28" y="276" width="10" height="10" rx="2" fill="#0d9488"/>
+  <text x="43" y="286" fill="#334155" font-size="11">FAQ 종결: 37건 (18.5%)</text>
+  <rect x="28" y="300" width="10" height="10" rx="2" fill="#2563eb"/>
+  <text x="43" y="310" fill="#334155" font-size="11">담당 부서 연결: 73건 (36.5%)</text>
+  <rect x="222" y="276" width="10" height="10" rx="2" fill="#d97706"/>
+  <text x="237" y="286" fill="#334155" font-size="11">담당자 검토 보류: 90건 (45.0%)</text>
+  <line x1="418" y1="76" x2="418" y2="340" stroke="#e2e8f0"/>
+  <text x="440" y="92" fill="#0f172a" font-size="13" font-weight="700">세부 사유 코드(reasonCode)별 건수</text>
+  <text x="440" y="124" fill="#334155" font-size="11">action_required (현장 출동/단속)</text>
+  <rect x="692" y="112" width="215.0" height="16" rx="4" fill="#2563eb"/>
+  <text x="913.0" y="124" fill="#0f172a" font-size="11" font-weight="700">78</text>
+  <text x="440" y="150" fill="#334155" font-size="11">ok (근거 적중 FAQ 종결)</text>
+  <rect x="692" y="138" width="102.0" height="16" rx="4" fill="#0d9488"/>
+  <text x="800.0" y="150" fill="#0f172a" font-size="11" font-weight="700">37</text>
+  <text x="440" y="176" fill="#334155" font-size="11">condition_unclear (미확인 정책/조건)</text>
+  <rect x="692" y="164" width="63.4" height="16" rx="4" fill="#f59e0b"/>
+  <text x="761.4" y="176" fill="#0f172a" font-size="11" font-weight="700">23</text>
+  <text x="440" y="202" fill="#334155" font-size="11">out_of_scope (타지역/비소관·탈옥)</text>
+  <rect x="692" y="190" width="60.6" height="16" rx="4" fill="#6366f1"/>
+  <text x="758.6" y="202" fill="#0f172a" font-size="11" font-weight="700">22</text>
+  <text x="440" y="228" fill="#334155" font-size="11">insufficient_evidence (근거 불충분)</text>
+  <rect x="692" y="216" width="57.9" height="16" rx="4" fill="#f59e0b"/>
+  <text x="755.9" y="228" fill="#0f172a" font-size="11" font-weight="700">21</text>
+  <text x="440" y="254" fill="#334155" font-size="11">department_unverified (부서 검증 필요)</text>
+  <rect x="692" y="242" width="35.8" height="16" rx="4" fill="#f59e0b"/>
+  <text x="733.8" y="254" fill="#0f172a" font-size="11" font-weight="700">13</text>
+  <text x="440" y="280" fill="#334155" font-size="11">mixed_request (안내+조치 복합)</text>
+  <rect x="692" y="268" width="16.5" height="16" rx="4" fill="#f59e0b"/>
+  <text x="714.5" y="280" fill="#0f172a" font-size="11" font-weight="700">6</text>
+</svg>

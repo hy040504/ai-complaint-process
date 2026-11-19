@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" width="100%" height="auto" role="img" aria-label="5대 테스트 축별 200건 실증 결과">
+  <title>5대 테스트 축별 200건 실증 결과</title>
+  <style>
+    text { font-family: "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif; }
+  </style>
+  <rect x="0" y="0" width="960" height="360" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="28" y="34" fill="#0f172a" font-size="16.5" font-weight="800">1. 5대 테스트 축별 200건 실증 검증 결과 (청주 184건 · 타지역 16건)</text>
+  <text x="28" y="55" fill="#475569" font-size="11.5">의미 통과 190/200건 (95.0% · 11/17 112건 83.9% 대비 +11.1%p) | 취약 8 · 결함 2 · 오류 0 (원시 PASS 189 / GAP 0 / FAIL 11 / ERR 0)</text>
+  <rect x="28" y="72" width="12" height="12" rx="3" fill="#0d9488"/>
+  <text x="46" y="82" fill="#334155" font-size="11.5">적중/방어 통과</text>
+  <rect x="193" y="72" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="211" y="82" fill="#334155" font-size="11.5">미감지·경계 취약</text>
+  <rect x="358" y="72" width="12" height="12" rx="3" fill="#dc2626"/>
+  <text x="376" y="82" fill="#334155" font-size="11.5">결함/기대 이탈</text>
+  <rect x="523" y="72" width="12" height="12" rx="3" fill="#64748b"/>
+  <text x="541" y="82" fill="#334155" font-size="11.5">타임아웃/429 보류</text>
+  <text x="28" y="128" fill="#0f172a" font-size="12.5" font-weight="700">A. 실제 FAQ 기반 1차 응대</text>
+  <rect x="248" y="111" width="315.0" height="24" rx="5" fill="#f1f5f9"/>
+  <rect x="248.0" y="111" width="297.5" height="24" rx="2" fill="#0d9488"/>
+  <text x="396.8" y="127" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">34</text>
+  <rect x="545.5" y="111" width="8.8" height="24" rx="2" fill="#f59e0b"/>
+  <rect x="554.2" y="111" width="8.8" height="24" rx="2" fill="#dc2626"/>
+  <text x="575.0" y="127" fill="#0f172a" font-size="12" font-weight="700">34/36 (94.4%)</text>
+  <text x="842" y="127" fill="#dc2626" font-size="11" font-weight="700">11/17 100% → 94%</text>
+  <text x="28" y="174" fill="#0f172a" font-size="12.5" font-weight="700">B. 모호 장소·도로·부서 연결</text>
+  <rect x="248" y="157" width="455.0" height="24" rx="5" fill="#f1f5f9"/>
+  <rect x="248.0" y="157" width="393.8" height="24" rx="2" fill="#0d9488"/>
+  <text x="444.9" y="173" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">45</text>
+  <rect x="641.8" y="157" width="52.5" height="24" rx="2" fill="#f59e0b"/>
+  <text x="668.0" y="173" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">6</text>
+  <rect x="694.2" y="157" width="8.8" height="24" rx="2" fill="#dc2626"/>
+  <text x="715.0" y="173" fill="#0f172a" font-size="12" font-weight="700">45/52 (86.5%)</text>
+  <text x="842" y="173" fill="#0d9488" font-size="11" font-weight="700">11/17 79% → 87%</text>
+  <text x="28" y="220" fill="#0f172a" font-size="12.5" font-weight="700">C. 환각·타지역 조기 차단</text>
+  <rect x="248" y="203" width="385.0" height="24" rx="5" fill="#f1f5f9"/>
+  <rect x="248.0" y="203" width="376.2" height="24" rx="2" fill="#0d9488"/>
+  <text x="436.1" y="219" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">43</text>
+  <rect x="624.2" y="203" width="8.8" height="24" rx="2" fill="#f59e0b"/>
+  <text x="645.0" y="219" fill="#0f172a" font-size="12" font-weight="700">43/44 (97.7%)</text>
+  <text x="842" y="219" fill="#dc2626" font-size="11" font-weight="700">11/17 100% → 98%</text>
+  <text x="28" y="266" fill="#0f172a" font-size="12.5" font-weight="700">D. 욕설·비꼬기·비오탐 순화</text>
+  <rect x="248" y="249" width="332.5" height="24" rx="5" fill="#f1f5f9"/>
+  <rect x="248.0" y="249" width="332.5" height="24" rx="2" fill="#0d9488"/>
+  <text x="414.2" y="265" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">38</text>
+  <text x="592.5" y="265" fill="#0f172a" font-size="12" font-weight="700">38/38 (100.0%)</text>
+  <text x="842" y="265" fill="#0d9488" font-size="11" font-weight="700">11/17 43% → 100%</text>
+  <text x="28" y="312" fill="#0f172a" font-size="12.5" font-weight="700">E. AI 탈옥·인젝션 방어</text>
+  <rect x="248" y="295" width="262.5" height="24" rx="5" fill="#f1f5f9"/>
+  <rect x="248.0" y="295" width="262.5" height="24" rx="2" fill="#0d9488"/>
+  <text x="379.2" y="311" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">30</text>
+  <text x="522.5" y="311" fill="#0f172a" font-size="12" font-weight="700">30/30 (100.0%)</text>
+  <text x="842" y="311" fill="#0d9488" font-size="11" font-weight="700">11/17 100% → 100%</text>
+  <text x="28" y="344" fill="#64748b" font-size="11">※ 기존 112건 전수 동일 문항 재호출 + 신규 고난도 88건 결합 실측 (오프라인 규칙 회귀와 별개 API 전수 결과)</text>
+</svg>

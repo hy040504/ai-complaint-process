@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 328" width="100%" height="auto" role="img" aria-label="관할 구 분포 및 한계 해소 비교">
+  <title>관할 구 분포 및 한계 해소 비교</title>
+  <style>
+    text { font-family: "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif; }
+  </style>
+  <rect x="0" y="0" width="960" height="328" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="28" y="34" fill="#0f172a" font-size="16.5" font-weight="800">4. 청주시 관할 구 감지 분포 및 패치 전후 한계 해소 비교</text>
+  <text x="28" y="55" fill="#475569" font-size="11.5">전체 200건 중 구 필터 적용 분포(좌)와 11/17 112건 식별 한계의 동일 문항 재실측 해소 현황(우)</text>
+  <text x="28" y="82" fill="#0f172a" font-size="13" font-weight="700">감지된 관할 구(effectiveDistrict)</text>
+  <text x="28" y="113" fill="#334155" font-size="11.5">미지정 (FAQ·타지역·충돌)</text>
+  <rect x="180" y="98" width="215.0" height="22" rx="4" fill="#94a3b8"/>
+  <text x="401.0" y="113" fill="#0f172a" font-size="11.5" font-weight="700">94건 (47.0%)</text>
+  <text x="28" y="153" fill="#334155" font-size="11.5">청주시 흥덕구</text>
+  <rect x="180" y="138" width="77.8" height="22" rx="4" fill="#2563eb"/>
+  <text x="263.8" y="153" fill="#0f172a" font-size="11.5" font-weight="700">34건 (17.0%)</text>
+  <text x="28" y="193" fill="#334155" font-size="11.5">청주시 상당구</text>
+  <rect x="180" y="178" width="54.9" height="22" rx="4" fill="#0d9488"/>
+  <text x="240.9" y="193" fill="#0f172a" font-size="11.5" font-weight="700">24건 (12.0%)</text>
+  <text x="28" y="233" fill="#334155" font-size="11.5">청주시 서원구</text>
+  <rect x="180" y="218" width="61.8" height="22" rx="4" fill="#7c3aed"/>
+  <text x="247.8" y="233" fill="#0f172a" font-size="11.5" font-weight="700">27건 (13.5%)</text>
+  <text x="28" y="273" fill="#334155" font-size="11.5">청주시 청원구</text>
+  <rect x="180" y="258" width="48.0" height="22" rx="4" fill="#d97706"/>
+  <text x="234.0" y="273" fill="#0f172a" font-size="11.5" font-weight="700">21건 (10.5%)</text>
+  <line x1="468" y1="74" x2="468" y2="306" stroke="#e2e8f0"/>
+  <text x="490" y="82" fill="#0f172a" font-size="13" font-weight="700">11/17 식별 한계 해결 추이 (재실측) &amp; 신규 88건</text>
+  <text x="490" y="111" fill="#0f172a" font-size="11.5" font-weight="700">① 우회 욕설·보복·비꼬기 미감지</text>
+  <rect x="490" y="116" width="110.0" height="6" rx="2" fill="#cbd5e1"/>
+  <rect x="490" y="124" width="3.0" height="7" rx="2" fill="#0d9488"/>
+  <text x="608.0" y="127" fill="#1e293b" font-size="10.5" font-weight="700">11/17 11건 → 11/19 0건 · CASE-100 PREFIX-01/04+문맥 폴백</text>
+  <text x="490" y="153" fill="#0f172a" font-size="11.5" font-weight="700">① 정상 시설 &#x27;꺼져&#x27; 순화 오탐</text>
+  <rect x="490" y="158" width="30.0" height="6" rx="2" fill="#cbd5e1"/>
+  <rect x="490" y="166" width="3.0" height="7" rx="2" fill="#2563eb"/>
+  <text x="528.0" y="169" fill="#1e293b" font-size="10.5" font-weight="700">11/17 3건 → 11/19 0건 · B02·B14·E17 시설 배제(B14 확장)</text>
+  <text x="490" y="195" fill="#0f172a" font-size="11.5" font-weight="700">②·③ 지명·장소 4대 결함</text>
+  <rect x="490" y="200" width="40.0" height="6" rx="2" fill="#cbd5e1"/>
+  <rect x="490" y="208" width="10.0" height="7" rx="2" fill="#7c3aed"/>
+  <text x="538.0" y="211" fill="#1e293b" font-size="10.5" font-weight="700">11/17 4건 → 11/19 1건 · B06(5컷)·B12(&#x27;지역&#x27;)·B14·B17(숫자)</text>
+  <text x="490" y="237" fill="#0f172a" font-size="11.5" font-weight="700">④ EXAONE 200s·지연·429 군</text>
+  <rect x="490" y="242" width="50.0" height="6" rx="2" fill="#cbd5e1"/>
+  <rect x="490" y="250" width="3.0" height="7" rx="2" fill="#d97706"/>
+  <text x="548.0" y="253" fill="#1e293b" font-size="10.5" font-weight="700">11/17 5건 → 11/19 0건 · 차등추론 high/low + 병렬 PREFIX-03∥04</text>
+  <text x="490" y="279" fill="#0f172a" font-size="11.5" font-weight="700">신규 88건 스트레스 미통과·관찰</text>
+  <rect x="490" y="284" width="60.0" height="11" rx="3" fill="#64748b"/>
+  <text x="558.0" y="293" fill="#1e293b" font-size="10.5" font-weight="700">6건 · 고난도 경계 88건 중 실측 미통과 건수</text>
+</svg>
