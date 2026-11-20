@@ -551,3 +551,150 @@ def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
     assert by_role["decision"]["usage"]["input_tokens"] == 500
     assert "usage" not in by_role["sanitize"]
     assert by_role["staff_draft"]["usage"]["input_tokens"] == 300
+
+
+def test_json_repair_codex_error_trim_exaone_timeout_low_retry_and_fallback(
+    monkeypatch: object,
+) -> None:
+    """N32 JSON 복구·A15 오류 요약·N18 EXAONE low 재시도·자동 폴백·staff_draft MCP 생략을 검증합니다."""
+    from src.assist import pipeline
+    from src.assist.prompts import DECISION_SYSTEM
+    from src.llm import complete
+
+    # 1. PREFIX-01에 불가 확정 FAQ 안내 규칙(A24 대응)이 반영돼 있어야 합니다.
+    assert "무인민원발급기" in DECISION_SYSTEM
+    assert "faq-demo-4" in DECISION_SYSTEM
+
+    # 2. 경미한 JSON 구문 오류(줄바꿈 사이 쉼표 누락·끝 쉼표·문자열 내 개행) 자동 복구
+    broken_json = (
+        "{\n"
+        '  "summary_card": {"core_summary": "가로수\n관리 요청", "missing_info": [],}\n'
+        '  "draft_answer": "현장 점검하겠습니다."\n'
+        '  "citations": []\n'
+        '  "requires_field_check": true,\n'
+        "}"
+    )
+    repaired = complete.parse_json_object(broken_json)
+    assert repaired["requires_field_check"] is True
+    assert "가로수\n관리 요청" == repaired["summary_card"]["core_summary"]
+
+    # 3. Codex CLI 실패 출력에서 시스템 프롬프트를 제거하고 ERROR 줄만 간결히 추출
+    noisy_stderr = (
+        "[시스템 지시]\n" + ("긴 프롬프트 내용 " * 500) + "\n"
+        "ERROR: You’ve hit your usage limit.\n"
+        "ERROR: You’ve hit your usage limit.\n"
+    )
+    short_err = complete._extract_codex_error(noisy_stderr, "")
+    assert "[시스템 지시]" not in short_err
+    assert short_err == "ERROR: You’ve hit your usage limit."
+
+    # 4. EXAONE decision 토큰 캡(8192) 및 Codex staff_draft MCP 생략 확인
+    dec_exaone = settings.settings_for_role(
+        {
+            "provider": "exaone_api",
+            "url": "https://api.exaone.ai/v1/chat/completions",
+            "model": "k-exaone_v2.5",
+            "token": "k",
+            "auth": "bearer",
+            "reasoning_effort": "max",
+            "max_tokens": "16384",
+        },
+        "decision",
+    )
+    assert dec_exaone is not None and dec_exaone["max_tokens"] == "8192"
+    codex_draft = settings.settings_for_role(
+        {
+            "provider": "codex_cli",
+            "url": None,
+            "model": "gpt-6-luna",
+            "token": None,
+            "auth": "codex",
+            "reasoning_effort": "medium",
+        },
+        "staff_draft",
+    )
+    assert codex_draft is not None and codex_draft.get("_disable_mcp") == "1"
+
+    # 5. EXAONE high 추론 타임아웃 시 low 강도·4096 토큰으로 1회 자동 재시도(N18 대응)
+    seen_payloads: list[dict[str, object]] = []
+
+    def fake_http_json(url: str, payload: dict[str, object], headers: object = None):
+        """첫 호출은 타임아웃을, low 재시도는 정상 응답을 반환합니다."""
+        del url, headers
+        seen_payloads.append(dict(payload))
+        if len(seen_payloads) == 1:
+            raise ValueError(
+                "요청 시간 초과 (https://api.exaone.ai/v1/chat/completions, 180초)"
+            )
+        return {"choices": [{"message": {"content": '{"ok": true}'}}]}
+
+    monkeypatch.setattr(complete, "http_json", fake_http_json)
+    retried = complete.complete_exaone_result(dec_exaone, "sys", "usr")
+    assert retried.text == '{"ok": true}'
+    assert len(seen_payloads) == 2
+    assert seen_payloads[0]["reasoning_effort"] == "high"
+    assert seen_payloads[1]["reasoning_effort"] == "low"
+    assert seen_payloads[1]["max_tokens"] == 4096
+
+    # 6. 미고정(provider=None) 호출 한도 실패 시 보조 공급자 자동 폴백 + staff_draft JSON 1회 재시도
+    monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
+    monkeypatch.setenv("EXAONE_API_KEY", "fallback-key")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(settings, "codex_available", lambda: True)
+
+    calls_seen: list[tuple[str | None, str]] = []
+    draft_attempts = {"n": 0}
+
+    def fake_complete_fallback(system: str, user: str, settings: dict | None = None):
+        """codex_cli 한도 실패 후 exaone_api 폴백 및 staff_draft JSON 재시도를 모사합니다."""
+        prov = settings.get("provider") if settings else None
+        calls_seen.append((prov, "decision" if "판정기" in system else "draft"))
+        if prov == "codex_cli":
+            raise ValueError("Codex CLI 호출 실패: ERROR: You’ve hit your usage limit.")
+        if "판정기" in system:
+            return complete.CompleteResult(
+                '{"scope":"in_scope","intent":"action","outcome":"human_handoff",'
+                '"reason_code":"action_required","evidence_refs":[],"department_ids":[],"sanitize_needed":false}',
+                {"input_tokens": 100, "output_tokens": 30, "cached_tokens": None},
+            )
+        draft_attempts["n"] += 1
+        if draft_attempts["n"] == 1:
+            return complete.CompleteResult("{완전히 깨진 JSON", None)
+        assert "형식 재확인" in user
+        return complete.CompleteResult(
+            '{"summary_card":{"core_summary":"가로등 수리","citizen_request":"수리",'
+            '"location_or_target":"상당구","missing_info":[]},'
+            '"draft_answer":"[담당자 확인 필요: 현장 점검 일시 입력] 수암골전망대 계단 가로등 현장 점검 후 보수하겠습니다.",'
+            '"citations":[],"requires_field_check":true}',
+            {"input_tokens": 200, "output_tokens": 50, "cached_tokens": None},
+        )
+
+    monkeypatch.setattr(pipeline, "complete_result", fake_complete_fallback)
+    fake_search = {
+        "retrieval_only": True,
+        "decision": "requires_gate",
+        "results": {
+            "faq_knowledge": {"hits": []},
+            "routing_cases": {"hits": [], "department_candidates": []},
+        },
+    }
+    fb_res = pipeline.run_assist(
+        "수암골전망대 계단 가로등 수리 요청합니다.",
+        district="상당구",
+        search_fn=lambda *_args: fake_search,
+    )
+    assert fb_res["llm_provider"] == "exaone_api"
+    assert fb_res["staff_draft"] is not None
+    assert draft_attempts["n"] == 2
+    assert calls_seen[0] == ("codex_cli", "decision")
+    assert calls_seen[1] == ("exaone_api", "decision")
+
+    # 명시 고정(provider="codex_cli") 호출은 타 엔진으로 몰래 전환하지 않아야 합니다.
+    pinned = pipeline.run_assist(
+        "수암골전망대 계단 가로등 수리 요청합니다.",
+        district="상당구",
+        provider="codex_cli",
+        search_fn=lambda *_args: fake_search,
+    )
+    assert pinned["llm_provider"] == "codex_cli"
+    assert pinned["reason_code"] == "llm_unavailable"

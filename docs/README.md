@@ -35,9 +35,9 @@
 ## 현재 구현과 데이터 위치
 
 - **검색·판정 계층:** 검색 CLI/API, 응대 CLI/`minwon`/`src/lab_web` `:5010`이 로컬에서 동작하며, `docs/harness/prompts/` `PREFIX-00~04`로 판정·조건 보존 FAQ 안내·담당자 초안(`out_of_scope` 고정 템플릿)·순화 요약을 분리 실행(`PREFIX-03∥04` 병렬, 순수 타지역 `early_external_reject`)합니다.
-- **응대 검사기 (`:5010`, `llm` 브랜치 기본):** 제목·상세로 지명·도로명+번지·사례 235쌍 도로 색인·네이버 지도(`address`/`ac`·HTTP 400/429 60초 서킷브레이커)를 추적해 검색하고 선택한 공급자(`K-EXAONE 2.5` 단계별 차등 `high`/`low<=4096`·`GPT-6 Luna`·`Codex CLI`)로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs`) 클릭 시 입력 폼을 복원합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`·`lookup_navermap_place` 2종을 제공합니다(`PREFIX-02`/`04`는 `_disable_mcp`).
+- **응대 검사기 (`:5010`, `llm` 브랜치 기본):** 제목·상세로 지명·도로명+번지·사례 235쌍 도로 색인·네이버 지도(`address`/`ac`·HTTP 400/429 60초 서킷브레이커)를 추적해 검색하고 선택한 공급자(`K-EXAONE 2.5` 단계별 차등 `high<=8192`/`low<=4096`·타임아웃 `low` 1회 재시도·`GPT-6 Luna`·`Codex CLI`)로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs`) 클릭 시 입력 폼을 복원합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`·`lookup_navermap_place` 2종을 제공합니다(`PREFIX-02`/`03`/`04`는 `_disable_mcp`, `PREFIX-03`/`04` JSON 복구·1회 재시도 및 Codex 오류 축약 적용).
 - **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`, **30경로**), Flask, **민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`, `scrypt`·5회 `429` 잠금·부서 범위 RBAC·간단 가입)**, **PostgreSQL `complaint_app` 7테이블 정규화(`users`~`job_events`·`automatic_transfer=false` CHECK·`complaint_rag` 교차 FK)**, 비동기 AI 분석 워커, **담당자 실시간 SSE 푸시(`/api/v1/staff/events`, `Last-Event-ID`·단절 시 3초 폴링 대체)** 및 **시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, 미게시 초안·순화 구조 차단)**을 지원합니다.
-- **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` → 패치 후 **100건 재검증 `98/100 (98.0%`, 실응답 `98/99, 99.0%`)**와 규칙 `112/5,015` 회귀를 통과했습니다. 외부 PASS/행정 SSO 연동·`openai_api` `cached_tokens` 실측·다중 워커 브로커(현 단계 제외)·청주시 공식 이관은 후속입니다.
+- **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` → 혼합 100건 재검증 `98/100 (98.0%)` → **Codex CLI 전용 신규 100건 실증 `99/100 (99.0%, CASE-113)`**과 규칙 `112/5,015` 회귀를 통과했습니다. 외부 PASS/행정 SSO 연동·`openai_api` `cached_tokens` 실측·다중 워커 브로커(현 단계 제외)·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -58,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-113](cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md) | 2026-11-20 | `CASE-109` 세부 문제 패치(`PREFIX-01` 명확 불가 FAQ, 경량 JSON 복구·1회 재시도, Codex 오류 240자 축약, `staff_draft` `_disable_mcp`, EXAONE `decision <=8192`/타임아웃 `low` 재시도, 미고정 폴백, 시설·가족/신고 불용어 24종) 및 `:5010` Codex CLI 전용 신규 100건 실증 **`99/100 (99.0%)`** (`20/20`+`79/80`, 평균 `16.11s`) | 완료 |
 | [CASE-112](cases/사례-112-실시간SSE-시민챗봇-로그인-7테이블정규화-후속품질검수와-최적화-2026-11-20.md) | 2026-11-20 | `CASE-110·111` 패치 후속 QA 검수·최적화: `message_versions` 이력 불변 보존(`DO NOTHING`), `change()` 잠금 내 RBAC 재검증(TOCTOU 제거), `StaffEventBroker._replay_since_locked` 중복 통합, `LoginRateLimiter` 만료 정리, 구 UI 문구 5곳 정정·Swagger 세션 표시 보강 및 전수 재검증 | 완료 |
 | [CASE-111](cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md) | 2026-11-20 | 민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`: `scrypt`·5회 `429` 잠금·부서 RBAC·2탭 로그인 모달·간단 가입·다중 사용자 격리; OTP 본인확인 제거로 간소화) 및 PostgreSQL 7테이블 정규화(`users`~`job_events`·`automatic_transfer=false` CHECK·`complaint_rag` 교차 FK·자동 백필·`GET /api/v1/staff/db-summary`), Swagger PDF 30경로 갱신 및 `179`/`29`/실PG·Edge E2E 검증 | 완료 |
 | [CASE-110](cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) | 2026-11-20 | 담당자 실시간 SSE 푸시(`GET /api/v1/staff/events`, `StaffEventBroker`·`Last-Event-ID`·`resync_required`·3초 대체) 및 시민 AI 챗봇 실연결(`POST /api/v1/citizen/chat(/stream)`, 비공개 초안/순화 구조 차단·`include_staff_outputs=False`), Swagger PDF 25경로 갱신 및 `176`/`27`/Edge E2E 검증 | 완료 |

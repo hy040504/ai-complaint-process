@@ -20,9 +20,11 @@ _LLM_ENV_KEYS = frozenset(
         "EXAONE_REASONING_EFFORT",
         "EXAONE_DECISION_REASONING_EFFORT",
         "EXAONE_FAST_REASONING_EFFORT",
+        "EXAONE_DECISION_MAX_TOKENS",
         "EXAONE_MAX_TOKENS",
         "EXAONE_TEMPERATURE",
         "EXAONE_TOP_P",
+        "COMPLAINT_LLM_AUTO_FALLBACK",
         "COMPLAINT_LLM_URL",
         "COMPLAINT_LLM_TOKEN",
         "PUBLIC_LLM_TOKEN",
@@ -43,8 +45,9 @@ DEFAULT_EXAONE_DECISION_REASONING_EFFORT = "high"
 DEFAULT_EXAONE_FAST_REASONING_EFFORT = "low"
 EXAONE_REASONING_EFFORTS = frozenset({"low", "high", "max"})
 _EXAONE_EFFORT_RANK = {"low": 0, "high": 1, "max": 2}
-# max_tokens에는 내부 추론 토큰이 함께 계산되므로 판정 JSON보다 넉넉히 두되 정형 후속 단계는 상한을 제한합니다.
+# max_tokens에는 내부 추론 토큰이 함께 계산되므로 판정 JSON(8192)·정형 후속 단계(4096) 상한을 단계별로 제한합니다.
 DEFAULT_EXAONE_MAX_TOKENS = 16384
+DEFAULT_EXAONE_DECISION_MAX_TOKENS = 8192
 DEFAULT_EXAONE_FAST_MAX_TOKENS = 4096
 # 공식 권장 1.0보다 낮춰 판정 JSON 형식을 안정적으로 유지합니다.
 DEFAULT_EXAONE_TEMPERATURE = 0.7
@@ -305,7 +308,24 @@ def settings_for_role(
             ):
                 target_effort = base_effort
         adjusted["reasoning_effort"] = target_effort
-        if role in ("faq_answer", "sanitize", "staff_draft"):
+        if role == "decision":
+            try:
+                cur_max = int(
+                    str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)
+                )
+            except (TypeError, ValueError):
+                cur_max = DEFAULT_EXAONE_MAX_TOKENS
+            env_dec_max = optional_env("EXAONE_DECISION_MAX_TOKENS")
+            try:
+                dec_cap = (
+                    int(env_dec_max)
+                    if env_dec_max
+                    else DEFAULT_EXAONE_DECISION_MAX_TOKENS
+                )
+            except ValueError:
+                dec_cap = DEFAULT_EXAONE_DECISION_MAX_TOKENS
+            adjusted["max_tokens"] = str(min(cur_max, max(1024, dec_cap)))
+        elif role in ("faq_answer", "sanitize", "staff_draft"):
             try:
                 cur_max = int(
                     str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)
@@ -313,7 +333,8 @@ def settings_for_role(
             except (TypeError, ValueError):
                 cur_max = DEFAULT_EXAONE_MAX_TOKENS
             adjusted["max_tokens"] = str(min(cur_max, DEFAULT_EXAONE_FAST_MAX_TOKENS))
-    elif prov == "codex_cli" and role in ("faq_answer", "sanitize"):
+    elif prov == "codex_cli" and role in ("faq_answer", "sanitize", "staff_draft"):
+        # 후속 단계는 검색 후보·원문이 이미 입력에 포함돼 있어 MCP 기동과 도구 스키마를 생략합니다.
         adjusted["_disable_mcp"] = "1"
     return adjusted
 
@@ -411,3 +432,29 @@ def provider_availability_map() -> dict[str, dict[str, Any]]:
             "resolved_provider": default_provider if not prov else prov,
         }
     return result
+
+
+def fallback_provider_settings(
+    failed_provider: str | None,
+) -> dict[str, str | None] | None:
+    """기본 공급자가 한도·타임아웃으로 실패했을 때 대체 가능한 보조 공급자 설정을 찾습니다.
+
+    `COMPLAINT_LLM_AUTO_FALLBACK=0`이면 자동 폴백을 비활성화합니다.
+
+    Args:
+        failed_provider: 직전 실패한 공급자 식별자입니다.
+
+    Returns:
+        대체 호출이 가능한 공급자 설정 딕셔너리 또는 없으면 None입니다.
+    """
+    load_llm_env_file()
+    if optional_env("COMPLAINT_LLM_AUTO_FALLBACK") == "0":
+        return None
+    failed = (failed_provider or "").strip().lower()
+    for candidate in ("codex_cli", "exaone_api", "openai_api"):
+        if candidate == failed:
+            continue
+        ok, _ = check_provider_availability(candidate)
+        if ok:
+            return settings_for_provider(candidate)
+    return None

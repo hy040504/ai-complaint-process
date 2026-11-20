@@ -51,6 +51,7 @@ from src.llm.complete import (
 )
 from src.llm.settings import (
     check_provider_availability,
+    fallback_provider_settings,
     llm_configured,
     llm_settings,
     settings_for_provider,
@@ -164,6 +165,34 @@ def resolve_chat(
         return result.text
 
     return chat
+
+
+_JSON_RETRY_REMINDER = (
+    "\n\n[형식 재확인] 마크다운이나 설명 없이 유효한 JSON 객체 하나만 반환하고, "
+    "모든 키-값 쌍 사이에 쉼표(,)를 빠뜨리지 마세요."
+)
+
+
+def _is_provider_limit_error(exc: Exception) -> bool:
+    """오류가 외부 공급자의 사용량 한도·속도 제한·타임아웃 때문인지 판별합니다.
+
+    Args:
+        exc: LLM 호출 중 발생한 예외입니다.
+
+    Returns:
+        보조 공급자 자동 폴백 대상인 한도·타임아웃 오류이면 True입니다.
+    """
+    msg = str(exc).lower()
+    return any(
+        token in msg
+        for token in (
+            "usage limit",
+            "api 429",
+            "rate_limit",
+            "한도 초과",
+            "요청 시간 초과",
+        )
+    )
 
 
 def _call_role(
@@ -298,9 +327,23 @@ def _run_sanitize_step(
         raw_text, call_usage = _call_role(
             llm_fn, bound_meta, "sanitize", SPECIAL_SANITIZE_SYSTEM, sanitize_json
         )
-        sanitize = validate_sanitize(parse_json_object(raw_text))
-        if sanitize is None:
-            raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
+        try:
+            sanitize = validate_sanitize(parse_json_object(raw_text))
+            if sanitize is None:
+                raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
+        except (json.JSONDecodeError, ValueError):
+            if llm_fn is not USE_ENV_LLM:
+                raise
+            raw_text, call_usage = _call_role(
+                llm_fn,
+                bound_meta,
+                "sanitize",
+                SPECIAL_SANITIZE_SYSTEM,
+                sanitize_json + _JSON_RETRY_REMINDER,
+            )
+            sanitize = validate_sanitize(parse_json_object(raw_text))
+            if sanitize is None:
+                raise ValueError("순화 결과를 코드에서 검증하지 못했습니다.")
         step_stage = stage("순화", started, True)
     except (ValueError, json.JSONDecodeError, OSError) as exc:
         step_stage = stage("순화", started, False)
@@ -361,9 +404,23 @@ def _run_staff_draft_step(
         raw_text, call_usage = _call_role(
             llm_fn, bound_meta, "staff_draft", STAFF_DRAFT_SYSTEM, draft_json
         )
-        staff_draft = validate_staff_draft(parse_json_object(raw_text), parts)
-        if staff_draft is None:
-            raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
+        try:
+            staff_draft = validate_staff_draft(parse_json_object(raw_text), parts)
+            if staff_draft is None:
+                raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
+        except (json.JSONDecodeError, ValueError):
+            if llm_fn is not USE_ENV_LLM:
+                raise
+            raw_text, call_usage = _call_role(
+                llm_fn,
+                bound_meta,
+                "staff_draft",
+                STAFF_DRAFT_SYSTEM,
+                draft_json + _JSON_RETRY_REMINDER,
+            )
+            staff_draft = validate_staff_draft(parse_json_object(raw_text), parts)
+            if staff_draft is None:
+                raise ValueError("담당자 초안을 코드에서 검증하지 못했습니다.")
         step_stage = stage("담당자초안", started, True)
     except (ValueError, json.JSONDecodeError, OSError) as exc:
         step_stage = stage("담당자초안", started, False)
@@ -377,6 +434,7 @@ def _run_staff_draft_step(
         True,
         draft_json,
         usage=call_usage,
+        disable_tools=bool(bound_meta and bound_meta.get("provider") == "codex_cli"),
     )
     return staff_draft, step_stage, codex_entry, err
 
@@ -667,12 +725,34 @@ def iter_assist(
                 llm_fn, bound_meta, "decision", DECISION_SYSTEM, decision_user
             )
         except (ValueError, OSError) as exc:
-            # 외부 API(429·연결 오류)나 CLI 실패면 후속 LLM 호출을 연달아 보내지 않습니다.
-            decision_call_failed = True
-            stages.append(stage("판정", started, False))
-            decision = empty_decision("llm_unavailable")
-            failures = [str(exc)]
-        else:
+            # 호출자가 특정 엔진을 고정하지 않은(.env 기본) 경우 한도·타임아웃 시 보조 공급자로 1회 자동 전환합니다.
+            fallback_cfg = (
+                fallback_provider_settings(resolved_provider)
+                if llm_fn is USE_ENV_LLM
+                and provider is None
+                and _is_provider_limit_error(exc)
+                else None
+            )
+            if fallback_cfg is not None:
+                try:
+                    raw_reply, decision_usage = _call_role(
+                        llm_fn, fallback_cfg, "decision", DECISION_SYSTEM, decision_user
+                    )
+                    bound_meta = fallback_cfg
+                    resolved_provider = fallback_cfg.get("provider")
+                    resolved_model = fallback_cfg.get("model")
+                except (ValueError, OSError) as fb_exc:
+                    decision_call_failed = True
+                    stages.append(stage("판정", started, False))
+                    decision = empty_decision("llm_unavailable")
+                    failures = [f"{exc} / 폴백 실패: {fb_exc}"]
+            else:
+                # 외부 API(429·연결 오류)나 CLI 실패면 후속 LLM 호출을 연달아 보내지 않습니다.
+                decision_call_failed = True
+                stages.append(stage("판정", started, False))
+                decision = empty_decision("llm_unavailable")
+                failures = [str(exc)]
+        if not decision_call_failed:
             try:
                 raw_decision = parse_json_object(raw_reply)
                 stages.append(stage("판정", started, True))

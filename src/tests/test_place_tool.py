@@ -436,3 +436,12 @@ def test_municipal_drainage_and_facility_nouns_do_not_trigger_contractor_noise()
         bad not in sb_cands
         for bad in ("과속방지턱", "안전난간", "가드레일", "고등학교")
     )
+
+    # K12: '출생신고 부모' 같은 가족·신고 일반명사가 요양기관 상호로 오매칭되지 않아야 합니다.
+    k12_text = (
+        "출생신고 부모 본인 방문 시 구비서류 및 신고 기관 문의 "
+        "아기가 태어나서 부모 중 한 명이 직접 출생신고를 하려고 합니다."
+    )
+    k12_cands = extract_place_candidates(k12_text)
+    assert all("부모" not in c and "출생신고" not in c for c in k12_cands)
+    assert is_place_relevant("부모사랑 재가장기요양기관", k12_text) is False

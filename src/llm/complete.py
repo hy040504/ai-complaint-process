@@ -21,6 +21,7 @@ from typing import Any, NamedTuple, NotRequired, TypedDict
 from src.llm.place_tool import PLACE_TOOL_NAME, PLACE_TOOL_USAGE
 from src.llm.rag_tool import RAG_TOOL_NAME, RAG_TOOL_USAGE
 from src.llm.settings import (
+    DEFAULT_EXAONE_FAST_MAX_TOKENS,
     DEFAULT_EXAONE_MAX_TOKENS,
     DEFAULT_EXAONE_REASONING_EFFORT,
     DEFAULT_EXAONE_TEMPERATURE,
@@ -287,12 +288,30 @@ def complete_exaone_result(
     try:
         body = http_json(str(url), payload, headers=headers)
     except ValueError as exc:
-        if str(exc).startswith("API 429:"):
+        msg = str(exc)
+        if effort != "low" and "요청 시간 초과" in msg:
+            # 고강도 추론(high/max)이 180초를 초과하면 low 강도·4096 토큰으로 1회 빠르게 재시도합니다.
+            fallback_payload = {
+                **payload,
+                "reasoning_effort": "low",
+                "max_tokens": min(max_tokens, DEFAULT_EXAONE_FAST_MAX_TOKENS),
+            }
+            try:
+                body = http_json(str(url), fallback_payload, headers=headers)
+            except ValueError as retry_exc:
+                if str(retry_exc).startswith("API 429:"):
+                    raise ValueError(
+                        f"{retry_exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
+                        "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
+                    ) from None
+                raise
+        elif msg.startswith("API 429:"):
             raise ValueError(
                 f"{exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
                 "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
             ) from None
-        raise
+        else:
+            raise
     try:
         content = body["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
@@ -533,12 +552,45 @@ def complete_codex_cli(settings: dict[str, str | None], system: str, user: str) 
             check=False,
         )
     if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or "알 수 없는 오류"
+        detail = _extract_codex_error(result.stderr, result.stdout)
         raise ValueError(f"Codex CLI 호출 실패: {detail}")
     text = result.stdout.strip()
     if not text:
         raise ValueError("Codex CLI 응답 본문이 비어 있습니다.")
     return text
+
+
+def _extract_codex_error(stderr: str, stdout: str) -> str:
+    """Codex CLI 실패 출력에서 시스템 프롬프트 반사를 제외하고 핵심 오류만 요약합니다.
+
+    Args:
+        stderr: 하위 프로세스 표준 오류 문자열입니다.
+        stdout: 하위 프로세스 표준 출력 문자열입니다.
+
+    Returns:
+        최대 240자 이내의 간결한 오류 요약 문자열입니다.
+    """
+    combined = "\n".join(
+        part.strip() for part in (stderr, stdout) if part and part.strip()
+    )
+    if not combined:
+        return "알 수 없는 오류"
+    error_lines = [
+        line.strip()
+        for line in combined.splitlines()
+        if line.strip().startswith(("ERROR:", "Error:", "error:", "fatal:"))
+    ]
+    if error_lines:
+        unique_lines: list[str] = []
+        for line in error_lines:
+            if line not in unique_lines:
+                unique_lines.append(line)
+        return " | ".join(unique_lines)[:240]
+    tail_lines = [line.strip() for line in combined.splitlines() if line.strip()][-3:]
+    summary = " | ".join(tail_lines)
+    if "[시스템 지시]" in summary or "[시스템 헌법" in summary:
+        return "실행 오류 (상세 로그 생략)"
+    return summary[:240]
 
 
 def complete_result(
@@ -623,8 +675,56 @@ def complete_chat(
     return complete_result(system, user, settings=settings).text
 
 
+_TRAILING_COMMA_RE = re.compile(r",(\s*[}\]])")
+_MISSING_PROP_COMMA_RE = re.compile(
+    r'(["}\]]|\btrue\b|\bfalse\b|\bnull\b|-?\d+(?:\.\d+)?)'
+    r'([ \t]*\r?\n[ \t]*"[^"\r\n]+"\s*:)'
+)
+
+
+def _repair_json_text(raw: str) -> str:
+    """모델 출력 JSON에서 빈번한 경미한 구문 오류(미이스케이프 줄바꿈·쉼표 누락·끝 쉼표)를 보정합니다.
+
+    Args:
+        raw: 원시 JSON 객체 후보 문자열입니다.
+
+    Returns:
+        구문 보정을 적용한 JSON 문자열입니다.
+    """
+    out: list[str] = []
+    in_string = False
+    escaped = False
+    for ch in raw:
+        if in_string:
+            if escaped:
+                out.append(ch)
+                escaped = False
+            elif ch == "\\":
+                out.append(ch)
+                escaped = True
+            elif ch == '"':
+                out.append(ch)
+                in_string = False
+            elif ch == "\n":
+                out.append("\\n")
+            elif ch == "\r":
+                out.append("\\r")
+            elif ch == "\t":
+                out.append("\\t")
+            else:
+                out.append(ch)
+        else:
+            if ch == '"':
+                in_string = True
+            out.append(ch)
+    repaired = "".join(out)
+    repaired = _TRAILING_COMMA_RE.sub(r"\1", repaired)
+    repaired = _MISSING_PROP_COMMA_RE.sub(r"\1,\2", repaired)
+    return repaired
+
+
 def parse_json_object(text: str) -> dict[str, Any]:
-    """모델 출력에서 첫 JSON 객체를 꺼냅니다.
+    """모델 출력에서 첫 JSON 객체를 꺼내며, 경미한 형식 오류 시 1회 자동 복구합니다.
 
     Args:
         text: 원문 응답입니다.
@@ -633,7 +733,7 @@ def parse_json_object(text: str) -> dict[str, Any]:
         객체로 해석한 값입니다.
 
     Raises:
-        ValueError: JSON 객체를 찾지 못한 경우 발생합니다.
+        ValueError: JSON 객체를 찾지 못하거나 복구 후에도 해석할 수 없는 경우 발생합니다.
     """
     block = _JSON_BLOCK.search(text)
     raw = block.group(1) if block else None
@@ -642,7 +742,10 @@ def parse_json_object(text: str) -> dict[str, Any]:
         raw = match.group(0) if match else None
     if not raw:
         raise ValueError("JSON 객체를 찾지 못했습니다.")
-    value = json.loads(raw)
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        value = json.loads(_repair_json_text(raw))
     if not isinstance(value, dict):
         raise ValueError("JSON 객체가 필요합니다.")
     return value
