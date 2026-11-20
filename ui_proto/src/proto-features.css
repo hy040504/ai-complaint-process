@@ -1,0 +1,398 @@
+/* 구상 메모 기능(UI_기능_구상.txt)의 프로토타입 전용 스타일입니다. 기존 테마 변수를 그대로 씁니다. */
+
+/* 1. 14일 초과 칩 */
+.staff-overdue-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 10px 0 6px;
+}
+.staff-overdue-chip {
+  border-color: #e0893a;
+  color: #b25a12;
+  font-weight: 700;
+}
+.staff-overdue-chip span {
+  margin-left: 6px;
+}
+.staff-overdue-chip.active {
+  background: #fff1e2;
+  color: #8a4208;
+}
+.staff-overdue-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* 2. AI 원문과 편집본 비교 */
+.proto-compare-summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.proto-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.proto-compare-grid h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.proto-compare-grid .compare-box {
+  max-height: 46vh;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.proto-diff-del {
+  background: rgba(220, 60, 60, 0.2);
+  color: inherit;
+  text-decoration: line-through;
+  border-radius: 3px;
+}
+.proto-diff-ins {
+  background: rgba(40, 160, 90, 0.22);
+  color: inherit;
+  border-radius: 3px;
+}
+@media (max-width: 680px) {
+  .proto-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 3. 시민 처리 단계 세로 타임라인 */
+.proto-timeline {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  position: relative;
+}
+.proto-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  padding: 0 0 16px;
+}
+.proto-timeline li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+}
+.proto-timeline li.done:not(:last-child)::before {
+  background: var(--teal);
+}
+.proto-timeline-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+.proto-timeline li.done .proto-timeline-mark {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+.proto-timeline li.current .proto-timeline-mark {
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 0 4px rgba(179, 129, 52, 0.18);
+}
+.proto-timeline li > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.proto-timeline b {
+  font-size: 15px;
+}
+.proto-timeline small {
+  color: var(--muted);
+  font-size: 13px;
+}
+.proto-timeline time {
+  color: var(--muted);
+  font-size: 12px;
+}
+.proto-timeline li.waiting b {
+  color: var(--muted);
+}
+
+/* 4. 읽지 않은 답변 점 */
+.proto-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e5484d;
+  box-shadow: 0 0 0 2px var(--bg, #fff);
+}
+.proto-bell,
+/* 하단 메뉴 아이콘은 칸 전체 폭으로 늘어나므로, 아이콘 크기만큼만 기준 상자를 만들어 점을 오른쪽 위 모서리에 붙입니다. */
+.citizen-bottom-nav .bottom-icon {
+  position: relative;
+  width: max-content;
+  margin: 0 auto;
+}
+.citizen-bottom-nav .bottom-icon .proto-dot {
+  top: -3px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+}
+.proto-dot-row {
+  position: static;
+  flex: none;
+  align-self: center;
+  margin: 0 4px;
+}
+.proto-new-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fde7e8;
+  color: #b3262b;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.citizen-update-row.is-unread {
+  border-color: #e5484d;
+}
+
+/* 5. 검사기 초안을 편집기로 넘기는 줄 */
+.proto-lab-handoff {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.proto-lab-handoff p {
+  margin: 0;
+  font-size: 13px;
+}
+.proto-seed-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: #fff7e6;
+  color: #6b4a12;
+  border: 1px solid #efd9a7;
+  font-size: 14px;
+}
+.proto-seed-banner span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 6. 답변 템플릿 */
+.proto-tpl {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.proto-tpl-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.proto-tpl-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.proto-tpl-head span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.proto-tpl-tools {
+  margin-bottom: 8px;
+}
+.proto-tpl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.proto-tpl-chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.proto-tpl-chip.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+.proto-tpl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+.proto-tpl-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.proto-tpl-item[hidden] {
+  display: none;
+}
+.proto-tpl-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.proto-tpl-text b {
+  font-size: 14px;
+}
+.proto-tpl-text small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.proto-tpl-text p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.proto-tpl-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+}
+.proto-tpl-btns .btn {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.proto-tpl-empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.proto-tpl-empty[hidden] {
+  display: none;
+}
+.proto-tpl-add {
+  margin-top: 10px;
+}
+.proto-tpl-add summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--teal);
+}
+.proto-tpl-form {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.proto-tpl-form label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.proto-tpl-form input,
+.proto-tpl-form select,
+.proto-tpl-form textarea {
+  width: 100%;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+}
+
+/* 7. 단축키 안내 */
+.proto-shortcuts dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.proto-shortcuts dl > div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.proto-shortcuts dt {
+  font-weight: 700;
+}
+.proto-shortcuts dd {
+  margin: 0;
+  font-size: 14px;
+}
+.proto-shortcuts kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+
+/* 8. 최근 본 민원 (담당자 사이드바) */
+.staff-recent {
+  display: grid;
+  gap: 2px;
+  margin: 8px 0 4px;
+}
+.staff-recent-link {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+}
+.staff-recent-link:hover,
+.staff-recent-link:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+.staff-recent-link.active {
+  background: rgba(255, 255, 255, 0.14);
+  font-weight: 700;
+}
+.staff-recent-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

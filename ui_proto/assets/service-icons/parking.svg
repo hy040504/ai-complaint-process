@@ -1,0 +1,7 @@
+<svg class="service-artwork" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="불법주정차" focusable="false" data-service-icon="parking"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/><rect x="11" y="13" width="21" height="25" rx="5" fill="#2f6fed" stroke="none"/>
+    <path d="M19 31V20h5a4 4 0 0 1 0 8h-5" stroke="#fff" stroke-width="2.6" fill="none"/>
+    <path d="M22 40l3-8a5 5 0 0 1 5-3h11a5 5 0 0 1 5 3l4 8" fill="#dbe8ff"/>
+    <rect x="20" y="38" width="33" height="12" rx="5" fill="#fff"/>
+    <path d="M27 38h19M26 44h2m17 0h2"/>
+    <path d="M25 50v3m23-3v3" stroke="#29466e" stroke-width="4"/>
+    <path d="M12 48h4" stroke="#85b5ef"/></svg>

@@ -1,0 +1,5 @@
+<svg class="service-artwork" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="도로·시설" focusable="false" data-service-icon="roads"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/><path d="M25 13h14l13 40H12Z" fill="#dbe8ff"/>
+    <path d="m25 13-9 40m23-40 9 40" stroke="#2f6fed"/>
+    <path d="M32 18v6m0 6v7m0 7v5" stroke="#537aaf"/>
+    <path d="M45 15h8m-4-4v17" stroke="#42a88e"/>
+    <path d="M46 15a3 3 0 0 1 6 0" fill="#a8dfd0" stroke="#42a88e"/></svg>

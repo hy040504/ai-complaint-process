@@ -1,0 +1,7 @@
+<svg class="service-artwork" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2f6fed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="주택·건축" focusable="false" data-service-icon="housing"><rect x="3" y="3" width="58" height="58" rx="18" fill="#f0f5ff" stroke="none"/><path d="M17 29v23h30V29" fill="#fff"/>
+    <path d="m10 30 22-19 22 19" stroke-width="4" fill="none"/>
+    <path d="M37 15v-4h7v10" fill="#dbe8ff"/>
+    <path d="M26 52V37h12v15" fill="#dbe8ff"/>
+    <path d="M20 32h4m18 0h3" stroke="#83a9e8"/>
+    <path d="M11 54h43" stroke="#88a7d5"/>
+    <circle cx="34" cy="44" r="1" fill="#2f6fed" stroke="none"/></svg>
