@@ -60,11 +60,11 @@ AI는 공식 접수 창구가 아니고, 배정 확정 권한도 없다. 검색 
 | 호출 | 시스템 접두 | 모델이 반환할 것 | 서버가 이어서 하는 일 |
 | --- | --- | --- | --- |
 | 사전 관할 검증 | (모델 호출 없음) | 호출하지 않음 | 순수 타 지자체 주소(거주지·청주 운수 예외 제외)는 `:8007`·`PREFIX-01`·`PREFIX-03` 생략 (`early_external_reject`), 명백 위험 시에만 `PREFIX-04` 단독 호출 |
-| 1차 판정 | PREFIX-00 + PREFIX-01 | 설명 없는 판정 JSON 한 개 | `exaone_api` 기본 `high` 추론. `validate_decision` 후 갈래 결정 |
+| 1차 판정 | PREFIX-00 + PREFIX-01 | 설명 없는 판정 JSON 한 개 | `exaone_api` 기본 `high`/`max_tokens<=8192`(타임아웃 시 `low`/`<=4096` 1회 재시도), 미고정 호출 한도·타임아웃 시 1회 자동 폴백. `validate_decision` 후 갈래 결정 |
 | FAQ 안내 | PREFIX-00 + PREFIX-02 | 조건이 남은 한국어 평문 | `exaone_api` `low`/`max_tokens<=4096`, `codex_cli` 비도구(`_disable_mcp`). 20자 미만이면 담당자 검토 |
 | 부서 추천·담당자 검토 | (모델 자유 문장 없음) | 호출하지 않음 | 코드 템플릿으로 시민 문구 구성 |
-| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | FAQ·`out_of_scope`가 아니면 호출(`out_of_scope`는 고정 템플릿). `exaone_api` `low`/`max_tokens<=4096`. `PREFIX-04`와 동시 필요 시 병렬 실행(`ThreadPoolExecutor`). 시민 안내 미게시 |
-| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | `PREFIX-01` `sanitize_needed` 문맥 판단 또는 안전 휴리스틱 시에만(`exaone_api` `low`/`<=4096`, `codex_cli` `_disable_mcp`). 자동 차단 아님 |
+| 담당자 초안 | PREFIX-00 + PREFIX-03 | 요약·초안 JSON | FAQ·`out_of_scope`가 아니면 호출(`out_of_scope`는 고정 템플릿). `exaone_api` `low`/`max_tokens<=4096`, `codex_cli` 비도구(`_disable_mcp`), 경량 JSON 복구·1회 재시도. `PREFIX-04`와 동시 필요 시 병렬 실행(`ThreadPoolExecutor`). 시민 안내 미게시 |
+| 특이민원 순화 | PREFIX-00 + PREFIX-04 | 순화 요약 JSON | `PREFIX-01` `sanitize_needed` 문맥 판단 또는 안전 휴리스틱 시에만(`exaone_api` `low`/`<=4096`, `codex_cli` `_disable_mcp`, JSON 복구·1회 재시도). 자동 차단 아님 |
 
 판정 JSON 필드: `scope`, `intent`, `outcome`, `reason_code`, `evidence_refs`, `department_ids`, `sanitize_needed`(문맥 기반 순화 트리거). 허용 값은 [`src/assist/constants.py`](../../src/assist/constants.py)와 같다.
 

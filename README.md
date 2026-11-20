@@ -156,15 +156,15 @@ flowchart LR
     D -->|순수 타지역| E0["early_external_reject<br/>(검색·01·03 생략 / 필요시 04만)"]
     D -->|청주·미정| S["검색 API :8007<br/>(FAQ + 구 필터 사례)"]
     S -->|NDJSON 진행 스트림| P["진행 버퍼링 UI<br/>(read→search→review→draft)"]
-    S --> C["판정 엔진 분기<br/>(PREFIX-00+01 · EXAONE high)"]
-    C --> E1["K-EXAONE 2.5 무료 API<br/>(high / low<=4096 · 429 백오프)"]
+    S --> C["판정 엔진 분기<br/>(PREFIX-00+01 · 미고정 1회 폴백)"]
+    C --> E1["K-EXAONE 2.5 무료 API<br/>(high<=8192 / low<=4096 · 타임아웃 재시도)"]
     C --> E2["GPT-6 Luna<br/>(OpenAI Responses API)"]
     C <-->|MCP NDJSON| M["Codex CLI + MCP 도구<br/>• search_complaint_rag<br/>• lookup_navermap_place"]
     E1 --> V["코드 정책 검증<br/>(validate_decision · 예외 보류)"]
     E2 --> V
     M --> V
     V -->|faq_answer| F["안내 문장 (PREFIX-02<br/>_disable_mcp · low<=4096)"]
-    V -->|department_suggestion / handoff| B["담당자 초안 (PREFIX-03 · <=4096)<br/>∥ 순화 (PREFIX-04)"]
+    V -->|department_suggestion / handoff| B["담당자 초안 (PREFIX-03 · _disable_mcp)<br/>∥ 순화 (PREFIX-04 · JSON 복구/재시도)"]
     V -->|out_of_scope| H["고정 검토 초안<br/>(PREFIX-03 LLM 생략)"]
     V --> O["결과 배지 · 데이터 ↑ · 프롬프트 ↓"]
     classDef ready fill:#ecfdf5,stroke:#0d9488,color:#134e4a

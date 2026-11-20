@@ -1533,7 +1533,13 @@ def _is_future_planned_place(title: str) -> bool:
     return bool(title and _FUTURE_PLACE_RE.search(title))
 
 
-def _is_tenant_branch(place_obj: dict[str, Any], query_text: str) -> bool:
+def _is_tenant_branch(
+    place_obj: dict[str, Any],
+    query_text: str,
+    *,
+    norm_query: str | None = None,
+    query_has_jeom: bool | None = None,
+) -> bool:
     """장소 결과가 질의에 없는 외부 브랜드의 입점 지점('○○ ○○점')인지 판별합니다.
 
     복합시설 본체('지웰시티몰II') 대신 입점 대리점('LG유플러스 복대동 지웰시티몰점')이
@@ -1543,6 +1549,8 @@ def _is_tenant_branch(place_obj: dict[str, Any], query_text: str) -> bool:
     Args:
         place_obj: 정규화된 장소 딕셔너리입니다.
         query_text: 전체 민원 원문 또는 검색 질의입니다.
+        norm_query: 사전 정규화한 소문자 질의 문자열입니다. 생략 시 내부에서 계산합니다.
+        query_has_jeom: 질의에 `'○○점'` 토큰이 있는지 여부입니다. 생략 시 내부에서 계산합니다.
 
     Returns:
         질의에 없는 외부 브랜드의 입점 지점이면 True입니다.
@@ -1553,11 +1561,20 @@ def _is_tenant_branch(place_obj: dict[str, Any], query_text: str) -> bool:
     tokens = title.split()
     if len(tokens) < 2:
         return False
-    if any(w.endswith("점") for w in query_text.split()):
+    has_jeom = (
+        query_has_jeom
+        if query_has_jeom is not None
+        else any(w.endswith("점") for w in query_text.split())
+    )
+    if has_jeom:
         return False
     brand = _NORM_TITLE_RE.sub("", tokens[0].lower())
-    norm_query = _NORM_TITLE_RE.sub("", query_text.lower())
-    if brand and brand in norm_query:
+    cmp_query = (
+        norm_query
+        if norm_query is not None
+        else _NORM_TITLE_RE.sub("", query_text.lower())
+    )
+    if brand and brand in cmp_query:
         return False
     return True
 
@@ -1566,6 +1583,9 @@ def _place_preference_score(
     place_obj: dict[str, Any],
     context_query: str,
     query_dongs: frozenset[str],
+    *,
+    norm_query: str | None = None,
+    query_has_jeom: bool | None = None,
 ) -> int:
     """청주시 장소 후보의 문맥 적합도 점수를 계산합니다.
 
@@ -1576,6 +1596,8 @@ def _place_preference_score(
         place_obj: 정규화된 장소 딕셔너리입니다.
         context_query: 전체 민원 원문 또는 검색 질의입니다.
         query_dongs: `context_query`에서 추출한 청주시 동·읍·면 집합입니다.
+        norm_query: 사전 정규화한 소문자 질의 문자열입니다.
+        query_has_jeom: 질의에 `'○○점'` 토큰이 있는지 여부입니다.
 
     Returns:
         높을수록 우선순위가 높은 정수 적합도 점수입니다.
@@ -1590,7 +1612,12 @@ def _place_preference_score(
     title = str(place_obj.get("title") or "")
     if _is_future_planned_place(title):
         score -= 4
-    if _is_tenant_branch(place_obj, context_query):
+    if _is_tenant_branch(
+        place_obj,
+        context_query,
+        norm_query=norm_query,
+        query_has_jeom=query_has_jeom,
+    ):
         score -= 3
     else:
         score += 2
@@ -1600,12 +1627,14 @@ def _place_preference_score(
 def _rank_places(
     places: list[dict[str, Any]],
     context_query: str,
+    query_dongs: frozenset[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """장소 목록을 청주시 여부 및 문맥 적합도 순으로 안정 정렬합니다.
 
     Args:
         places: 중복 제거된 장소 딕셔너리 목록입니다.
         context_query: 동명·브랜드 대조에 사용할 전체 원문 또는 질의입니다.
+        query_dongs: 미리 추출한 원문 청주시 동·읍·면 집합입니다. 생략 시 내부에서 계산합니다.
 
     Returns:
         `(정렬된 전체 목록, 정렬된 청주시 목록)` 튜플입니다.
@@ -1613,14 +1642,24 @@ def _rank_places(
     if len(places) <= 1:
         cj = [p for p in places if p.get("is_cheongju")]
         return places, cj
-    query_dongs = _extract_query_dongs(context_query)
+    dongs = (
+        query_dongs if query_dongs is not None else _extract_query_dongs(context_query)
+    )
+    norm_query = _NORM_TITLE_RE.sub("", context_query.lower())
+    query_has_jeom = any(w.endswith("점") for w in context_query.split())
     ranked = [
         item
         for _, item in sorted(
             enumerate(places),
             key=lambda pair: (
                 1 if pair[1].get("is_cheongju") else 0,
-                _place_preference_score(pair[1], context_query, query_dongs),
+                _place_preference_score(
+                    pair[1],
+                    context_query,
+                    dongs,
+                    norm_query=norm_query,
+                    query_has_jeom=query_has_jeom,
+                ),
                 -pair[0],
             ),
             reverse=True,
@@ -1636,6 +1675,7 @@ def lookup_navermap_place(
     fetch_fn: Callable[..., dict[str, Any]] | None = None,
     _allow_fallback: bool = True,
     _context_query: str | None = None,
+    _query_dongs: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """장소명 또는 도로명 주소로 네이버 지도를 검색하고 청주시 구/동 정보를 반환합니다.
 
@@ -1645,6 +1685,7 @@ def lookup_navermap_place(
         fetch_fn: HTTP 호출을 대신할 검색 함수입니다. 테스트 시 주입합니다.
         _allow_fallback: 내부 재귀 호출 시 후보 분해 재검색을 막기 위한 플래그입니다.
         _context_query: 보완 후보 검색 시 원문 동명·브랜드 우선순위 비교에 쓰는 전체 원문입니다.
+        _query_dongs: 보완 후보 검색 시 중복 토큰화를 피하려고 전달하는 원문 동·읍·면 집합입니다.
 
     Returns:
         검색 결과 요약, 청주시 최우선 장소(primary_place), 전체 장소 목록을 담은 객체입니다.
@@ -1679,6 +1720,9 @@ def lookup_navermap_place(
             "places": [],
         }
 
+    query_dongs = (
+        _query_dongs if _query_dongs is not None else _extract_query_dongs(rank_context)
+    )
     fetcher = fetch_fn or fetch_navermap_instant_search
     skip_full_sentence = (
         _allow_fallback and len(text.split()) >= 3 and bool(road_num_pairs)
@@ -1693,7 +1737,7 @@ def lookup_navermap_place(
         try:
             raw_data = fetcher(text, coords=center_coords)
             places, cheongju_places = _parse_navermap_items(raw_data, text)
-            places, cheongju_places = _rank_places(places, rank_context)
+            places, cheongju_places = _rank_places(places, rank_context, query_dongs)
             primary = (
                 cheongju_places[0]
                 if cheongju_places
@@ -1715,7 +1759,8 @@ def lookup_navermap_place(
     # 청주시 장소를 찾지 못했거나 도로명+번지 장문이면 추출된 핵심 후보로 보완 검색합니다.
     # 첫 후보가 입점 지점('○○점')·예정지·타 동 결과이면 다음 후보의 시설 본체까지 비교합니다.
     if _allow_fallback and (primary is None or not primary.get("is_cheongju")):
-        query_dongs = _extract_query_dongs(rank_context)
+        norm_context = _NORM_TITLE_RE.sub("", rank_context.lower())
+        context_has_jeom = any(w.endswith("점") for w in rank_context.split())
         best_score: int | None = None
         for cand in fallback_candidates[:_MAX_FALLBACK_CANDIDATES]:
             if cand == text:
@@ -1726,6 +1771,7 @@ def lookup_navermap_place(
                 fetch_fn=fetcher,
                 _allow_fallback=False,
                 _context_query=rank_context,
+                _query_dongs=query_dongs,
             )
             if cand_res.get("error"):
                 last_error = str(cand_res["error"])
@@ -1738,14 +1784,23 @@ def lookup_navermap_place(
             cand_primary = cand_res.get("primary_place")
             if cand_primary and cand_primary.get("is_cheongju"):
                 cand_score = _place_preference_score(
-                    cand_primary, rank_context, query_dongs
+                    cand_primary,
+                    rank_context,
+                    query_dongs,
+                    norm_query=norm_context,
+                    query_has_jeom=context_has_jeom,
                 )
                 if best_score is None or cand_score > best_score:
                     best_score = cand_score
                     primary = cand_primary
                     places = cand_res.get("places", [])
                 is_clean_main = (
-                    not _is_tenant_branch(cand_primary, rank_context)
+                    not _is_tenant_branch(
+                        cand_primary,
+                        rank_context,
+                        norm_query=norm_context,
+                        query_has_jeom=context_has_jeom,
+                    )
                     and not _is_future_planned_place(
                         str(cand_primary.get("title") or "")
                     )

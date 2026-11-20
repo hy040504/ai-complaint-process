@@ -164,8 +164,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_LLM_PROVIDER` | `exaone_api`, `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `EXAONE_API_KEY` | `exaone_api` 선택 시 LG AI연구원 EXAONE 무료 API 키. `.env`에만 보관 |
 | `EXAONE_URL` · `EXAONE_MODEL` | 기본 `https://api.exaone.ai/v1/chat/completions` · `k-exaone_v2.5` |
-| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 전역 추론 강도(기본 `max`)·최대 토큰(`16384`). 미지정 시 `EXAONE_DECISION_REASONING_EFFORT`(`high`)·`EXAONE_FAST_REASONING_EFFORT`(`low`, `faq_answer`/`staff_draft`/`sanitize` 상한 `4096`)로 단계별 차등 적용 |
+| `EXAONE_REASONING_EFFORT` · `EXAONE_MAX_TOKENS` | 전역 추론 강도(기본 `max`)·최대 토큰(`16384`). 미지정 시 `EXAONE_DECISION_REASONING_EFFORT`(`high`·`EXAONE_DECISION_MAX_TOKENS=8192`, 타임아웃 시 `low`/`4096` 1회 재시도)·`EXAONE_FAST_REASONING_EFFORT`(`low`, `faq_answer`/`staff_draft`/`sanitize` 상한 `4096`)로 단계별 차등 적용 |
 | `EXAONE_TEMPERATURE` · `EXAONE_TOP_P` | 생성 다양성 기본 `0.7` · `0.95` |
+| `COMPLAINT_LLM_AUTO_FALLBACK` | 기본 `1`, 미고정 호출(`provider=None`) 한도·타임아웃 시 준비된 다른 공급자로 1회 자동 전환 (`0`이면 비활성, 명시 고정 호출은 전환 안 함) |
 | `OPENAI_API_KEY` | `openai_api` 선택 시 OpenAI API 키. `.env`에만 보관 |
 | `COMPLAINT_LLM_MODEL` · `COMPLAINT_LLM_REASONING_EFFORT` | 기본 `gpt-6-luna` · `medium` |
 | `COMPLAINT_CODEX_COMMAND` | `codex_cli` 선택 시 Codex CLI 실행 파일, 기본 `codex` |

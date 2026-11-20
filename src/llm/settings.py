@@ -254,6 +254,24 @@ def settings_for_provider(provider: str | None = None) -> dict[str, str | None]:
     }
 
 
+def _parse_int_or_default(raw: object, default: int) -> int:
+    """정수 문자열을 안전하게 변환하고 파싱 실패 시 기본값을 돌려줍니다.
+
+    Args:
+        raw: 환경변수 또는 설정 딕셔너리 값입니다.
+        default: 비어 있거나 정수가 아닐 때 사용할 기본값입니다.
+
+    Returns:
+        변환된 정수 값입니다.
+    """
+    if raw is None or raw == "":
+        return default
+    try:
+        return int(str(raw))
+    except (TypeError, ValueError):
+        return default
+
+
 def settings_for_role(
     settings: dict[str, str | None] | None, role: str
 ) -> dict[str, str | None] | None:
@@ -309,29 +327,18 @@ def settings_for_role(
                 target_effort = base_effort
         adjusted["reasoning_effort"] = target_effort
         if role == "decision":
-            try:
-                cur_max = int(
-                    str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)
-                )
-            except (TypeError, ValueError):
-                cur_max = DEFAULT_EXAONE_MAX_TOKENS
-            env_dec_max = optional_env("EXAONE_DECISION_MAX_TOKENS")
-            try:
-                dec_cap = (
-                    int(env_dec_max)
-                    if env_dec_max
-                    else DEFAULT_EXAONE_DECISION_MAX_TOKENS
-                )
-            except ValueError:
-                dec_cap = DEFAULT_EXAONE_DECISION_MAX_TOKENS
+            cur_max = _parse_int_or_default(
+                adjusted.get("max_tokens"), DEFAULT_EXAONE_MAX_TOKENS
+            )
+            dec_cap = _parse_int_or_default(
+                optional_env("EXAONE_DECISION_MAX_TOKENS"),
+                DEFAULT_EXAONE_DECISION_MAX_TOKENS,
+            )
             adjusted["max_tokens"] = str(min(cur_max, max(1024, dec_cap)))
         elif role in ("faq_answer", "sanitize", "staff_draft"):
-            try:
-                cur_max = int(
-                    str(adjusted.get("max_tokens") or DEFAULT_EXAONE_MAX_TOKENS)
-                )
-            except (TypeError, ValueError):
-                cur_max = DEFAULT_EXAONE_MAX_TOKENS
+            cur_max = _parse_int_or_default(
+                adjusted.get("max_tokens"), DEFAULT_EXAONE_MAX_TOKENS
+            )
             adjusted["max_tokens"] = str(min(cur_max, DEFAULT_EXAONE_FAST_MAX_TOKENS))
     elif prov == "codex_cli" and role in ("faq_answer", "sanitize", "staff_draft"):
         # 후속 단계는 검색 후보·원문이 이미 입력에 포함돼 있어 MCP 기동과 도구 스키마를 생략합니다.

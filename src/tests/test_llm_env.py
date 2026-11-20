@@ -565,7 +565,7 @@ def test_json_repair_codex_error_trim_exaone_timeout_low_retry_and_fallback(
     assert "무인민원발급기" in DECISION_SYSTEM
     assert "faq-demo-4" in DECISION_SYSTEM
 
-    # 2. 경미한 JSON 구문 오류(줄바꿈 사이 쉼표 누락·끝 쉼표·문자열 내 개행) 자동 복구
+    # 2. 경미한 JSON 구문 오류(줄바꿈·단일행 쉼표 누락·끝 쉼표·문자열 내 개행) 자동 복구
     broken_json = (
         "{\n"
         '  "summary_card": {"core_summary": "가로수\n관리 요청", "missing_info": [],}\n'
@@ -578,7 +578,16 @@ def test_json_repair_codex_error_trim_exaone_timeout_low_retry_and_fallback(
     assert repaired["requires_field_check"] is True
     assert "가로수\n관리 요청" == repaired["summary_card"]["core_summary"]
 
-    # 3. Codex CLI 실패 출력에서 시스템 프롬프트를 제거하고 ERROR 줄만 간결히 추출
+    # N32 실측과 같은 단일 행 쉼표 누락도 문자열 내부를 건드리지 않고 즉시 복구해야 합니다.
+    single_line_broken = (
+        '{"summary_card":{"core_summary":"율량동 가로수 관리" "missing_info":[]} '
+        '"draft_answer":"현장 점검 후 조치하겠습니다." "citations":[] "requires_field_check":true}'
+    )
+    repaired_single = complete.parse_json_object(single_line_broken)
+    assert repaired_single["summary_card"]["core_summary"] == "율량동 가로수 관리"
+    assert repaired_single["requires_field_check"] is True
+
+    # 3. Codex CLI 실패 출력에서 시스템 프롬프트·민원 원문 꼬리 노출을 차단하고 ERROR 줄만 추출
     noisy_stderr = (
         "[시스템 지시]\n" + ("긴 프롬프트 내용 " * 500) + "\n"
         "ERROR: You’ve hit your usage limit.\n"
@@ -587,6 +596,15 @@ def test_json_repair_codex_error_trim_exaone_timeout_low_retry_and_fallback(
     short_err = complete._extract_codex_error(noisy_stderr, "")
     assert "[시스템 지시]" not in short_err
     assert short_err == "ERROR: You’ve hit your usage limit."
+
+    # ERROR 접두가 없더라도 반사된 프롬프트·사용자 입력 꼬리(전화번호 등)는 노출하지 않습니다.
+    prompt_only_stderr = (
+        "[시스템 지시]\n내부 지침\n[사용자 입력]\n"
+        '{"query":"010-1234-5678 민원 원문"}\ntokens used\n8,549\n'
+    )
+    safe_err = complete._extract_codex_error(prompt_only_stderr, "")
+    assert safe_err == "실행 오류 (상세 로그 생략)"
+    assert "010-1234-5678" not in safe_err
 
     # 4. EXAONE decision 토큰 캡(8192) 및 Codex staff_draft MCP 생략 확인
     dec_exaone = settings.settings_for_role(

@@ -226,6 +226,21 @@ def complete_exaone_response(
     return complete_exaone_result(settings, system, user).text
 
 
+def _format_exaone_429(exc: Exception) -> str:
+    """EXAONE API 429 한도 초과 예외를 안내 문구가 포함된 오류 문자열로 포맷합니다.
+
+    Args:
+        exc: `http_json`에서 발생한 429 관련 예외입니다.
+
+    Returns:
+        사용자·로그용 간결한 한국어 오류 안내 문자열입니다.
+    """
+    return (
+        f"{exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
+        "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
+    )
+
+
 def complete_exaone_result(
     settings: dict[str, str | None], system: str, user: str
 ) -> CompleteResult:
@@ -300,16 +315,10 @@ def complete_exaone_result(
                 body = http_json(str(url), fallback_payload, headers=headers)
             except ValueError as retry_exc:
                 if str(retry_exc).startswith("API 429:"):
-                    raise ValueError(
-                        f"{retry_exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
-                        "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
-                    ) from None
+                    raise ValueError(_format_exaone_429(retry_exc)) from None
                 raise
         elif msg.startswith("API 429:"):
-            raise ValueError(
-                f"{exc} | EXAONE API 동시 요청·호출 한도 초과(429)입니다. "
-                "잠시 후 다시 시도하거나 .env의 EXAONE_REASONING_EFFORT=low로 부담을 줄여 보세요."
-            ) from None
+            raise ValueError(_format_exaone_429(exc)) from None
         else:
             raise
     try:
@@ -586,11 +595,15 @@ def _extract_codex_error(stderr: str, stdout: str) -> str:
             if line not in unique_lines:
                 unique_lines.append(line)
         return " | ".join(unique_lines)[:240]
-    tail_lines = [line.strip() for line in combined.splitlines() if line.strip()][-3:]
-    summary = " | ".join(tail_lines)
-    if "[시스템 지시]" in summary or "[시스템 헌법" in summary:
+    if (
+        "[시스템 지시]" in combined
+        or "[시스템 헌법" in combined
+        or "[사용자 입력]" in combined
+    ):
+        # ERROR: 접두 줄이 없을 때 반사된 시스템 프롬프트나 민원 원문 꼬리가 노출되지 않게 차단합니다.
         return "실행 오류 (상세 로그 생략)"
-    return summary[:240]
+    tail_lines = [line.strip() for line in combined.splitlines() if line.strip()][-3:]
+    return " | ".join(tail_lines)[:240]
 
 
 def complete_result(
@@ -680,6 +693,54 @@ _MISSING_PROP_COMMA_RE = re.compile(
     r'(["}\]]|\btrue\b|\bfalse\b|\bnull\b|-?\d+(?:\.\d+)?)'
     r'([ \t]*\r?\n[ \t]*"[^"\r\n]+"\s*:)'
 )
+_INLINE_SCHEMA_KEY_RE = re.compile(r'[ \t]*"[A-Za-z_][A-Za-z0-9_]*"[ \t]*:')
+
+
+def _insert_missing_inline_commas(text: str) -> str:
+    """문자열 리터럴 바깥에서 단일 행 JSON 키 앞의 누락된 쉼표를 보정합니다.
+
+    문자열 내부 내용은 건드리지 않고, 닫힌 값(`"`, `}`, `]`, 불리언/null/숫자) 뒤에
+    공백만 두고 영문 스키마 키(`"draft_answer":` 등)가 바로 이어질 때만 `,`를 삽입합니다.
+
+    Args:
+        text: 문자열 제어문자 이스케이프가 끝난 JSON 후보 문자열입니다.
+
+    Returns:
+        단일 행 쉼표 누락이 보정된 JSON 문자열입니다.
+    """
+    out: list[str] = []
+    in_string = False
+    escaped = False
+    n = len(text)
+    i = 0
+    while i < n:
+        ch = text[i]
+        out.append(ch)
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+                if _INLINE_SCHEMA_KEY_RE.match(text, i + 1):
+                    out.append(",")
+        else:
+            if ch == '"':
+                in_string = True
+            elif ch in ("}", "]") and _INLINE_SCHEMA_KEY_RE.match(text, i + 1):
+                out.append(",")
+            elif ch in ("e", "l") or ch.isdigit():
+                tail = "".join(out[-5:])
+                if (
+                    ch.isdigit()
+                    or tail.endswith("true")
+                    or tail.endswith("false")
+                    or tail.endswith("null")
+                ) and _INLINE_SCHEMA_KEY_RE.match(text, i + 1):
+                    out.append(",")
+        i += 1
+    return "".join(out)
 
 
 def _repair_json_text(raw: str) -> str:
@@ -720,6 +781,7 @@ def _repair_json_text(raw: str) -> str:
     repaired = "".join(out)
     repaired = _TRAILING_COMMA_RE.sub(r"\1", repaired)
     repaired = _MISSING_PROP_COMMA_RE.sub(r"\1,\2", repaired)
+    repaired = _insert_missing_inline_commas(repaired)
     return repaired
 
 
