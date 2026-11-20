@@ -1,5 +1,6 @@
 """시민·담당자 정적 화면과 API 문서 진입 경로를 제공합니다."""
 
+import os
 from pathlib import Path
 from flask import Blueprint, Response, send_from_directory
 from src.complaints.config import ROOT
@@ -7,15 +8,18 @@ from src.complaints.errors import AppError
 
 web = Blueprint("web", __name__)
 
+# 서빙할 UI 폴더입니다. COMPLAINT_UI_DIR을 지정하면 그 폴더를, 없으면 저장소의 ui 폴더를 씁니다.
+UI_DIR = Path(os.environ.get("COMPLAINT_UI_DIR") or ROOT / "ui")
+
 
 @web.route("/")
 def ui_index() -> Response:
     """동일 출처에서 시민·담당자 UI를 제공합니다.
 
     Returns:
-        `ui/index.html`입니다.
+        `UI_DIR`의 `index.html`입니다.
     """
-    return send_from_directory(ROOT / "ui", "index.html")
+    return send_from_directory(UI_DIR, "index.html")
 
 
 @web.route("/src/<path:filename>")
@@ -30,7 +34,7 @@ def ui_source(filename: str) -> Response:
     """
     if Path(filename).suffix not in (".js", ".css"):
         raise AppError(404, "not_found", "파일을 찾을 수 없습니다.")
-    return send_from_directory(ROOT / "ui" / "src", filename)
+    return send_from_directory(UI_DIR / "src", filename)
 
 
 @web.route("/favicon.svg")
@@ -38,9 +42,9 @@ def favicon() -> Response:
     """UI의 로컬 아이콘을 제공합니다.
 
     Returns:
-        `ui/favicon.svg`입니다.
+        `UI_DIR`의 `favicon.svg`입니다.
     """
-    return send_from_directory(ROOT / "ui", "favicon.svg")
+    return send_from_directory(UI_DIR, "favicon.svg")
 
 
 @web.route("/design/ui04")
