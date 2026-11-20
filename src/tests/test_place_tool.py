@@ -14,6 +14,8 @@ from src.llm.place_tool import (
     PLACE_TOOL_NAME,
     extract_cheongju_district,
     extract_cheongju_dong,
+    extract_place_candidates,
+    is_place_relevant,
     lookup_navermap_place,
 )
 
@@ -412,3 +414,25 @@ def test_address_section_ac_dong_adjacent_road_and_generic_place_guards() -> Non
     assert blocked["found"] is False
     assert "error" in blocked
     assert len(limit_calls) <= 2
+
+
+def test_municipal_drainage_and_facility_nouns_do_not_trigger_contractor_noise() -> (
+    None
+):
+    """'하수구'·'과속방지턱' 등 생활 기반시설 일반명사가 민간 업체 오매칭 후보로 남지 않습니다."""
+    n28_text = (
+        "가경동 하수구 악취 방치 세금 낭비 조롱 시민 세금으로 놀고 먹는 건지 "
+        "가경동 하수구 악취가 몇 달째 진동하는데 코 막고 출근하라는 겁니까? 청소하세요."
+    )
+    cands = extract_place_candidates(n28_text)
+    assert all("하수구" not in c for c in cands)
+    assert is_place_relevant("청주하수구막힘변기뚫음누수탐지", n28_text) is False
+
+    speedbump_text = (
+        "우리 동네 고등학교 앞 과속방지턱과 안전난간 가드레일 보수 요청합니다"
+    )
+    sb_cands = extract_place_candidates(speedbump_text)
+    assert all(
+        bad not in sb_cands
+        for bad in ("과속방지턱", "안전난간", "가드레일", "고등학교")
+    )

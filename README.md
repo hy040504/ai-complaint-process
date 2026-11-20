@@ -30,8 +30,8 @@
   <img src="https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <a href="#저장과-검색"><img src="https://img.shields.io/badge/PostgreSQL-18_%2B_pgvector-4169e1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
   <a href="docs/청주톡톡_민원_업무_API_Swagger.pdf"><img src="https://img.shields.io/badge/Swagger-OpenAPI_PDF-85a329?style=flat-square" alt="Swagger PDF" /></a>
-  <a href="#검증-근거"><img src="https://img.shields.io/badge/Eval-200_Live_Runs_(95%25)-0d9488?style=flat-square" alt="Live Eval" /></a>
-  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-171_Py_%C2%B7_49_RAG_%C2%B7_22_UI-0f766e?style=flat-square" alt="Verified" /></a>
+  <a href="#검증-근거"><img src="https://img.shields.io/badge/Eval-200_(95%25)_%C2%B7_PostPatch_100_(98%25)-0d9488?style=flat-square" alt="Live Eval" /></a>
+  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-172_Py_%C2%B7_49_RAG_%C2%B7_22_UI-0f766e?style=flat-square" alt="Verified" /></a>
   <a href="docs/report/README.md"><img src="https://img.shields.io/badge/Report-11%2F19_8Pages-b91c1c?style=flat-square" alt="Report" /></a>
   <a href="docs/test/README.md"><img src="https://img.shields.io/badge/Test-200_SourceTrail_14Pages-0369a1?style=flat-square" alt="Test Report" /></a>
   <a href="#현재-구현-상태"><img src="https://img.shields.io/badge/Branch-llm-334155?style=flat-square&logo=github&logoColor=white" alt="Branch" /></a>
@@ -48,7 +48,7 @@
 >
 > - 민원 웹(`:5000`, `python -m src`)의 시민·담당자 포털과 `#/lab`에 응대 검사기(`:5010`, `src/lab_web`)의 RAG+LLM 파이프라인을 비동기 워커로 통합했습니다.
 > - `K-EXAONE 2.5` · `Codex CLI` · `GPT-6 Luna` 가드를 지원하며, **미게시 초안 시민 비노출**과 **`automaticTransfer=False`**(자동 이관 금지) 원칙을 지킵니다.
-> - 상세 경위는 [`src/`](src/README.md) · [`src/lab_web`](src/lab_web/README.md) · [`ui/`](ui/README.md) · [사례 색인(`CASE-093~108`)](docs/cases/README.md)에서 확인할 수 있습니다.
+> - 상세 경위는 [`src/`](src/README.md) · [`src/lab_web`](src/lab_web/README.md) · [`ui/`](ui/README.md) · [사례 색인(`CASE-093~109`)](docs/cases/README.md)에서 확인할 수 있습니다.
 
 ### 한눈에 보는 주요 구현 (`2026-11-20 KST`)
 
@@ -442,13 +442,14 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 ## 검증 근거
 
-`2026-11-19 KST` 패치 후속 200건 전수 실증([CASE-105](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md)), 미통과 10건+경계 개선 패치 및 `:5010` 표적 재검증([CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md)), 코드·테스트 정합 점검([CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md)) 결과를 함께 관리합니다.
+`2026-11-19~20 KST` 200건 전수 실증([CASE-105](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md)), 미통과 10건·노이즈 13건 패치([CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md)), **패치 후 100건 실서버 재검증(`98/100, 98.0%`) 및 생활 기반시설 불용어 보강([CASE-109](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md))** 결과를 함께 관리합니다.
 
 | 검증 영역 | 실행 명령 · 환경 | 관찰된 결과 |
 | --- | --- | --- |
+| **패치 후 `:5010` 100건 재검증 (`CASE-109`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_재검증.py` | **`98 / 100 (98.0%)` 통과**(실응답 `98/99, 99.0%`: 기존 미통과 **10/10**·노이즈 **13/13** 전원 해소, 신규 변형 **39/40**, `0.011s` 조기차단, `automaticTransfer=True` **0건**) |
 | **단독 검사기 `:5010` 200건 실증 (`CASE-105`)** | `.venv-web\Scripts\python.exe scripts/실증평가_200건_실행.py` | **`190 / 200 (95.0%)` 의미 통과** (11/17 112건 재측정 **108/112, +14건** · 신규 **82/88**, EXAONE **14/14 완주**, 조기차단 **0.012s**, `automaticTransfer=True` **0건**) |
-| **비통과 10건 · 경계 2건 패치 재검증 (`CASE-106`)** | 패치 적용 후 `:5010` 표적 12건 실서버 호출 | **표적 `12 / 12` 기대 동작 달성** (`B12·A35·A31·C09·B22~B24·B35·F05·F09` 전수 해소 + `C32` `0.01s` 조기차단 + `D20` `200.22s`; 노이즈 13건 제거 확인) |
-| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`171 passed`** (`CASE-106` 신규 3종 포함 0 실패 · 0 건너뜀) |
+| **비통과 10건 · 경계 2건 표적 재검증 (`CASE-106`)** | 패치 적용 후 `:5010` 표적 12건 실서버 호출 | **표적 `12 / 12` 기대 동작 달성** (`B12·A35·A31·C09·B22~B24·B35·F05·F09` 전수 해소 + `C32` `0.01s` 조기차단 + `D20` `200.22s`; 노이즈 13건 제거 확인) |
+| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`172 passed`** (`CASE-109` 생활 기반시설 노이즈 회귀 포함 0 실패 · 0 건너뜀) |
 | **112건 · 5,015건 규칙 회귀** | `.venv-web\Scripts\python.exe scripts/회귀검증_112건_규칙.py` | **112건 규칙 실패 `0`**, 공개 사례 `5,015`건 구 적중 **`762`** (`+11`, 오분류 `17` 유지, 외부 오탐 **`0`**) |
 | **포맷 · 정적 타입 · UI** | `black --check` · `mypy` · `npm --prefix ui run check` · `ui test` | `black` **통과** · 패치 6모듈 `mypy` **오류 0건** · UI 문법 **19개** · UI 단위 **22 / 22 통과** |
 | **RAG 단위 · DB 무결성** | `.venv\Scripts\python.exe -m pytest rag/tests` · `-m rag.verify` | `rag/tests` **49 passed, 3 skipped**(Windows PG 템플릿 미구성) · `rag.verify` **`passed: true`** (`94`·`5,015`·`127`) |
@@ -482,11 +483,11 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | 타 지자체 차단 · FAQ 예외 · EXAONE · 최적화 | `충남 천안 두정동` 누락, `'담당자 연결'` FAQ 오종결, EXAONE `staff_draft` 초과 지연, 중복 로직 | `_EXT_DO_SHORT_CITIES` 조기 차단 + 거주지/운수 예외 + `PREFIX-01`/`validate_decision` 예외 보류 + `staff_draft` `4096` 상한 + `PREFIX-03∥04` 병렬 + 보고서/후보 중복 제거 및 전수 주석·JSDoc 정비 | `district.py`, `policy.py`, `pipeline.py`, `settings.py`, `place_tool.py`, `scripts/보고서_공통.py` |
 
 <details>
-<summary><strong>11/17 112건 기준선 요약 및 패치·검증 사례 인덱스 (`CASE-093 ~ CASE-108`)</strong></summary>
+<summary><strong>11/17 112건 기준선 요약 및 패치·검증 사례 인덱스 (`CASE-093 ~ CASE-109`)</strong></summary>
 
-`11/17 기준선`(`codex_cli` 102건 평균 `23.27s` + `exaone_api` 10건) 전체 결과는 **[청주 민원 112건 상세 분석 보고서 (MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF)](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf)** · [원자료 JSON](rag/reports/lab-5010-eval-112-20261117.json)에 보존되어 있으며, `/swagger`+`#/staff/api` Edge CDP `lowContrast: []` 검증(`CASE-102`)부터 11/19 보고서·코드 공용화·전수 주석 정비(`CASE-108`)까지 이어지는 전체 이력은 아래 사례에서 확인할 수 있습니다.
+`11/17 기준선`(`codex_cli` 102건 평균 `23.27s` + `exaone_api` 10건) 전체 결과는 **[청주 민원 112건 상세 분석 보고서 (MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF)](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf)** · [원자료 JSON](rag/reports/lab-5010-eval-112-20261117.json)에 보존되어 있으며, `/swagger`+`#/staff/api` Edge CDP `lowContrast: []` 검증(`CASE-102`)부터 패치 후 100건 재검증(`98/100`)·생활 기반시설 불용어 보강(`CASE-109`)까지 이어지는 전체 이력은 아래 사례에서 확인할 수 있습니다.
 
-- **핵심 패치·실증:** [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-097(112건)](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101(Swagger)](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105(200건)](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md)
+- **핵심 패치·실증:** [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-097(112건)](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101(Swagger)](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105(200건)](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [CASE-109(100건 재검증)](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md)
 
 </details>
 
@@ -552,7 +553,7 @@ ai-complaint-process/
 │   └── lab_web/                  # 추출 응대 검사기 웹 (:5010) · LLM 선택·다크 테마·기록 폼 복원
 ├── ui/                           # 시민·담당자·검사기 화면 (투명 청주시 로고·다크 테마·템플릿/부서 UI)
 ├── scripts/                      # 200건 실증·SourceTrail 보고서 생성·112건/5,015건 규칙 회귀·업무 PDF 보고서 스크립트
-├── docs/                         # 목차·사례(`CASE-108`)·하네스·배너·실증 SVG 차트
+├── docs/                         # 목차·사례(`CASE-109`)·하네스·배너·실증 SVG 차트
 │   ├── report/                   # 일자별 업무보고 PDF 전용 폴더
 │   ├── test/                     # 민원 실증 테스트 상세 분석 보고서 전용 폴더
 │   └── harness/prompts/          # PREFIX-00~04 시스템 접두 원문

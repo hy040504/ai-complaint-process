@@ -22,6 +22,7 @@
 | [`검색서비스_실행.sh`](검색서비스_실행.sh) · [`serve-search.sh`](serve-search.sh) | `python -m rag serve` | 우분투 `.venv` |
 | [`검색서비스_설치.sh`](검색서비스_설치.sh) · [`install-search-service.sh`](install-search-service.sh) | systemd 사용자 서비스 | 우분투 |
 | [`업무보고_pdf_생성.py`](업무보고_pdf_생성.py) · [`업무보고_20261110_pdf_생성.py`](업무보고_20261110_pdf_생성.py) · [`업무보고_20261111_pdf_생성.py`](업무보고_20261111_pdf_생성.py) · [`업무보고_20261116_pdf_생성.py`](업무보고_20261116_pdf_생성.py) · [`업무보고_20261117_pdf_생성.py`](업무보고_20261117_pdf_생성.py) · [`업무보고_20261118_pdf_생성.py`](업무보고_20261118_pdf_생성.py) · [`업무보고_20261119_pdf_생성.py`](업무보고_20261119_pdf_생성.py) | 일자별 업무보고 PDF([`docs/report/`](../docs/report/README.md)) 생성·병합 | `.venv-web` + Chrome/Edge |
+| [`실증평가_100건_재검증.py`](실증평가_100건_재검증.py) | `CASE-106~108` 패치 후 기존 문제·노이즈 60건+신규 변형 40건(총 100건) 실서버 재검증·EXAONE 이어하기(`--resume-with-exaone`) 및 [`lab-5010-eval-100-20261120.json`](../rag/reports/lab-5010-eval-100-20261120.json) 저장 | `.venv-web` + `:5010`/`:8007` |
 | [`실증평가_200건_실행.py`](실증평가_200건_실행.py) | `:5010` 실서버에 기존 112건+신규 경계 88건(총 200건)을 호출해 [`lab-5010-eval-200-20261119.json`](../rag/reports/lab-5010-eval-200-20261119.json) 생성 및 임시 run 정리 | `.venv-web` + `:5010`/`:8007` |
 | [`상세분석보고서_200건_생성.py`](상세분석보고서_200건_생성.py) | 200건/112건 원자료 비교 기반 SVG 차트 4종·SourceTrail 스타일 [`docs/test/`](../docs/test/README.md) 14쪽 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 | [`상세분석보고서_112건_생성.py`](상세분석보고서_112건_생성.py) | 112건 원자료 JSON 기반 SVG 차트 4종·[`docs/test/`](../docs/test/README.md) 분석 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
