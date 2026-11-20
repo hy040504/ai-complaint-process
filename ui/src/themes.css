@@ -2224,3 +2224,51 @@ body[data-theme="dark"][data-site="staff"] .staff-api-page .staff-filter-chip.ac
   background: rgba(15, 23, 42, 0.35);
   color: #ffffff;
 }
+body[data-theme="dark"] .auth-current-bar,
+body[data-theme="dark"] .auth-staff-hints {
+  background: #172338;
+  border-color: #334663;
+  color: #cbd5e1;
+}
+body[data-theme="dark"] .auth-tab {
+  background: #162236;
+  border-color: #334663;
+  color: #cbd5e1;
+}
+body[data-theme="dark"] .auth-tab.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+body[data-theme="dark"] .auth-desc {
+  color: #b7c8e2;
+}
+body[data-theme="dark"] .auth-otp-box {
+  background: #112d2b;
+  border-color: #256f68;
+  color: #a7f3d0;
+}
+body[data-theme="dark"] .auth-otp-code code {
+  background: #0f172a;
+  color: #6ee7b7;
+}
+body[data-theme="dark"] .auth-error-box {
+  background: #3b1820;
+  border-color: #7f2a3b;
+  color: #fecaca;
+}
+body[data-theme="dark"] .auth-badge.verified {
+  background: #123635;
+  border-color: #256f68;
+  color: #86efac;
+}
+body[data-theme="dark"] .auth-badge.staff-auth {
+  background: #1a3057;
+  border-color: #3b63a3;
+  color: #bfdbfe;
+}
+body[data-theme="dark"] .auth-badge.demo {
+  background: #253349;
+  border-color: #40516d;
+  color: #cbd5e1;
+}

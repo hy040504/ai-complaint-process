@@ -68,18 +68,89 @@ class Model(BaseModel):
     )
 
 
+AuthMode = Literal["demo", "password", "verified_account"]
+
+
 class Actor(Model):
-    """서버 세션에서 확인한 시연 사용자의 역할과 식별자입니다."""
+    """서버 세션에서 확인한 사용자의 식별자·역할·인증 상태·소속 부서입니다.
+
+    Attributes:
+        id: `users.id` 사용자 고유 식별자입니다.
+        login_id: 로그인 아이디입니다. 시연 계정은 기본 아이디를 담습니다.
+        display_name: 화면·이력에 표시할 사용자 이름입니다.
+        role: 시민(`citizen`) 또는 담당자(`staff`) 역할입니다.
+        department: 담당자 소속 부서명입니다. 총괄 담당자·시민은 None입니다.
+        verified: 시민 본인확인(또는 공무원 계정 인증) 완료 여부입니다.
+        auth_mode: `demo`(시연 전환) · `password`(아이디/비밀번호) · `verified_account`(시민 본인확인 가입)입니다.
+        demo: 로컬 시연 원클릭 계정이면 True, 실계정 인증이면 False입니다.
+    """
 
     id: str
     role: Role
-    demo: Literal[True] = True
+    login_id: str | None = None
+    display_name: str = ""
+    department: str | None = None
+    verified: bool = False
+    auth_mode: AuthMode = "demo"
+    demo: bool = True
 
 
 class SessionInput(Model):
-    """로컬 시연 계정 선택 요청이며 운영용 로그인과 구별합니다."""
+    """로컬 시연 계정 선택 요청이며 실계정 인증과 구별합니다."""
 
     role: Role
+
+
+class CitizenVerifyRequest(Model):
+    """시민 회원가입 전 1단계 본인확인 인증코드 발급 요청입니다."""
+
+    name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=2, max_length=30)
+    ]
+    phone: str = Field(
+        pattern=r"^01[016789]-?\d{3,4}-?\d{4}$",
+        description="대한민국 휴대전화 번호 형식(010-XXXX-XXXX 또는 숫자 10~11자리)",
+    )
+
+
+class CitizenVerifyResponse(Model):
+    """시민 본인확인 1단계 챌린지 발급 응답입니다."""
+
+    challenge_id: str
+    expires_in_seconds: int
+    masked_phone: str
+    verification_mode: Literal["local_otp", "external_sms"] = "local_otp"
+    demo_code: str | None = None
+
+
+class CitizenRegisterInput(Model):
+    """본인확인 코드를 검증하고 시민 계정을 생성하는 2단계 요청입니다."""
+
+    login_id: str = Field(pattern=r"^[A-Za-z0-9_.-]{4,32}$")
+    password: str = Field(min_length=8, max_length=100)
+    display_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=2, max_length=30)
+    ]
+    challenge_id: str = Field(min_length=8, max_length=64)
+    code: str = Field(pattern=r"^\d{6}$")
+
+
+class LoginInput(Model):
+    """시민·담당자 실계정 비밀번호 로그인 요청입니다."""
+
+    login_id: str = Field(pattern=r"^[A-Za-z0-9_.-]{3,32}$")
+    password: str = Field(min_length=4, max_length=100)
+    expected_role: Role | None = None
+
+
+class NormalizedDbSummary(Model):
+    """정규화 7테이블(`users`~`job_events`) 행 수와 AI·역할 집계 응답입니다."""
+
+    schema_name: str
+    storage: Literal["postgresql", "memory"]
+    normalized_tables: dict[str, int]
+    ai_outcomes: dict[str, int] = Field(default_factory=dict)
+    user_roles: dict[str, int] = Field(default_factory=dict)
 
 
 class Event(Model):
@@ -171,6 +242,8 @@ class Complaint(PublicComplaint):
     """담당자만 조회하는 초안·AI 원본·내부 작업·응대 분석 정보를 포함합니다."""
 
     assigned: bool = False
+    assignee_id: str | None = None
+    assignee_name: str | None = None
     department: str | None = None
     ai_original: str = ""
     ai_candidate: str = ""
@@ -438,7 +511,7 @@ class StaffPage(StaffWorkspace):
 
 
 class Health(Model):
-    """업무 서버와 AI·실시간 SSE·시민 챗봇 연결 범위를 명시한 상태 응답입니다."""
+    """업무 서버와 AI·실시간 SSE·시민 챗봇·인증·정규화 DB 연결 범위를 명시한 상태 응답입니다."""
 
     status: Literal["ok"] = "ok"
     storage: Literal["postgresql", "memory"] = "postgresql"
@@ -448,6 +521,8 @@ class Health(Model):
     assist_llm: bool = False
     sse_enabled: bool = True
     citizen_chat_enabled: bool = True
+    auth_enabled: bool = True
+    normalized_schema: bool = True
 
 
 class CitizenChatInput(Model):

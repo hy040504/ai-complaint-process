@@ -35,6 +35,7 @@ from src.complaints.models import (
     ListQuery,
     Message,
     MessageInput,
+    NormalizedDbSummary,
     PublicComplaint,
     PublicPage,
     PublicWorkspace,
@@ -584,6 +585,7 @@ class ComplaintService:
         row = self.get(actor, complaint_id)
         if staff:
             self._require_staff(actor)
+            self._require_department_scope(actor, row)
         if not staff and (actor.role != "citizen" or row.owner != actor.id):
             raise AppError(
                 403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
@@ -634,13 +636,51 @@ class ComplaintService:
         """요청 사용자가 담당자 역할인지 검증합니다.
 
         Args:
-            actor: 인증된 시연 사용자입니다.
+            actor: 인증된 시연 또는 공무원 사용자입니다.
 
         Raises:
             AppError: 담당자 역할이 아니면 403 오류를 발생합니다.
         """
         if actor.role != "staff":
             raise AppError(403, "staff_required", "담당자만 수행할 수 있는 작업입니다.")
+
+    @staticmethod
+    def _require_department_scope(actor: Actor, row: Complaint) -> None:
+        """부서 소속 담당자가 타 부서에 배정된 민원을 무단 수정·게시하지 못하도록 검증합니다.
+
+        소속 부서가 비어 있는 총괄 담당자(`actor.department is None`)는 모든 부서
+        민원을 관리할 수 있으며, 부서 담당자는 미배정 또는 본인 소속 부서 민원만 처리합니다.
+
+        Args:
+            actor: 작업을 요청한 담당자입니다.
+            row: 대상 민원 레코드입니다.
+
+        Raises:
+            AppError: 타 부서에 이미 배정된 민원이면 403 오류를 발생합니다.
+        """
+        if (
+            actor.role == "staff"
+            and actor.department
+            and row.department
+            and row.department != actor.department
+        ):
+            raise AppError(
+                403,
+                "department_scope_forbidden",
+                f"소속 부서({actor.department})가 아닌 '{row.department}' 배정 민원은 수정·답변할 수 없습니다.",
+            )
+
+    def normalized_summary(self, actor: Actor) -> NormalizedDbSummary:
+        """정규화 7테이블의 행 수와 AI·역할 집계를 담당자에게 반환합니다.
+
+        Args:
+            actor: 조회를 요청한 담당자입니다.
+
+        Returns:
+            정규화 7테이블 집계 응답입니다.
+        """
+        self._require_staff(actor)
+        return self.repository.normalized_summary()
 
     def list_departments(self, actor: Actor) -> DepartmentListResponse:
         """담당자 부서 배정 모달에 표시할 청주시 현행 부서 목록을 반환합니다.
@@ -930,9 +970,16 @@ class ComplaintService:
                 self.invalidate(row)
                 text = "시민이 담당자 재검토 요청"
             elif operation == "assign" and isinstance(body, AssignmentInput):
+                actor_name = actor.display_name or "김담당"
                 if body.department is not None:
                     dept = body.department
                     if dept:
+                        if actor.department and dept != actor.department:
+                            raise AppError(
+                                403,
+                                "department_scope_forbidden",
+                                f"타 부서('{dept}')로 이관 배정은 총괄 민원과 담당자만 수행할 수 있습니다.",
+                            )
                         allowed = valid_department_names(
                             prefer_remote=self.ai_connected
                         )
@@ -944,6 +991,12 @@ class ComplaintService:
                             )
                         row.department = dept
                         row.assigned = True if body.assigned is None else body.assigned
+                        if row.assigned:
+                            row.assignee_id = actor.id
+                            row.assignee_name = actor_name
+                        else:
+                            row.assignee_id = None
+                            row.assignee_name = None
                         if row.status == "submitted":
                             row.status = "under_review"
                         text = f"담당 부서 지정(시연 · 공식 이관 아님): {dept}"
@@ -952,18 +1005,41 @@ class ComplaintService:
                     else:
                         row.department = None
                         row.assigned = False if body.assigned is None else body.assigned
+                        if not row.assigned:
+                            row.assignee_id = None
+                            row.assignee_name = None
                         text = "담당 부서 배정 해제"
                         if body.reason:
                             text += f": {body.reason}"
                 else:
                     row.assigned = bool(body.assigned)
+                    if row.assigned:
+                        row.assignee_id = actor.id
+                        row.assignee_name = actor_name
+                        if actor.department and not row.department:
+                            row.department = actor.department
+                    else:
+                        row.assignee_id = None
+                        row.assignee_name = None
                     if row.assigned and row.status == "submitted":
                         row.status = "under_review"
-                    text = "담당자 지정" if row.assigned else "담당자 지정 해제"
+                    text = (
+                        f"담당자 지정 ({actor_name})"
+                        if row.assigned
+                        else "담당자 지정 해제"
+                    )
             elif operation in ("draft", "publish") and isinstance(body, AnswerInput):
                 publish = operation == "publish"
                 self._save_answer(row, body, publish)
-                text = "담당자 답변 게시" if publish else "담당자 초안 저장"
+                if not row.assignee_id:
+                    row.assignee_id = actor.id
+                    row.assignee_name = actor.display_name or "김담당"
+                suffix = f" ({actor.display_name})" if actor.display_name else ""
+                text = (
+                    f"담당자 답변 게시{suffix}"
+                    if publish
+                    else f"담당자 초안 저장{suffix}"
+                )
                 public = publish
             elif operation == "retract" and isinstance(body, ReasonInput):
                 self._retract_answer(row, body)

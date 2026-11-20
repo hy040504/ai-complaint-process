@@ -66,7 +66,7 @@ flowchart LR
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
-| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), 실시간 SSE 브로커(`events.py`), 시민 챗봇 투영(`chat.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
+| `complaints/` | 민원 CRUD, **운영 본인·담당자 인증(`auth.py`: 2단계 OTP·`scrypt`·5회 잠금·부서 RBAC)**, 시연 세션, **PostgreSQL 7테이블 정규화(`schema/complaint_app.sql`·`repository.py`)**, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), 실시간 SSE 브로커(`events.py`), 시민 챗봇 투영(`chat.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON·프롬프트 전문, `llmProvider`·`llmModel`에 실제 사용 엔진 기록. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
@@ -90,7 +90,10 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 | 메서드·경로 (`/api/v1` 기준) | 권한·기능 |
 | --- | --- |
-| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부, `sseEnabled`·`citizenChatEnabled`는 실시간 SSE·시민 챗봇 활성화 여부 |
+| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부, `sseEnabled`·`citizenChatEnabled`는 실시간 SSE·시민 챗봇 활성화 여부, `authEnabled`·`normalizedSchema`는 운영 인증·7테이블 정규화 활성화 여부 |
+| `GET /staff/db-summary` | 담당자 전용 정규화 7테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) 실시간 SQL 행 수·역할·AI 판정 분포 집계 |
+| `POST /auth/citizen/verify-request`, `POST /auth/citizen/register` | 시민 2단계 본인확인(6자리 OTP 5분 TTL·5회 잠금·1회용·전화번호 원문 미저장 해시+마스킹) 및 실계정 회원가입·로그인 |
+| `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | 시민·담당자 실계정 `scrypt` 비밀번호 로그인(5회 연속 실패 시 60초 `429` 잠금·세션 회전)·로그아웃(`204`)·세션 조회 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역·공급자별 사용 가능 여부(`providers`: `available`, `reason`, `resolvedProvider`) 목록 |
 | 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세 검색 및 장소 추적 후 선택 공급자(`provider`)로 판정. `assist.inferredPlace`·`assist.llmProvider`·`assist.llmModel`·`assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
@@ -143,8 +146,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 ## 데이터·게시·작업 경계
 
-- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. 민원 상태·답변 버전·작업을 jsonb `payload`로 저장하는 `complaints`와 등록 키 `idempotency`다. `complaints`는 목록·필터용 `STORED` 생성 칼럼 5개(`status`·`owner`·`visibility`·`district`·`is_synthetic`), 복합 인덱스 2개, `CHECK` 제약(`_VALUE_CHECKS`)과 `DEMO-PUB-` 시연 백필을 초기화 때 맞춘다. 검색 색인 `complaint_rag`와 테이블을 섞지 않는다. [스키마](complaints/schema/complaint_app.sql) · [업무 DB 실행 설계](../docs/harness/업무DB_실행설계.md) · [CASE-092](../docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)
-- 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+- 기본 업무 DB: 같은 PostgreSQL의 `complaint_app` 스키마. **7개 핵심 정규화 테이블**(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`)과 운영 보조 3테이블(`idempotency`·`answer_templates`·`app_meta`)로 구성한다. `complaints`는 기존 jsonb `payload`와 목록·필터용 `STORED` 생성 칼럼 5개(`status`·`owner`·`visibility`·`district`·`is_synthetic`)·복합 인덱스·`CHECK` 제약을 유지하면서 정규화 외래 키(`owner_user_id`·`assignee_user_id`)와 하위 5개 테이블을 동일 트랜잭션에서 원자적으로 동기화한다. `ai_results`는 `CHECK (automatic_transfer = false)`와 `complaint_rag.department_directory` 조건부 교차 스키마 FK(`fk_ai_results_department`)를 강제한다. 검색 색인 `complaint_rag`에 업무 행을 섞지 않는다. [스키마](complaints/schema/complaint_app.sql) · [업무 DB 실행 설계](../docs/harness/업무DB_실행설계.md) · [CASE-111](../docs/cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md)
+- 초기 설계 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 보존하며, `CASE-111`로 기존 jsonb 계약 호환성을 깨지 않고 7테이블 정규화·자동 백필·`GET /api/v1/staff/db-summary` 집계를 완료했다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-111](../docs/cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
 - AI 완료·답변 게시·민원 상태는 구분합니다. 운영 앱(`testing=False`)에서는 민원 등록·수정 및 담당자 작업 실행 시 백그라운드 스레드(`ComplaintService`)가 `iter_web_assist`를 비동기로 실행하며 진행 단계를 `_live_jobs` 메모리와 `StaffEventBroker`(`GET /api/v1/staff/events`)에 발행하고 완료/실패 시에만 DB `version`을 갱신합니다(단절 시 UI 3초 폴링 자동 전환). 이미 담당자가 작성·수정한 초안(`draft`)과 최초 AI 원본(`aiOriginal`)은 후속 AI 실행으로 덮어쓰지 않고 `aiCandidate`·`aiAssist`만 갱신합니다. AI 실패 시에도 저장된 민원과 기존 초안은 보존됩니다(`testing=True` 또는 미연결 시에는 기존 `advance_jobs()` 단계 시연 동작 유지). [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-110](../docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md)
@@ -172,7 +175,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_DATABASE_URL` | 비면 libpq `PG*` 환경변수. 같은 서버의 `complaint_app` |
 | `COMPLAINT_APP_SCHEMA` | `complaint_app` |
 | `COMPLAINT_SECRET_KEY` | 미지정 시 `.web-data/session.key`에 생성·보존, 로그·Git에서 제외 |
-| `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부 |
+| `COMPLAINT_STAFF_INIT_PASSWORD` | 부트스트랩 담당자 실계정(`staff_admin`·`staff_seowon`·`staff_heungdeok`) 초기 비밀번호(로컬 기본 `cheongju-staff-2026!`) |
+| `COMPLAINT_SMS_MODE` | `local`(기본: 로컬 검증용 `demoCode` 반환) 또는 `external`(응답에서 `demoCode` 생략) |
+| `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부(실인증 `/api/v1/auth/*`만 허용) |
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
 
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.

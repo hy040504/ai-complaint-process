@@ -5,6 +5,7 @@ import { icon } from "./icons.js";
 import { themeButton } from "./theme.js";
 import { districts, categories, statusNames } from "./store.js";
 import { escapeHTML as e } from "./citizen.js";
+import { renderAuthBadge } from "./auth.js";
 import {
   OUTCOME_SHORT_NAMES,
   REASON_NAMES,
@@ -72,9 +73,10 @@ function queryLink(path, params, changes) {
  * @param {string} content 렌더링할 HTML 내용입니다.
  * @param {object} route 현재 화면 경로와 역할 정보입니다.
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
+ * @param {object|null} [actor=null] 현재 로그인된 담당자 `Actor` 정보입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-export function staffShell(content, route, data) {
+export function staffShell(content, route, data, actor = null) {
   const rows = live(data),
     pending = rows.filter(open).length;
   const mine = rows.filter((c) => c.assigned || c.department).length;
@@ -165,7 +167,10 @@ export function staffShell(content, route, data) {
           ),
     )
     .join("");
-  return `<div class="demo-bar staff-demo-bar"><div><span class="demo-label">DEMO</span><span>민원톡톡 <span class="demo-extra">· 개인정보 없는 합성 데이터로 체험하는 업무 콘솔</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff", "selected")}${a("응대 검사기", "/lab")}</div></div><button class="staff-menu-backdrop" data-action="staff-menu-close" aria-label="업무 메뉴 닫기" tabindex="-1"></button><aside class="staff-sidebar" id="staff-sidebar"><div class="staff-console-brand">${a(`<span>MINWON DESK</span><small>민원과 · 담당자 업무 콘솔</small>`, "/staff")}<button class="staff-drawer-close icon-btn" data-action="staff-menu-close" aria-label="업무 메뉴 닫기">${icon("close", 19)}</button></div><nav aria-label="담당자 업무 메뉴">${nav}</nav><div class="staff-sidebar-bottom"><div class="staff-sidebar-policy">${icon("shield", 16)}<b>검토 우선 모드</b><p>담당자가 확인한 답변만<br>시민에게 게시됩니다.</p></div><button class="staff-help-link" data-action="staff-help">${icon("help", 16)} 업무 이용 안내 ${icon("chevron", 13)}</button>${a(`${icon("exit", 16)} 시민 사이트로 이동`, "/citizen", "staff-exit-link")}<div class="staff-account"><span class="staff-account-avatar">김</span><div><b>김담당 <small>시연 계정</small></b><p>민원 검토·답변 담당자</p></div></div></div></aside><div class="staff-shell staff-workspace"><header class="staff-topbar"><button class="staff-menu-toggle icon-btn" data-action="staff-menu-toggle" aria-controls="staff-sidebar" aria-expanded="false" aria-label="업무 메뉴 열기">${icon("menu", 21)}</button><span class="staff-connection"><i></i> 로컬 시연</span><span class="staff-crumb">민원과 <i>/</i> ${title}</span><div class="staff-topbar-right"><span>${icon("shield", 13)} 미게시 초안은 시민 비공개</span>${themeButton()}<button class="icon-btn" data-action="staff-help" aria-label="업무 이용 안내">${icon("help", 18)}</button><span class="staff-mini-avatar">김</span></div></header><nav class="staff-compact-nav" aria-label="담당자 빠른 메뉴">${a("접수·검토", "/staff", "", route.path === "/staff")}${a("전체 민원", "/staff/complaints", "", route.path === "/staff/complaints" && assign !== "mine")}${a("담당 업무", "/staff/complaints?assign=mine", "", assign === "mine")}${a("AI 모니터", "/staff/monitor", "", route.path === "/staff/monitor")}${a("API 문서", "/staff/api", "", route.path === "/staff/api")}</nav><main id="main" tabindex="-1">${content}</main><footer class="staff-footer"><span>민원톡톡 <b>시민의 목소리를 업무로 잇다</b></span><span>로컬 시연 · 공식 접수·외부 이관 미연동 · <a href="/swagger" target="_blank" rel="noopener">Swagger API</a></span></footer></div>`;
+  const staffName = actor?.displayName || "김담당";
+  const staffDept = actor?.department || "민원과 총괄";
+  const avatarChar = staffName.slice(0, 1) || "김";
+  return `<div class="demo-bar staff-demo-bar"><div><span class="demo-label">DEMO</span><span>민원톡톡 <span class="demo-extra">· 개인정보 없는 합성 데이터로 체험하는 업무 콘솔</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff", "selected")}${a("응대 검사기", "/lab")}</div></div><button class="staff-menu-backdrop" data-action="staff-menu-close" aria-label="업무 메뉴 닫기" tabindex="-1"></button><aside class="staff-sidebar" id="staff-sidebar"><div class="staff-console-brand">${a(`<span>MINWON DESK</span><small>${e(staffDept)} · 담당자 콘솔</small>`, "/staff")}<button class="staff-drawer-close icon-btn" data-action="staff-menu-close" aria-label="업무 메뉴 닫기">${icon("close", 19)}</button></div><nav aria-label="담당자 업무 메뉴">${nav}</nav><div class="staff-sidebar-bottom"><div class="staff-sidebar-policy">${icon("shield", 16)}<b>검토 우선 모드</b><p>담당자가 확인한 답변만<br>시민에게 게시됩니다.</p></div><button class="staff-help-link" data-action="staff-help">${icon("help", 16)} 업무 이용 안내 ${icon("chevron", 13)}</button>${a(`${icon("exit", 16)} 시민 사이트로 이동`, "/citizen", "staff-exit-link")}<div class="staff-account"><span class="staff-account-avatar">${e(avatarChar)}</span><div><b>${e(staffName)} ${renderAuthBadge(actor)}</b><p>${e(staffDept)}</p><div class="staff-account-actions"><button type="button" class="staff-auth-link" data-action="open-auth" data-tab="staff-login">${actor && !actor.demo ? "계정 전환" : "담당자 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="staff-auth-link" data-action="auth-logout">로그아웃</button>' : ""}</div></div></div></div></aside><div class="staff-shell staff-workspace"><header class="staff-topbar"><button class="staff-menu-toggle icon-btn" data-action="staff-menu-toggle" aria-controls="staff-sidebar" aria-expanded="false" aria-label="업무 메뉴 열기">${icon("menu", 21)}</button><span class="staff-connection"><i></i> ${actor && !actor.demo ? "인증 세션" : "로컬 시연"}</span><span class="staff-crumb">${e(staffDept)} <i>/</i> ${title}</span><div class="staff-topbar-right"><span>${icon("shield", 13)} 미게시 초안은 시민 비공개</span>${themeButton()}<button class="icon-btn" data-action="staff-help" aria-label="업무 이용 안내">${icon("help", 18)}</button><button type="button" class="staff-mini-avatar" data-action="open-auth" data-tab="staff-login" title="담당자 계정 로그인·전환" aria-label="담당자 계정 로그인">${e(avatarChar)}</button></div></header><nav class="staff-compact-nav" aria-label="담당자 빠른 메뉴">${a("접수·검토", "/staff", "", route.path === "/staff")}${a("전체 민원", "/staff/complaints", "", route.path === "/staff/complaints" && assign !== "mine")}${a("담당 업무", "/staff/complaints?assign=mine", "", assign === "mine")}${a("AI 모니터", "/staff/monitor", "", route.path === "/staff/monitor")}${a("API 문서", "/staff/api", "", route.path === "/staff/api")}</nav><main id="main" tabindex="-1">${content}</main><footer class="staff-footer"><span>민원톡톡 <b>시민의 목소리를 업무로 잇다</b></span><span>7테이블 정규화 · 공식 접수·외부 이관 미연동 · <a href="/swagger" target="_blank" rel="noopener">Swagger API</a></span></footer></div>`;
 }
 
 /**
@@ -378,10 +383,11 @@ function categoryOverview(rows) {
  */
 export function staffProcess(c) {
   const hasAssignee = Boolean(c.assigned || c.department);
+  const officerName = c.assigneeName || "김담당";
   const assigneeLabel = c.department
-    ? `${c.department}${c.assigned ? " · 김담당" : ""}`
+    ? `${c.department}${c.assigned ? ` · ${officerName}` : ""}`
     : c.assigned
-      ? "김담당"
+      ? officerName
       : "담당자 미지정";
   const steps = [
     ["서버 접수", true, "민원 원문 저장"],

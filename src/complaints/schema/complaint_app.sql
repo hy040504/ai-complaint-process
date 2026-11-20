@@ -1,32 +1,54 @@
 -- =====================================================================
 -- complaint_app.sql
--- 시연 웹 민원 업무 스키마. Flask `src.complaints`가 이 스키마를 쓴다.
+-- 민원 업무 스키마 (7테이블 정규화 + 보조 3테이블). Flask `src.complaints`가 사용한다.
 --
--- 한눈에 보기
---   - 민원 한 건의 상태·답변·시연 작업을 JSON으로 저장한다.
---   - 테이블 2개 : complaints, idempotency
---   - AI 검색 자료(FAQ, 사례, 부서)는 complaint_rag 에 두고 여기서 쓰지 않는다.
---   - 2026-10-30 설계의 7개 정규화 테이블 초안은 미채택이다
---     (plan/db 설계 1차/2026-10-30/02_complaint_app_초안_미채택.sql).
---     현재 구조와 기준은 docs/harness/업무DB_실행설계.md(2026-11-06 기준)를 따른다.
---   - Flask 계약은 Pydantic 민원 문서를 통째로 보존하므로 jsonb payload 를 쓴다.
---     목록·필터용 칼럼은 payload에서 자동 계산하는 생성 칼럼이다.
+-- 핵심 정규화 7테이블:
+--   1. users            : 시민 본인확인 계정·담당자 공무원 계정(scrypt 해시·부서 권한)
+--   2. complaints       : 민원 원문·상태·버전·작성자/담당자 FK (하위 호환 payload jsonb + 생성 칼럼 유지)
+--   3. messages         : 민원별 답변 스레드 및 시민 추가 문의
+--   4. message_versions : 답변 초안·게시·철회·원문 수정 버전 이력
+--   5. ai_jobs          : 민원별 AI 실행 작업(시도·맥락 버전·상태·공급자)
+--   6. ai_results       : AI 판정·근거·부서 추천 결과(automatic_transfer=false CHECK 강제)
+--   7. job_events       : AI 작업 단계별 진행 로그(pub/int/ai 가시성 구분)
 --
--- 실행 방법
---   - 검색 스키마가 있으면 먼저 rag/origin/schema/complaint_rag.sql
---   - 명령 : psql -d <DB이름> -f src/complaints/schema/complaint_app.sql
---   - IF NOT EXISTS 와 ADD COLUMN IF NOT EXISTS 라서 여러 번 실행해도 기존 행을 지우지 않는다.
---   - version 컬럼이 없는 예전 테이블은 payload 의 version, 없으면 1로 채운다.
---   - 서버도 시작 시 같은 DDL을 적용한다.
+-- 보조 3테이블:
+--   - idempotency       : 중복 등록 방지 Idempotency-Key
+--   - answer_templates  : 담당자 답변 편집기 템플릿
+--   - app_meta          : 최초 1회 시드/마이그레이션 플래그
+--
+-- 경계:
+--   - 검색 색인 `complaint_rag`와 민원 본문을 섞지 않는다.
+--   - 유일한 스키마 간 연결은 선택적 FK `ai_results.department_id -> complaint_rag.department_directory(department_id)`다.
+--   - IF NOT EXISTS / ADD COLUMN IF NOT EXISTS로 반복 실행해도 기존 행을 지우지 않는다.
 -- =====================================================================
 
 CREATE SCHEMA IF NOT EXISTS complaint_app;
 
+-- 1. users : 시민 본인확인 계정 및 담당자 공무원 계정
+CREATE TABLE IF NOT EXISTS complaint_app.users (
+    id            text        PRIMARY KEY,
+    login_id      text        NOT NULL UNIQUE,
+    display_name  text        NOT NULL,
+    role          text        NOT NULL CHECK (role IN ('citizen', 'staff')),
+    password_hash text        NOT NULL,
+    department    text,
+    verified      boolean     NOT NULL DEFAULT false,
+    phone_last4   text,
+    is_demo       boolean     NOT NULL DEFAULT false,
+    active        boolean     NOT NULL DEFAULT true,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    last_login_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_users_role_dept
+    ON complaint_app.users (role, department);
+
+-- 2. complaints : 민원 본문·상태·낙관적 잠금·작성자/담당자 FK
 CREATE TABLE IF NOT EXISTS complaint_app.complaints (
-    id          text        PRIMARY KEY,                 -- 서버가 발급한 민원 식별자
-    version     integer     NOT NULL CHECK (version > 0), -- 동시 수정 검사용
-    created_at  timestamptz NOT NULL,                    -- 등록 시각
-    payload     jsonb       NOT NULL                     -- Complaint Pydantic JSON
+    id          text        PRIMARY KEY,
+    version     integer     NOT NULL CHECK (version > 0),
+    created_at  timestamptz NOT NULL,
+    payload     jsonb       NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_app_complaints_created
@@ -60,7 +82,7 @@ BEGIN
     END IF;
 END $$;
 
--- 목록·필터용 생성 칼럼. 원본은 payload 하나이며, 값은 payload에서 자동 계산된다.
+-- 목록·필터용 생성 칼럼(하위 호환 유지) + 정규화 관계형 칼럼
 ALTER TABLE complaint_app.complaints
     ADD COLUMN IF NOT EXISTS status text
         GENERATED ALWAYS AS (payload->>'status') STORED,
@@ -71,19 +93,29 @@ ALTER TABLE complaint_app.complaints
     ADD COLUMN IF NOT EXISTS district text
         GENERATED ALWAYS AS (payload->>'district') STORED,
     ADD COLUMN IF NOT EXISTS is_synthetic boolean
-        GENERATED ALWAYS AS (COALESCE((payload->>'isSynthetic')::boolean, false)) STORED;
+        GENERATED ALWAYS AS (COALESCE((payload->>'isSynthetic')::boolean, false)) STORED,
+    ADD COLUMN IF NOT EXISTS owner_user_id text
+        REFERENCES complaint_app.users(id),
+    ADD COLUMN IF NOT EXISTS assignee_user_id text
+        REFERENCES complaint_app.users(id),
+    ADD COLUMN IF NOT EXISTS title text,
+    ADD COLUMN IF NOT EXISTS body text,
+    ADD COLUMN IF NOT EXISTS category text,
+    ADD COLUMN IF NOT EXISTS department text,
+    ADD COLUMN IF NOT EXISTS context_version integer NOT NULL DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS complaints_status_created
     ON complaint_app.complaints (status, created_at);
 CREATE INDEX IF NOT EXISTS complaints_owner_created
     ON complaint_app.complaints (owner, created_at);
+CREATE INDEX IF NOT EXISTS idx_app_complaints_department
+    ON complaint_app.complaints (department, created_at DESC);
 
--- 예전 시연 데이터에는 isSynthetic 키가 없으므로 공개 시연 ID(DEMO-PUB-)만 한 번 채운다.
 UPDATE complaint_app.complaints
 SET payload = payload || jsonb_build_object('isSynthetic', true)
 WHERE left(id, 9) = 'DEMO-PUB-' AND NOT (payload ? 'isSynthetic');
 
--- 상태·공개 범위·지역을 DB도 검사한다. 값 목록은 src/complaints/models.py와 맞춘다.
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint
@@ -109,24 +141,130 @@ BEGIN
     END IF;
 END $$;
 
+-- 3. messages : 민원별 답변 스레드 및 시민 추가 문의
+CREATE TABLE IF NOT EXISTS complaint_app.messages (
+    id                   text        PRIMARY KEY,
+    complaint_id         text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    kind                 text        NOT NULL CHECK (kind IN ('answer', 'inquiry')),
+    origin               text        NOT NULL CHECK (origin IN ('ai', 'ai_edited', 'staff', 'citizen')),
+    author_user_id       text        REFERENCES complaint_app.users(id),
+    body                 text        NOT NULL DEFAULT '',
+    published_version_id text,
+    created_at           timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_messages_complaint
+    ON complaint_app.messages (complaint_id, created_at);
+
+-- 4. message_versions : 답변 초안·게시·철회·원문 수정 버전 이력
+CREATE TABLE IF NOT EXISTS complaint_app.message_versions (
+    id              text        PRIMARY KEY,
+    message_id      text        NOT NULL REFERENCES complaint_app.messages(id) ON DELETE CASCADE,
+    complaint_id    text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    version_no      integer     NOT NULL,
+    body            text        NOT NULL,
+    origin          text        NOT NULL CHECK (origin IN ('ai', 'ai_edited', 'staff', 'citizen')),
+    kind            text        NOT NULL,
+    publish_state   text        NOT NULL CHECK (publish_state IN ('draft', 'published', 'retracted', 'archived')),
+    reason          text        NOT NULL DEFAULT '',
+    actor_user_id   text        REFERENCES complaint_app.users(id),
+    context_version integer     NOT NULL DEFAULT 1,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (message_id, version_no)
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_message_versions_complaint
+    ON complaint_app.message_versions (complaint_id, version_no);
+
+-- 5. ai_jobs : 민원별 AI 분석 실행 작업
+CREATE TABLE IF NOT EXISTS complaint_app.ai_jobs (
+    id              text        PRIMARY KEY,
+    complaint_id    text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    context_version integer     NOT NULL,
+    attempt         integer     NOT NULL,
+    state           text        NOT NULL CHECK (state IN ('queued', 'running', 'succeeded', 'failed', 'cancelled', 'superseded')),
+    stage           text        NOT NULL DEFAULT '',
+    provider        text,
+    started_at      timestamptz,
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (complaint_id, context_version, attempt)
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_ai_jobs_state
+    ON complaint_app.ai_jobs (state, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_app_ai_jobs_complaint
+    ON complaint_app.ai_jobs (complaint_id);
+
+-- 6. ai_results : AI 판정·근거·부서 추천 결과(자동 이관 금지 강제)
+CREATE TABLE IF NOT EXISTS complaint_app.ai_results (
+    id                 text        PRIMARY KEY,
+    job_id             text        NOT NULL UNIQUE REFERENCES complaint_app.ai_jobs(id) ON DELETE CASCADE,
+    complaint_id       text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    outcome            text        NOT NULL CHECK (outcome IN ('faq_answer', 'department_suggestion', 'human_handoff')),
+    reason_code        text        NOT NULL DEFAULT '',
+    department_id      text,
+    department_name    text,
+    evidence           jsonb       NOT NULL DEFAULT '[]'::jsonb,
+    draft_body         text,
+    guide_body         text,
+    automatic_transfer boolean     NOT NULL DEFAULT false CHECK (automatic_transfer = false),
+    llm_provider       text,
+    llm_model          text,
+    created_at         timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_ai_results_outcome
+    ON complaint_app.ai_results (outcome, created_at DESC);
+
+DO $$
+BEGIN
+    IF to_regclass('complaint_rag.department_directory') IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1 FROM pg_constraint
+           WHERE conrelid = 'complaint_app.ai_results'::regclass
+             AND conname = 'fk_ai_results_department'
+       ) THEN
+        ALTER TABLE complaint_app.ai_results
+            ADD CONSTRAINT fk_ai_results_department
+            FOREIGN KEY (department_id)
+            REFERENCES complaint_rag.department_directory (department_id);
+    END IF;
+END $$;
+
+-- 7. job_events : AI 작업 단계별 진행 로그
+CREATE TABLE IF NOT EXISTS complaint_app.job_events (
+    id           bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    job_id       text        NOT NULL REFERENCES complaint_app.ai_jobs(id) ON DELETE CASCADE,
+    complaint_id text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    seq_no       integer     NOT NULL,
+    occurred_at  timestamptz NOT NULL DEFAULT now(),
+    stage        text        NOT NULL,
+    vis          text        NOT NULL DEFAULT 'ai' CHECK (vis IN ('pub', 'int', 'ai')),
+    UNIQUE (job_id, seq_no)
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_job_events_job
+    ON complaint_app.job_events (job_id, seq_no);
+
+-- 보조 3테이블: idempotency, answer_templates, app_meta
 CREATE TABLE IF NOT EXISTS complaint_app.idempotency (
-    owner         text NOT NULL,                         -- 작성자 시연 계정
-    key           text NOT NULL,                         -- Idempotency-Key
-    fingerprint   text NOT NULL,                         -- 등록 본문 해시
+    owner         text NOT NULL,
+    key           text NOT NULL,
+    fingerprint   text NOT NULL,
     complaint_id  text NOT NULL
-                  REFERENCES complaint_app.complaints(id),
+                  REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
     PRIMARY KEY (owner, key)
 );
 
 CREATE TABLE IF NOT EXISTS complaint_app.answer_templates (
-    id          text        PRIMARY KEY,                 -- 답변 템플릿 식별자
-    title       text        NOT NULL,                    -- 칩에 표시할 템플릿 이름
-    content     text        NOT NULL,                    -- 편집기 삽입 문구 본문
-    is_default  boolean     NOT NULL DEFAULT false,      -- 기본 제공 템플릿 여부
-    created_at  timestamptz NOT NULL DEFAULT now()       -- 등록 시각
+    id          text        PRIMARY KEY,
+    title       text        NOT NULL,
+    content     text        NOT NULL,
+    is_default  boolean     NOT NULL DEFAULT false,
+    created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS complaint_app.app_meta (
-    key         text        PRIMARY KEY,                 -- 시연 스키마 초기화 플래그
-    value       text        NOT NULL                     -- 설정·시드 상태 값
+    key         text        PRIMARY KEY,
+    value       text        NOT NULL
 );

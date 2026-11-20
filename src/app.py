@@ -4,6 +4,8 @@
 `src.assist`를 호출합니다.
 """
 
+import os
+
 import click
 from flask_openapi3.models.info import Info
 from flask_openapi3.openapi import OpenAPI
@@ -11,6 +13,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from src.assist import iter_web_assist
 from src.complaints.api import create_api
+from src.complaints.auth import AuthService
 from src.complaints.config import ROOT, Settings
 from src.complaints.demo_data import seed_public_demo
 from src.complaints.http import register_http, validation_error
@@ -85,11 +88,16 @@ def create_app(
     service = ComplaintService(
         repository, iter_assist_fn=resolved_iter, auto_start_ai=resolved_auto
     )
+    expose_demo_otp = (
+        os.environ.get("COMPLAINT_SMS_MODE", "local").strip().lower() != "external"
+    )
+    auth_service = AuthService(repository, expose_demo_otp=expose_demo_otp)
     app.extensions["complaint_service"] = service
+    app.extensions["auth_service"] = auth_service
     # Tailscale Serve 등 로컬 프록시의 X-Forwarded-Proto를 반영해 HTTPS Origin 검사를 통과시킵니다.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)  # type: ignore[method-assign]
     register_http(app)
-    app.register_api(create_api(service))
+    app.register_api(create_api(service, auth_service))
     app.register_blueprint(web)
 
     @app.cli.command("seed-demo")

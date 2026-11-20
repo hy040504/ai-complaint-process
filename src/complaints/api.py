@@ -6,7 +6,8 @@ from collections.abc import Iterator
 from flask import Response, current_app, request, session, stream_with_context
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
-from src.complaints.http import actor, reply
+from src.complaints.auth import AuthService
+from src.complaints.http import actor, reply, set_session_actor
 
 from src.complaints.errors import AppError
 from src.assist import (
@@ -29,6 +30,9 @@ from src.complaints.models import (
     AssistResponse,
     CitizenChatInput,
     CitizenChatResponse,
+    CitizenRegisterInput,
+    CitizenVerifyRequest,
+    CitizenVerifyResponse,
     ComplaintInput,
     ComplaintPath,
     ComplaintResponse,
@@ -39,7 +43,9 @@ from src.complaints.models import (
     Health,
     JobStartInput,
     ListQuery,
+    LoginInput,
     MessageInput,
+    NormalizedDbSummary,
     PageResponse,
     ProviderStatus,
     ReasonInput,
@@ -55,15 +61,20 @@ from src.complaints.service import ComplaintService, Operation
 from src.llm.settings import provider_availability_map
 
 
-def create_api(service: ComplaintService) -> APIBlueprint:
-    """서비스 인스턴스를 경로에 주입하고 문서화한 블루프린트를 만듭니다.
+def create_api(
+    service: ComplaintService,
+    auth_service: AuthService | None = None,
+) -> APIBlueprint:
+    """서비스·인증 인스턴스를 경로에 주입하고 문서화한 블루프린트를 만듭니다.
 
     Args:
         service: 업무 검증과 저장을 수행할 서비스입니다.
+        auth_service: 본인확인·비밀번호 인증 서비스입니다. 생략하면 저장소로 기본 생성합니다.
 
     Returns:
         요청·응답 스키마를 포함하는 API 블루프린트입니다.
     """
+    auth = auth_service or AuthService(service.repository)
     api = APIBlueprint(
         "complaint_api",
         __name__,
@@ -76,13 +87,19 @@ def create_api(service: ComplaintService) -> APIBlueprint:
             409: ErrorResponse,
             413: ErrorResponse,
             422: ErrorResponse,
+            429: ErrorResponse,
             500: ErrorResponse,
         },
         validate_response=True,
     )
+    server_status = Tag(name="서버 상태")
+    auth_tag = Tag(
+        name="계정 · 본인인증",
+        description="시민 2단계 본인확인 가입·비밀번호(scrypt) 로그인·담당자 부서별 계정 인증(외부 PASS/SSO 미연동)",
+    )
     sessions = Tag(
         name="시연 세션",
-        description="로컬 역할 체험용 세션입니다. 운영용 본인인증이 아닙니다.",
+        description="로컬 역할 체험용 시연 전환 세션입니다(COMPLAINT_DEMO_LOGIN=0일 때 비활성).",
     )
     complaints = Tag(
         name="민원",
@@ -105,9 +122,9 @@ def create_api(service: ComplaintService) -> APIBlueprint:
         description="미게시 초안·순화를 제거하고 청주시 공식 FAQ·참고 부서를 안내하는 시민 전용 실시간 챗봇(공식 접수·이관 아님)",
     )
 
-    @api.get("/health", tags=[Tag(name="서버 상태")], responses={200: Health})
+    @api.get("/health", tags=[server_status], responses={200: Health})
     def health() -> Response:
-        """서버 상태와 검색·LLM 설정 여부, 민원 CRUD의 AI 연결 여부를 반환합니다."""
+        """서버 상태와 검색·LLM·실시간 SSE·시민 챗봇·인증·정규화 DB 연결 여부를 반환합니다."""
         return reply(
             Health(
                 storage=service.repository.storage,
@@ -116,6 +133,15 @@ def create_api(service: ComplaintService) -> APIBlueprint:
                 assist_llm=llm_configured(),
             )
         )
+
+    @api.get(
+        "/staff/db-summary",
+        tags=[server_status],
+        responses={200: NormalizedDbSummary},
+    )
+    def staff_db_summary() -> Response:
+        """담당자 전용 정규화 7테이블(`users`~`job_events`) 행 수와 집계를 조회합니다."""
+        return reply(service.normalized_summary(actor()))
 
     @api.get(
         "/assist/fields",
@@ -271,6 +297,65 @@ def create_api(service: ComplaintService) -> APIBlueprint:
             },
         )
 
+    @api.post(
+        "/auth/citizen/verify-request",
+        tags=[auth_tag],
+        responses={200: CitizenVerifyResponse},
+    )
+    def request_citizen_verify(body: CitizenVerifyRequest) -> Response:
+        """시민 회원가입 1단계 본인확인 6자리 인증코드를 발급합니다.
+
+        Args:
+            body: 신청자 이름과 휴대전화 번호입니다.
+
+        Returns:
+            챌린지 ID·만료 시간·마스킹된 연락처 응답입니다.
+        """
+        return reply(auth.request_citizen_verification(body))
+
+    @api.post(
+        "/auth/citizen/register",
+        tags=[auth_tag],
+        responses={201: Actor},
+    )
+    def register_citizen_account(body: CitizenRegisterInput) -> Response:
+        """본인확인 6자리 코드를 검증하고 새 시민 계정을 생성해 로그인합니다.
+
+        Args:
+            body: 아이디·비밀번호·이름·본인확인 챌린지·6자리 코드입니다.
+
+        Returns:
+            생성·인증된 시민 `Actor` 모델입니다.
+        """
+        user = auth.register_citizen(body)
+        set_session_actor(user)
+        return reply(user, 201)
+
+    @api.post("/auth/login", tags=[auth_tag], responses={200: Actor})
+    def login_account(body: LoginInput) -> Response:
+        """시민·담당자 실계정 아이디와 `scrypt` 해시 비밀번호로 로그인합니다.
+
+        Args:
+            body: 로그인 아이디·비밀번호·선택 기대 역할입니다.
+
+        Returns:
+            세션 쿠키가 발급된 `Actor` 모델입니다.
+        """
+        user = auth.login(body)
+        set_session_actor(user)
+        return reply(user)
+
+    @api.post("/auth/logout", tags=[auth_tag], responses={204: None})
+    def logout_account() -> Response:
+        """현재 로그인된 세션을 즉시 파기합니다."""
+        session.clear()
+        return Response(status=204)
+
+    @api.get("/auth/me", tags=[auth_tag], responses={200: Actor})
+    def auth_me() -> Response:
+        """현재 세션의 검증된 사용자 정보(소속 부서·본인확인 상태 포함)를 반환합니다."""
+        return reply(actor())
+
     @api.post("/session", tags=[sessions], responses={200: Actor})
     def select_session(body: SessionInput) -> Response:
         """로컬 시연 계정의 역할을 선택합니다.
@@ -285,9 +370,9 @@ def create_api(service: ComplaintService) -> APIBlueprint:
             raise AppError(
                 403, "demo_login_disabled", "시연 역할 선택이 비활성화되어 있습니다."
             )
-        session.clear()
-        session["role"] = body.role
-        return reply(actor())
+        user = auth.demo_actor(body.role)
+        set_session_actor(user)
+        return reply(user)
 
     @api.get("/session", tags=[sessions], responses={200: Actor})
     def get_session() -> Response:

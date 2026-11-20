@@ -5,6 +5,7 @@ import { icon } from "./icons.js";
 import { serviceIcon } from "./service-icons.js";
 import { themeButton } from "./theme.js";
 import { visible, statusNames } from "./store.js";
+import { renderAuthBadge } from "./auth.js";
 
 export const citizenNotices = [
   {
@@ -104,9 +105,10 @@ export function citizenIdentity() {
  *
  * @param {string} content 렌더링할 HTML 내용입니다.
  * @param {string} path 화면 경로 또는 API 상대 경로입니다.
+ * @param {object|null} [actor=null] 현재 로그인된 사용자 정보입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-export function citizenShell(content, path) {
+export function citizenShell(content, path, actor = null) {
   const tabs = [
     ["home", "홈", "/citizen"],
     ["file", "나의 민원", "/citizen/mine"],
@@ -121,6 +123,10 @@ export function citizenShell(content, path) {
     (target.endsWith("/mine") && path.includes("/detail/")) ||
     (target.endsWith("/assistant") && path.endsWith("/write")) ||
     (target.endsWith("/profile") && path.endsWith("/guide"));
+  const accountLabel =
+    actor && !actor.demo
+      ? `${e(actor.displayName || actor.loginId || "내 계정")}`
+      : "로그인·본인확인";
   return `<div class="demo-bar citizen-demo-bar"><div><span class="demo-label">DEMO</span><span>청주 민원 시연 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 시연 서비스입니다.</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen", "selected")}${a("담당자 사이트", "/staff")}${a("응대 검사기", "/lab")}</div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
     ["홈", "/citizen"],
     ["나의 민원", "/citizen/mine"],
@@ -132,7 +138,7 @@ export function citizenShell(content, path) {
     )
     .join(
       "",
-    )}</nav><div class="citizen-header-actions">${themeButton()}${a(icon("bell", 21), "/citizen/updates", "icon-btn")}${a(`${icon("plus", 17)} 직접 작성`, "/citizen/write", "btn primary")}</div></header><main id="main" tabindex="-1">${content}</main><footer><span>청주톡톡 <b>말하듯 접수하고, 눈으로 확인하세요</b></span><span>시연 서비스 · 공식 접수·행정 이관 미연동</span></footer><nav class="citizen-bottom-nav" aria-label="시민 하단 메뉴">${tabs.map(([ic, label, target], index) => a(`<span class="bottom-icon">${icon(ic, index === 2 ? 25 : 21)}</span><span>${label}</span>`, target, `${selected(target) ? "active " : ""}${index === 2 ? "citizen-fab" : ""}`)).join("")}</nav></div>`;
+    )}</nav><div class="citizen-header-actions"><button type="button" class="btn subtle auth-account-btn" data-action="open-auth" data-tab="citizen-login">${icon("user", 15)} <span>${accountLabel}</span></button>${themeButton()}${a(icon("bell", 21), "/citizen/updates", "icon-btn")}${a(`${icon("plus", 17)} 직접 작성`, "/citizen/write", "btn primary")}</div></header><main id="main" tabindex="-1">${content}</main><footer><span>청주톡톡 <b>말하듯 접수하고, 눈으로 확인하세요</b></span><span>시연 서비스 · 공식 접수·행정 이관 미연동</span></footer><nav class="citizen-bottom-nav" aria-label="시민 하단 메뉴">${tabs.map(([ic, label, target], index) => a(`<span class="bottom-icon">${icon(ic, index === 2 ? 25 : 21)}</span><span>${label}</span>`, target, `${selected(target) ? "active " : ""}${index === 2 ? "citizen-fab" : ""}`)).join("")}</nav></div>`;
 }
 
 /**
@@ -250,13 +256,20 @@ export function citizenUpdates(data) {
 }
 
 /**
- * 시연 계정 정보와 실제로 이용 가능한 메뉴만 제공합니다.
+ * 로그인·본인확인 계정 정보와 실제로 이용 가능한 메뉴만 제공합니다.
  *
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
+ * @param {object|null} [actor=null] 현재 세션의 사용자 객체입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-export function citizenProfile(data) {
-  return `<div class="page-content narrow citizen-utility"><div class="page-heading"><div><div class="eyebrow">MY PAGE</div><h1>내 정보</h1><p>나의 민원과 이용 정보를 한곳에서 확인하세요.</p></div></div><section class="citizen-profile-card"><span>${icon("user", 27)}</span><div><b>시민님 <em>시연 계정</em></b><p>현재 나의 민원 ${visible(data, true).length}건</p></div></section><div class="citizen-profile-menu">${[
+export function citizenProfile(data, actor = null) {
+  const name = actor?.displayName || "시연 시민";
+  const loginHint = actor?.loginId ? ` (${actor.loginId})` : "";
+  const verifiedNote =
+    actor && !actor.demo
+      ? "로컬 2단계 본인확인 및 비밀번호(scrypt) 인증이 적용된 계정입니다. 타인의 비공개 민원과 완전히 격리됩니다."
+      : "현재 로컬 시연 계정으로 체험 중입니다. '계정 로그인 · 본인확인 가입'에서 본인확인 계정을 만들어 실제 다중 사용자 격리를 체험할 수 있습니다.";
+  return `<div class="page-content narrow citizen-utility"><div class="page-heading"><div><div class="eyebrow">MY PAGE</div><h1>내 정보</h1><p>나의 민원과 계정 인증 정보를 한곳에서 확인하세요.</p></div></div><section class="citizen-profile-card"><span>${icon("user", 27)}</span><div style="flex:1"><b>${e(name)}${e(loginHint)} ${renderAuthBadge(actor)}</b><p>현재 나의 민원 ${visible(data, true).length}건</p></div><div class="auth-profile-actions"><button type="button" class="btn primary" data-action="open-auth" data-tab="${actor && !actor.demo ? "citizen-login" : "citizen-register"}">${actor && !actor.demo ? "계정 전환" : "본인확인 · 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="btn" data-action="auth-logout">로그아웃</button>' : ""}</div></section><div class="citizen-profile-menu">${[
     ["file", "나의 민원", "/citizen/mine"],
     ["bell", "답변 알림", "/citizen/updates"],
     ["grid", "민원 게시판", "/citizen/board"],
@@ -268,7 +281,7 @@ export function citizenProfile(data) {
     )
     .join(
       "",
-    )}</div><div class="info-banner">${icon("shield", 18)} 운영용 본인인증이 아닌 로컬 시연 계정입니다. 실제 개인정보를 입력하지 마세요.</div></div>`;
+    )}</div><div class="info-banner">${icon("shield", 18)} ${e(verifiedNote)}</div></div>`;
 }
 
 /**

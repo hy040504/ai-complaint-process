@@ -26,12 +26,18 @@ import {
   read,
   refresh,
   api,
-  setRole,
+  getActor,
+  ensureRoleSession,
+  loginAccount,
+  logoutAccount,
+  requestCitizenVerify,
+  registerCitizenAccount,
   visible,
   statusNames,
   districts,
   categories,
 } from "./store.js";
+import { renderAuthModalHtml } from "./auth.js";
 import {
   labExamples,
   labFields,
@@ -227,6 +233,29 @@ let sseLastEventAt = null;
 let sseAiConnected = true;
 let staffSyncPending = false;
 let staffSyncQueued = false;
+let authModalTab = "citizen-login";
+let authVerifyChallenge = null;
+let authModalError = "";
+
+/**
+ * 계정 로그인·시민 본인확인 모달을 지정한 탭으로 엽니다.
+ *
+ * @param {string} [tab] 초기 활성 탭(`citizen-login`·`citizen-register`·`staff-login`)입니다.
+ * @returns {void}
+ */
+function openAuthModal(tab) {
+  authModalTab = tab || (route?.staff ? "staff-login" : "citizen-login");
+  authModalError = "";
+  openModal(
+    "계정 로그인 · 본인확인",
+    renderAuthModalHtml({
+      tab: authModalTab,
+      verifyChallenge: authVerifyChallenge,
+      actor: getActor(),
+      error: authModalError,
+    }),
+  );
+}
 
 /**
  * 서버의 최신 담당자 스냅샷을 조회해 안전하게 화면을 갱신합니다.
@@ -431,7 +460,7 @@ async function loadScreen() {
     '<div class="page-content"><div class="panel empty" role="status">서버에서 민원을 불러오고 있습니다…</div></div>',
   );
   try {
-    await setRole(route.staff ? "staff" : "citizen");
+    await ensureRoleSession(route.staff ? "staff" : "citizen");
     await Promise.all([
       refresh(),
       route.staff
@@ -458,10 +487,13 @@ async function loadScreen() {
       }
     }
   } catch (error) {
-    if (sequence === loadSequence)
+    if (sequence === loadSequence) {
+      const needsLogin = error?.code === "demo_login_disabled" || error?.status === 401;
       app.innerHTML = shell(
-        `<div class="page-content"><div class="panel empty"><h1>서버 데이터를 불러오지 못했습니다</h1><p>${esc(error.message)}</p>${button("다시 시도", "primary", 'data-action="reload"')}</div></div>`,
+        `<div class="page-content"><div class="panel empty"><h1>${needsLogin ? "계정 로그인이 필요합니다" : "서버 데이터를 불러오지 못했습니다"}</h1><p>${esc(error.message)}</p>${needsLogin ? button("로그인 · 본인확인", "primary", 'data-action="open-auth"') : button("다시 시도", "primary", 'data-action="reload"')}</div></div>`,
       );
+      if (needsLogin) openAuthModal();
+    }
   }
 }
 /**
@@ -481,8 +513,8 @@ function shell(content) {
   document.querySelector('meta[name="theme-color"]').content =
     getTheme() === "dark" ? "#101827" : route.staff ? "#16203a" : "#2f6fed";
   return route.staff
-    ? staffShell(content, route, data || read())
-    : citizenShell(content, route.path);
+    ? staffShell(content, route, data || read(), getActor())
+    : citizenShell(content, route.path, getActor());
 }
 /**
  * pageHeading 화면 동작을 구성합니다.
@@ -513,10 +545,11 @@ function home() {
  * @returns {string} 화면에 사용할 HTML 문자열입니다.
  */
 function listRows(rows, staff = false, mine = false) {
+  const myId = getActor()?.id || "citizen-demo";
   return rows
     .map(
       (c) =>
-        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? "김담당" : "담당자 미지정") : `<span class="origin-badge ${c.published?.origin || ""}">${origin(c.published)}</span>`}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td>${!staff && mine && c.owner === "citizen-demo" ? `<div class="row-actions"><button type="button" class="row-delete-btn" data-action="delete-complaint" data-id="${c.id}" aria-label="${esc(c.title)} 삭제">삭제</button><a class="row-open" href="#/citizen/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></div>` : `<a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a>`}</td></tr>`,
+        `<tr><td class="id-cell">${c.id.split("-").at(-1)}</td><td><a class="row-title" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}">${esc(c.title)} ${c.visibility === "private" ? `<span class="private-mark" title="비공개">${icon("shield", 13)}</span>` : ""}</a><span class="row-sub">${esc(c.category)} <span>·</span> ${staff ? (c.assigned ? esc(c.assigneeName || "김담당") : "담당자 미지정") : `<span class="origin-badge ${c.published?.origin || ""}">${origin(c.published)}</span>`}</span></td><td>${esc(c.district)}</td><td>${badge(c)}</td><td class="date-cell">${date(c.date)}</td><td>${!staff && mine && c.owner === myId ? `<div class="row-actions"><button type="button" class="row-delete-btn" data-action="delete-complaint" data-id="${c.id}" aria-label="${esc(c.title)} 삭제">삭제</button><a class="row-open" href="#/citizen/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a></div>` : `<a class="row-open" href="#/${staff ? "staff" : "citizen"}/detail/${c.id}" aria-label="${esc(c.title)} 상세 보기">${icon("chevron", 16)}</a>`}</td></tr>`,
     )
     .join("");
 }
@@ -585,11 +618,12 @@ function board(staff = false) {
  */
 function writeForm() {
   const editId = route.params.get("edit");
+  const myId = getActor()?.id || "citizen-demo";
   const item = editId
     ? data.complaints.find(
         (c) =>
           c.id === editId &&
-          c.owner === "citizen-demo" &&
+          c.owner === myId &&
           !c.published &&
           c.status !== "withdrawn",
       )
@@ -619,14 +653,15 @@ function missing() {
  */
 function detail() {
   const id = route.path.split("/").at(-1);
+  const myId = getActor()?.id || "citizen-demo";
   const c = data.complaints.find(
     (c) =>
       c.id === id &&
       c.status !== "withdrawn" &&
-      (route.staff || c.owner === "citizen-demo" || c.visibility === "public"),
+      (route.staff || c.owner === myId || c.visibility === "public"),
   );
   if (!c) return missing();
-  const owner = c.owner === "citizen-demo";
+  const owner = c.owner === myId;
   return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button type="button" data-action="withdraw" data-id="${c.id}">민원 철회</button><button type="button" class="danger-link" data-action="delete-complaint" data-id="${c.id}">민원 삭제</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">김</span><div><b>김담당 <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
     .slice()
     .reverse()
@@ -741,12 +776,13 @@ function editor(c) {
   const candidateDiffers = Boolean(
     c.aiCandidate && c.aiCandidate.trim() && c.aiCandidate.trim() !== c.draft.trim(),
   );
+  const officerName = c.assigneeName || "김담당";
   const assignLabel = c.department
     ? c.assigned
-      ? `${esc(c.department)} · 김담당`
+      ? `${esc(c.department)} · ${esc(officerName)}`
       : esc(c.department)
     : c.assigned
-      ? "김담당"
+      ? esc(officerName)
       : "미지정";
   const templates = Array.isArray(answerTemplates) ? answerTemplates : [];
   const existingIds = new Set(templates.map((t) => t.id));
@@ -957,7 +993,8 @@ function render() {
   else if (route.path === "/citizen/services") content = citizenServicesPage();
   else if (route.path === "/citizen/news") content = citizenNewsPage();
   else if (route.path === "/citizen/updates") content = citizenUpdates(data);
-  else if (route.path === "/citizen/profile") content = citizenProfile(data);
+  else if (route.path === "/citizen/profile")
+    content = citizenProfile(data, getActor());
   else content = missing();
   app.innerHTML = shell(content);
   const newEditor = $("#answer-form");
@@ -1267,6 +1304,29 @@ document.addEventListener("click", async (event) => {
     $("#main")?.focus();
     return;
   }
+  if (action === "open-auth") {
+    authVerifyChallenge = null;
+    openAuthModal(target.dataset.tab || undefined);
+    return;
+  }
+  if (action === "auth-tab") {
+    authModalTab = target.dataset.tab || "citizen-login";
+    if (authModalTab === "citizen-register") authVerifyChallenge = null;
+    openAuthModal(authModalTab);
+    return;
+  }
+  if (action === "auth-logout") {
+    try {
+      staffStream.close();
+      await logoutAccount();
+      modal.close();
+      toast("로그아웃되었습니다.");
+      await loadScreen();
+    } catch (err) {
+      toast(err?.message || "로그아웃 처리 중 오류가 발생했습니다.");
+    }
+    return;
+  }
   if (action === "close-modal") {
     modal.close();
     return;
@@ -1547,6 +1607,97 @@ document.addEventListener("submit", async (event) => {
   }
   if (form.id === "filters") {
     updateFilter({ ...values, page: "" });
+    return;
+  }
+  if (form.id === "auth-citizen-login-form" || form.id === "auth-staff-login-form") {
+    const isStaffLogin = form.id === "auth-staff-login-form";
+    try {
+      const loggedIn = await loginAccount({
+        loginId: String(values.loginId || "").trim(),
+        password: String(values.password || ""),
+        expectedRole: isStaffLogin ? "staff" : "citizen",
+      });
+      modal.close();
+      staffStream.close();
+      toast(`${loggedIn.displayName || loggedIn.loginId} 계정으로 로그인했습니다.`);
+      const targetHash = isStaffLogin ? "/staff" : "/citizen/mine";
+      if ((isStaffLogin && !route.staff) || (!isStaffLogin && route.staff)) {
+        location.hash = targetHash;
+      } else {
+        await loadScreen();
+      }
+    } catch (err) {
+      authModalError = err?.message || "로그인에 실패했습니다.";
+      openModal(
+        "계정 로그인 · 본인확인",
+        renderAuthModalHtml({
+          tab: authModalTab,
+          verifyChallenge: authVerifyChallenge,
+          actor: getActor(),
+          error: authModalError,
+        }),
+      );
+    }
+    return;
+  }
+  if (form.id === "auth-citizen-verify-form") {
+    try {
+      const name = String(values.name || "").trim();
+      const res = await requestCitizenVerify({
+        name,
+        phone: String(values.phone || "").trim(),
+      });
+      authVerifyChallenge = { ...res, name };
+      authModalError = "";
+      openModal(
+        "계정 로그인 · 본인확인",
+        renderAuthModalHtml({
+          tab: "citizen-register",
+          verifyChallenge: authVerifyChallenge,
+          actor: getActor(),
+          error: "",
+        }),
+      );
+    } catch (err) {
+      authModalError = err?.message || "본인확인 코드 발급에 실패했습니다.";
+      openModal(
+        "계정 로그인 · 본인확인",
+        renderAuthModalHtml({
+          tab: "citizen-register",
+          verifyChallenge: null,
+          actor: getActor(),
+          error: authModalError,
+        }),
+      );
+    }
+    return;
+  }
+  if (form.id === "auth-citizen-register-form") {
+    try {
+      const createdActor = await registerCitizenAccount({
+        loginId: String(values.loginId || "").trim(),
+        password: String(values.password || ""),
+        displayName: String(values.displayName || authVerifyChallenge?.name || "").trim(),
+        challengeId: String(values.challengeId || "").trim(),
+        code: String(values.code || "").trim(),
+      });
+      authVerifyChallenge = null;
+      modal.close();
+      toast(`${createdActor.displayName} 님 본인확인 및 가입이 완료되었습니다.`);
+      if (route.staff) location.hash = "/citizen/mine";
+      else await loadScreen();
+    } catch (err) {
+      authModalError = err?.message || "회원가입에 실패했습니다.";
+      openModal(
+        "계정 로그인 · 본인확인",
+        renderAuthModalHtml({
+          tab: "citizen-register",
+          verifyChallenge: authVerifyChallenge,
+          actor: getActor(),
+          error: authModalError,
+        }),
+      );
+    }
     return;
   }
   if (form.id === "chat-form") {

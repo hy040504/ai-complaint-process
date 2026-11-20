@@ -9,15 +9,34 @@ from src.complaints.errors import AppError
 from src.complaints.models import Actor, ErrorResponse
 
 
+def set_session_actor(user: Actor) -> None:
+    """로그인·본인확인 가입·시연 전환 시 서명 세션 쿠키를 안전하게 회전·저장합니다.
+
+    Args:
+        user: 인증이 완료된 사용자 `Actor` 모델입니다.
+    """
+    session.clear()
+    session["user_id"] = user.id
+    session["role"] = user.role
+    session["auth_mode"] = user.auth_mode
+
+
 def actor() -> Actor:
-    """세션에 저장된 사용자만 반환하며 미인증 요청은 거부합니다.
+    """세션에 저장된 사용자를 `users` 저장소와 대조해 반환하며 미인증 요청은 거부합니다.
 
     Returns:
-        서버가 확인한 시연 사용자입니다.
+        서버가 확인한 인증 사용자 또는 시연 사용자입니다.
 
     Raises:
-        AppError: 유효한 세션이 없으면 발생합니다.
+        AppError: 유효한 세션이 없거나 계정이 비활성 상태이면 발생합니다.
     """
+    auth_service = current_app.extensions.get("auth_service")
+    if auth_service is not None:
+        return auth_service.resolve_session_actor(
+            user_id=session.get("user_id"),
+            role=session.get("role"),
+            auth_mode=session.get("auth_mode"),
+        )
     role = session.get("role")
     if role not in ("citizen", "staff"):
         raise AppError(
@@ -25,7 +44,12 @@ def actor() -> Actor:
         )
     return Actor(
         id="staff-demo" if role == "staff" else "citizen-demo",
+        login_id="staff-demo" if role == "staff" else "citizen-demo",
+        display_name="김담당" if role == "staff" else "시연 시민",
         role="staff" if role == "staff" else "citizen",
+        verified=True,
+        auth_mode="demo",
+        demo=True,
     )
 
 
@@ -77,6 +101,10 @@ def protect_api() -> None:
     if request.path not in (
         "/api/v1/health",
         "/api/v1/session",
+        "/api/v1/auth/login",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/citizen/verify-request",
+        "/api/v1/auth/citizen/register",
         "/api/v1/assist",
         "/api/v1/assist/fields",
         "/api/v1/assist/examples",

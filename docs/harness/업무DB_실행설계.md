@@ -2,15 +2,17 @@
 
 [하네스 안내](README.md) · [데이터 계약](data-contracts.md) · [서버 안내](../../src/README.md) · [사례 색인](../cases/README.md)
 
-**기준일: 2026-11-16 KST (초기 구조 2026-11-06 UTC 확장).** 이 문서는 현재 실행 중인 민원 업무 DB의 구조를 설명합니다. 2026-10-30 설계 초안(7테이블)과 다른 점은 [3절](#3-2026-10-30-설계와의-대응)에 정리했습니다. 2026-11-06 이전 자료의 구조 설명은 이 문서로 대체합니다.
+**기준일: 2026-11-20 KST (`CASE-111` 7테이블 정규화 완료).** 이 문서는 현재 실행 중인 민원 업무 DB(`complaint_app`)의 구조를 설명합니다. 기존 jsonb 기반 실행 구조(`2026-11-06~16`)의 하위 호환성을 100% 유지하면서 2026-10-30 설계의 7개 핵심 정규화 테이블을 실제 PostgreSQL 테이블·외래 키·CHECK 제약으로 구현했습니다([CASE-111](../cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md)).
 
 ## 1. 한눈에 보기
 
 - 저장소: 같은 PostgreSQL 서버의 `complaint_app` 스키마 (기본값, `COMPLAINT_APP_SCHEMA`로 바꿀 수 있음)
-- 테이블 4개: `complaints`(민원 한 건 = 한 행), `idempotency`(등록 중복 방지), `answer_templates`(담당자 자주 쓰는 답변 템플릿), `app_meta`(기본 템플릿 최초 1회 시드 플래그)
-- 원본은 `complaints.payload`(jsonb) 하나입니다. 답변 버전·추가 문의·배정 부서·AI 후보·`aiAssist`·작업 단계는 모두 payload 안에 있습니다.
-- 목록·필터용 칼럼 5개는 payload에서 자동 계산되는 **생성 칼럼**입니다. 따로 쓰지 않으므로 payload와 어긋나지 않습니다.
-- 검색 색인 `complaint_rag`와 섞지 않습니다. 현재 `complaint_rag`는 이 DB에 없습니다(검색 적재는 별도 작업).
+- **총 10테이블 구성 (7개 핵심 정규화 테이블 + 3개 운영 보조 테이블):**
+  - 핵심 7테이블: `users`(계정·`scrypt` 해시·본인확인 마스킹·부서 RBAC), `complaints`(민원 본체 + 기존 `payload` JSONB/생성 칼럼 5개 호환 + `owner_user_id`/`assignee_user_id` FK), `messages`(추가 문의·답변), `message_versions`(초안·게시·철회 버전 이력), `ai_jobs`(AI 작업 이력), `ai_results`(판정·근거·`CHECK (automatic_transfer = false)`·`complaint_rag.department_directory` 조건부 교차 FK), `job_events`(작업 단계 타임라인, `ON DELETE CASCADE`)
+  - 보조 3테이블: `idempotency`(등록 중복 방지), `answer_templates`(담당자 자주 쓰는 답변 템플릿), `app_meta`(기본 템플릿 최초 1회 시드 플래그)
+- `PostgresRepository`는 민원 생성(`create`)·변경(`change`) 시 동일 PostgreSQL 트랜잭션에서 `complaints`와 하위 5개 정규화 테이블을 원자적으로 동기화하며, 서버 기동 시 기존 행을 무손실 자동 백필합니다. 담당자 전용 `GET /api/v1/staff/db-summary`로 7테이블 실시간 행 수·역할·AI 판정 분포를 SQL 집계합니다.
+- 목록·필터용 칼럼 5개(`status`·`owner`·`visibility`·`district`·`is_synthetic`)는 `complaints.payload`에서 자동 계산되는 **생성 칼럼**으로 유지되어 기존 쿼리·테스트와 어긋나지 않습니다.
+- 검색 색인 `complaint_rag`에 업무 행을 섞지 않습니다(`ai_results.department_id`만 `complaint_rag.department_directory` 존재 시 참조 FK로 연결).
 
 ## 2. 실제 구조
 
@@ -69,21 +71,21 @@ CHECK 제약:
 
 `origin`은 `ai`, `ai_edited`, `staff` 중 하나입니다. 담당자 응답에서 `aiOriginal`이 있으면 작성 기원을 서버가 정합니다.
 
-## 3. 2026-10-30 설계와의 대응
+## 3. 2026-10-30 설계와의 대응 (`CASE-111` 정규화 완료)
 
-2026-10-30 설계(`plan/db 설계 1차/2026-10-30/02_complaint_app.sql`)는 7테이블 정규화 초안입니다. 현재 구현은 이 설계를 **미채택**했습니다. 근거는 [CASE-031](../cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)과 [CASE-054](../cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md)입니다.
+2026-10-30 설계(`plan/db 설계 1차/2026-10-30/02_complaint_app.sql`)의 7테이블 정규화는 [CASE-031](../cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)과 [CASE-054](../cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md) 단계에서 일시 보류했으나, **2026-11-20 [CASE-111](../cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md)로 기존 JSONB 계약을 보존하면서 7개 핵심 테이블을 모두 구현·자동 백필·원자적 동기화**했습니다.
 
-| 설계 테이블 | 현재 위치 | 상태 |
+| 설계 테이블 | 현재 위치 (`complaint_app`) | 상태 (`2026-11-20`) |
 | --- | --- | --- |
-| `users` | 없음. `owner`에 세션 ID 문자열 | 미구현 (시연에 인증 없음) |
-| `complaints` | `complaints` (payload + 생성 칼럼) | 구조 다름 |
-| `messages` (inquiry) | `payload.messages[]` | 미정규화 |
-| `message_versions` | `payload.versions[]`, `payload.published` | 미정규화 |
-| `ai_jobs` | `payload.job` (최신 1건만 보존) | 미정규화, 이전 시도 기록 없음 |
-| `ai_results` | `payload.aiCandidate` (근거·부서 없음) | 미구현 |
-| `job_events` | `payload.job.events[]` (공개 구분 `vis` 없음) | 미정규화 |
-| (없음) | `idempotency` | 추가됨 |
-| (없음) | `answer_templates`, `app_meta` | 추가됨 (2026-11-16 담당자 답변 템플릿 CRUD·1회 시드) |
+| `users` | `complaint_app.users` (`login_id`, `password_hash`, `role`, `department`, `phone_hash`, `masked_phone`, `verified`, `is_demo`) | **구현 완료** (시연 2계정 + 실계정 3담당자 멱등 시드 + 시민 2단계 OTP 가입) |
+| `complaints` | `complaint_app.complaints` (기존 `payload` + 생성 칼럼 5개 + `owner_user_id`/`assignee_user_id` FK·`title`/`body`/`category`/`department`/`context_version`) | **구현 완료** (하위 호환 + 정규화 병행) |
+| `messages` | `complaint_app.messages` (`complaint_id` `ON DELETE CASCADE`, `author_user_id` FK) | **구현 완료** (원자 동기화·자동 백필) |
+| `message_versions` | `complaint_app.message_versions` (`message_id`/`complaint_id` `ON DELETE CASCADE`, `actor_user_id` FK, `origin` CHECK) | **구현 완료** (초안·게시·철회·수정 전 이력) |
+| `ai_jobs` | `complaint_app.ai_jobs` (`complaint_id` `ON DELETE CASCADE`, `status`·`stage`·`provider`·`attempt`) | **구현 완료** |
+| `ai_results` | `complaint_app.ai_results` (`CHECK (automatic_transfer = false)`, `fk_ai_results_department` → `complaint_rag.department_directory`) | **구현 완료** (DB 레벨 자동이관 차단 + 교차 FK) |
+| `job_events` | `complaint_app.job_events` (`job_id`/`complaint_id` `ON DELETE CASCADE`, `seq`·`stage`·`visibility`) | **구현 완료** |
+| (없음) | `idempotency` | 운영 보조 테이블 유지 |
+| (없음) | `answer_templates`, `app_meta` | 운영 보조 테이블 유지 (담당자 템플릿 CRUD·1회 시드) |
 
 설계와 다른 값 기준:
 
@@ -96,12 +98,12 @@ CHECK 제약:
 | 시연 표시 | `is_synthetic` 칼럼 | 같은 이름의 생성 칼럼 (2026-11-06 반영) |
 | 삭제 | `deleted_at` | `withdrawn` 논리 철회(`DELETE /complaints/{id}`) + 작성자 영구 삭제(`POST /complaints/{id}/delete`) |
 
-**2026-11-06~2026-11-16에 추가·정합화한 내용:** 시연 표시(`is_synthetic`)·상태·지역·공개 범위 CHECK 제약, 시민 영구 삭제(`idempotency` 선삭제 후 삭제), `payload.department`·`payload.aiAssist`, 담당자 템플릿 테이블(`answer_templates`·`app_meta`)을 반영했습니다. 나머지 7테이블 정규화 차이는 현재 구조를 유지합니다.
+**2026-11-06~2026-11-20 진화 요약:** 시연 표시(`is_synthetic`)·상태·지역·공개 범위 CHECK 제약, 시민 영구 삭제(`idempotency` 선삭제 후 삭제), `payload.department`·`payload.aiAssist`, 담당자 템플릿 테이블(`answer_templates`·`app_meta`)에 이어 **2026-11-20 `CASE-111`로 7개 정규화 테이블(`users`~`job_events`), `automatic_transfer=false` CHECK, `complaint_rag` 교차 FK, 자동 백필 및 `GET /api/v1/staff/db-summary` SQL 집계**를 반영했습니다.
 
 ## 4. 다른 자료와의 관계
 
-- **검색 스키마 `complaint_rag`:** 이 DB에 아직 없습니다. 현재 설계는 AI 결과의 부서 번호를 외래 키가 아니라 **payload 안의 값으로 두고, 코드에서 `department_directory`와 대조**하는 방식입니다. 검색 적재 후 결정합니다.
-- **`ui` 목업 (`minwon-toktok-ui04.html`):** 목업 안의 데이터 저장소는 설계 테이블 이름(`users`, `ai_jobs`, `message_versions`…)을 씁니다. 목업은 이 문서의 구조와 다르므로, 서버에 연결할 때 위 대응표로 변환합니다.
+- **검색 스키마 `complaint_rag`:** 같은 `complaints_native` DB에 분리 스키마로 공존합니다. 업무 행을 검색 색인에 섞지 않되, `complaint_app.ai_results.department_id`는 `complaint_rag.department_directory(department_id)`가 존재할 때 조건부 외래 키(`fk_ai_results_department`)로 참조 무결성을 보장합니다.
+- **`ui` 목업 (`minwon-toktok-ui04.html`):** 목업 안의 데이터 저장소는 설계 테이블 이름(`users`, `ai_jobs`, `message_versions`…)을 씁니다. `/design/ui04` 경로의 `ui04-adapter.js`로 `/api/v1`에 연결합니다.
 - **시연 데이터:** `seed-public-demo`는 공개 사례·자주 묻는 민원 JSON에서 만든 민원에 `isSynthetic=true`를 넣습니다. 지역은 `모름`입니다.
 
 ## 5. 변경 절차
@@ -110,25 +112,24 @@ CHECK 제약:
 
 1. 이 문서와 [CASE 색인](../cases/README.md)에서 같은 주제의 기존 결정을 찾습니다.
 2. `src/complaints/models.py`의 필드를 바꿉니다. 모델이 payload 형식의 기준입니다.
-3. 목록·필터에 쓸 값이면 생성 칼럼을 추가합니다. 저장소 `_SCHEMA_STATEMENTS`와 `src/complaints/schema/complaint_app.sql`을 같이 고칩니다. 두 곳은 같은 내용이어야 합니다.
+3. 목록·필터·정규화 테이블을 추가할 때는 저장소 `_SCHEMA_STATEMENTS`와 `src/complaints/schema/complaint_app.sql`을 같이 고칩니다. 두 곳은 같은 내용이어야 합니다.
 4. 허용 값을 바꾸면 CHECK 목록(`_VALUE_CHECKS`)과 SQL 파일의 DO 블록을 같이 바꿉니다.
-5. 예전 행을 맞춰야 하면 `UPDATE`를 `_SCHEMA_STATEMENTS`에 **멱등하게** 추가합니다. 이미 맞춘 행은 다시 바꾸지 않아야 합니다.
+5. 예전 행을 맞춰야 하면 `UPDATE`/백필 로직을 **멱등하게** 추가합니다. 이미 맞춘 행은 다시 바꾸지 않아야 합니다.
 6. 스키마 변경 전에 백업합니다. 예: `pg_dump -n complaint_app -f <백업 경로>`
 7. 검증: 아래 명령을 실행하고 결과를 사례에 기록합니다.
 
 ```powershell
 .\.venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider
-$env:RUN_PG_TESTS = "1"; .\.venv-web\Scripts\python.exe -m pytest src/tests/test_postgres_schema.py src/tests/test_postgres_repository.py -q -p no:cacheprovider
+$env:RUN_PG_TESTS = "1"; .\.venv-web\Scripts\python.exe -m pytest src/tests/test_postgres_schema.py src/tests/test_postgres_repository.py src/tests/test_auth_and_normalized_db.py -q -p no:cacheprovider
 ```
 
 PostgreSQL 테스트는 `PGUSER`·`PGHOST`·`PGDATABASE` 환경변수로 접속합니다. 임시 스키마를 만들고 끝나면 지웁니다.
 
 ## 6. 현재 한계
 
-- **목록은 전체를 읽습니다.** `PostgresRepository.all()`이 모든 행을 가져와 Python에서 필터링합니다. 생성 칼럼과 색인은 준비됐지만, 목록 쿼리는 아직 이를 쓰지 않습니다. 시연 규모(수십~수백 건)에서는 충분하며, 대규모 운영 전에 페이지네이션 쿼리로 바꿔야 합니다.
-- **`payload` 구조 검사는 Python 모델에만 있습니다.** DB는 생성 칼럼이 가리키는 값만 검사합니다.
-- **이전 시도 기록이 없습니다.** 작업은 최신 1건만 `payload.job`에 남습니다.
-- **인증과 사용자 테이블이 없습니다.** 시연 세션 ID만 씁니다.
+- **목록은 전체를 읽습니다.** `PostgresRepository.all()`이 모든 행을 가져와 Python에서 필터링합니다. 생성 칼럼·정규화 칼럼·색인은 준비됐지만, 목록 쿼리는 시연 규모(수십~수백 건) 호환을 위해 유지하며 대규모 운영 전에 페이지네이션 SQL 쿼리로 전환해야 합니다.
+- **정규화 테이블과 `payload` JSONB 병행 유지:** 기존 API·테스트 호환을 위해 `complaints.payload` JSONB와 정규화 자식 5테이블을 동일 트랜잭션에서 원자 동기화합니다. 향후 완전 정규화 조회 전환 시 `payload` 중복 칼럼 축소를 검토할 수 있습니다.
+- **로컬 인증과 외부 기관 인증의 구별:** `users` 테이블은 로컬 서버의 `scrypt` 비밀번호·6자리 OTP 해시·부서 권한을 저장하며, 실제 외부 PASS/공동인증서·청주시 행정 SSO 연계는 별도 배포 단계입니다.
 
 ## 7. 설계 문서의 기준일 표기
 
