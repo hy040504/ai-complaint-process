@@ -763,6 +763,12 @@ _PLACE_PRIORITY_SUFFIXES: tuple[str, ...] = (
     "백화점",
     "마트",
     "아울렛",
+    "쇼핑몰",
+    "시티몰",
+    "플라자",
+    "스퀘어",
+    "타워",
+    "빌딩",
     "대교",
     "매표소",
     "호수",
@@ -941,6 +947,50 @@ def _clean_query_tokens(text: str) -> list[str]:
     return refined_words
 
 
+def _normalize_city_prefix(value: str) -> str:
+    """'청주시...' 접두 표기를 '청주...'로 통일해 공식 시설명과 일상 표기 차이를 흡수합니다.
+
+    '청주시청'처럼 '시청' 어근이 붙은 경우와 접두어를 뗀 뒤 3글자 미만인 경우는 유지합니다.
+
+    Args:
+        value: 공백·기호가 제거된 소문자 문자열입니다.
+
+    Returns:
+        접두 표기가 정규화된 문자열입니다.
+    """
+    if (
+        value.startswith("청주시")
+        and not value.startswith("청주시청")
+        and len(value) >= 6
+    ):
+        return "청주" + value[3:]
+    return value
+
+
+def _token_pair_matches(low: str, cmp_title: str) -> bool:
+    """단일 `(검색어, 제목)` 쌍이 유의미하게 포함·역포함 관계인지 검사합니다.
+
+    Args:
+        low: 소문자화된 검색어 토큰입니다.
+        cmp_title: 소문자화된 장소 제목입니다.
+
+    Returns:
+        포함 또는 충분한 길이의 역포함이면 True입니다.
+    """
+    if low in cmp_title:
+        if len(low) <= 2 and len(cmp_title) > 12:
+            return False
+        return True
+    return (
+        cmp_title not in _STOP_WORDS
+        and (
+            len(cmp_title) >= 4
+            or (len(cmp_title) >= 3 and len(cmp_title) >= len(low) * 0.6)
+        )
+        and cmp_title in low
+    )
+
+
 def _token_matches_title(token: str, norm_title: str) -> bool:
     """단일 정제 토큰이 정규화된 장소 제목과 유의미하게 겹치는지 판별합니다.
 
@@ -951,19 +1001,14 @@ def _token_matches_title(token: str, norm_title: str) -> bool:
     Returns:
         토큰이 장소 제목에 포함되거나 충분한 길이의 역포함이면 True입니다.
     """
-    low = token.lower()
-    if low in norm_title:
-        if len(low) <= 2 and len(norm_title) > 12:
-            return False
+    raw_low = token.lower()
+    if _token_pair_matches(raw_low, norm_title):
         return True
-    return (
-        norm_title not in _STOP_WORDS
-        and (
-            len(norm_title) >= 4
-            or (len(norm_title) >= 3 and len(norm_title) >= len(token) * 0.6)
-        )
-        and norm_title in low
-    )
+    norm_low = _normalize_city_prefix(raw_low)
+    norm_cmp = _normalize_city_prefix(norm_title)
+    if norm_low == raw_low and norm_cmp == norm_title:
+        return False
+    return _token_pair_matches(norm_low, norm_cmp)
 
 
 def is_place_relevant(title: str, query: str) -> bool:
@@ -1456,12 +1501,141 @@ def _parse_navermap_items(
     return places, cheongju_places
 
 
+_FUTURE_PLACE_RE = re.compile(r"(?:예정\)|이전예정|개통예정|준공예정|입주예정)")
+
+
+def _extract_query_dongs(query_text: str) -> frozenset[str]:
+    """질의 원문에 명시된 청주시 읍·면·동 이름 집합을 반환합니다.
+
+    Args:
+        query_text: 전체 민원 원문 또는 검색 질의입니다.
+
+    Returns:
+        청주시 4개 구 이름을 제외한 명시적 동·읍·면 집합입니다.
+    """
+    if not query_text:
+        return frozenset()
+    admin_dongs = _cheongju_admin_tokens() - set(CHEONGJU_DISTRICTS)
+    return frozenset(
+        tok for tok in _clean_query_tokens(query_text) if tok in admin_dongs
+    )
+
+
+def _is_future_planned_place(title: str) -> bool:
+    """장소명이 향후 개통·이전 예정지('(2027년3월예정)' 등) 표기인지 확인합니다.
+
+    Args:
+        title: 네이버 지도 장소 제목입니다.
+
+    Returns:
+        예정지 표기가 포함되어 있으면 True입니다.
+    """
+    return bool(title and _FUTURE_PLACE_RE.search(title))
+
+
+def _is_tenant_branch(place_obj: dict[str, Any], query_text: str) -> bool:
+    """장소 결과가 질의에 없는 외부 브랜드의 입점 지점('○○ ○○점')인지 판별합니다.
+
+    복합시설 본체('지웰시티몰II') 대신 입점 대리점('LG유플러스 복대동 지웰시티몰점')이
+    우선 채택되는 편차를 줄이기 위해 사용합니다. 사용자가 지점명('○○점')이나
+    앞쪽 브랜드명을 직접 언급한 경우에는 입점 지점 감점을 적용하지 않습니다.
+
+    Args:
+        place_obj: 정규화된 장소 딕셔너리입니다.
+        query_text: 전체 민원 원문 또는 검색 질의입니다.
+
+    Returns:
+        질의에 없는 외부 브랜드의 입점 지점이면 True입니다.
+    """
+    title = str(place_obj.get("title") or "").strip()
+    if not title or not title.endswith("점"):
+        return False
+    tokens = title.split()
+    if len(tokens) < 2:
+        return False
+    if any(w.endswith("점") for w in query_text.split()):
+        return False
+    brand = _NORM_TITLE_RE.sub("", tokens[0].lower())
+    norm_query = _NORM_TITLE_RE.sub("", query_text.lower())
+    if brand and brand in norm_query:
+        return False
+    return True
+
+
+def _place_preference_score(
+    place_obj: dict[str, Any],
+    context_query: str,
+    query_dongs: frozenset[str],
+) -> int:
+    """청주시 장소 후보의 문맥 적합도 점수를 계산합니다.
+
+    본문 명시 동·읍·면 일치에 가점을 주고, 타 동 불일치·예정지 표기·외부 브랜드
+    입점 지점은 감점해 현행 시설 본체가 최우선 선택되도록 정렬합니다.
+
+    Args:
+        place_obj: 정규화된 장소 딕셔너리입니다.
+        context_query: 전체 민원 원문 또는 검색 질의입니다.
+        query_dongs: `context_query`에서 추출한 청주시 동·읍·면 집합입니다.
+
+    Returns:
+        높을수록 우선순위가 높은 정수 적합도 점수입니다.
+    """
+    score = 0
+    dong = place_obj.get("dong")
+    if query_dongs:
+        if dong in query_dongs:
+            score += 4
+        elif dong:
+            score -= 3
+    title = str(place_obj.get("title") or "")
+    if _is_future_planned_place(title):
+        score -= 4
+    if _is_tenant_branch(place_obj, context_query):
+        score -= 3
+    else:
+        score += 2
+    return score
+
+
+def _rank_places(
+    places: list[dict[str, Any]],
+    context_query: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """장소 목록을 청주시 여부 및 문맥 적합도 순으로 안정 정렬합니다.
+
+    Args:
+        places: 중복 제거된 장소 딕셔너리 목록입니다.
+        context_query: 동명·브랜드 대조에 사용할 전체 원문 또는 질의입니다.
+
+    Returns:
+        `(정렬된 전체 목록, 정렬된 청주시 목록)` 튜플입니다.
+    """
+    if len(places) <= 1:
+        cj = [p for p in places if p.get("is_cheongju")]
+        return places, cj
+    query_dongs = _extract_query_dongs(context_query)
+    ranked = [
+        item
+        for _, item in sorted(
+            enumerate(places),
+            key=lambda pair: (
+                1 if pair[1].get("is_cheongju") else 0,
+                _place_preference_score(pair[1], context_query, query_dongs),
+                -pair[0],
+            ),
+            reverse=True,
+        )
+    ]
+    return ranked, [p for p in ranked if p.get("is_cheongju")]
+
+
 def lookup_navermap_place(
     query: str,
     coords: str | None = None,
     *,
     fetch_fn: Callable[..., dict[str, Any]] | None = None,
     _allow_fallback: bool = True,
+    _context_query: str | None = None,
 ) -> dict[str, Any]:
     """장소명 또는 도로명 주소로 네이버 지도를 검색하고 청주시 구/동 정보를 반환합니다.
 
@@ -1470,6 +1644,7 @@ def lookup_navermap_place(
         coords: 검색 중심 좌표입니다. 생략 시 청주시청 좌표를 사용합니다.
         fetch_fn: HTTP 호출을 대신할 검색 함수입니다. 테스트 시 주입합니다.
         _allow_fallback: 내부 재귀 호출 시 후보 분해 재검색을 막기 위한 플래그입니다.
+        _context_query: 보완 후보 검색 시 원문 동명·브랜드 우선순위 비교에 쓰는 전체 원문입니다.
 
     Returns:
         검색 결과 요약, 청주시 최우선 장소(primary_place), 전체 장소 목록을 담은 객체입니다.
@@ -1482,9 +1657,10 @@ def lookup_navermap_place(
         raise ValueError("장소 검색어가 비어 있습니다.")
 
     center_coords = coords.strip() if coords and coords.strip() else CHEONGJU_COORDS
+    rank_context = _context_query or text
     cache_key = f"{text}|{center_coords}"
 
-    if fetch_fn is None and cache_key in _PLACE_CACHE:
+    if fetch_fn is None and _context_query is None and cache_key in _PLACE_CACHE:
         return _PLACE_CACHE[cache_key]
 
     road_num_pairs = _extract_road_number_pairs(text) if _allow_fallback else []
@@ -1517,6 +1693,7 @@ def lookup_navermap_place(
         try:
             raw_data = fetcher(text, coords=center_coords)
             places, cheongju_places = _parse_navermap_items(raw_data, text)
+            places, cheongju_places = _rank_places(places, rank_context)
             primary = (
                 cheongju_places[0]
                 if cheongju_places
@@ -1536,7 +1713,10 @@ def lookup_navermap_place(
                 }
 
     # 청주시 장소를 찾지 못했거나 도로명+번지 장문이면 추출된 핵심 후보로 보완 검색합니다.
+    # 첫 후보가 입점 지점('○○점')·예정지·타 동 결과이면 다음 후보의 시설 본체까지 비교합니다.
     if _allow_fallback and (primary is None or not primary.get("is_cheongju")):
+        query_dongs = _extract_query_dongs(rank_context)
+        best_score: int | None = None
         for cand in fallback_candidates[:_MAX_FALLBACK_CANDIDATES]:
             if cand == text:
                 continue
@@ -1545,6 +1725,7 @@ def lookup_navermap_place(
                 coords=center_coords,
                 fetch_fn=fetcher,
                 _allow_fallback=False,
+                _context_query=rank_context,
             )
             if cand_res.get("error"):
                 last_error = str(cand_res["error"])
@@ -1556,9 +1737,26 @@ def lookup_navermap_place(
                 continue
             cand_primary = cand_res.get("primary_place")
             if cand_primary and cand_primary.get("is_cheongju"):
-                primary = cand_primary
-                places = cand_res.get("places", [])
-                break
+                cand_score = _place_preference_score(
+                    cand_primary, rank_context, query_dongs
+                )
+                if best_score is None or cand_score > best_score:
+                    best_score = cand_score
+                    primary = cand_primary
+                    places = cand_res.get("places", [])
+                is_clean_main = (
+                    not _is_tenant_branch(cand_primary, rank_context)
+                    and not _is_future_planned_place(
+                        str(cand_primary.get("title") or "")
+                    )
+                    and (
+                        not query_dongs
+                        or cand_primary.get("dong") in query_dongs
+                        or cand_primary.get("dong") is None
+                    )
+                )
+                if is_clean_main:
+                    break
 
     result: dict[str, Any] = {
         "query": text,
@@ -1573,6 +1771,7 @@ def lookup_navermap_place(
 
     if (
         fetch_fn is None
+        and _context_query is None
         and "error" not in result
         and (_allow_fallback or (primary is not None and primary.get("is_cheongju")))
     ):

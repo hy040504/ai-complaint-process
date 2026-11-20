@@ -445,3 +445,103 @@ def test_municipal_drainage_and_facility_nouns_do_not_trigger_contractor_noise()
     k12_cands = extract_place_candidates(k12_text)
     assert all("부모" not in c and "출생신고" not in c for c in k12_cands)
     assert is_place_relevant("부모사랑 재가장기요양기관", k12_text) is False
+
+
+def test_place_ranking_prefers_matching_dong_and_main_building_over_planned_or_tenant() -> (
+    None
+):
+    """K31(청주시 접두·동명 일치·예정지 감점)과 K33(입점 지점보다 복합시설 본체 우선)을 검증합니다."""
+
+    # 1. K31: '청주시농수산물도매시장'(봉명동)이 '청주농수산물도매시장(2027년3월예정)'(옥산면)보다 우선 선택
+    def mock_k31_fetch(query: str, coords: str = "") -> dict[str, Any]:
+        """봉명동 현행 도매시장과 옥산면 이전 예정지를 함께 반환하는 모의 응답입니다."""
+        del coords
+        if query == "청주농수산물도매시장":
+            return {
+                "place": [
+                    {
+                        "title": "청주농수산물도매시장(2027년3월예정)",
+                        "ctg": "농수산물",
+                        "jibunAddress": "충청북도 청주시 흥덕구 옥산면 오산리 606-8",
+                        "roadAddress": "충청북도 청주시 흥덕구 옥산면",
+                    },
+                    {
+                        "title": "청주시농수산물도매시장",
+                        "ctg": "시장",
+                        "jibunAddress": "충청북도 청주시 흥덕구 봉명동 89-9",
+                        "roadAddress": "충청북도 청주시 흥덕구 백봉로 254",
+                    },
+                ]
+            }
+        return {"place": []}
+
+    k31 = lookup_navermap_place(
+        "봉명동 청주농수산물도매시장 주변 불법주정차 단속 요청",
+        fetch_fn=mock_k31_fetch,
+    )
+    assert k31["primary_place"] is not None
+    assert k31["primary_place"]["title"] == "청주시농수산물도매시장"
+    assert k31["primary_place"]["dong"] == "봉명동"
+
+    # 2. K33: '복대동 지웰시티몰'이 입점 대리점만 반환해도 다음 후보 '지웰시티몰' 본체를 선택
+    def mock_k33_fetch(query: str, coords: str = "") -> dict[str, Any]:
+        """복대동 입점 휴대폰 대리점과 지웰시티몰 본체를 구분 반환하는 모의 응답입니다."""
+        del coords
+        if query == "복대동 지웰시티몰":
+            return {
+                "place": [
+                    {
+                        "title": "LG유플러스 복대동 지웰시티몰점",
+                        "ctg": "휴대폰",
+                        "jibunAddress": "충청북도 청주시 흥덕구 복대동 3379",
+                        "roadAddress": "충청북도 청주시 흥덕구 대농로 43",
+                    }
+                ]
+            }
+        if query == "지웰시티몰":
+            return {
+                "place": [
+                    {
+                        "title": "지웰시티몰II",
+                        "ctg": "쇼핑센터,할인매장",
+                        "jibunAddress": "충청북도 청주시 흥덕구 복대동 3381",
+                        "roadAddress": "충청북도 청주시 흥덕구 대농로 47-1",
+                    },
+                    {
+                        "title": "탑텐 지웰시티몰 청주점",
+                        "ctg": "패션",
+                        "jibunAddress": "충청북도 청주시 흥덕구 복대동 3381",
+                        "roadAddress": "충청북도 청주시 흥덕구 대농로 47-1",
+                    },
+                ]
+            }
+        return {"place": []}
+
+    k33 = lookup_navermap_place(
+        "복대동 지웰시티몰 인근 횡단보도 볼라드 파손 정비 요청",
+        fetch_fn=mock_k33_fetch,
+    )
+    assert k33["primary_place"] is not None
+    assert k33["primary_place"]["title"] == "지웰시티몰II"
+    assert k33["primary_place"]["dong"] == "복대동"
+
+    # 3. 사용자가 브랜드를 직접 명시한 경우에는 해당 입점 지점을 정상 유지
+    explicit_brand = lookup_navermap_place(
+        "복대동 LG유플러스 앞 인도 보도블록 파손",
+        fetch_fn=lambda q, coords="": (
+            {
+                "place": [
+                    {
+                        "title": "LG유플러스 복대동 지웰시티몰점",
+                        "ctg": "휴대폰",
+                        "jibunAddress": "충청북도 청주시 흥덕구 복대동 3379",
+                        "roadAddress": "충청북도 청주시 흥덕구 대농로 43",
+                    }
+                ]
+            }
+            if "LG유플러스" in q
+            else {"place": []}
+        ),
+    )
+    assert explicit_brand["primary_place"] is not None
+    assert explicit_brand["primary_place"]["title"] == "LG유플러스 복대동 지웰시티몰점"

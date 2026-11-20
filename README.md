@@ -31,7 +31,7 @@
   <a href="#저장과-검색"><img src="https://img.shields.io/badge/PostgreSQL-18_%2B_pgvector-4169e1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
   <a href="docs/청주톡톡_민원_업무_API_Swagger.pdf"><img src="https://img.shields.io/badge/Swagger-OpenAPI_30_Paths-85a329?style=flat-square" alt="Swagger PDF" /></a>
   <a href="#검증-근거"><img src="https://img.shields.io/badge/Eval-200_(95%25)_%C2%B7_Codex_100_(99%25)-0d9488?style=flat-square" alt="Live Eval" /></a>
-  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-180_Py_%C2%B7_49_RAG_%C2%B7_29_UI-0f766e?style=flat-square" alt="Verified" /></a>
+  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-181_Py_%C2%B7_49_RAG_%C2%B7_29_UI-0f766e?style=flat-square" alt="Verified" /></a>
   <a href="docs/report/README.md"><img src="https://img.shields.io/badge/Report-11%2F19_8Pages-b91c1c?style=flat-square" alt="Report" /></a>
   <a href="docs/test/README.md"><img src="https://img.shields.io/badge/Test-200_SourceTrail_14Pages-0369a1?style=flat-square" alt="Test Report" /></a>
   <a href="#현재-구현-상태"><img src="https://img.shields.io/badge/Branch-llm-334155?style=flat-square&logo=github&logoColor=white" alt="Branch" /></a>
@@ -450,7 +450,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | **Codex CLI 전용 신규 100건 실증 (`CASE-113`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_코덱스.py` | **`99 / 100 (99.0%)` 통과** (`patch_reverify_20` **20/20** · 신규 비중복 `fresh_codex_80` **79/80**, B/C/D/E축 **100%**, `staff_draft` **71/71**, 평균 **`16.11s`** / 최대 `29.33s` / 조기차단 `0.013s`, `automaticTransfer=True` **0건**) |
 | **패치 후 `:5010` 혼합 100건 재검증 (`CASE-109`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_재검증.py` | **`98 / 100 (98.0%)` 통과**(실응답 `98/99, 99.0%`: 기존 미통과 **10/10**·노이즈 **13/13** 전원 해소, 신규 변형 **39/40**, `0.011s` 조기차단, `automaticTransfer=True` **0건**) |
 | **단독 검사기 `:5010` 200건 실증 (`CASE-105`)** | `.venv-web\Scripts\python.exe scripts/실증평가_200건_실행.py` | **`190 / 200 (95.0%)` 의미 통과** (11/17 112건 재측정 **108/112, +14건** · 신규 **82/88**, EXAONE **14/14 완주**, 조기차단 **0.012s**, `automaticTransfer=True` **0건**) |
-| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`180 passed`** (`CASE-113` JSON 복구·Codex 오류 축약·EXAONE 타임아웃 `low` 재시도·폴백/불용어 + `CASE-111` 로그인/실 PG 7테이블 포함 0 실패) |
+| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`181 passed`** (`CASE-113` JSON 복구·Codex 오류 축약·EXAONE `low` 재시도·불용어·동명/본체 장소 정렬 + `CASE-111` 로그인/실 PG 7테이블 포함 0 실패) |
 | **112건 · 5,015건 규칙 회귀** | `.venv-web\Scripts\python.exe scripts/회귀검증_112건_규칙.py` | **112건 규칙 실패 `0`**, 공개 사례 `5,015`건 구 적중 **`762`** (`+11`, 오분류 `17` 유지, 외부 오탐 **`0`**) |
 | **포맷 · 정적 타입 · UI · CDP** | `black --check` · `mypy` · `npm --prefix ui run check` · `ui test` · Edge CDP | `black` **통과** · `src/` **43모듈** `mypy` **오류 0건** · UI 문법 **25개** · UI 단위 **29 / 29** · `:5000` 인증/7테이블/SSE Edge E2E **0오류** |
 | **RAG 단위 · DB 무결성** | `.venv\Scripts\python.exe -m pytest rag/tests` · `-m rag.verify` | `rag/tests` **49 passed, 3 skipped**(Windows PG 템플릿 미구성) · `rag.verify` **`passed: true`** (`94`·`5,015`·`127`) |
