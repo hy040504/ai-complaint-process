@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
+import threading
 import time
 from typing import Any
 
@@ -920,56 +921,61 @@ def main() -> int:
         else set()
     )
     t_all = time.perf_counter()
+    state_lock = threading.Lock()
 
     def _run_one(spec: EvalCaseSpec) -> dict[str, Any]:
-        """단일 문항 호출 후 `CASE-106` 장소 노이즈 회귀 검사를 덧붙입니다."""
+        """단일 문항 호출 후 `CASE-106` 장소 노이즈 회귀 검사를 덧붙입니다.
+
+        Args:
+            spec: 실행할 평가 문항 명세입니다.
+
+        Returns:
+            장소 노이즈 회귀 검사 결과가 반영된 단일 문항 실측 딕셔너리입니다.
+        """
         row = _run_single_case(spec, args.endpoint)
         _apply_case106_noise_checks(spec, row)
         return row
 
-    def _run_exaone_lane() -> list[dict[str, Any]]:
-        """EXAONE 레인을 429 회피 간격과 선택적 병렬 워커로 실행합니다."""
+    def _record_and_log_exaone(done: int, total: int, row: dict[str, Any]) -> None:
+        """EXAONE 단일 결과를 누적 맵에 스레드 안전하게 반영하고 진행 로그를 출력합니다.
+
+        Args:
+            done: 현재까지 완료한 EXAONE 문항 순번입니다.
+            total: 실행 예정인 전체 EXAONE 문항 수입니다.
+            row: 단일 문항 실측 결과 딕셔너리입니다.
+        """
+        pl = (row.get("inferred_place") or {}).get("title")
+        with state_lock:
+            results_map[row["id"]] = row
+            print(
+                f"[EXAONE {done:2d}/{total}] {row['id']:3s} "
+                f"{row['elapsed_s']:6.2f}s | {row['auto_status']:9s} | "
+                f"{row['outcome']}/{row['reason_code']} | d={row['effective_district']} "
+                f"san={row['sanitize_triggered']} place={pl} issues={row['auto_issues']}",
+                flush=True,
+            )
+            if done % 5 == 0:
+                _flush_100_results(args.out, specs, results_map, args.endpoint)
+
+    def _run_exaone_lane() -> None:
+        """EXAONE 레인을 429 회피 간격과 선택적 병렬 워커로 실행해 누적 맵에 기록합니다."""
+        total = len(exaone_specs)
         if args.exaone_workers <= 1:
-            out_rows: list[dict[str, Any]] = []
             for idx, spec in enumerate(exaone_specs, start=1):
                 row = _run_one(spec)
-                out_rows.append(row)
-                pl = (row.get("inferred_place") or {}).get("title")
-                print(
-                    f"[EXAONE {idx:2d}/{len(exaone_specs)}] {row['id']:3s} "
-                    f"{row['elapsed_s']:6.2f}s | {row['auto_status']:9s} | "
-                    f"{row['outcome']}/{row['reason_code']} | d={row['effective_district']} "
-                    f"san={row['sanitize_triggered']} place={pl} issues={row['auto_issues']}",
-                    flush=True,
-                )
-                if idx < len(exaone_specs):
+                _record_and_log_exaone(idx, total, row)
+                if idx < total:
                     time.sleep(args.exaone_gap)
-            return out_rows
+            return
 
-        out_rows = []
         with ThreadPoolExecutor(max_workers=args.exaone_workers) as epool:
             efuts = {}
             for idx, spec in enumerate(exaone_specs):
                 if idx > 0:
                     time.sleep(args.exaone_gap)
                 efuts[epool.submit(_run_one, spec)] = spec
-            done = 0
-            for fut in as_completed(efuts):
-                row = fut.result()
-                out_rows.append(row)
-                results_map[row["id"]] = row
-                done += 1
-                pl = (row.get("inferred_place") or {}).get("title")
-                print(
-                    f"[EXAONE {done:2d}/{len(exaone_specs)}] {row['id']:3s} "
-                    f"{row['elapsed_s']:6.2f}s | {row['auto_status']:9s} | "
-                    f"{row['outcome']}/{row['reason_code']} | d={row['effective_district']} "
-                    f"san={row['sanitize_triggered']} place={pl} issues={row['auto_issues']}",
-                    flush=True,
-                )
-                if done % 5 == 0:
-                    _flush_100_results(args.out, specs, results_map, args.endpoint)
-        return out_rows
+            for done, fut in enumerate(as_completed(efuts), start=1):
+                _record_and_log_exaone(done, total, fut.result())
 
     try:
         with ThreadPoolExecutor(max_workers=args.codex_workers + 1) as pool:
@@ -978,24 +984,27 @@ def main() -> int:
             done_codex = 0
             for fut in as_completed(codex_futures):
                 row = fut.result()
-                results_map[row["id"]] = row
                 done_codex += 1
-                if done_codex % 10 == 0 or row["auto_status"] != "PASS":
-                    pl = (row.get("inferred_place") or {}).get("title")
-                    print(
-                        f"[CODEX  {done_codex:2d}/{len(codex_specs)}] {row['id']:3s} "
-                        f"{row['elapsed_s']:5.2f}s | {row['auto_status']:9s} | "
-                        f"{row['outcome']}/{row['reason_code']} | d={row['effective_district']} "
-                        f"san={row['sanitize_triggered']} place={pl} issues={row['auto_issues']}",
-                        flush=True,
-                    )
-                    if done_codex % 10 == 0:
-                        _flush_100_results(args.out, specs, results_map, args.endpoint)
+                with state_lock:
+                    results_map[row["id"]] = row
+                    if done_codex % 10 == 0 or row["auto_status"] != "PASS":
+                        pl = (row.get("inferred_place") or {}).get("title")
+                        print(
+                            f"[CODEX  {done_codex:2d}/{len(codex_specs)}] {row['id']:3s} "
+                            f"{row['elapsed_s']:5.2f}s | {row['auto_status']:9s} | "
+                            f"{row['outcome']}/{row['reason_code']} | d={row['effective_district']} "
+                            f"san={row['sanitize_triggered']} place={pl} issues={row['auto_issues']}",
+                            flush=True,
+                        )
+                        if done_codex % 10 == 0:
+                            _flush_100_results(
+                                args.out, specs, results_map, args.endpoint
+                            )
 
-            for row in exaone_future.result():
-                results_map[row["id"]] = row
+            exaone_future.result()
 
-        _flush_100_results(args.out, specs, results_map, args.endpoint)
+        with state_lock:
+            _flush_100_results(args.out, specs, results_map, args.endpoint)
     finally:
         if not args.keep_runs and LAB_RUNS_DIR.exists():
             after_runs = {p.name for p in LAB_RUNS_DIR.glob("*.json")}
