@@ -58,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-112](cases/사례-112-실시간SSE-시민챗봇-로그인-7테이블정규화-후속품질검수와-최적화-2026-11-20.md) | 2026-11-20 | `CASE-110·111` 패치 후속 QA 검수·최적화: `message_versions` 이력 불변 보존(`DO NOTHING`), `change()` 잠금 내 RBAC 재검증(TOCTOU 제거), `StaffEventBroker._replay_since_locked` 중복 통합, `LoginRateLimiter` 만료 정리, 구 UI 문구 5곳 정정·Swagger 세션 표시 보강 및 전수 재검증 | 완료 |
 | [CASE-111](cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md) | 2026-11-20 | 민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`: `scrypt`·5회 `429` 잠금·부서 RBAC·2탭 로그인 모달·간단 가입·다중 사용자 격리; OTP 본인확인 제거로 간소화) 및 PostgreSQL 7테이블 정규화(`users`~`job_events`·`automatic_transfer=false` CHECK·`complaint_rag` 교차 FK·자동 백필·`GET /api/v1/staff/db-summary`), Swagger PDF 30경로 갱신 및 `179`/`29`/실PG·Edge E2E 검증 | 완료 |
 | [CASE-110](cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) | 2026-11-20 | 담당자 실시간 SSE 푸시(`GET /api/v1/staff/events`, `StaffEventBroker`·`Last-Event-ID`·`resync_required`·3초 대체) 및 시민 AI 챗봇 실연결(`POST /api/v1/citizen/chat(/stream)`, 비공개 초안/순화 구조 차단·`include_staff_outputs=False`), Swagger PDF 25경로 갱신 및 `176`/`27`/Edge E2E 검증 | 완료 |
 | [CASE-109](cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) | 2026-11-20 | 패치 후 `:5010` 100건 실증 재검증(`98/100, 98.0%`, 실응답 `98/99, 99.0%`; 기존 미통과 10/10·노이즈 13/13 전원 해소·신규 39/40 통과), `하수구` 등 생활 기반시설 14종 불용어 보강·중복/스레드안전 최적화·전수 주석/README 3단계 추이표 정비(`src/tests 172`) | 완료 |

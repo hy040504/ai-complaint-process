@@ -590,7 +590,22 @@ class ComplaintService:
             raise AppError(
                 403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
             )
-        return self.repository.change(complaint_id, version, action)
+
+        def guarded_action(locked: Complaint) -> None:
+            """트랜잭션 잠금 안에서 부서 권한·작성자 경계를 재검증한 뒤 동작을 적용합니다.
+
+            Args:
+                locked: `FOR UPDATE` 잠금으로 조회한 최신 민원 레코드입니다.
+            """
+            if staff:
+                self._require_department_scope(actor, locked)
+            elif actor.role != "citizen" or locked.owner != actor.id:
+                raise AppError(
+                    403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
+                )
+            action(locked)
+
+        return self.repository.change(complaint_id, version, guarded_action)
 
     def delete_complaint(self, actor: Actor, complaint_id: str, version: int) -> None:
         """작성자 본인이 등록한 민원을 저장소에서 완전히 삭제합니다.

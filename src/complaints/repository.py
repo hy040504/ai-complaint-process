@@ -865,10 +865,7 @@ class PostgresRepository:
             "(id, message_id, complaint_id, version_no, body, origin, kind, "
             "publish_state, reason, actor_user_id, context_version, created_at) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON CONFLICT (id) DO UPDATE SET "
-            "body = EXCLUDED.body, origin = EXCLUDED.origin, kind = EXCLUDED.kind, "
-            "publish_state = EXCLUDED.publish_state, reason = EXCLUDED.reason, "
-            "actor_user_id = EXCLUDED.actor_user_id, context_version = EXCLUDED.context_version"
+            "ON CONFLICT (id) DO NOTHING"
         ).format(ident)
         self._sql_upsert_ai_job = sql.SQL(
             "INSERT INTO {}.ai_jobs "

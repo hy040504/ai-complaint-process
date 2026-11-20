@@ -260,12 +260,23 @@ class LoginRateLimiter:
     def record_failure(self, login_id: str) -> None:
         """비밀번호 불일치 실패 횟수를 누적하고 한도 도달 시 잠금을 설정합니다.
 
+        장기 실행 시 존재하지 않는 아이디 시도로 메모리가 무한 증가하지 않도록
+        잠금이 만료된 항목을 주기적으로 정리합니다.
+
         Args:
             login_id: 실패한 로그인 아이디입니다.
         """
         key = login_id.casefold()
         now = time.monotonic()
         with self._lock:
+            if len(self._failures) >= 512:
+                expired = [
+                    k
+                    for k, (cnt, unlock_at) in self._failures.items()
+                    if cnt >= self._max_failures and unlock_at <= now
+                ]
+                for k in expired:
+                    self._failures.pop(k, None)
             count, _ = self._failures.get(key, (0, 0.0))
             count += 1
             unlock_at = now + self._lock_seconds if count >= self._max_failures else 0.0

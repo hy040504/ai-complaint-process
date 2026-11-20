@@ -872,7 +872,14 @@ def render_swagger_html(*, embed: bool = False) -> str:
           const res = await fetch("/api/v1/session", {{ credentials: "same-origin" }});
           const actor = await res.json();
           const role = actor && actor.role ? actor.role : "none";
-          const roleName = role === "staff" ? "담당자(staff)" : role === "citizen" ? "시민(citizen)" : "미연결";
+          const roleName =
+            actor && !actor.demo && (actor.displayName || actor.loginId)
+              ? (actor.displayName || actor.loginId) + " (" + role + ")"
+              : role === "staff"
+                ? "담당자(staff)"
+                : role === "citizen"
+                  ? "시민(citizen)"
+                  : "미연결";
           if (sessionPill) {{
             sessionPill.textContent = "세션: " + roleName;
           }}

@@ -195,6 +195,29 @@ class StaffEventBroker:
                         pass
             return event
 
+    def _replay_since_locked(self, last_event_id: int) -> tuple[list[StaffEvent], bool]:
+        """락을 보유한 상태에서 `last_event_id` 이후 누락 이벤트와 재동기화 여부를 계산합니다.
+
+        Args:
+            last_event_id: 클라이언트가 마지막으로 수신한 이벤트 커서 번호입니다.
+
+        Returns:
+            `(재전송 이벤트 목록, 스냅샷 재동기화 필요 여부)` 튜플입니다.
+        """
+        if last_event_id < 0:
+            return [], True
+        if last_event_id == self._cursor:
+            return [], False
+        if last_event_id > self._cursor:
+            # 서버 재기동 등으로 커서가 초기화된 경우 전체 스냅샷 재조회를 안내합니다.
+            return [], True
+        if not self._history:
+            return [], True
+        oldest_id = self._history[0].event_id
+        if last_event_id < oldest_id - 1:
+            return [], True
+        return [ev for ev in self._history if ev.event_id > last_event_id], False
+
     def replay_since(self, last_event_id: int) -> tuple[list[StaffEvent], bool]:
         """지정한 `last_event_id` 이후 누락 이벤트를 조회하거나 재동기화 필요 여부를 판정합니다.
 
@@ -205,20 +228,7 @@ class StaffEventBroker:
             `(재전송 이벤트 목록, 스냅샷 재동기화 필요 여부)` 튜플입니다.
         """
         with self._lock:
-            if last_event_id < 0:
-                return [], True
-            if last_event_id == self._cursor:
-                return [], False
-            if last_event_id > self._cursor:
-                # 서버 재기동 등으로 커서가 초기화된 경우 전체 스냅샷 재조회를 안내합니다.
-                return [], True
-            if not self._history:
-                return [], True
-            oldest_id = self._history[0].event_id
-            if last_event_id < oldest_id - 1:
-                return [], True
-            missed = [ev for ev in self._history if ev.event_id > last_event_id]
-            return missed, False
+            return self._replay_since_locked(last_event_id)
 
     def subscribe(
         self,
@@ -248,18 +258,8 @@ class StaffEventBroker:
             if last_event_id is None:
                 missed: list[StaffEvent] = []
                 resync = False
-            elif last_event_id < 0 or last_event_id > self._cursor:
-                missed = []
-                resync = True
-            elif last_event_id == self._cursor:
-                missed = []
-                resync = False
-            elif not self._history or last_event_id < self._history[0].event_id - 1:
-                missed = []
-                resync = True
             else:
-                missed = [ev for ev in self._history if ev.event_id > last_event_id]
-                resync = False
+                missed, resync = self._replay_since_locked(last_event_id)
 
         sent_count = 0
         started = time.monotonic()

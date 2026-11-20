@@ -370,10 +370,39 @@ def test_postgres_seven_table_normalization_and_cascade_delete() -> None:
         assert msg_res.status_code == 200
 
         latest_staff = staff.get(f"/api/v1/complaints/{cid}").get_json()
+        # 서원구 담당자로 배정 후 초안 저장 -> 총괄 담당자가 최종 게시 시 과거 초안 버전의 actor_user_id 불변성 검증
+        seowon_client = app.test_client()
+        assert (
+            seowon_client.post(
+                "/api/v1/auth/login",
+                json={
+                    "loginId": "staff_seowon",
+                    "password": DEFAULT_STAFF_INIT_PASSWORD,
+                    "expectedRole": "staff",
+                },
+            ).status_code
+            == 200
+        )
+        draft_res = seowon_client.put(
+            f"/api/v1/complaints/{cid}/draft",
+            json={
+                "version": latest_staff["version"],
+                "text": "서원구 1차 초안입니다.",
+                "reason": "1차 검토",
+            },
+        )
+        assert draft_res.status_code == 200
+
+        assign_admin = staff.put(
+            f"/api/v1/complaints/{cid}/assignment",
+            json={"version": draft_res.get_json()["version"], "assigned": True},
+        )
+        assert assign_admin.status_code == 200
+
         pub_res = staff.post(
             f"/api/v1/complaints/{cid}/publish",
             json={
-                "version": latest_staff["version"],
+                "version": assign_admin.get_json()["version"],
                 "text": "현장 점검 후 보수 완료하겠습니다.",
                 "reason": "최종 게시",
             },
@@ -403,11 +432,12 @@ def test_postgres_seven_table_normalization_and_cascade_delete() -> None:
 
             vers = conn.execute(
                 sql.SQL(
-                    "SELECT publish_state, actor_user_id FROM {}.message_versions WHERE complaint_id = %s"
+                    "SELECT publish_state, actor_user_id FROM {}.message_versions WHERE complaint_id = %s ORDER BY version_no"
                 ).format(ident),
                 (cid,),
             ).fetchall()
-            assert any(v[0] == "published" and v[1] == "staff-admin" for v in vers)
+            assert ("draft", "staff-seowon") in vers
+            assert ("published", "staff-admin") in vers
 
             jobs = conn.execute(
                 sql.SQL(
