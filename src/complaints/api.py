@@ -3,7 +3,7 @@
 import json
 from collections.abc import Iterator
 
-from flask import Response, current_app, session, stream_with_context
+from flask import Response, current_app, request, session, stream_with_context
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
 from src.complaints.http import actor, reply
@@ -27,6 +27,8 @@ from src.complaints.models import (
     AssistFields,
     AssistInput,
     AssistResponse,
+    CitizenChatInput,
+    CitizenChatResponse,
     ComplaintInput,
     ComplaintPath,
     ComplaintResponse,
@@ -42,6 +44,7 @@ from src.complaints.models import (
     ProviderStatus,
     ReasonInput,
     SessionInput,
+    StaffEventsQuery,
     TemplateCreateInput,
     TemplateListResponse,
     TemplatePath,
@@ -91,11 +94,15 @@ def create_api(service: ComplaintService) -> APIBlueprint:
     )
     jobs = Tag(
         name="AI 작업 · 단계 시연",
-        description="비동기 RAG+LLM 초안·근거 생성 작업(미연결 또는 testing=True 환경에서는 서버 단계 시연으로 동작)",
+        description="비동기 RAG+LLM 초안·근거 생성 작업과 담당자 전용 실시간 SSE 푸시(미연결 또는 testing=True 환경에서는 서버 단계 시연으로 동작)",
     )
     assist = Tag(
         name="응대 검사기",
         description="검색 근거와 LLM 판정을 검증합니다. 민원 등록·공식 이관이 아닙니다.",
+    )
+    citizen_chat_tag = Tag(
+        name="시민 민원 도우미",
+        description="미게시 초안·순화를 제거하고 청주시 공식 FAQ·참고 부서를 안내하는 시민 전용 실시간 챗봇(공식 접수·이관 아님)",
     )
 
     @api.get("/health", tags=[Tag(name="서버 상태")], responses={200: Health})
@@ -190,6 +197,64 @@ def create_api(service: ComplaintService) -> APIBlueprint:
                 if event.get("type") == "done":
                     payload = AssistResponse.model_validate(event["result"]).model_dump(
                         mode="json"
+                    )
+                    yield json.dumps(
+                        {"type": "done", "result": payload}, ensure_ascii=False
+                    ) + "\n"
+                else:
+                    yield json.dumps(event, ensure_ascii=False) + "\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="application/x-ndjson",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    @api.post(
+        "/citizen/chat",
+        tags=[citizen_chat_tag],
+        responses={200: CitizenChatResponse},
+    )
+    def citizen_chat(body: CitizenChatInput) -> Response:
+        """시민 민원 도우미 질문을 RAG+LLM으로 분석하고 시민 안전 응답만 반환합니다.
+
+        담당자 초안(`PREFIX-03`)·직원 보호 순화(`PREFIX-04`)·내부 프롬프트·과거 사례 원문은
+        생성·반환하지 않으며 자동 이관(`automaticTransfer=False`)을 허용하지 않습니다.
+
+        Args:
+            body: 시민 문의 내용과 선택 관할·LLM 공급자입니다.
+
+        Returns:
+            시민에게 안전하게 표시할 안내·FAQ 출처·참고 부서 후보·감지 관할 구입니다.
+        """
+        return reply(service.run_citizen_chat(actor(), body))
+
+    @api.post("/citizen/chat/stream", tags=[citizen_chat_tag])
+    def citizen_chat_stream(body: CitizenChatInput) -> Response:
+        """시민 민원 도우미 진행 안내를 NDJSON으로 보내고 마지막에 시민 안전 응답을 붙입니다.
+
+        Args:
+            body: 시민 문의 내용과 선택 관할·LLM 공급자입니다.
+
+        Returns:
+            줄 단위 JSON 진행·완료 사건 스트림입니다. 민원 저장·공식 이관이 아닙니다.
+        """
+        user = actor()
+
+        def generate() -> Iterator[str]:
+            """진행 단계와 시민 전용 투영 결과를 줄 단위 JSON 문자열로 생성합니다."""
+            for event in service.iter_citizen_chat(user, body):
+                if event.get("type") == "done":
+                    result = event["result"]
+                    payload = (
+                        result.model_dump(mode="json", by_alias=True)
+                        if isinstance(result, CitizenChatResponse)
+                        else CitizenChatResponse.model_validate(result).model_dump(
+                            mode="json", by_alias=True
+                        )
                     )
                     yield json.dumps(
                         {"type": "done", "result": payload}, ensure_ascii=False
@@ -566,5 +631,50 @@ def create_api(service: ComplaintService) -> APIBlueprint:
             취소 상태를 저장한 민원입니다.
         """
         return operate(path, body, "cancel")
+
+    @api.get("/staff/events", tags=[jobs])
+    def staff_events(query: StaffEventsQuery) -> Response:
+        """담당자 전용 실시간 작업·민원 변경 SSE(`text/event-stream`) 스트림을 엽니다.
+
+        `Last-Event-ID` 헤더 또는 `lastEventId` 쿼리로 마지막 커서 이후 누락 이벤트를
+        재전달하며, 보관 범위를 초과하면 `resync_required` 이벤트를 보냅니다.
+        시민·미인증 세션은 401/403으로 차단합니다.
+
+        Args:
+            query: 선택적 `lastEventId` 재연결 커서 쿼리입니다.
+
+        Returns:
+            `text/event-stream` 형식의 실시간 SSE 응답입니다.
+        """
+        service.require_staff(actor())
+        cursor: int | None = query.last_event_id
+        raw_header = request.headers.get("Last-Event-ID", "").strip()
+        if raw_header:
+            try:
+                parsed = int(raw_header)
+                if parsed >= 0:
+                    cursor = parsed
+            except ValueError:
+                cursor = -1
+
+        heartbeat = float(current_app.config.get("SSE_HEARTBEAT_SECONDS", 15.0))
+        max_events = current_app.config.get("SSE_MAX_EVENTS")
+        max_seconds = current_app.config.get("SSE_MAX_SECONDS")
+        stream = service.events.subscribe(
+            last_event_id=cursor,
+            ai_connected=service.ai_connected,
+            heartbeat_seconds=heartbeat,
+            max_events=max_events,
+            max_seconds=max_seconds,
+        )
+        return Response(
+            stream_with_context(stream),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache, no-store",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     return api

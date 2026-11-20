@@ -673,6 +673,14 @@ body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"])
   border-color: #40516d;
   color: #bccbe0;
 }
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"])
+  .citizen-shell
+  .chat-heading
+  .mini-chip.live-chip {
+  background: #123635;
+  border-color: #256f68;
+  color: #86efac;
+}
 body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .chat-messages {
   background: #121d30;
 }
@@ -739,6 +747,65 @@ body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai
 }
 body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card dd {
   color: #eee3bf;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-faq {
+  background: linear-gradient(180deg, #132d2f, #112428);
+  border-color: #2c6e69;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-faq header {
+  background: #14b8a614;
+  border-color: #255d59;
+  color: #7eead9;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-faq dl > div {
+  border-color: #23504d;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-faq dt {
+  color: #7eead9;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-faq dd {
+  color: #d6f5ef;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-action {
+  background: linear-gradient(180deg, #172844, #142138);
+  border-color: #36578c;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-action header {
+  background: #3b82f618;
+  border-color: #2f4d7d;
+  color: #9dc2ff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-action dl > div {
+  border-color: #28426b;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-action dt {
+  color: #9dc2ff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-ai-card.tone-action dd {
+  color: #d9e7ff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-answer-text {
+  color: #e6eefb;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-faq-links a {
+  color: #93c5fd;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-dept-chip {
+  background: #1e3a66;
+  border-color: #3b63a3;
+  color: #cfe0ff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-card-note {
+  color: #a9bad3;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-district-wrap {
+  background: #1f2e47;
+  border-color: #3e506b;
+  color: #bfd0e8;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-district-wrap select {
+  color: #e6effc;
+  background: #1f2e47;
 }
 body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"])
   .citizen-shell
@@ -1067,6 +1134,24 @@ body[data-theme="dark"][data-site="staff"]
   .page-heading
   .connection {
   color: #b3c5dd;
+}
+body[data-theme="dark"][data-site="staff"]
+  .staff-workspace
+  .page-heading
+  .connection.sse-live {
+  color: #6ee7b7;
+}
+body[data-theme="dark"][data-site="staff"]
+  .staff-workspace
+  .page-heading
+  .connection.sse-warn {
+  color: #fcd34d;
+}
+body[data-theme="dark"][data-site="staff"]
+  .staff-workspace
+  .page-heading
+  .connection.sse-fallback {
+  color: #fdba74;
 }
 body[data-theme="dark"][data-site="staff"] .staff-inbox-banner {
   background: #1c3050;

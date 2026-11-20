@@ -851,9 +851,32 @@ body[data-site="staff"] .role-switch a.selected {
   letter-spacing: 1.5px;
 }
 .staff-workspace .page-heading .connection {
-  color: #8a9fbb;
+  color: #5b7296;
   font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
+}
+.staff-workspace .page-heading .connection.sse-live {
+  color: #0f766e;
+}
+.staff-workspace .page-heading .connection.sse-live i {
+  background: #10b981;
+  box-shadow: 0 0 0 3px #10b98126;
+}
+.staff-workspace .page-heading .connection.sse-warn {
+  color: #b45309;
+}
+.staff-workspace .page-heading .connection.sse-warn i {
+  background: #f59e0b;
+}
+.staff-workspace .page-heading .connection.sse-fallback {
+  color: #c2410c;
+}
+.staff-workspace .page-heading .connection.sse-fallback i {
+  background: #ea580c;
+}
+.staff-workspace .page-heading .connection.sse-idle i {
+  background: #94a3b8;
 }
 .staff-workspace .info-banner {
   color: #7891b7;

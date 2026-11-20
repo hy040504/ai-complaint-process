@@ -36,8 +36,8 @@
 
 - **검색·판정 계층:** 검색 CLI/API, 응대 CLI/`minwon`/`src/lab_web` `:5010`이 로컬에서 동작하며, `docs/harness/prompts/` `PREFIX-00~04`로 판정·조건 보존 FAQ 안내·담당자 초안(`out_of_scope` 고정 템플릿)·순화 요약을 분리 실행(`PREFIX-03∥04` 병렬, 순수 타지역 `early_external_reject`)합니다.
 - **응대 검사기 (`:5010`, `llm` 브랜치 기본):** 제목·상세로 지명·도로명+번지·사례 235쌍 도로 색인·네이버 지도(`address`/`ac`·HTTP 400/429 60초 서킷브레이커)를 추적해 검색하고 선택한 공급자(`K-EXAONE 2.5` 단계별 차등 `high`/`low<=4096`·`GPT-6 Luna`·`Codex CLI`)로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs`) 클릭 시 입력 폼을 복원합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`·`lookup_navermap_place` 2종을 제공합니다(`PREFIX-02`/`04`는 `_disable_mcp`).
-- **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`), Flask, PostgreSQL `complaint_app` 및 비동기 AI 분석 워커를 지원하며, 미게시 초안 비노출·`automaticTransfer=False` 원칙을 지킵니다.
-- **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` → 패치 후 **100건 재검증 `98/100 (98.0%`, 실응답 `98/99, 99.0%`)**와 규칙 `112/5,015` 회귀를 통과했습니다. `openai_api` `cached_tokens` 실측·시민 챗봇 실연결·담당자 실시간 SSE 모니터·운영 인증·청주시 공식 이관은 후속입니다.
+- **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`, 25경로), Flask, PostgreSQL `complaint_app`, 비동기 AI 분석 워커, **담당자 실시간 SSE 푸시(`/api/v1/staff/events`, `Last-Event-ID`·단절 시 3초 폴링 대체)** 및 **시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, 미게시 초안·순화 구조 차단)**을 지원하며 `automaticTransfer=False` 원칙을 지킵니다.
+- **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` → 패치 후 **100건 재검증 `98/100 (98.0%`, 실응답 `98/99, 99.0%`)**와 규칙 `112/5,015` 회귀를 통과했습니다. `openai_api` `cached_tokens` 실측·운영 본인·담당자 인증·7테이블 정규화·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |
 | --- | --- | --- |
@@ -58,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-110](cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) | 2026-11-20 | 담당자 실시간 SSE 푸시(`GET /api/v1/staff/events`, `StaffEventBroker`·`Last-Event-ID`·`resync_required`·3초 대체) 및 시민 AI 챗봇 실연결(`POST /api/v1/citizen/chat(/stream)`, 비공개 초안/순화 구조 차단·`include_staff_outputs=False`), Swagger PDF 25경로 갱신 및 `176`/`27`/Edge E2E 검증 | 완료 |
 | [CASE-109](cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) | 2026-11-20 | 패치 후 `:5010` 100건 실증 재검증(`98/100, 98.0%`, 실응답 `98/99, 99.0%`; 기존 미통과 10/10·노이즈 13/13 전원 해소·신규 39/40 통과), `하수구` 등 생활 기반시설 14종 불용어 보강·중복/스레드안전 최적화·전수 주석/README 3단계 추이표 정비(`src/tests 172`) | 완료 |
 | [CASE-108](cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) | 2026-11-20 | 11/19 종합 업무보고 8쪽 PDF([`업무보고_20261119.pdf`](report/업무보고_20261119.pdf)), `보고서_공통.py` UI 캡처 공용화, 저장소 114 Py/21 JS 전수 docstring/JSDoc·`db/load_samples.py`·`응대_비교.py` 정비, `README.md`/`docs/README.md` 가독성 개편 및 최종 검증 | 완료 |
 | [CASE-107](cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) | 2026-11-20 | 패치 정비: `place_tool`/`district` 중복 추론·미사용 import 제거, `eval_set --strict`, 테스트 모의 docstring 21건·JSDoc 보완, `decision-policy`/`architecture`/`README` 정비 및 전수 검증(`171`/`49`/`22`) | 완료 |

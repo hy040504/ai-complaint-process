@@ -52,6 +52,12 @@ import {
   buildProviderOptionsHtml,
   resolveLlmMeta,
 } from "./llm-meta.js";
+import { createStaffEventStream, renderSseStatusBadge } from "./realtime.js";
+import {
+  buildCitizenDraftPayload,
+  renderCitizenChatBubble,
+  streamCitizenChat,
+} from "./chatbot.js";
 
 const app = document.querySelector("#app");
 const modal = document.querySelector("#modal");
@@ -210,10 +216,93 @@ const link = (text, path, cls = "") =>
 let route, data, toastTimer;
 let chatMessages = [];
 let chatPending = false;
+let chatLiveLabel = "";
+let chatDistrict = "";
 let citizenPrompt = null;
 let newlyCreatedId = null;
 let busy = false;
 let loadSequence = 0;
+let sseState = "idle";
+let sseLastEventAt = null;
+let sseAiConnected = true;
+let staffSyncPending = false;
+let staffSyncQueued = false;
+
+/**
+ * 서버의 최신 담당자 스냅샷을 조회해 안전하게 화면을 갱신합니다.
+ *
+ * 편집 중인 `#answer-form` 초안을 덮어쓰지 않으며, 동시 이벤트가 몰릴 때는
+ * 한 번의 후속 조회로 합쳐 중복 HTTP 호출을 방지합니다.
+ *
+ * @returns {Promise<void>} 스냅샷 동기화 완료 프로미스입니다.
+ */
+async function syncStaffFromServer() {
+  if (busy || !currentRoute().staff) return;
+  if (staffSyncPending) {
+    staffSyncQueued = true;
+    return;
+  }
+  staffSyncPending = true;
+  try {
+    const editorForm = $("#answer-form");
+    const snapshot = await refresh();
+    const latest = editorForm
+      ? snapshot.complaints.find((c) => c.id === editorForm.dataset.id)
+      : null;
+    if (
+      editorForm &&
+      latest &&
+      (String(latest.contextVersion) !== editorForm.dataset.context ||
+        String(latest.draftVersion) !== editorForm.dataset.draft)
+    ) {
+      toast(
+        "다른 요청에서 내용이 바뀌었습니다. 편집 내용을 보관한 뒤 새로고침해 주세요.",
+      );
+      return;
+    }
+    if (
+      !modal.open &&
+      !$("#complaint-form") &&
+      !$("#followup-form textarea:focus") &&
+      currentRoute().path !== "/staff/api"
+    ) {
+      render();
+    }
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    staffSyncPending = false;
+    if (staffSyncQueued) {
+      staffSyncQueued = false;
+      syncStaffFromServer();
+    }
+  }
+}
+
+/** 담당자 실시간 AI 작업·민원 변경 SSE 구독 관리자입니다. */
+const staffStream = createStaffEventStream({
+  onEvent: (_type, payload) => {
+    sseLastEventAt = payload?.occurredAt || new Date().toISOString();
+    syncStaffFromServer();
+  },
+  onResync: () => {
+    syncStaffFromServer();
+  },
+  onStateChange: (nextState, detail) => {
+    sseState = nextState;
+    if (detail?.lastEventAt) sseLastEventAt = detail.lastEventAt;
+    if (typeof detail?.aiConnected === "boolean") {
+      sseAiConnected = detail.aiConnected;
+    }
+    const badgeEl = $("#staff-sse-status");
+    if (badgeEl) {
+      badgeEl.outerHTML = renderSseStatusBadge(sseState, sseLastEventAt).replace(
+        "<span ",
+        '<span id="staff-sse-status" ',
+      );
+    }
+  },
+});
 
 /**
  * 현재 해시 경로와 목록 필터를 읽습니다.
@@ -320,6 +409,7 @@ async function loadScreen() {
   const sequence = ++loadSequence;
   route = currentRoute();
   if (route.path === "/lab") {
+    staffStream.close();
     app.innerHTML = labShell(
       '<div class="panel empty" role="status">검사기를 준비하고 있습니다…</div>',
     );
@@ -333,6 +423,9 @@ async function loadScreen() {
         );
     }
     return;
+  }
+  if (!route.staff) {
+    staffStream.close();
   }
   app.innerHTML = shell(
     '<div class="page-content"><div class="panel empty" role="status">서버에서 민원을 불러오고 있습니다…</div></div>',
@@ -353,6 +446,9 @@ async function loadScreen() {
         : Promise.resolve(),
     ]);
     if (sequence === loadSequence) {
+      if (route.staff && staffStream.getState() === "idle") {
+        staffStream.open(read()?.eventCursor || 0);
+      }
       render();
       if (!route.staff) showCitizenIntro();
       if (route.path === "/citizen/assistant" && citizenPrompt) {
@@ -708,7 +804,11 @@ function monitor() {
     ["판정·검토", /살펴|판정|부서/],
     ["안내·초안", /안내|작성|초안|정리|검증|완료/],
   ];
-  return `<div class="page-content">${pageHeading("AI WORKSPACE", "AI 작업 모니터", "검색부터 검토 대기까지, AI 작업의 단계와 이력을 확인하세요.", `<span class="connection"><i></i> RAG + LLM 연동</span>`)}<div class="info-banner amber">${icon("help", 20)}<span><b>RAG + LLM 백그라운드 분석 · 1.5초 폴링</b> · 민원 등록·재실행 시 실제 검색과 LLM 판정·초안을 실행하며, 미게시 초안은 시민에게 노출하지 않습니다.</span></div><div class="monitor-toolbar">${[
+  const sseBadgeHtml = renderSseStatusBadge(sseState, sseLastEventAt).replace(
+    "<span ",
+    '<span id="staff-sse-status" ',
+  );
+  return `<div class="page-content">${pageHeading("AI WORKSPACE", "AI 작업 모니터", "검색부터 검토 대기까지, AI 작업의 단계와 이력을 실시간으로 확인하세요.", sseBadgeHtml)}<div class="info-banner amber">${icon("help", 20)}<span><b>RAG + LLM 백그라운드 분석 · 실시간 SSE 푸시</b> (연결 단절 시 3초 폴링 자동 전환) · 민원 등록·재실행 시 실제 검색과 LLM 판정·초안을 실행하며, 미게시 초안은 시민에게 노출하지 않습니다.</span></div><div class="monitor-toolbar">${[
     ["", "전체 작업"],
     ["queued", "실행 대기"],
     ["running", "실행 중"],
@@ -739,7 +839,8 @@ function monitor() {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function assistant() {
-  return `<div class="page-content assistant-page"><a class="back-link" href="#/citizen">← 홈으로</a><section class="panel chat-panel"><div class="chat-heading"><span class="citizen-chat-avatar">${icon("spark", 24)}</span><div><h1>민원 도우미</h1><small><i></i> 편하게 이야기해 주세요 · 상담 흐름 시연</small></div><span class="mini-chip">AI 미연동</span></div><div class="chat-messages" aria-live="polite"><div class="chat-bubble ai"><b>안녕하세요! 불편하신 점을<br>평소 말하듯이 알려주세요 🙂</b><p>어느 부서에 문의할지 몰라도 괜찮아요.<br>일상에서 겪은 일을 편하게 들려주세요.</p><small>현재는 고정 응답으로 상담 흐름을 체험하는 시연입니다. 정책 판단과 부서 배정은 담당자 확인이 필요합니다.</small></div>${chatMessages.map((m) => `<div class="chat-bubble ${m.role}">${esc(m.text)}${m.role === "ai" ? `<section class="citizen-ai-card"><header>${icon("spark", 15)} 민원 작성 안내 <span>시연</span></header><dl><div><dt>접수 내용</dt><dd>${esc(m.source || "말씀하신 내용")}</dd></div><div><dt>다음 단계</dt><dd>발생 위치와 요청 사항을 보완해 주세요.</dd></div><div><dt>검토 안내</dt><dd>정책·담당 부서는 담당자 확인이 필요해요.</dd></div></dl><button class="btn primary" data-action="citizen-use-draft" data-text="${esc(m.source || "")}">이 내용으로 민원 작성 ${icon("arrow", 16)}</button></section>` : ""}</div>`).join("")}${chatPending ? '<div class="chat-bubble ai citizen-typing" role="status" aria-label="시연 답변 준비 중"><i></i><i></i><i></i><span>내용을 정리하고 있어요</span></div>' : ""}</div>${!chatMessages.length ? `<div class="suggestions">${["전입신고에 필요한 서류를 문의하고 싶어요", "우리집 앞 가로등이 밤새 깜빡거려요", "놀이터 그네가 부서졌어요"].map((s) => button(s, "", 'data-action="chat-suggest" data-text="' + s + '"')).join("")}</div>` : ""}<div class="citizen-chat-tools"><button data-action="citizen-chat-help">${icon("book", 14)} 작성 요령</button><span>${icon("shield", 14)} 개인정보 입력 주의</span>${link("직접 작성하기", "/citizen/write")}</div><form id="chat-form" class="chat-input"><label class="sr-only" for="chat-input">도우미에게 보낼 내용</label><input id="chat-input" name="message" required maxlength="2000" placeholder="예) 우리집 앞 가로등이 깜빡거려요" ${chatPending ? "disabled" : ""}>${button(icon("arrow", 20), "primary", 'type="submit" aria-label="보내기" ' + (chatPending ? "disabled" : ""))}</form></section><p class="chat-disclaimer">${icon("shield", 14)} 실제 AI 미연동 · 민원 작성 후 확인해야 시연 서버에 등록돼요.</p></div>`;
+  const districtChoices = ["", ...districts.filter((d) => d !== "모름")];
+  return `<div class="page-content assistant-page"><a class="back-link" href="#/citizen">← 홈으로</a><section class="panel chat-panel"><div class="chat-heading"><span class="citizen-chat-avatar">${icon("spark", 24)}</span><div><h1>민원 도우미</h1><small><i></i> 청주시 공식 FAQ · 사례 기반 실시간 AI 안내</small></div><span class="mini-chip live-chip">RAG + LLM 연동</span></div><div class="chat-messages" aria-live="polite"><div class="chat-bubble ai"><b>안녕하세요! 불편하신 점이나 궁금한 제도를<br>평소 말하듯이 물어보세요 🙂</b><p>청주시 공식 자주 묻는 민원(FAQ)을 찾아 바로 안내해 드리고,<br>현장 조치나 담당자 확인이 필요하면 민원 작성으로 바로 이어 드려요.</p><small>AI 시연 안내이며 공식 민원 접수·자동 부서 이관은 아닙니다. 미게시 담당자 초안은 노출하지 않습니다.</small></div>${chatMessages.map(renderCitizenChatBubble).join("")}${chatPending ? `<div class="chat-bubble ai citizen-typing" role="status" aria-label="AI 답변 준비 중"><i></i><i></i><i></i><span id="chat-live-label">${esc(chatLiveLabel || "민원 내용을 읽고 있어요")}</span></div>` : ""}</div>${!chatMessages.length ? `<div class="suggestions">${["대형폐기물 배출 방법이 궁금해요", "서원대 후문 가로등이 밤새 깜빡거려요", "전입신고에 필요한 서류를 문의하고 싶어요"].map((s) => button(s, "", 'data-action="chat-suggest" data-text="' + s + '"')).join("")}</div>` : ""}<div class="citizen-chat-tools"><label class="chat-district-wrap" for="chat-district"><span>지역</span><select id="chat-district" aria-label="문의 관할 구 선택" ${chatPending ? "disabled" : ""}>${districtChoices.map((d) => `<option value="${esc(d)}" ${chatDistrict === d ? "selected" : ""}>${d ? esc(d) : "자동 감지"}</option>`).join("")}</select></label><button data-action="citizen-chat-help">${icon("book", 14)} 작성 요령</button>${chatMessages.length ? `<button data-action="chat-reset" ${chatPending ? "disabled" : ""}>${icon("refresh", 14)} 새 대화</button>` : ""}<span>${icon("shield", 14)} 개인정보 입력 주의</span>${link("직접 작성하기", "/citizen/write")}</div><form id="chat-form" class="chat-input"><label class="sr-only" for="chat-input">도우미에게 보낼 내용</label><input id="chat-input" name="message" required maxlength="2000" placeholder="예) 대형폐기물 배출 방법이나 동네 불편 사항을 입력해 주세요" ${chatPending ? "disabled" : ""}>${button(icon("arrow", 20), "primary", 'type="submit" aria-label="보내기" ' + (chatPending ? "disabled" : ""))}</form></section><p class="chat-disclaimer">${icon("shield", 14)} 청주시 공식 FAQ·사례 검색 기반 AI 시연 안내 · 실제 민원은 작성 화면에서 직접 등록해야 담당자가 접수합니다.</p></div>`;
 }
 /**
  * guide 화면 동작을 구성합니다.
@@ -914,46 +1015,72 @@ function updateFilter(changes) {
   location.hash = route.path + (params.size ? "?" + params : "");
 }
 /**
- * sendChat 화면 동작을 구성합니다.
+ * 시민 민원 도우미 질문을 서버 RAG+LLM 스트림 API로 보내고 결과를 말풍선에 표시합니다.
  *
  * @param {string} text 사용자가 입력한 상담 내용입니다.
- * @returns {void} 반환값 없이 화면 상태를 갱신합니다.
+ * @returns {Promise<void>} 비동기 응답 반영 완료 프로미스입니다.
  */
-function sendChat(text) {
-  if (chatPending || !text.trim()) return;
-  chatMessages.push({ role: "me", text: text.trim() });
+async function sendChat(text) {
+  const trimmed = String(text || "").trim();
+  if (chatPending || !trimmed) return;
+  chatMessages.push({ role: "me", text: trimmed });
   chatPending = true;
+  chatLiveLabel = "민원 내용을 읽고 있어요";
+  const scrollChatBottom = () => {
+    $(".chat-messages")?.lastElementChild?.scrollIntoView({
+      block: "nearest",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+    });
+  };
   render();
-  setTimeout(() => {
+  scrollChatBottom();
+  try {
+    const result = await streamCitizenChat(
+      {
+        message: trimmed,
+        district: chatDistrict || null,
+      },
+      {
+        onProgress: (step) => {
+          chatLiveLabel = step.label;
+          const liveEl = $("#chat-live-label");
+          if (liveEl) liveEl.textContent = chatLiveLabel;
+        },
+      },
+    );
     try {
       sessionStorage.setItem(
         "complaint-form",
-        JSON.stringify({
-          title: text.slice(0, 120),
-          body: text,
-          district: "모름",
-          visibility: "private",
-        }),
+        JSON.stringify(buildCitizenDraftPayload(trimmed, result)),
       );
     } catch {
-      toast("임시 입력을 저장하지 못했습니다.");
+      /* 브라우저 탭 저장소 제한 환경은 무시합니다. */
     }
     chatMessages.push({
       role: "ai",
-      source: text,
-      text: "말씀하신 내용을 작성 화면에 옮길 수 있어요. 구체적인 위치와 요청 사항을 확인한 뒤 민원을 등록해 주세요.",
+      source: trimmed,
+      text: result.answer,
+      result,
     });
+  } catch (error) {
+    chatMessages.push({
+      role: "ai",
+      source: trimmed,
+      text:
+        error?.message ||
+        "일시적으로 AI 안내를 불러오지 못했습니다. 아래 버튼으로 민원을 직접 작성해 주세요.",
+      result: null,
+    });
+  } finally {
     chatPending = false;
+    chatLiveLabel = "";
     if (currentRoute().path === "/citizen/assistant") {
       render();
-      $(".chat-messages")?.lastElementChild?.scrollIntoView({
-        block: "nearest",
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
+      scrollChatBottom();
     }
-  }, 850);
+  }
 }
 
 document.addEventListener("click", async (event) => {
@@ -1041,19 +1168,21 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "citizen-use-draft") {
     try {
-      sessionStorage.setItem(
-        "complaint-form",
-        JSON.stringify({
-          title: target.dataset.text.slice(0, 120),
-          body: target.dataset.text,
-          district: "모름",
-          visibility: "private",
-        }),
-      );
+      const payload = buildCitizenDraftPayload(target.dataset.text, {
+        district: target.dataset.district || "모름",
+      });
+      sessionStorage.setItem("complaint-form", JSON.stringify(payload));
       location.hash = "/citizen/write";
     } catch {
       toast("작성 내용을 옮기지 못했습니다. 입력 내용을 보관해 주세요.");
     }
+    return;
+  }
+  if (action === "chat-reset") {
+    if (chatPending) return;
+    chatMessages = [];
+    chatLiveLabel = "";
+    render();
     return;
   }
   if (action === "citizen-notice") {
@@ -1668,42 +1797,23 @@ window.addEventListener("hashchange", () => {
   loadScreen();
   window.scrollTo(0, 0);
 });
-setInterval(async () => {
-  if (
-    busy ||
-    document.hidden ||
-    !currentRoute().staff ||
-    !data?.complaints.some((c) => c.job?.status === "running")
-  )
-    return;
-  try {
-    const editor = $("#answer-form"),
-      snapshot = await refresh();
-    const latest = editor
-      ? snapshot.complaints.find((c) => c.id === editor.dataset.id)
-      : null;
-    if (
-      editor &&
-      latest &&
-      (String(latest.contextVersion) !== editor.dataset.context ||
-        String(latest.draftVersion) !== editor.dataset.draft)
-    ) {
-      toast(
-        "다른 요청에서 내용이 바뀌었습니다. 편집 내용을 보관한 뒤 새로고침해 주세요.",
-      );
-      return;
-    }
-    if (
-      !modal.open &&
-      !$("#complaint-form") &&
-      !$("#followup-form textarea:focus") &&
-      currentRoute().path !== "/staff/api"
-    )
-      render();
-  } catch (error) {
-    toast(error.message);
+document.addEventListener("change", (event) => {
+  if (event.target.id === "chat-district") {
+    chatDistrict = event.target.value || "";
   }
-}, 1500);
+});
+window.addEventListener("beforeunload", () => {
+  staffStream.close(false);
+});
+setInterval(async () => {
+  if (busy || document.hidden || !currentRoute().staff) return;
+  // 정상 SSE 연결 중(실제 AI)에는 중복 폴링을 하지 않고, 장애 대체(fallback) 또는 단계 시연 실행 중에만 3초 조회합니다.
+  const needsFallbackPoll =
+    sseState === "fallback" ||
+    (!sseAiConnected && data?.complaints.some((c) => c.job?.status === "running"));
+  if (!needsFallbackPoll) return;
+  await syncStaffFromServer();
+}, 3000);
 setTheme(readTheme(), false);
 loadScreen();
 

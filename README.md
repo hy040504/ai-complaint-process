@@ -12,7 +12,7 @@
   <a href="src/README.md"><img src="https://img.shields.io/badge/Web-Flask_%3A5000-2f6fed?style=flat-square" alt="Web" /></a>
   <a href="src/README.md"><img src="https://img.shields.io/badge/Swagger-%2Fdocs_%C2%B7_%23%2Fstaff%2Fapi-0d9488?style=flat-square&logo=swagger&logoColor=white" alt="Swagger Portal" /></a>
   <a href="src/lab_web/README.md"><img src="https://img.shields.io/badge/Lab-Checker_%3A5010-b45309?style=flat-square" alt="Lab" /></a>
-  <a href="src/lab_web/README.md"><img src="https://img.shields.io/badge/Stream-NDJSON_진행안내-0f766e?style=flat-square" alt="Stream" /></a>
+  <a href="src/README.md"><img src="https://img.shields.io/badge/Stream-SSE_%C2%B7_NDJSON-0f766e?style=flat-square" alt="Stream" /></a>
   <a href="ui/README.md"><img src="https://img.shields.io/badge/Theme-Light_%26_Dark-1e293b?style=flat-square" alt="Theme" /></a>
   <a href="src/README.md"><img src="https://img.shields.io/badge/Staff-127_Depts_%26_Templates-2f6fed?style=flat-square" alt="Staff" /></a>
 </p>
@@ -31,7 +31,7 @@
   <a href="#저장과-검색"><img src="https://img.shields.io/badge/PostgreSQL-18_%2B_pgvector-4169e1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
   <a href="docs/청주톡톡_민원_업무_API_Swagger.pdf"><img src="https://img.shields.io/badge/Swagger-OpenAPI_PDF-85a329?style=flat-square" alt="Swagger PDF" /></a>
   <a href="#검증-근거"><img src="https://img.shields.io/badge/Eval-200_(95%25)_%C2%B7_PostPatch_100_(98%25)-0d9488?style=flat-square" alt="Live Eval" /></a>
-  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-172_Py_%C2%B7_49_RAG_%C2%B7_22_UI-0f766e?style=flat-square" alt="Verified" /></a>
+  <a href="#검증-근거"><img src="https://img.shields.io/badge/Verified-176_Py_%C2%B7_49_RAG_%C2%B7_27_UI-0f766e?style=flat-square" alt="Verified" /></a>
   <a href="docs/report/README.md"><img src="https://img.shields.io/badge/Report-11%2F19_8Pages-b91c1c?style=flat-square" alt="Report" /></a>
   <a href="docs/test/README.md"><img src="https://img.shields.io/badge/Test-200_SourceTrail_14Pages-0369a1?style=flat-square" alt="Test Report" /></a>
   <a href="#현재-구현-상태"><img src="https://img.shields.io/badge/Branch-llm-334155?style=flat-square&logo=github&logoColor=white" alt="Branch" /></a>
@@ -48,14 +48,14 @@
 >
 > - 민원 웹(`:5000`, `python -m src`)의 시민·담당자 포털과 `#/lab`에 응대 검사기(`:5010`, `src/lab_web`)의 RAG+LLM 파이프라인을 비동기 워커로 통합했습니다.
 > - `K-EXAONE 2.5` · `Codex CLI` · `GPT-6 Luna` 가드를 지원하며, **미게시 초안 시민 비노출**과 **`automaticTransfer=False`**(자동 이관 금지) 원칙을 지킵니다.
-> - 상세 경위는 [`src/`](src/README.md) · [`src/lab_web`](src/lab_web/README.md) · [`ui/`](ui/README.md) · [사례 색인(`CASE-093~109`)](docs/cases/README.md)에서 확인할 수 있습니다.
+> - 상세 경위는 [`src/`](src/README.md) · [`src/lab_web`](src/lab_web/README.md) · [`ui/`](ui/README.md) · [사례 색인(`CASE-093~110`)](docs/cases/README.md)에서 확인할 수 있습니다.
 
 ### 한눈에 보는 주요 구현 (`2026-11-20 KST`)
 
 | 영역 | 핵심 구현 내용 | 기준 문서 · 사례 |
 | --- | --- | --- |
-| **민원 웹 · 업무 DB (`:5000`)** | 시민 등록·수정·철회·영구 삭제, 다크/라이트 전용 투명 청주시 로고·12종 SVG, 담당자 127개 부서 배정·커스텀 템플릿 CRUD, PostgreSQL `complaint_app` 4테이블 + 비동기 워커(1.5초 폴링) | [`src/README.md`](src/README.md) · [`CASE-093`](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)~[`095`](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) |
-| **한국어 Swagger 포털** | 로컬 자산 기반 `/docs`·`/swagger`(원클릭 `staff`/`citizen` 전환·다크 WCAG 4.5+·빈 `Authorize` 제거), 담당자 `#/staff/api` 상태 요약·빠른 색인, [`Swagger PDF`](docs/청주톡톡_민원_업무_API_Swagger.pdf)(22경로) | [`CASE-101`](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [`CASE-102`](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) |
+| **민원 웹 · 실시간 SSE · 챗봇 (`:5000`)** | 시민 등록·수정·철회·영구 삭제, **시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, 비공개 초안·순화 구조 차단)**, **담당자 실시간 SSE 푸시(`/api/v1/staff/events`, `Last-Event-ID`·3초 대체)**, 127개 부서 배정·커스텀 템플릿 CRUD, PostgreSQL `complaint_app` 4테이블 | [`src/README.md`](src/README.md) · [`CASE-093`](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)~[`095`](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) · [`CASE-110`](docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) |
+| **한국어 Swagger 포털** | 로컬 자산 기반 `/docs`·`/swagger`(원클릭 `staff`/`citizen` 전환·다크 WCAG 4.5+·빈 `Authorize` 제거), 담당자 `#/staff/api` 상태 요약·빠른 색인, [`Swagger PDF`](docs/청주톡톡_민원_업무_API_Swagger.pdf)(25경로) | [`CASE-101`](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [`CASE-102`](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [`CASE-110`](docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) |
 | **응대 검사기 (`:5010` · `#/lab`)** | 시민 UI 톤 통일·다크 토글, 4종 엔진 선택/잠금, 4구/98 읍·면·동·장소 추적, 엔진별 데이터 JSON(↑)·프롬프트 전문(↓), 테스트 기록 클릭 시 입력 폼 자동 복원(`fillComplaintForm`) | [`src/lab_web`](src/lab_web/README.md) · [`CASE-098`](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md) |
 | **지명·타지역·순화 · 성능** | 문맥 `sanitize_needed` + `sarcasm_mockery`, 네이버 `address`/`ac`·HTTP 400 서킷브레이커·사례 235쌍 도로+번지 색인, 일반명사·관공서·생활 기반시설 14종 불용어 필터, 도+시 약칭/거주지 예외 분리, `PREFIX-01` 예외/조건 가드 · 중복 추론 제거 | [`CASE-100`](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [`CASE-103`](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [`CASE-106`](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [`CASE-107`](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [`CASE-109`](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) |
 | **LLM · 429 안정화 · 보고** | `K-EXAONE 2.5` 단계별 차등(`high`/`low`)·`02/03/04 4096` 상한·429 백오프, `Codex CLI` 비도구 `_disable_mcp`·MCP 2종, `PREFIX-00~04`, **11/19 보고서 [`업무보고_20261119.pdf`](docs/report/업무보고_20261119.pdf)**([`docs/report/`](docs/report/README.md)) · **200건 실증 [`docs/test/`](docs/test/README.md)** | [`CASE-105`](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [`CASE-108`](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [프롬프트 구조](#시스템-프롬프트-prefix) |
@@ -64,9 +64,9 @@
 
 | 지금 됨 (`:5000` 민원 웹) | 응대 검사기 (`:5010` / `#/lab`) | 아직 (후속) |
 | --- | --- | --- |
-| 시민 등록·수정·철회·영구 삭제, 다크 투명 로고·SVG·호버 | 문맥 순화(`sanitize_needed`·`sarcasm_mockery`) · 도로+번지/타지역 조기 차단 | 담당자 실시간 SSE 푸시 · 시민 챗봇 실연결 |
-| 담당자 127부서 배정·템플릿 CRUD · `/docs`·`/swagger`·`#/staff/api` Swagger | 거주지·운수 예외, `address`/`ac`·HTTP 400 서킷브레이커·사례 색인, FAQ 예외 가드 | 운영 본인·담당자 인증 · `openai_api` 키 실측 |
-| 비동기 RAG+LLM 워커·`aiAssist`·초안 보호, `complaint_app` 4테이블 | EXAONE `high/low`(`<=4096`), `PREFIX-03∥04` 병렬, 200건(`95%`) → 패치 후 100건(`98%`, 실응답 `99%`) 재검증 | `EXAONE Tabular` · 공식 이관 · 200초 단일 지연 |
+| 시민 등록·수정·철회·영구 삭제, **시민 AI 챗봇 실연결**, 다크 투명 로고·SVG | 문맥 순화(`sanitize_needed`·`sarcasm_mockery`) · 도로+번지/타지역 조기 차단 | 운영 본인·담당자 인증 · `openai_api` 키 실측 |
+| **담당자 실시간 SSE 푸시(`Last-Event-ID`·3초 대체)**, 127부서·템플릿 · Swagger 25경로 | 거주지·운수 예외, `address`/`ac`·HTTP 400 서킷브레이커·사례 색인, FAQ 예외 가드 | 7테이블 정규화 · 다중 워커 브로커(Redis/PG) |
+| 비동기 RAG+LLM 워커·`aiAssist`·초안 보호, `complaint_app` 4테이블 | EXAONE `high/low`(`<=4096`), `PREFIX-03∥04` 병렬, 200건(`95%`) → 패치 후 100건(`98%`, 실응답 `99%`) 재검증 | 청주시 공식 접수·외부 이관 · 200초 단일 지연 |
 
 <img src="docs/assets/lab-overview.svg" width="100%" alt="응대 검사기: 작성, 검색, 판정, 안내 또는 처리 사유" />
 
@@ -108,13 +108,13 @@
 시연 웹과 업무 서버는 **PostgreSQL `complaint_app`(업무)**과 **`complaint_rag`(검색 지식)**를 스키마 단위로 완전히 분리해 운영합니다.
 
 - **업무 서버 · UI (`:5000`):** 시민·담당자 UI는 Flask API(`src/complaints/api.py`)를 통해 민원 CRUD, 다크/라이트 테마(투명 청주시 로고), 시민 본인 민원 영구 삭제, 담당자 127개 부서 배정, 커스텀 답변 템플릿을 제공합니다.
-- **비동기 AI 워커 (`CASE-093`):** 민원 웹(`:5000`)과 `#/lab`은 `ComplaintService`가 `src/assist` 백그라운드 워커 및 스트림 API를 호출하며, 단독 검사기(`:5010`)와 동일한 판정·초안·순화·정책 검사를 공유합니다(1.5초 폴링).
-- **미구현 경계:** 담당자 실시간 SSE 푸시, 시민 챗봇 실연동, 운영 본인·담당자 인증, 청주시 공식 접수·외부 이관은 후속 구현 범위입니다.
+- **비동기 AI 워커 · 실시간 SSE · 시민 챗봇 (`CASE-093` · `CASE-110`):** 민원 웹(`:5000`)과 `#/lab`은 `ComplaintService`가 `src.assist` 백그라운드 워커를 실행하며, 담당자 모니터는 `GET /api/v1/staff/events` 실시간 SSE 푸시(`Last-Event-ID`·`resync_required`·단절 시 3초 폴링 대체)로 진행 단계를 수신합니다. 시민 민원 도우미(`#/citizen/assistant`)는 `POST /api/v1/citizen/chat/stream`으로 실시간 RAG+LLM 안내(FAQ 출처·참고 부서·감지 구 폼 자동 전달)를 제공하되 `staffDraft`·`sanitize`·`codex`·`cases`를 서버에서 구조적으로 차단합니다.
+- **미구현 경계:** 운영 본인·담당자 인증, 다중 인스턴스 이벤트 브로커, 7테이블 정규화, 청주시 공식 접수·외부 이관은 후속 구현 범위입니다.
 
 <details>
-<summary><strong>구현 이력 관련 사례 (CASE-014 ~ CASE-109) 및 Swagger PDF</strong></summary>
+<summary><strong>구현 이력 관련 사례 (CASE-014 ~ CASE-110) 및 Swagger PDF</strong></summary>
 
-[서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-094](docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md) · [CASE-095](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) · [CASE-096](docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md) · [CASE-097](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-098](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md) · [CASE-099](docs/cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [CASE-109](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
+[서버 안내](src/README.md) · [CASE-014](docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) · [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) · [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-094](docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md) · [CASE-095](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) · [CASE-096](docs/cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md) · [CASE-097](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-098](docs/cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md) · [CASE-099](docs/cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [CASE-109](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) · [CASE-110](docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf)
 
 </details>
 
@@ -128,8 +128,8 @@
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
 | 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
 | AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010`·민원 CRUD 비동기 워커(`:5000`) · K-EXAONE 2.5·GPT-6 Luna(가드)·Codex CLI 선택 · 초안 평가 개발 26/26 · 보류 3/3 · 400문항 아님 · openai_api 캐시 실측은 키 후속 |
-| 시연 웹 | 시민·담당자·`#/lab`, 다크/라이트·투명 로고·시민 영구 삭제·127부서 배정·커스텀 템플릿·1.5초 폴링 | Flask·Swagger·PostgreSQL `complaint_app` (4테이블) · Windows `웹-시작.cmd` · SSE 푸시/시민 챗봇은 후속 |
-| 응대 검사기 | `:5010` 작성 → 장소추적·검색 → 엔진선택 판정 → 기록 클릭 시 폼 복원 (시민 UI 톤 통일·다크 토글) | 업무 DB 없음 · `.rag-cache/lab-runs` 파일 기록 · 키 미설정 공급자 비활성화 · MCP NDJSON 핸드셰이크 · 시민 챗봇은 고정 응답 |
+| 시연 웹 | 시민·담당자·`#/lab`, 다크/라이트·투명 로고·시민 영구 삭제·**시민 AI 챗봇 실연결**·**담당자 실시간 SSE 푸시**·127부서 배정·커스텀 템플릿 | Flask·Swagger(25경로)·PostgreSQL `complaint_app` (4테이블) · Windows `웹-시작.cmd` · 운영 인증/공식 이관은 후속 |
+| 응대 검사기 | `:5010` 작성 → 장소추적·검색 → 엔진선택 판정 → 기록 클릭 시 폼 복원 (시민 UI 톤 통일·다크 토글) | 업무 DB 없음 · `.rag-cache/lab-runs` 파일 기록 · 키 미설정 공급자 비활성화 · MCP NDJSON 핸드셰이크 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
 - **검색·판정 계약:** 검색 CLI/API는 **FAQ 원문·출처와 유사 사례·부서 후보 JSON**을 반환하며 모든 검색 응답은 `retrieval_only=true`, `decision="requires_gate"`입니다(후속 판단 필요 의미이며 Jev 전용 계약 아님). `python3 -m rag assist`와 `src/lab_web` `:5010`은 이 검색 결과 위에서 2중 정책 검사를 수행합니다.
@@ -449,9 +449,9 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | **패치 후 `:5010` 100건 재검증 (`CASE-109`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_재검증.py` | **`98 / 100 (98.0%)` 통과**(실응답 `98/99, 99.0%`: 기존 미통과 **10/10**·노이즈 **13/13** 전원 해소, 신규 변형 **39/40**, `0.011s` 조기차단, `automaticTransfer=True` **0건**) |
 | **단독 검사기 `:5010` 200건 실증 (`CASE-105`)** | `.venv-web\Scripts\python.exe scripts/실증평가_200건_실행.py` | **`190 / 200 (95.0%)` 의미 통과** (11/17 112건 재측정 **108/112, +14건** · 신규 **82/88**, EXAONE **14/14 완주**, 조기차단 **0.012s**, `automaticTransfer=True` **0건**) |
 | **비통과 10건 · 경계 2건 표적 재검증 (`CASE-106`)** | 패치 적용 후 `:5010` 표적 12건 실서버 호출 | **표적 `12 / 12` 기대 동작 달성** (`B12·A35·A31·C09·B22~B24·B35·F05·F09` 전수 해소 + `C32` `0.01s` 조기차단 + `D20` `200.22s`; 노이즈 13건 제거 확인) |
-| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`172 passed`** (`CASE-109` 생활 기반시설 노이즈 회귀 포함 0 실패 · 0 건너뜀) |
+| **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`176 passed`** (`CASE-110` 실시간 SSE·시민 챗봇 비공개 투영 회귀 포함 0 실패 · 0 건너뜀) |
 | **112건 · 5,015건 규칙 회귀** | `.venv-web\Scripts\python.exe scripts/회귀검증_112건_규칙.py` | **112건 규칙 실패 `0`**, 공개 사례 `5,015`건 구 적중 **`762`** (`+11`, 오분류 `17` 유지, 외부 오탐 **`0`**) |
-| **포맷 · 정적 타입 · UI** | `black --check` · `mypy` · `npm --prefix ui run check` · `ui test` | `black` **통과** · `src/` 39모듈 + 100건 실행기 `mypy` **오류 0건** · UI 문법 **19개** · UI 단위 **22 / 22 통과** |
+| **포맷 · 정적 타입 · UI · CDP** | `black --check` · `mypy` · `npm --prefix ui run check` · `ui test` · Edge CDP | `black` **통과** · `src/` **41모듈** `mypy` **오류 0건** · UI 문법 **23개** · UI 단위 **27 / 27** · `:5000` SSE/챗봇 Edge E2E **0오류** |
 | **RAG 단위 · DB 무결성** | `.venv\Scripts\python.exe -m pytest rag/tests` · `-m rag.verify` | `rag/tests` **49 passed, 3 skipped**(Windows PG 템플릿 미구성) · `rag.verify` **`passed: true`** (`94`·`5,015`·`127`) |
 
 <details open>
@@ -485,11 +485,11 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | 타 지자체 차단 · FAQ 예외 · EXAONE · 최적화 | `충남 천안 두정동` 누락, `'담당자 연결'` FAQ 오종결, EXAONE 지연, 중복 로직 | `_EXT_DO_SHORT_CITIES` 조기 차단(`0.011s`) + 거주지/운수 예외 + `PREFIX-01`/`validate_decision` 예외 보류 + `staff_draft <=4096` + `PREFIX-03∥04` 병렬 + 스레드안전 평가 저장 및 전수 주석·JSDoc 정비 | `district.py`, `policy.py`, `pipeline.py`, `settings.py`, `scripts/실증평가_100건_재검증.py`, `scripts/보고서_공통.py` |
 
 <details>
-<summary><strong>11/17 112건 기준선 요약 및 패치·검증 사례 인덱스 (`CASE-093 ~ CASE-109`)</strong></summary>
+<summary><strong>11/17 112건 기준선 요약 및 패치·검증 사례 인덱스 (`CASE-093 ~ CASE-110`)</strong></summary>
 
-`11/17 기준선`(`codex_cli` 102건 평균 `23.27s` + `exaone_api` 10건) 전체 결과는 **[청주 민원 112건 상세 분석 보고서 (MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF)](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf)** · [원자료 JSON](rag/reports/lab-5010-eval-112-20261117.json)에 보존되어 있으며, `/swagger`+`#/staff/api` Edge CDP `lowContrast: []` 검증(`CASE-102`)부터 패치 후 100건 재검증(`98/100`)·생활 기반시설 불용어 보강(`CASE-109`)까지 이어지는 전체 이력은 아래 사례에서 확인할 수 있습니다.
+`11/17 기준선`(`codex_cli` 102건 평균 `23.27s` + `exaone_api` 10건) 전체 결과는 **[청주 민원 112건 상세 분석 보고서 (MD](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [PDF)](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.pdf)** · [원자료 JSON](rag/reports/lab-5010-eval-112-20261117.json)에 보존되어 있으며, `/swagger`+`#/staff/api` Edge CDP `lowContrast: []` 검증(`CASE-102`)부터 패치 후 100건 재검증(`98/100`, `CASE-109`)·담당자 실시간 SSE 및 시민 AI 챗봇 실연결(`CASE-110`)까지 이어지는 전체 이력은 아래 사례에서 확인할 수 있습니다.
 
-- **핵심 패치·실증:** [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-097(112건)](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101(Swagger)](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105(200건)](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [CASE-109(100건 재검증)](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md)
+- **핵심 패치·실증:** [CASE-093](docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-097(112건)](docs/cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [CASE-100](docs/cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) · [CASE-101(Swagger)](docs/cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) · [CASE-102](docs/cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) · [CASE-103](docs/cases/사례-103-잔여한계-도로번지-광역시약칭-거주지예외-EXAONE추론차등-병렬실행-2026-11-18.md) · [CASE-104](docs/cases/사례-104-잔여한계패치-주석-하네스동기화-중복최적화-최종검증-2026-11-19.md) · [CASE-105(200건)](docs/cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) · [CASE-106](docs/cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-107](docs/cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) · [CASE-108](docs/cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) · [CASE-109(100건 재검증)](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) · [CASE-110(실시간 SSE·시민 챗봇)](docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md)
 
 </details>
 
@@ -548,14 +548,14 @@ ai-complaint-process/
 ├── .env.example                  # 응대 LLM 공급자 예시
 ├── src/
 │   ├── app.py                    # Flask 팩토리
-│   ├── complaints/               # 민원 웹 CRUD·세션·127부서 배정·답변 템플릿
+│   ├── complaints/               # 민원 웹 CRUD·세션·실시간 SSE 브로커·시민 챗봇 투영·127부서·템플릿
 │   ├── rag/                      # 검색 API·부서 사전 클라이언트
 │   ├── llm/                      # K-EXAONE 2.5(차등 추론)·Luna·Codex CLI·도로+번지 장소추적
 │   ├── assist/                   # 조기 타지역 차단·지명/거주지 분리·병렬 PREFIX-03∥04 응대 파이프라인
 │   └── lab_web/                  # 추출 응대 검사기 웹 (:5010) · LLM 선택·다크 테마·기록 폼 복원
-├── ui/                           # 시민·담당자·검사기 화면 (투명 청주시 로고·다크 테마·템플릿/부서 UI)
+├── ui/                           # 시민(AI 챗봇)·담당자(실시간 SSE 모니터)·검사기 화면 · 다크 테마
 ├── scripts/                      # 200건 실증·패치 후 100건 재검증·SourceTrail 보고서·112건/5,015건 회귀·업무 PDF 스크립트
-├── docs/                         # 목차·사례(`CASE-109`)·하네스·배너·실증 SVG 차트
+├── docs/                         # 목차·사례(`CASE-110`)·하네스·배너·실증 SVG 차트
 │   ├── report/                   # 일자별 업무보고 PDF 전용 폴더
 │   ├── test/                     # 민원 실증 테스트 상세 분석 보고서 전용 폴더
 │   └── harness/prompts/          # PREFIX-00~04 시스템 접두 원문

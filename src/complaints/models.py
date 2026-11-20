@@ -412,6 +412,13 @@ class StaffWorkspace(Model):
     complaints: list[Complaint]
     revision: int
     role: Literal["staff"] = "staff"
+    event_cursor: int = 0
+
+
+class StaffEventsQuery(Model):
+    """담당자 SSE 구독 시 마지막으로 받은 이벤트 커서를 전달하는 쿼리 모델입니다."""
+
+    last_event_id: int | None = Field(default=None, ge=0)
 
 
 class PublicPage(PublicWorkspace):
@@ -431,7 +438,7 @@ class StaffPage(StaffWorkspace):
 
 
 class Health(Model):
-    """업무 서버와 AI 연결 범위를 명시한 상태 응답입니다."""
+    """업무 서버와 AI·실시간 SSE·시민 챗봇 연결 범위를 명시한 상태 응답입니다."""
 
     status: Literal["ok"] = "ok"
     storage: Literal["postgresql", "memory"] = "postgresql"
@@ -439,6 +446,99 @@ class Health(Model):
     ai_connected: bool = False
     assist_search: bool = False
     assist_llm: bool = False
+    sse_enabled: bool = True
+    citizen_chat_enabled: bool = True
+
+
+class CitizenChatInput(Model):
+    """시민 민원 도우미 챗봇 질문 입력 모델입니다.
+
+    Attributes:
+        message: 시민이 입력한 문의 또는 불편 내용(1~2000자)입니다.
+        district: 선택 관할 구 또는 세부 지역입니다. 비우면 본문에서 자동 추론합니다.
+        provider: 선택 LLM 공급자입니다. 비우면 `.env` 기본 공급자를 사용합니다.
+    """
+
+    message: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+    ]
+    district: str | None = Field(default=None, max_length=60)
+    provider: Provider | None = None
+
+    @field_validator("district", "provider", mode="before")
+    @classmethod
+    def clean_chat_optional(cls, value: object, info: ValidationInfo) -> object:
+        """선택 지역·공급자의 공백을 정리하고 관할 지역을 검증합니다.
+
+        Args:
+            value: 검증 전 입력 값입니다.
+            info: 검증 대상 필드 정보(`district` 또는 `provider`)입니다.
+
+        Returns:
+            정제된 문자열 또는 None입니다.
+
+        Raises:
+            ValueError: `district`에 알 수 없는 지역명이 들어오면 발생합니다.
+        """
+        is_provider = info.field_name == "provider"
+        cleaned = normalize_optional_text(value, lowercase=is_provider)
+        if cleaned is None:
+            return None
+        if not is_provider:
+            text = str(cleaned)
+            if text in ("전체", "모름", "자동 감지"):
+                return None
+            if normalize_district(text) is None:
+                raise ValueError(
+                    "청주시 4개 자치구 또는 관할 읍·면·동 이름을 입력해 주세요."
+                )
+            return text
+        return cleaned
+
+
+class CitizenFaqSource(Model):
+    """시민 챗봇 응답에 표시할 공식 FAQ 출처 요약입니다."""
+
+    source_id: str = ""
+    title: str
+    source_url: str | None = None
+    excerpt: str = ""
+
+
+class CitizenChatResponse(Model):
+    """미게시 초안·순화·내부 프롬프트를 제외한 시민 챗봇 전용 응답입니다.
+
+    Attributes:
+        query: 분석에 사용한 시민 문의 원문입니다.
+        outcome: 검증을 거친 세 갈래 결과(`faq_answer`·`department_suggestion`·`human_handoff`)입니다.
+        reason_code: 판정 사유 코드입니다.
+        answer: 시민에게 표시할 안내 문구입니다.
+        handoff_required: 담당자 확인 또는 민원 작성이 필요하면 True입니다.
+        automatic_transfer: 항상 False입니다. 공식 이관이 아닙니다.
+        district: 민원 작성 화면으로 넘길 정규화 관할 구 또는 `'모름'`입니다.
+        district_inferred: 본문 지명·장소 추적으로 관할 구를 자동 감지했으면 True입니다.
+        inferred_place_title: 추론된 장소명입니다. 없으면 None입니다.
+        faq_sources: 검증된 공식 FAQ 출처 목록입니다.
+        department_hints: 참고용 부서 명칭 후보 목록입니다(공식 배정 아님).
+        llm_provider: 실제 응답을 만든 LLM 공급자 식별자입니다.
+        llm_configured: 이번 호출에서 LLM을 사용했으면 True입니다.
+        demo_notice: 시연 서비스 및 비공식 접수 안내 문구입니다.
+    """
+
+    query: str
+    outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
+    reason_code: str
+    answer: str
+    handoff_required: bool
+    automatic_transfer: Literal[False] = False
+    district: District = "모름"
+    district_inferred: bool = False
+    inferred_place_title: str | None = None
+    faq_sources: list[CitizenFaqSource] = Field(default_factory=list)
+    department_hints: list[str] = Field(default_factory=list)
+    llm_provider: str | None = None
+    llm_configured: bool = False
+    demo_notice: str = ""
 
 
 class AssistInput(Model):
@@ -462,9 +562,7 @@ class AssistInput(Model):
 
     @field_validator("district", "provider", mode="before")
     @classmethod
-    def clean_optional_fields(
-        cls, value: object, info: ValidationInfo
-    ) -> object:
+    def clean_optional_fields(cls, value: object, info: ValidationInfo) -> object:
         """선택 지역·공급자의 빈 값을 None으로 정리하고 관할 지역을 확인합니다.
 
         Args:

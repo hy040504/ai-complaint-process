@@ -2,15 +2,18 @@
 
 from collections.abc import Callable, Iterator
 from hashlib import sha256
+import inspect
 from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
+from src.complaints.chat import project_citizen_chat
 from src.complaints.departments import (
     load_department_directory,
     valid_department_names,
 )
 from src.complaints.errors import AppError
+from src.complaints.events import StaffEventBroker, StaffEventType
 from src.complaints.models import (
     Actor,
     Answer,
@@ -19,6 +22,8 @@ from src.complaints.models import (
     AnswerVersion,
     AssignmentInput,
     AssistResponse,
+    CitizenChatInput,
+    CitizenChatResponse,
     Complaint,
     ComplaintInput,
     ComplaintUpdate,
@@ -183,9 +188,155 @@ class ComplaintService:
         self.repository = repository
         self.iter_assist_fn = iter_assist_fn
         self.auto_start_ai = auto_start_ai
+        self._supports_staff_output_flag = bool(
+            iter_assist_fn is not None
+            and "include_staff_outputs" in inspect.signature(iter_assist_fn).parameters
+        )
         self._live_lock = Lock()
         self._live_jobs: dict[tuple[str, int, int], tuple[str, list[Event]]] = {}
         self._active_threads: dict[tuple[str, int, int], Thread] = {}
+        self.events = StaffEventBroker()
+
+    def _publish_row_event(self, event_type: StaffEventType, row: Complaint) -> None:
+        """커밋된 민원의 안전한 작업·상태 메타데이터를 담당자 SSE 브로커에 발행합니다.
+
+        Args:
+            event_type: 발행할 SSE 이벤트 유형입니다.
+            row: 저장소에 커밋된 최신 민원 레코드입니다.
+        """
+        self.events.publish(
+            event_type,
+            row.id,
+            context_version=row.context_version,
+            attempt=row.job.attempt,
+            job_status=row.job.status,
+            stage=row.job.stage,
+        )
+
+    def require_staff(self, actor: Actor) -> None:
+        """담당자 전용 API 경로(SSE 등) 진입 시 세션 역할을 검증합니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 사용자입니다.
+
+        Raises:
+            AppError: 담당자 역할이 아니면 403 오류를 발생합니다.
+        """
+        self._require_staff(actor)
+
+    def iter_citizen_chat(
+        self, actor: Actor, body: CitizenChatInput
+    ) -> Iterator[dict[str, Any]]:
+        """시민 민원 도우미 질의를 RAG+LLM으로 분석하고 안전한 시민 전용 결과를 스트리밍합니다.
+
+        담당자 초안(`PREFIX-03`)과 직원 보호 순화(`PREFIX-04`)는 생성·노출하지 않습니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 사용자입니다.
+            body: 시민이 입력한 질문과 선택 관할·공급자입니다.
+
+        Yields:
+            진행 안내(`progress`) 또는 시민 투영 완료(`done`) 이벤트 사전입니다.
+        """
+        del actor  # 세션 인증은 protect_api·actor()에서 선행 검증됩니다.
+        iter_fn = self.iter_assist_fn
+        if iter_fn is None:
+            yield {
+                "type": "progress",
+                "key": "read",
+                "label": "민원 내용을 읽고 있어요",
+            }
+            fallback = project_citizen_chat(
+                {
+                    "query": body.message,
+                    "district": body.district,
+                    "outcome": "human_handoff",
+                    "reason_code": "llm_unavailable",
+                    "llm_configured": False,
+                }
+            )
+            yield {"type": "done", "result": fallback}
+            return
+
+        kwargs: dict[str, Any] = {}
+        if body.provider is not None:
+            kwargs["provider"] = body.provider
+        if self._supports_staff_output_flag:
+            kwargs["include_staff_outputs"] = False
+
+        done_raw: dict[str, Any] | None = None
+        try:
+            for event in iter_fn(body.message, body.district, 5, False, **kwargs):
+                kind = event.get("type")
+                if kind == "progress":
+                    # 시민 챗봇 화면에는 직원용 초안·순화 단계 라벨을 노출하지 않습니다.
+                    if event.get("key") in ("sanitize", "draft"):
+                        continue
+                    yield {
+                        "type": "progress",
+                        "key": str(event.get("key") or "review"),
+                        "label": str(event.get("label") or "내용을 확인하고 있어요"),
+                    }
+                elif kind == "done" and isinstance(event.get("result"), dict):
+                    done_raw = event["result"]
+                    break
+                elif kind == "error":
+                    done_raw = {
+                        "query": body.message,
+                        "district": body.district,
+                        "outcome": "human_handoff",
+                        "reason_code": "llm_unavailable",
+                        "llm_configured": False,
+                    }
+                    break
+        except Exception:
+            done_raw = {
+                "query": body.message,
+                "district": body.district,
+                "outcome": "human_handoff",
+                "reason_code": "llm_unavailable",
+                "llm_configured": False,
+            }
+
+        if done_raw is None:
+            done_raw = {
+                "query": body.message,
+                "district": body.district,
+                "outcome": "human_handoff",
+                "reason_code": "llm_unavailable",
+                "llm_configured": False,
+            }
+        yield {"type": "done", "result": project_citizen_chat(done_raw)}
+
+    def run_citizen_chat(
+        self, actor: Actor, body: CitizenChatInput
+    ) -> CitizenChatResponse:
+        """시민 민원 도우미 질의에 대한 최종 시민 전용 응답을 반환합니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 사용자입니다.
+            body: 시민 질문과 선택 관할·공급자입니다.
+
+        Returns:
+            내부 초안·순화 필드가 제거된 `CitizenChatResponse` 모델입니다.
+        """
+        result: CitizenChatResponse | None = None
+        for event in self.iter_citizen_chat(actor, body):
+            if event.get("type") == "done" and isinstance(
+                event.get("result"), CitizenChatResponse
+            ):
+                result = event["result"]
+        if result is not None:
+            return result
+        return project_citizen_chat(
+            {
+                "query": body.message,
+                "district": body.district,
+                "outcome": "human_handoff",
+                "reason_code": "llm_unavailable",
+                "llm_configured": False,
+            }
+        )
 
     @property
     def ai_connected(self) -> bool:
@@ -298,7 +449,9 @@ class ComplaintService:
         revision = sum(row.version for row in rows)
         if actor.role == "staff":
             return StaffWorkspace(
-                complaints=[self._enrich_live(row) for row in rows], revision=revision
+                complaints=[self._enrich_live(row) for row in rows],
+                revision=revision,
+                event_cursor=self.events.cursor,
             )
         return PublicWorkspace(
             complaints=[self.project(actor, row) for row in rows], revision=revision
@@ -337,12 +490,13 @@ class ComplaintService:
             ]
         total = len(rows)
         selected = rows[(query.page - 1) * query.limit : query.page * query.limit]
-        if actor.role == "staff":
+        if actor.role == "staff" and isinstance(workspace, StaffWorkspace):
             return StaffPage(
                 complaints=[
                     Complaint.model_validate(row.model_dump()) for row in selected
                 ],
                 revision=workspace.revision,
+                event_cursor=workspace.event_cursor,
                 total=total,
                 page=query.page,
                 limit=query.limit,
@@ -399,6 +553,7 @@ class ComplaintService:
         saved = self.repository.create(
             row, key, sha256(body.model_dump_json().encode()).hexdigest()
         )
+        self._publish_row_event("complaint.created", saved)
         if self.ai_connected and self.auto_start_ai:
             self._launch_ai_job(saved)
         return saved
@@ -466,6 +621,14 @@ class ComplaintService:
                 )
 
         self.repository.delete(complaint_id, version, check_owner)
+        self.events.publish(
+            "complaint.deleted",
+            complaint_id,
+            context_version=row.context_version,
+            attempt=row.job.attempt,
+            job_status=row.job.status,
+            stage="민원 삭제",
+        )
 
     def _require_staff(self, actor: Actor) -> None:
         """요청 사용자가 담당자 역할인지 검증합니다.
@@ -610,6 +773,7 @@ class ComplaintService:
                 self._start_job(row, provider=next_provider, real_ai=True)
 
         saved = self.change(actor, complaint_id, body.version, False, apply)
+        self._publish_row_event("complaint.updated", saved)
         if self.ai_connected and self.auto_start_ai:
             self._launch_ai_job(saved)
         return saved
@@ -832,6 +996,12 @@ class ComplaintService:
             operation not in ("withdraw", "message", "review"),
             apply,
         )
+        event_kind: StaffEventType = (
+            "ai_job.stage_changed"
+            if operation == "retry"
+            else ("ai_job.cancelled" if operation == "cancel" else "complaint.updated")
+        )
+        self._publish_row_event(event_kind, saved)
         if operation == "retry" and self.ai_connected:
             self._launch_ai_job(saved)
         return saved
@@ -901,6 +1071,14 @@ class ComplaintService:
                             events.append(Event(stage=label))
                         with self._live_lock:
                             self._live_jobs[key] = (label, list(events))
+                        self.events.publish(
+                            "ai_job.stage_changed",
+                            complaint_id,
+                            context_version=context_version,
+                            attempt=attempt,
+                            job_status="running",
+                            stage=label,
+                        )
                 elif kind == "error":
                     raise RuntimeError(
                         str(event.get("message") or "응대 분석이 실패했습니다.")
@@ -932,7 +1110,7 @@ class ComplaintService:
         attempt: int,
         context_version: int,
         updater: Callable[[Complaint], None],
-    ) -> None:
+    ) -> Complaint | None:
         """맥락·시도·실행 상태가 유효할 때만 작업 결과를 원자적으로 저장합니다.
 
         시민 원문 수정, 게시, 취소, 재시도로 맥락·시도 번호가 바뀐 늦은 결과는
@@ -944,16 +1122,21 @@ class ComplaintService:
             attempt: 시작한 작업 시도 번호입니다.
             context_version: 작업 시작 당시 민원 내용 버전입니다.
             updater: 최신 민원에 최종 결과나 실패 상태를 반영할 콜백입니다.
+
+        Returns:
+            실제로 커밋에 성공한 민원 레코드입니다. 취소·맥락 변경으로 버려졌으면 None입니다.
         """
         for _ in range(4):
             try:
                 latest = self.repository.get(complaint_id)
             except AppError as err:
                 if err.status == 404:
-                    return
+                    return None
                 raise
             if not self._matches_running_job(latest, attempt, context_version):
-                return
+                return None
+
+            applied = False
 
             def apply_checked(current: Complaint) -> None:
                 """트랜잭션 잠금 안에서 실행 맥락 일치 여부를 한 번 더 검증합니다.
@@ -961,15 +1144,20 @@ class ComplaintService:
                 Args:
                     current: 잠금으로 조회한 최신 민원 레코드입니다.
                 """
+                nonlocal applied
                 if self._matches_running_job(current, attempt, context_version):
                     updater(current)
+                    applied = True
 
             try:
-                self.repository.change(complaint_id, latest.version, apply_checked)
-                return
+                saved = self.repository.change(
+                    complaint_id, latest.version, apply_checked
+                )
+                return saved if applied else None
             except AppError as err:
                 if err.status != 409:
                     raise
+        return None
 
     @staticmethod
     def _matches_running_job(
@@ -1047,7 +1235,11 @@ class ComplaintService:
                 )
             )
 
-        self._commit_with_retry(complaint_id, attempt, context_version, update)
+        committed = self._commit_with_retry(
+            complaint_id, attempt, context_version, update
+        )
+        if committed is not None:
+            self._publish_row_event("ai_job.completed", committed)
 
     def _commit_ai_failure(
         self,
@@ -1080,7 +1272,11 @@ class ComplaintService:
             current.job.events = [*events, Event(stage=final_stage)]
             current.history.append(History(text=final_stage, public=False))
 
-        self._commit_with_retry(complaint_id, attempt, context_version, update)
+        committed = self._commit_with_retry(
+            complaint_id, attempt, context_version, update
+        )
+        if committed is not None:
+            self._publish_row_event("ai_job.failed", committed)
 
     def advance_jobs(self) -> None:
         """경과 시간에 따른 시연 단계를 DB에 반영하며 실제 AI 연결 시에는 실행하지 않습니다."""
@@ -1121,7 +1317,11 @@ class ComplaintService:
                     current.ai_candidate = "[서버 시연 후보] 담당자의 근거·현장 확인이 필요합니다. 현재 편집본에 자동 적용하지 않는 고정 시연 문구입니다."
 
             try:
-                self.repository.change(row.id, row.version, advance)
+                saved = self.repository.change(row.id, row.version, advance)
+                self._publish_row_event(
+                    "ai_job.completed" if completed == 5 else "ai_job.stage_changed",
+                    saved,
+                )
             except AppError as error:
                 if error.status != 409:
                     raise

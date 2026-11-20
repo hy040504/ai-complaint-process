@@ -145,7 +145,10 @@ def response_headers(response: Response) -> Response:
     Returns:
         캐시와 콘텐츠 해석 제한을 추가한 응답입니다.
     """
-    response.headers["Cache-Control"] = "no-store"
+    if response.mimetype == "text/event-stream":
+        response.headers["Cache-Control"] = "no-cache, no-store"
+    else:
+        response.headers["Cache-Control"] = "no-store"
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 

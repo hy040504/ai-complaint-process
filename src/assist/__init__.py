@@ -30,8 +30,10 @@ def run_web_assist(
     limit: int,
     rerank: bool,
     provider: str | None = None,
+    *,
+    include_staff_outputs: bool = True,
 ) -> dict[str, Any]:
-    """웹 검사기가 사용하는 응대 파이프라인을 실행합니다.
+    """웹 검사기·시민 도우미가 사용하는 응대 파이프라인을 실행합니다.
 
     Args:
         query: 한국어 민원 원문입니다.
@@ -39,11 +41,19 @@ def run_web_assist(
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
         provider: 선택한 LLM 공급자입니다.
+        include_staff_outputs: 담당자 전용 초안·순화를 함께 생성할지 여부입니다.
 
     Returns:
         `run_assist`의 결과 딕셔너리입니다.
     """
-    return run_assist(query, district, limit=limit, rerank=rerank, provider=provider)
+    return run_assist(
+        query,
+        district,
+        limit=limit,
+        rerank=rerank,
+        provider=provider,
+        include_staff_outputs=include_staff_outputs,
+    )
 
 
 def iter_web_assist(
@@ -52,8 +62,10 @@ def iter_web_assist(
     limit: int,
     rerank: bool,
     provider: str | None = None,
+    *,
+    include_staff_outputs: bool = True,
 ) -> Iterator[dict[str, Any]]:
-    """웹 검사기가 진행 안내와 최종 결과를 순서대로 받습니다.
+    """웹 검사기·시민 도우미가 진행 안내와 최종 결과를 순서대로 받습니다.
 
     Args:
         query: 한국어 민원 원문입니다.
@@ -61,11 +73,19 @@ def iter_web_assist(
         limit: 컬렉션별 검색 수입니다.
         rerank: 재정렬 여부입니다.
         provider: 선택한 LLM 공급자입니다.
+        include_staff_outputs: 담당자 전용 초안·순화를 함께 생성할지 여부입니다.
 
     Yields:
         짧은 진행 안내 또는 최종 응대 결과입니다.
     """
-    yield from iter_assist(query, district, limit=limit, rerank=rerank, provider=provider)
+    yield from iter_assist(
+        query,
+        district,
+        limit=limit,
+        rerank=rerank,
+        provider=provider,
+        include_staff_outputs=include_staff_outputs,
+    )
 
 
 __all__ = [

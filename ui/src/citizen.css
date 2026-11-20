@@ -1152,15 +1152,21 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-top: 4px;
 }
 .citizen-shell .chat-heading small i {
-  height: 5px;
-  width: 5px;
-  background: #9aabc6;
+  height: 6px;
+  width: 6px;
+  background: #10b981;
   border-radius: 50%;
 }
 .citizen-shell .chat-heading .mini-chip {
-  color: #8b98b0;
+  color: #5b7296;
   background: #f3f6fc;
-  border-color: #e2e9f4;
+  border-color: #dce5f4;
+}
+.citizen-shell .chat-heading .mini-chip.live-chip {
+  color: #0f766e;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  font-weight: 650;
 }
 .citizen-shell .chat-messages {
   padding: 25px;
@@ -1330,6 +1336,98 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 12px;
   padding: 11px;
   white-space: normal;
+}
+.citizen-ai-card.tone-faq {
+  border-color: #99d5c9;
+  background: linear-gradient(180deg, #f4fdfb, #ecfaf6);
+}
+.citizen-ai-card.tone-faq header {
+  color: #0f766e;
+  background: #0d94880f;
+  border-color: #b7e4da;
+}
+.citizen-ai-card.tone-faq dl > div {
+  border-color: #c2e8df;
+}
+.citizen-ai-card.tone-faq dt {
+  color: #0f766e;
+}
+.citizen-ai-card.tone-faq dd {
+  color: #1f4d47;
+}
+.citizen-ai-card.tone-action {
+  border-color: #bfd5fb;
+  background: linear-gradient(180deg, #f7faff, #eff5ff);
+}
+.citizen-ai-card.tone-action header {
+  color: #1d4ed8;
+  background: #2f6fed10;
+  border-color: #cadcfb;
+}
+.citizen-ai-card.tone-action dl > div {
+  border-color: #d2e2fc;
+}
+.citizen-ai-card.tone-action dt {
+  color: #1e40af;
+}
+.citizen-ai-card.tone-action dd {
+  color: #253b63;
+}
+.chat-answer-text {
+  color: #1f2f4d;
+  line-height: 1.85;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.chat-faq-links a {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chat-dept-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.chat-dept-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #1e40af;
+  background: #e0ecff;
+  border: 1px solid #bfdbfe;
+}
+.chat-card-note {
+  margin: 0;
+  padding: 8px 12px 0;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #64748b;
+}
+.chat-district-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid #d7e2f4;
+  border-radius: 15px;
+  background: #f8faff;
+  color: #4f668c;
+  font-size: 11px;
+}
+.chat-district-wrap select {
+  border: none;
+  background: transparent;
+  color: #1e3a6d;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 2px;
+  cursor: pointer;
 }
 .citizen-typing {
   display: flex;

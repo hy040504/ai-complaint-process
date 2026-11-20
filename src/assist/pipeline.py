@@ -492,6 +492,7 @@ def iter_assist(
     search_fn: Callable[..., dict[str, Any]] | None = None,
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
     provider: str | None = None,
+    include_staff_outputs: bool = True,
 ) -> Iterator[dict[str, Any]]:
     """검색 다음에 LLM 판정을 이어 진행 안내와 최종 결과를 넘깁니다.
 
@@ -503,6 +504,8 @@ def iter_assist(
         search_fn: 검색 함수입니다. 생략하면 검색 API를 호출합니다.
         llm_fn: (system, user) → 텍스트 함수입니다. 생략하면 환경 설정의 LLM을 쓰고, None이면 호출하지 않습니다.
         provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
+        include_staff_outputs: 담당자 전용 산출물(`PREFIX-03` 초안·`PREFIX-04` 순화)을
+            함께 생성할지 여부입니다. 시민 챗봇 경로에서는 False로 지정해 생략합니다.
 
     Yields:
         `progress` 사건 또는 최종 `done` 결과입니다.
@@ -567,7 +570,7 @@ def iter_assist(
         ]
         early_sanitize: dict[str, Any] | None = None
         early_codex: list[dict[str, Any]] = []
-        if llm_on and needs_sanitize(text):
+        if include_staff_outputs and llm_on and needs_sanitize(text):
             yield progress("sanitize")
             early_sanitize, san_stage, san_codex, san_err = _run_sanitize_step(
                 text, llm_fn, bound_meta
@@ -592,7 +595,11 @@ def iter_assist(
                 stages=stages,
                 llm_on=llm_on,
                 codex=early_codex,
-                staff_draft=_out_of_scope_staff_draft(text, early_external),
+                staff_draft=(
+                    _out_of_scope_staff_draft(text, early_external)
+                    if include_staff_outputs
+                    else None
+                ),
                 sanitize=early_sanitize,
                 district_inferred=False,
                 inferred_place=None,
@@ -736,12 +743,14 @@ def iter_assist(
         )
 
     need_sanitize = (
-        llm_on
+        include_staff_outputs
+        and llm_on
         and not decision_call_failed
         and should_run_sanitize(text, raw_decision, decision)
     )
     need_draft = (
-        llm_on
+        include_staff_outputs
+        and llm_on
         and not decision_call_failed
         and decision["outcome"] != "faq_answer"
         and decision["scope"] != "out_of_scope"
@@ -802,7 +811,8 @@ def iter_assist(
             if draft_err:
                 failures.append(draft_err)
         elif (
-            not decision_call_failed
+            include_staff_outputs
+            and not decision_call_failed
             and decision["scope"] == "out_of_scope"
             and decision["outcome"] != "faq_answer"
         ):
@@ -842,6 +852,7 @@ def run_assist(
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
     on_progress: Callable[[str, str], None] | None = None,
     provider: str | None = None,
+    include_staff_outputs: bool = True,
 ) -> dict[str, Any]:
     """검색 → 판정 → 정책 검사 → 조건부 FAQ·순화·담당자 초안 순서로 응대 결과를 만듭니다.
 
@@ -854,6 +865,8 @@ def run_assist(
         llm_fn: (system, user) → 텍스트 함수입니다. 생략하면 환경 설정의 LLM을 쓰고, None이면 호출하지 않습니다.
         on_progress: 짧은 진행 안내를 받을 콜백입니다. `(key, label)`입니다.
         provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
+        include_staff_outputs: 담당자 전용 산출물(`PREFIX-03` 초안·`PREFIX-04` 순화)을
+            함께 생성할지 여부입니다. 시민 챗봇 경로에서는 False로 지정해 생략합니다.
 
     Returns:
         세 갈래 결과·근거·정책 실패·단계를 담은 딕셔너리입니다.
@@ -867,6 +880,7 @@ def run_assist(
         search_fn=search_fn,
         llm_fn=llm_fn,
         provider=provider,
+        include_staff_outputs=include_staff_outputs,
     ):
         if event["type"] == "progress":
             if on_progress:

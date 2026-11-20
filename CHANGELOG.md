@@ -2,6 +2,11 @@
 
 ## 2026-11-20
 
+- **담당자 실시간 SSE 푸시(`BE07`·`UI08`) 및 시민 AI 챗봇 실연결 구현 ([CASE-110](docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md)):**
+  - **담당자 실시간 SSE 이벤트 브로커·API·UI (`src/complaints/events.py`·`service.py`·`api.py`·`http.py`, `ui/src/realtime.js`·`app.js`·`staff.css`·`themes.css`):** 단조 증가 커서·256건 링 버퍼·`Last-Event-ID` 재전송·`resync_required`·15초 하트비트를 제공하는 `StaffEventBroker`와 담당자 전용 `GET /api/v1/staff/events`(익명 401·시민 403, 민감 본문/초안 미포함)를 구현했습니다. `#/staff/monitor`의 1.5초 폴링을 실시간 `EventSource`(단절 시 3초 폴링 자동 대체·복구 시 원복·편집 초안 보호)로 전환했습니다.
+  - **시민 민원 도우미(`#/citizen/assistant`) 실시간 RAG+LLM 연결 (`src/complaints/chat.py`·`models.py`·`api.py`, `src/assist/pipeline.py`, `ui/src/chatbot.js`·`app.js`·`citizen.css`·`themes.css`):** `include_staff_outputs=False` 최적화로 직원용 `PREFIX-03/04` 호출을 생략하고, `POST /api/v1/citizen/chat(/stream)`에서 `CitizenChatResponse` 투영으로 `staffDraft`·`sanitize`·`codex`·`cases`·`modelRaw`를 구조적으로 배제했습니다. 시민 화면에 실시간 NDJSON 진행 안내, FAQ 출처·참고 부서·관할 구 선택·`새 대화`·민원 작성 폼 구 자동 채움을 연동했습니다.
+  - **Swagger PDF 및 전수 검증:** [`청주톡톡_민원_업무_API_Swagger.pdf`](docs/청주톡톡_민원_업무_API_Swagger.pdf) 25경로 갱신, `mypy` 41모듈 **0오류**, `RUN_PG_TESTS=1 pytest src/tests` **`176 passed`**, `ui check` **23** · `ui test` **`27 / 27`**, `:5000` Headless Edge CDP 실시간 SSE·시민 챗봇·작성 이관 E2E(콘솔 오류 `0건`) 통과.
+
 - **패치 후 `:5010` 100건 실증 재검증(`98/100, 98.0%`) 및 생활 기반시설 노이즈 보강 ([CASE-109](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md)):**
   - **100건 실서버 재검증 ([`scripts/실증평가_100건_재검증.py`](scripts/실증평가_100건_재검증.py) · [`lab-5010-eval-100-20261120.json`](rag/reports/lab-5010-eval-100-20261120.json)):** 기존 문제·노이즈·회귀 60건(`reverify_60`)과 신규 변형·경계 스트레스 40건(`fresh_40`, `N01~N40`)을 `:5010` 실서버(`codex_cli` 50 · `exaone_api` 50)로 호출해 **`98 / 100 (98.0%)` 통과**(실응답 `98 / 99, 99.0%`)를 확인했습니다. `CASE-105` 미통과 10건(`10/10`)·장소 노이즈 13건(`13/13`, 재발 0건)·신규 4개 구 도로+번지(`4/4`)·도+시 약칭 조기차단(평균 `0.011s`)·`automatic_transfer=True` `0건`을 검증했습니다.
   - **생활 기반시설 일반명사 불용어 보강 (`src/llm/place_tool.py`, `src/tests/test_place_tool.py`):** 100건 재검증 `N28`에서 포착된 `"하수구"` 민간 업체 오매칭(`청주하수구막힘변기뚫음누수탐지`) 방지를 위해 `_STOP_WORDS`에 `하수구·배수구·하수관·오수관·우수관·정화조·전신주·변압기·과속방지턱·가드레일·안전펜스·안전난간·중앙분리대·적치물` 14종(기존 `"난간"` 중복 제거로 `351종` 고유화)과 단위 회귀 테스트를 추가해 `src/tests` **`172 passed`**를 확인했습니다.

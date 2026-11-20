@@ -66,7 +66,7 @@ flowchart LR
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
-| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
+| `complaints/` | 민원 CRUD, 시연 세션, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), 실시간 SSE 브로커(`events.py`), 시민 챗봇 투영(`chat.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON·프롬프트 전문, `llmProvider`·`llmModel`에 실제 사용 엔진 기록. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
@@ -90,7 +90,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 
 | 메서드·경로 (`/api/v1` 기준) | 권한·기능 |
 | --- | --- |
-| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부 |
+| `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부, `sseEnabled`·`citizenChatEnabled`는 실시간 SSE·시민 챗봇 활성화 여부 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역·공급자별 사용 가능 여부(`providers`: `available`, `reason`, `resolvedProvider`) 목록 |
 | 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세 검색 및 장소 추적 후 선택 공급자(`provider`)로 판정. `assist.inferredPlace`·`assist.llmProvider`·`assist.llmModel`·`assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
@@ -102,8 +102,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
 | `POST /assist` | 검색+판정+정책 검사(`rerank` 기본 False·`provider` 선택·읍·면·동 허용). 세션 불필요. 민원 저장 없음 |
 | `POST /assist/stream` | 같은 파이프라인의 진행 안내 NDJSON 뒤 `done` 스트리밍. 세션 불필요 |
+| `POST /citizen/chat`, `POST /citizen/chat/stream` | 시민 민원 도우미 전용 RAG+LLM 응답 및 NDJSON 스트림(세션 필수·`include_staff_outputs=False`·`staffDraft`/`sanitize`/`codex`/`cases` 구조 제거·`automaticTransfer=False`) |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
-| `GET /workspace` | 역할별 로컬 UI 전체 스냅샷 |
+| `GET /workspace` | 역할별 로컬 UI 전체 스냅샷(담당자는 `eventCursor` 포함) |
 | `GET /complaints` | 공개 범위 적용 후 검색·페이지 목록 |
 | `POST /complaints` | 시민 등록, `Idempotency-Key` 지원 |
 | `GET /complaints/{complaint_id}` | 허용된 상세만 조회 |
@@ -120,6 +121,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `POST /complaints/{complaint_id}/retract` | 담당자 게시본 철회·이력 보존 |
 | `POST /complaints/{complaint_id}/jobs` | 담당자 비동기 AI 분석 시작(`JobStartInput.provider` 선택) 또는 테스트 미연결 시 단계 시연 |
 | `POST /complaints/{complaint_id}/jobs/cancel` | 담당자 실행 중 작업 취소 |
+| `GET /staff/events` | 담당자 전용 실시간 SSE(`text/event-stream`) 이벤트 푸시(익명 401·시민 403, `Last-Event-ID`/`lastEventId` 재전송, 만료 시 `resync_required`, 15초 하트비트) |
 
 등록 본문 예시:
 
@@ -145,7 +147,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 - 7개 정규화 테이블 초안은 [PostgreSQL 1차 업무 스키마](../plan/db%20설계%201차/2026-10-30/README.md)에 남아 있으며, 현재 Flask 계약은 문서 jsonb다. [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 - 초안·AI 원본·후보·담당자 편집 이력·내부 작업은 담당자 응답에만 들어간다. 시민 목록·상세·스냅샷에서는 응답 전용 모델로 제거한다. 초안 저장 자체의 내부 이력도 시민에게 반환하지 않는다.
 - 본문 수정·추가 문의·철회·게시·재검토는 맥락 버전을 증가시킨다. 실행 중인 기존 작업은 무효화한다. 시연 작업은 후보만 별도로 저장하고 사람의 편집본·게시본을 자동 교체하지 않는다.
-- AI 완료·답변 게시·민원 상태는 구분합니다. 운영 앱(`testing=False`)에서는 민원 등록·수정 및 담당자 작업 실행 시 백그라운드 스레드(`ComplaintService`)가 `iter_web_assist`를 비동기로 실행하며 진행 단계를 `_live_jobs` 메모리에 반영하고 완료/실패 시에만 DB `version`을 갱신합니다(UI는 1.5초 폴링, SSE 푸시 미구현). 이미 담당자가 작성·수정한 초안(`draft`)과 최초 AI 원본(`aiOriginal`)은 후속 AI 실행으로 덮어쓰지 않고 `aiCandidate`·`aiAssist`만 갱신합니다. AI 실패 시에도 저장된 민원과 기존 초안은 보존됩니다(`testing=True` 또는 미연결 시에는 기존 `advance_jobs()` 단계 시연 동작 유지). [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
+- AI 완료·답변 게시·민원 상태는 구분합니다. 운영 앱(`testing=False`)에서는 민원 등록·수정 및 담당자 작업 실행 시 백그라운드 스레드(`ComplaintService`)가 `iter_web_assist`를 비동기로 실행하며 진행 단계를 `_live_jobs` 메모리와 `StaffEventBroker`(`GET /api/v1/staff/events`)에 발행하고 완료/실패 시에만 DB `version`을 갱신합니다(단절 시 UI 3초 폴링 자동 전환). 이미 담당자가 작성·수정한 초안(`draft`)과 최초 AI 원본(`aiOriginal`)은 후속 AI 실행으로 덮어쓰지 않고 `aiCandidate`·`aiAssist`만 갱신합니다. AI 실패 시에도 저장된 민원과 기존 초안은 보존됩니다(`testing=True` 또는 미연결 시에는 기존 `advance_jobs()` 단계 시연 동작 유지). [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-110](../docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md)
 - 기존 브라우저 `cheongju-ui-v1` 자료는 보존하며 서버로 자동 업로드하지 않는다. 신규 업무 저장은 API만 사용한다. `sessionStorage`에는 작성 전 임시 입력만 남긴다.
 
 ## 설정·검증·남은 범위
