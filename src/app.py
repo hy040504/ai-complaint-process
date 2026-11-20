@@ -4,8 +4,6 @@
 `src.assist`를 호출합니다.
 """
 
-import os
-
 import click
 from flask_openapi3.models.info import Info
 from flask_openapi3.openapi import OpenAPI
@@ -88,10 +86,7 @@ def create_app(
     service = ComplaintService(
         repository, iter_assist_fn=resolved_iter, auto_start_ai=resolved_auto
     )
-    expose_demo_otp = (
-        os.environ.get("COMPLAINT_SMS_MODE", "local").strip().lower() != "external"
-    )
-    auth_service = AuthService(repository, expose_demo_otp=expose_demo_otp)
+    auth_service = AuthService(repository)
     app.extensions["complaint_service"] = service
     app.extensions["auth_service"] = auth_service
     # Tailscale Serve 등 로컬 프록시의 X-Forwarded-Proto를 반영해 HTTPS Origin 검사를 통과시킵니다.

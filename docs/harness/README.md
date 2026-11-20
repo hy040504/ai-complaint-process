@@ -8,7 +8,7 @@
 
 현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `민원-응대.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 운영 모델 선정·외부 PASS/SSO·공식 이관·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 
-CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고받는 서버를 포함한다. 2026-10-31 [시민·담당자 UI](../../ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](../../src/README.md)를 구현했다. 2026-11-05 `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md). 2026-11-15~2026-11-20에는 민원 웹(`:5000`)에 비동기 `src.assist` 워커(`CASE-093`), 담당자 실시간 SSE 푸시(`/api/v1/staff/events`) 및 시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, `CASE-110`), **운영 본인·담당자 인증(`/api/v1/auth/*`, 2단계 OTP·`scrypt`·부서 RBAC)과 PostgreSQL `complaint_app` 7테이블 정규화(`CASE-111`)**를 구현했다. 외부 PASS/행정 SSO·다중 워커 브로커(현 단계 제외)·공식 행정 이관은 후속이다. 검색 위 판정·검사기는 [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)에 있다. 기존 RAG 지식·환경은 분리한다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
+CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고받는 서버를 포함한다. 2026-10-31 [시민·담당자 UI](../../ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](../../src/README.md)를 구현했다. 2026-11-05 `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md). 2026-11-15~2026-11-20에는 민원 웹(`:5000`)에 비동기 `src.assist` 워커(`CASE-093`), 담당자 실시간 SSE 푸시(`/api/v1/staff/events`) 및 시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, `CASE-110`), **민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`, `scrypt`·부서 RBAC)과 PostgreSQL `complaint_app` 7테이블 정규화(`CASE-111`)**를 구현했다. 외부 PASS/행정 SSO·다중 워커 브로커(현 단계 제외)·공식 행정 이관은 후속이다. 검색 위 판정·검사기는 [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)에 있다. 기존 RAG 지식·환경은 분리한다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
 2026-10-27에는 실제 목록·CRUD, AI 답변 표시·담당자 수정·실시간 작업 모니터를 추가 구체화했다. [통합 상세설계·분야별 작업계획](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md)과 [PDF](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf)를 후속 구현 기준으로 함께 읽는다. 세부 작업은 UI·백엔드·AI·DB 네 분야의 38개 항목이며 개인별 담당을 배정하지 않는다. 상태·권한·버전·게시·이벤트 계약은 제안이며 기능 구현으로 표시하지 않는다.
 
@@ -56,7 +56,7 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 데이터 검증 | 입력 검증, 원자적 색인 갱신, 원본/DB 대조 구현 | FAQ 현행성·부서 업무분장 검증 기록 |
 | 테스트 | 백엔드·DB 통합 179개, RAG 49개(Windows 3 skipped), UI 29개, 112건·5,015건 규칙 회귀, `:5010` 200건(`95.0%`)·패치 후 100건(`98.0%`) 실증, 초안 평가셋 29건(개발 26/26·보류 3/3) | 400문항 검수, 운영 임계값 |
 | 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04 조립(`early_external_reject`·병렬 `03∥04`·EXAONE 차등 추론 `high`/`low<=4096`), 코드 정책 검사(`validate_decision` 예외 보류), `회귀검증_112건_규칙.py`·`실증평가_100건_재검증.py` | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록 |
-| 시연 웹·업무 서버 | Flask·Swagger(**31경로**)·PostgreSQL `complaint_app` **7테이블 정규화**·시민/담당자 UI·**운영 본인·담당자 인증(`CASE-111`)**·비동기 CRUD AI 워커(`CASE-093`)·담당자 실시간 SSE 푸시(`BE07`/`UI08`)·시민 AI 챗봇 실연결(`CASE-110`) | 외부 PASS/SSO·다중 인스턴스 브로커(현 단계 제외)·공식 이관 |
+| 시연 웹·업무 서버 | Flask·Swagger(**30경로**)·PostgreSQL `complaint_app` **7테이블 정규화**·시민/담당자 UI·**민원인/담당자 아이디·비밀번호 로그인(`CASE-111`)**·비동기 CRUD AI 워커(`CASE-093`)·담당자 실시간 SSE 푸시(`BE07`/`UI08`)·시민 AI 챗봇 실연결(`CASE-110`) | 외부 PASS/SSO·다중 인스턴스 브로커(현 단계 제외)·공식 이관 |
 | 실행 기록 | 적재 메타데이터, 검색 시간, 기존 보고서 | 요청 단위 추적, 설정·정책 버전, 민감정보 제외 |
 | 사례 기록 | 번호별 색인·양식, 구축·설계 이력과 미해결 데이터 사례 | 변경마다 사례 상태·근거와 현재 기준 문서 갱신 |
 | 자동화 | 수동 실행 명령 존재 | 가벼운 CI와 별도 모델 평가 작업 |

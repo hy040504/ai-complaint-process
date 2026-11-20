@@ -2240,17 +2240,12 @@ body[data-theme="dark"] .auth-tab.active {
   border-color: #3b82f6;
   color: #ffffff;
 }
-body[data-theme="dark"] .auth-desc {
+body[data-theme="dark"] .auth-desc,
+body[data-theme="dark"] .auth-switch-row {
   color: #b7c8e2;
 }
-body[data-theme="dark"] .auth-otp-box {
-  background: #112d2b;
-  border-color: #256f68;
-  color: #a7f3d0;
-}
-body[data-theme="dark"] .auth-otp-code code {
-  background: #0f172a;
-  color: #6ee7b7;
+body[data-theme="dark"] .auth-inline-link {
+  color: #93c5fd;
 }
 body[data-theme="dark"] .auth-error-box {
   background: #3b1820;

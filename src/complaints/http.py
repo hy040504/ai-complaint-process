@@ -47,7 +47,6 @@ def actor() -> Actor:
         login_id="staff-demo" if role == "staff" else "citizen-demo",
         display_name="김담당" if role == "staff" else "시연 시민",
         role="staff" if role == "staff" else "citizen",
-        verified=True,
         auth_mode="demo",
         demo=True,
     )
@@ -103,8 +102,7 @@ def protect_api() -> None:
         "/api/v1/session",
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
-        "/api/v1/auth/citizen/verify-request",
-        "/api/v1/auth/citizen/register",
+        "/api/v1/auth/register",
         "/api/v1/assist",
         "/api/v1/assist/fields",
         "/api/v1/assist/examples",

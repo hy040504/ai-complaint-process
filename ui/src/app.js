@@ -30,7 +30,6 @@ import {
   ensureRoleSession,
   loginAccount,
   logoutAccount,
-  requestCitizenVerify,
   registerCitizenAccount,
   visible,
   statusNames,
@@ -234,23 +233,21 @@ let sseAiConnected = true;
 let staffSyncPending = false;
 let staffSyncQueued = false;
 let authModalTab = "citizen-login";
-let authVerifyChallenge = null;
 let authModalError = "";
 
 /**
- * 계정 로그인·시민 본인확인 모달을 지정한 탭으로 엽니다.
+ * 민원인·담당자 아이디·비밀번호 로그인 모달을 지정한 탭으로 엽니다.
  *
- * @param {string} [tab] 초기 활성 탭(`citizen-login`·`citizen-register`·`staff-login`)입니다.
+ * @param {string} [tab] 초기 활성 화면(`citizen-login`·`citizen-register`·`staff-login`)입니다.
  * @returns {void}
  */
 function openAuthModal(tab) {
   authModalTab = tab || (route?.staff ? "staff-login" : "citizen-login");
   authModalError = "";
   openModal(
-    "계정 로그인 · 본인확인",
+    "계정 로그인",
     renderAuthModalHtml({
       tab: authModalTab,
-      verifyChallenge: authVerifyChallenge,
       actor: getActor(),
       error: authModalError,
     }),
@@ -1305,13 +1302,11 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (action === "open-auth") {
-    authVerifyChallenge = null;
     openAuthModal(target.dataset.tab || undefined);
     return;
   }
   if (action === "auth-tab") {
     authModalTab = target.dataset.tab || "citizen-login";
-    if (authModalTab === "citizen-register") authVerifyChallenge = null;
     openAuthModal(authModalTab);
     return;
   }
@@ -1629,42 +1624,9 @@ document.addEventListener("submit", async (event) => {
     } catch (err) {
       authModalError = err?.message || "로그인에 실패했습니다.";
       openModal(
-        "계정 로그인 · 본인확인",
+        "계정 로그인",
         renderAuthModalHtml({
           tab: authModalTab,
-          verifyChallenge: authVerifyChallenge,
-          actor: getActor(),
-          error: authModalError,
-        }),
-      );
-    }
-    return;
-  }
-  if (form.id === "auth-citizen-verify-form") {
-    try {
-      const name = String(values.name || "").trim();
-      const res = await requestCitizenVerify({
-        name,
-        phone: String(values.phone || "").trim(),
-      });
-      authVerifyChallenge = { ...res, name };
-      authModalError = "";
-      openModal(
-        "계정 로그인 · 본인확인",
-        renderAuthModalHtml({
-          tab: "citizen-register",
-          verifyChallenge: authVerifyChallenge,
-          actor: getActor(),
-          error: "",
-        }),
-      );
-    } catch (err) {
-      authModalError = err?.message || "본인확인 코드 발급에 실패했습니다.";
-      openModal(
-        "계정 로그인 · 본인확인",
-        renderAuthModalHtml({
-          tab: "citizen-register",
-          verifyChallenge: null,
           actor: getActor(),
           error: authModalError,
         }),
@@ -1677,22 +1639,18 @@ document.addEventListener("submit", async (event) => {
       const createdActor = await registerCitizenAccount({
         loginId: String(values.loginId || "").trim(),
         password: String(values.password || ""),
-        displayName: String(values.displayName || authVerifyChallenge?.name || "").trim(),
-        challengeId: String(values.challengeId || "").trim(),
-        code: String(values.code || "").trim(),
+        displayName: String(values.displayName || "").trim(),
       });
-      authVerifyChallenge = null;
       modal.close();
-      toast(`${createdActor.displayName} 님 본인확인 및 가입이 완료되었습니다.`);
+      toast(`${createdActor.displayName} 민원인 계정이 생성되어 로그인했습니다.`);
       if (route.staff) location.hash = "/citizen/mine";
       else await loadScreen();
     } catch (err) {
-      authModalError = err?.message || "회원가입에 실패했습니다.";
+      authModalError = err?.message || "민원인 계정 생성에 실패했습니다.";
       openModal(
-        "계정 로그인 · 본인확인",
+        "계정 로그인",
         renderAuthModalHtml({
           tab: "citizen-register",
-          verifyChallenge: authVerifyChallenge,
           actor: getActor(),
           error: authModalError,
         }),

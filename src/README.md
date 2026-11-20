@@ -66,7 +66,7 @@ flowchart LR
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
-| `complaints/` | 민원 CRUD, **운영 본인·담당자 인증(`auth.py`: 2단계 OTP·`scrypt`·5회 잠금·부서 RBAC)**, 시연 세션, **PostgreSQL 7테이블 정규화(`schema/complaint_app.sql`·`repository.py`)**, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), 실시간 SSE 브로커(`events.py`), 시민 챗봇 투영(`chat.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
+| `complaints/` | 민원 CRUD, **민원인·담당자 아이디/비밀번호 로그인(`auth.py`: `scrypt`·5회 잠금·부서 RBAC)**, 시연 세션, **PostgreSQL 7테이블 정규화(`schema/complaint_app.sql`·`repository.py`)**, 정적 UI, 한국어 Swagger 포털(`swagger_page.py`), 실시간 SSE 브로커(`events.py`), 시민 챗봇 투영(`chat.py`), `demo_data.py`(공개 시연 생성), `is_synthetic` 표시. `pages.py`는 UI·`/design/ui04`·`/docs`·`/swagger` 제공 |
 | `rag/` | 검색 API 클라이언트, `retrieval_only`/`requires_gate` 계약, FAQ·사례 근거 |
 | `llm/` | `openai_api`·`exaone_api`·`codex_cli`·`legacy` 공급자, 설정·완성 호출, MCP stdio 서버 및 도구(`search_complaint_rag`, `lookup_navermap_place`) |
 | `assist/` | RAG와 LLM을 잇는 판정·정책 검사·조건부 FAQ·PREFIX-03 초안·PREFIX-04 순화. 민원을 저장하지 않음. `codex`에 사용자 JSON·프롬프트 전문, `llmProvider`·`llmModel`에 실제 사용 엔진 기록. 시스템 접두는 [prompts](../docs/harness/prompts/README.md), 계약은 [완충지대 하네스](../docs/harness/LLM_완충지대_하네스.md) |
@@ -92,8 +92,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부, `sseEnabled`·`citizenChatEnabled`는 실시간 SSE·시민 챗봇 활성화 여부, `authEnabled`·`normalizedSchema`는 운영 인증·7테이블 정규화 활성화 여부 |
 | `GET /staff/db-summary` | 담당자 전용 정규화 7테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) 실시간 SQL 행 수·역할·AI 판정 분포 집계 |
-| `POST /auth/citizen/verify-request`, `POST /auth/citizen/register` | 시민 2단계 본인확인(6자리 OTP 5분 TTL·5회 잠금·1회용·전화번호 원문 미저장 해시+마스킹) 및 실계정 회원가입·로그인 |
-| `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | 시민·담당자 실계정 `scrypt` 비밀번호 로그인(5회 연속 실패 시 60초 `429` 잠금·세션 회전)·로그아웃(`204`)·세션 조회 |
+| `POST /auth/login`, `POST /auth/register`, `POST /auth/logout`, `GET /auth/me` | 민원인·담당자 아이디·비밀번호(`scrypt`) 로그인(5회 연속 실패 시 60초 `429` 잠금·세션 회전)·민원인 간단 가입(`loginId`·`password`·`displayName`)·로그아웃(`204`)·세션 조회 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역·공급자별 사용 가능 여부(`providers`: `available`, `reason`, `resolvedProvider`) 목록 |
 | 검사기 웹 `POST /api/v1/lab/complaints` | 제목·상세 검색 및 장소 추적 후 선택 공급자(`provider`)로 판정. `assist.inferredPlace`·`assist.llmProvider`·`assist.llmModel`·`assist.codex` 포함. 분야는 검색 질의에서 제외. 업무 DB 미저장. `.rag-cache/lab-runs`에 기록 |
@@ -175,9 +174,9 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_DATABASE_URL` | 비면 libpq `PG*` 환경변수. 같은 서버의 `complaint_app` |
 | `COMPLAINT_APP_SCHEMA` | `complaint_app` |
 | `COMPLAINT_SECRET_KEY` | 미지정 시 `.web-data/session.key`에 생성·보존, 로그·Git에서 제외 |
-| `COMPLAINT_STAFF_INIT_PASSWORD` | 부트스트랩 담당자 실계정(`staff_admin`·`staff_seowon`·`staff_heungdeok`) 초기 비밀번호(로컬 기본 `cheongju-staff-2026!`) |
-| `COMPLAINT_SMS_MODE` | `local`(기본: 로컬 검증용 `demoCode` 반환) 또는 `external`(응답에서 `demoCode` 생략) |
-| `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부(실인증 `/api/v1/auth/*`만 허용) |
+| `COMPLAINT_CITIZEN_INIT_PASSWORD` | 기본 민원인 계정(`citizen_01`) 초기 비밀번호(로컬 기본 `cheongju-citizen-2026!`) |
+| `COMPLAINT_STAFF_INIT_PASSWORD` | 기본 담당자 계정(`staff_admin`·`staff_seowon`·`staff_heungdeok`) 초기 비밀번호(로컬 기본 `cheongju-staff-2026!`) |
+| `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부(아이디/비밀번호 `/api/v1/auth/*`만 허용) |
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
 
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.

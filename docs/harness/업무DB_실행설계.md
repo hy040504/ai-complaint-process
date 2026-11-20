@@ -8,7 +8,7 @@
 
 - 저장소: 같은 PostgreSQL 서버의 `complaint_app` 스키마 (기본값, `COMPLAINT_APP_SCHEMA`로 바꿀 수 있음)
 - **총 10테이블 구성 (7개 핵심 정규화 테이블 + 3개 운영 보조 테이블):**
-  - 핵심 7테이블: `users`(계정·`scrypt` 해시·본인확인 마스킹·부서 RBAC), `complaints`(민원 본체 + 기존 `payload` JSONB/생성 칼럼 5개 호환 + `owner_user_id`/`assignee_user_id` FK), `messages`(추가 문의·답변), `message_versions`(초안·게시·철회 버전 이력), `ai_jobs`(AI 작업 이력), `ai_results`(판정·근거·`CHECK (automatic_transfer = false)`·`complaint_rag.department_directory` 조건부 교차 FK), `job_events`(작업 단계 타임라인, `ON DELETE CASCADE`)
+  - 핵심 7테이블: `users`(민원인·담당자 아이디/비밀번호 `scrypt` 해시·부서 권한), `complaints`(민원 본체 + 기존 `payload` JSONB/생성 칼럼 5개 호환 + `owner_user_id`/`assignee_user_id` FK), `messages`(추가 문의·답변), `message_versions`(초안·게시·철회 버전 이력), `ai_jobs`(AI 작업 이력), `ai_results`(판정·근거·`CHECK (automatic_transfer = false)`·`complaint_rag.department_directory` 조건부 교차 FK), `job_events`(작업 단계 타임라인, `ON DELETE CASCADE`)
   - 보조 3테이블: `idempotency`(등록 중복 방지), `answer_templates`(담당자 자주 쓰는 답변 템플릿), `app_meta`(기본 템플릿 최초 1회 시드 플래그)
 - `PostgresRepository`는 민원 생성(`create`)·변경(`change`) 시 동일 PostgreSQL 트랜잭션에서 `complaints`와 하위 5개 정규화 테이블을 원자적으로 동기화하며, 서버 기동 시 기존 행을 무손실 자동 백필합니다. 담당자 전용 `GET /api/v1/staff/db-summary`로 7테이블 실시간 행 수·역할·AI 판정 분포를 SQL 집계합니다.
 - 목록·필터용 칼럼 5개(`status`·`owner`·`visibility`·`district`·`is_synthetic`)는 `complaints.payload`에서 자동 계산되는 **생성 칼럼**으로 유지되어 기존 쿼리·테스트와 어긋나지 않습니다.
@@ -77,7 +77,7 @@ CHECK 제약:
 
 | 설계 테이블 | 현재 위치 (`complaint_app`) | 상태 (`2026-11-20`) |
 | --- | --- | --- |
-| `users` | `complaint_app.users` (`login_id`, `password_hash`, `role`, `department`, `phone_hash`, `masked_phone`, `verified`, `is_demo`) | **구현 완료** (시연 2계정 + 실계정 3담당자 멱등 시드 + 시민 2단계 OTP 가입) |
+| `users` | `complaint_app.users` (`login_id`, `password_hash`, `role`, `department`, `is_demo`, `active`) | **구현 완료** (시연 2계정 + 기본 민원인 1계정 + 담당자 3계정 멱등 시드 + 간단 가입) |
 | `complaints` | `complaint_app.complaints` (기존 `payload` + 생성 칼럼 5개 + `owner_user_id`/`assignee_user_id` FK·`title`/`body`/`category`/`department`/`context_version`) | **구현 완료** (하위 호환 + 정규화 병행) |
 | `messages` | `complaint_app.messages` (`complaint_id` `ON DELETE CASCADE`, `author_user_id` FK) | **구현 완료** (원자 동기화·자동 백필) |
 | `message_versions` | `complaint_app.message_versions` (`message_id`/`complaint_id` `ON DELETE CASCADE`, `actor_user_id` FK, `origin` CHECK) | **구현 완료** (초안·게시·철회·수정 전 이력) |
@@ -129,7 +129,7 @@ PostgreSQL 테스트는 `PGUSER`·`PGHOST`·`PGDATABASE` 환경변수로 접속�
 
 - **목록은 전체를 읽습니다.** `PostgresRepository.all()`이 모든 행을 가져와 Python에서 필터링합니다. 생성 칼럼·정규화 칼럼·색인은 준비됐지만, 목록 쿼리는 시연 규모(수십~수백 건) 호환을 위해 유지하며 대규모 운영 전에 페이지네이션 SQL 쿼리로 전환해야 합니다.
 - **정규화 테이블과 `payload` JSONB 병행 유지:** 기존 API·테스트 호환을 위해 `complaints.payload` JSONB와 정규화 자식 5테이블을 동일 트랜잭션에서 원자 동기화합니다. 향후 완전 정규화 조회 전환 시 `payload` 중복 칼럼 축소를 검토할 수 있습니다.
-- **로컬 인증과 외부 기관 인증의 구별:** `users` 테이블은 로컬 서버의 `scrypt` 비밀번호·6자리 OTP 해시·부서 권한을 저장하며, 실제 외부 PASS/공동인증서·청주시 행정 SSO 연계는 별도 배포 단계입니다.
+- **로컬 로그인과 외부 기관 인증의 구별:** `users` 테이블은 로컬 서버의 민원인·담당자 아이디/`scrypt` 비밀번호·부서 권한을 저장하며, 실제 외부 PASS/공동인증서·청주시 행정 SSO 연계는 별도 배포 단계입니다.
 
 ## 7. 설계 문서의 기준일 표기
 

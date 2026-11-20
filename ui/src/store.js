@@ -133,26 +133,16 @@ export async function loginAccount(payload) {
 }
 
 /**
- * 시민 회원가입 1단계 본인확인 6자리 코드를 요청합니다.
+ * 아이디·비밀번호·이름으로 새 민원인 계정을 생성하고 즉시 로그인합니다.
  *
- * @param {{name:string,phone:string}} payload 신청자 이름과 휴대전화 번호입니다.
- * @returns {Promise<object>} 챌린지 ID와 마스킹 연락처 응답입니다.
- */
-export async function requestCitizenVerify(payload) {
-  return api("/auth/citizen/verify-request", { method: "POST", body: payload });
-}
-
-/**
- * 시민 본인확인 코드를 검증하고 새 시민 계정을 생성해 로그인합니다.
- *
- * @param {{loginId:string,password:string,displayName:string,challengeId:string,code:string}} payload 가입 정보입니다.
- * @returns {Promise<object>} 가입·인증된 시민 `Actor` 객체입니다.
+ * @param {{loginId:string,password:string,displayName:string}} payload 가입 정보입니다.
+ * @returns {Promise<object>} 가입·로그인된 민원인 `Actor` 객체입니다.
  */
 export async function registerCitizenAccount(payload) {
   cache = { revision: 0, complaints: [] };
   activeRole = undefined;
   currentActor = null;
-  const actor = await api("/auth/citizen/register", {
+  const actor = await api("/auth/register", {
     method: "POST",
     body: payload,
   });

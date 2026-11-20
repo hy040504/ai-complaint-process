@@ -3737,7 +3737,7 @@ dialog::backdrop {
 }
 .auth-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
 }
 .auth-tab {
@@ -3777,23 +3777,24 @@ dialog::backdrop {
   color: #b91c1c;
   font-size: 12px;
 }
-.auth-otp-box {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
+.auth-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 12px;
-  line-height: 1.65;
+  color: #475569;
+  padding-top: 2px;
 }
-.auth-otp-code code {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #047857;
+.auth-inline-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
 }
 .auth-staff-hints {
   padding: 10px 12px;

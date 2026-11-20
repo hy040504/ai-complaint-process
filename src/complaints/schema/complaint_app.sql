@@ -3,7 +3,7 @@
 -- 민원 업무 스키마 (7테이블 정규화 + 보조 3테이블). Flask `src.complaints`가 사용한다.
 --
 -- 핵심 정규화 7테이블:
---   1. users            : 시민 본인확인 계정·담당자 공무원 계정(scrypt 해시·부서 권한)
+--   1. users            : 민원인·담당자 로그인 계정(아이디·scrypt 비밀번호·담당 부서)
 --   2. complaints       : 민원 원문·상태·버전·작성자/담당자 FK (하위 호환 payload jsonb + 생성 칼럼 유지)
 --   3. messages         : 민원별 답변 스레드 및 시민 추가 문의
 --   4. message_versions : 답변 초안·게시·철회·원문 수정 버전 이력
@@ -24,7 +24,7 @@
 
 CREATE SCHEMA IF NOT EXISTS complaint_app;
 
--- 1. users : 시민 본인확인 계정 및 담당자 공무원 계정
+-- 1. users : 민원인·담당자 아이디/비밀번호 계정
 CREATE TABLE IF NOT EXISTS complaint_app.users (
     id            text        PRIMARY KEY,
     login_id      text        NOT NULL UNIQUE,
@@ -32,13 +32,15 @@ CREATE TABLE IF NOT EXISTS complaint_app.users (
     role          text        NOT NULL CHECK (role IN ('citizen', 'staff')),
     password_hash text        NOT NULL,
     department    text,
-    verified      boolean     NOT NULL DEFAULT false,
-    phone_last4   text,
     is_demo       boolean     NOT NULL DEFAULT false,
     active        boolean     NOT NULL DEFAULT true,
     created_at    timestamptz NOT NULL DEFAULT now(),
     last_login_at timestamptz
 );
+
+ALTER TABLE complaint_app.users
+    DROP COLUMN IF EXISTS verified,
+    DROP COLUMN IF EXISTS phone_last4;
 
 CREATE INDEX IF NOT EXISTS idx_app_users_role_dept
     ON complaint_app.users (role, department);

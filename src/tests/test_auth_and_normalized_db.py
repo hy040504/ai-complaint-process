@@ -1,4 +1,4 @@
-"""운영 본인·담당자 인증(`BE02` 확장)과 PostgreSQL 7테이블 정규화를 검증합니다."""
+"""민원인·담당자 아이디/비밀번호 로그인과 PostgreSQL 7테이블 정규화를 검증합니다."""
 
 from __future__ import annotations
 
@@ -12,14 +12,17 @@ from psycopg.errors import CheckViolation
 import pytest
 
 from src import create_app
-from src.complaints.auth import DEFAULT_STAFF_INIT_PASSWORD
+from src.complaints.auth import (
+    DEFAULT_CITIZEN_INIT_PASSWORD,
+    DEFAULT_STAFF_INIT_PASSWORD,
+)
 from src.complaints.config import Settings
 from src.complaints.repository import NORMALIZED_TABLE_NAMES, PostgresRepository
 from src.tests.test_complaint_ai import _fake_assist_payload
 
 
-def test_citizen_two_step_verification_registration_login_and_isolation() -> None:
-    """시민 2단계 본인확인 가입·비밀번호 검증·다중 사용자 비공개 민원 격리를 검증합니다."""
+def test_citizen_id_password_login_register_and_isolation() -> None:
+    """민원인 기본 계정 로그인·간단 가입·다중 사용자 비공개 민원 격리를 검증합니다."""
     app = create_app(
         Settings(
             secret_key="auth-citizen-test",
@@ -31,85 +34,32 @@ def test_citizen_two_step_verification_registration_login_and_isolation() -> Non
     cit_a = app.test_client()
     cit_b = app.test_client()
 
-    # demo_login=False이면 기존 시연 세션 전환은 403으로 막히고 실인증 경로만 허용됩니다.
+    # demo_login=False이면 기존 시연 세션 전환은 403으로 막히고 로그인 경로만 허용됩니다.
     assert cit_a.post("/api/v1/session", json={"role": "citizen"}).status_code == 403
 
-    # 1단계: 휴대전화 본인확인 6자리 OTP 발급
-    ver_a = cit_a.post(
-        "/api/v1/auth/citizen/verify-request",
-        json={"name": "청주시민A", "phone": "010-1234-5678"},
-    )
-    assert ver_a.status_code == 200
-    vdata = ver_a.get_json()
-    assert vdata["maskedPhone"] == "010-****-5678"
-    assert len(vdata["demoCode"]) == 6
-
-    # 약한 비밀번호(숫자만) 거부
-    weak = cit_a.post(
-        "/api/v1/auth/citizen/register",
+    # 기본 민원인 계정(citizen_01)으로 바로 아이디·비밀번호 로그인 가능
+    seeded_login = cit_a.post(
+        "/api/v1/auth/login",
         json={
-            "loginId": "citizen_alpha",
-            "password": "12345678",
-            "displayName": "청주시민A",
-            "challengeId": vdata["challengeId"],
-            "code": vdata["demoCode"],
+            "loginId": "citizen_01",
+            "password": DEFAULT_CITIZEN_INIT_PASSWORD,
+            "expectedRole": "citizen",
         },
     )
-    assert weak.status_code == 422
-    assert weak.get_json()["code"] == "weak_password"
-
-    # 틀린 인증코드 거부
-    wrong_otp = cit_a.post(
-        "/api/v1/auth/citizen/register",
-        json={
-            "loginId": "citizen_alpha",
-            "password": "cheongju123",
-            "displayName": "청주시민A",
-            "challengeId": vdata["challengeId"],
-            "code": "000000" if vdata["demoCode"] != "000000" else "999999",
-        },
-    )
-    assert wrong_otp.status_code == 400
-    assert wrong_otp.get_json()["code"] == "verification_failed"
-
-    # 정상 2단계 가입 완료 -> 본인확인 완료 세션 발급
-    reg_a = cit_a.post(
-        "/api/v1/auth/citizen/register",
-        json={
-            "loginId": "citizen_alpha",
-            "password": "cheongju123",
-            "displayName": "청주시민A",
-            "challengeId": vdata["challengeId"],
-            "code": vdata["demoCode"],
-        },
-    )
-    assert reg_a.status_code == 201
-    actor_a = reg_a.get_json()
+    assert seeded_login.status_code == 200
+    actor_a = seeded_login.get_json()
     assert actor_a["role"] == "citizen"
-    assert actor_a["verified"] is True
     assert actor_a["demo"] is False
-    assert actor_a["authMode"] == "verified_account"
-    assert "password" not in str(actor_a).lower()
+    assert actor_a["authMode"] == "password"
+    assert "passwordHash" not in actor_a and "password_hash" not in actor_a
+    assert DEFAULT_CITIZEN_INIT_PASSWORD not in str(actor_a)
 
-    # 이미 소비한 OTP 재사용 차단
-    replay = cit_a.post(
-        "/api/v1/auth/citizen/register",
-        json={
-            "loginId": "citizen_other",
-            "password": "cheongju123",
-            "displayName": "재사용시도",
-            "challengeId": vdata["challengeId"],
-            "code": vdata["demoCode"],
-        },
-    )
-    assert replay.status_code == 400
-
-    # 시민 A 비공개 민원 등록
+    # 민원인 A 비공개 민원 등록
     created = cit_a.post(
         "/api/v1/complaints",
         json={
-            "title": "시민A 비공개 민원",
-            "body": "시민A만 조회하고 수정할 수 있어야 하는 비공개 민원 본문입니다.",
+            "title": "민원인A 비공개 민원",
+            "body": "민원인A만 조회하고 수정할 수 있어야 하는 비공개 민원 본문입니다.",
             "district": "서원구",
             "category": "도로·교통",
             "visibility": "private",
@@ -119,22 +69,28 @@ def test_citizen_two_step_verification_registration_login_and_isolation() -> Non
     cid = created.get_json()["id"]
     assert created.get_json()["owner"] == actor_a["id"]
 
-    # 시민 B 가입 후 시민 A의 비공개 민원에 접근·수정·삭제 시도 -> 완전 차단
-    ver_b = cit_b.post(
-        "/api/v1/auth/citizen/verify-request",
-        json={"name": "청주시민B", "phone": "010-9876-5432"},
-    ).get_json()
+    # 중복 아이디 가입 차단(409)
+    dup = cit_b.post(
+        "/api/v1/auth/register",
+        json={
+            "loginId": "citizen_01",
+            "password": "otherpassword",
+            "displayName": "중복시도",
+        },
+    )
+    assert dup.status_code == 409
+
+    # 민원인 B 간단 가입(아이디·비밀번호·이름만) -> 민원인 A 비공개 민원 접근·삭제 차단
     reg_b = cit_b.post(
-        "/api/v1/auth/citizen/register",
+        "/api/v1/auth/register",
         json={
             "loginId": "citizen_beta",
             "password": "cheongju456",
             "displayName": "청주시민B",
-            "challengeId": ver_b["challengeId"],
-            "code": ver_b["demoCode"],
         },
     )
     assert reg_b.status_code == 201
+    assert reg_b.get_json()["authMode"] == "password"
     assert cit_b.get(f"/api/v1/complaints/{cid}").status_code == 404
     assert (
         cit_b.post(f"/api/v1/complaints/{cid}/delete", json={"version": 1}).status_code
@@ -145,14 +101,14 @@ def test_citizen_two_step_verification_registration_login_and_isolation() -> Non
         for row in cit_b.get("/api/v1/workspace").get_json()["complaints"]
     )
 
-    # 시민 A 로그아웃 -> 401 -> 비밀번호 재로그인 -> 본인 민원 정상 조회
+    # 민원인 A 로그아웃 -> 401 -> 재로그인 -> 본인 민원 정상 조회
     assert cit_a.post("/api/v1/auth/logout").status_code == 204
     assert cit_a.get("/api/v1/auth/me").status_code == 401
     relogin = cit_a.post(
         "/api/v1/auth/login",
         json={
-            "loginId": "citizen_alpha",
-            "password": "cheongju123",
+            "loginId": "citizen_01",
+            "password": DEFAULT_CITIZEN_INIT_PASSWORD,
             "expectedRole": "citizen",
         },
     )
@@ -162,7 +118,7 @@ def test_citizen_two_step_verification_registration_login_and_isolation() -> Non
 
 
 def test_staff_password_auth_rate_limit_and_department_scope_rbac() -> None:
-    """담당자 비밀번호 로그인·5회 실패 잠금·부서 권한 스코프(RBAC)를 검증합니다."""
+    """담당자 아이디/비밀번호 로그인·5회 실패 잠금·부서 권한 스코프(RBAC)를 검증합니다."""
     app = create_app(
         Settings(
             secret_key="auth-staff-test",
@@ -176,23 +132,17 @@ def test_staff_password_auth_rate_limit_and_department_scope_rbac() -> None:
     heungdeok = app.test_client()
     citizen = app.test_client()
 
-    # 1. 시민 가입 및 민원 등록
-    ver = citizen.post(
-        "/api/v1/auth/citizen/verify-request",
-        json={"name": "민원인", "phone": "010-2222-3333"},
-    ).get_json()
+    # 1. 민원인 로그인 및 민원 등록
     assert (
         citizen.post(
-            "/api/v1/auth/citizen/register",
+            "/api/v1/auth/login",
             json={
-                "loginId": "cit_rbac",
-                "password": "password123",
-                "displayName": "민원인",
-                "challengeId": ver["challengeId"],
-                "code": ver["demoCode"],
+                "loginId": "citizen_01",
+                "password": DEFAULT_CITIZEN_INIT_PASSWORD,
+                "expectedRole": "citizen",
             },
         ).status_code
-        == 201
+        == 200
     )
     row = citizen.post(
         "/api/v1/complaints",
@@ -370,20 +320,14 @@ def test_postgres_seven_table_normalization_and_cascade_delete() -> None:
             }
         assert set(NORMALIZED_TABLE_NAMES) <= found_tables
 
-        # 2. 실계정 시민 가입 -> 민원 등록 -> AI 완료 -> 추가 문의 -> 담당자 초안/게시
+        # 2. 민원인 간단 가입 -> 민원 등록 -> AI 완료 -> 추가 문의 -> 담당자 초안/게시
         cit = app.test_client()
-        ver = cit.post(
-            "/api/v1/auth/citizen/verify-request",
-            json={"name": "정규화시민", "phone": "010-5555-6666"},
-        ).get_json()
         reg = cit.post(
-            "/api/v1/auth/citizen/register",
+            "/api/v1/auth/register",
             json={
                 "loginId": "norm_citizen",
                 "password": "normuser123",
                 "displayName": "정규화시민",
-                "challengeId": ver["challengeId"],
-                "code": ver["demoCode"],
             },
         )
         assert reg.status_code == 201
@@ -506,7 +450,7 @@ def test_postgres_seven_table_normalization_and_cascade_delete() -> None:
         assert cit.get("/api/v1/staff/db-summary").status_code == 403
         summary = staff.get("/api/v1/staff/db-summary").get_json()
         assert summary["storage"] == "postgresql"
-        assert summary["normalizedTables"]["users"] == 6  # 시드 5 + norm_citizen 1
+        assert summary["normalizedTables"]["users"] == 7  # 시드 6 + norm_citizen 1
         assert summary["normalizedTables"]["complaints"] == 1
         assert summary["normalizedTables"]["messages"] == 2
         assert summary["normalizedTables"]["message_versions"] >= 1

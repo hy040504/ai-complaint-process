@@ -1,4 +1,4 @@
-/** 운영 계정 인증 모달 렌더러와 다중 사용자 소유권 필터링을 검증합니다. */
+/** 민원인·담당자 아이디/비밀번호 로그인 모달 렌더러와 다중 사용자 소유권 필터링을 검증합니다. */
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -11,41 +11,23 @@ import {
   visible,
 } from "../src/store.js";
 
-test("renderAuthBadge와 renderAuthModalHtml은 3개 탭·본인확인 OTP·XSS 이스케이프를 처리한다", () => {
-  assert.match(
-    renderAuthBadge({ role: "citizen", verified: true, demo: false }),
-    /본인확인 완료/,
-  );
-  assert.match(
-    renderAuthBadge({ role: "staff", verified: true, demo: false }),
-    /담당자 인증/,
-  );
-  assert.match(
-    renderAuthBadge({ role: "citizen", verified: true, demo: true }),
-    /시연 계정/,
-  );
+test("renderAuthBadge와 renderAuthModalHtml은 민원인·담당자 로그인 탭과 간단 가입·XSS 이스케이프를 처리한다", () => {
+  assert.match(renderAuthBadge({ role: "citizen", demo: false }), /민원인/);
+  assert.match(renderAuthBadge({ role: "staff", demo: false }), /담당자/);
+  assert.match(renderAuthBadge({ role: "citizen", demo: true }), /시연/);
 
-  const step1 = renderAuthModalHtml({
-    tab: "citizen-register",
-    verifyChallenge: null,
+  const citizenTab = renderAuthModalHtml({
+    tab: "citizen-login",
     error: "잘못된 <script>오류</script>",
   });
-  assert.match(step1, /auth-citizen-verify-form/);
-  assert.doesNotMatch(step1, /<script>/);
+  assert.match(citizenTab, /auth-citizen-login-form/);
+  assert.match(citizenTab, /citizen_01/);
+  assert.doesNotMatch(citizenTab, /<script>/);
+  assert.doesNotMatch(citizenTab, /본인확인/);
 
-  const step2 = renderAuthModalHtml({
-    tab: "citizen-register",
-    verifyChallenge: {
-      challengeId: "VER-12345678",
-      maskedPhone: "010-****-5678",
-      expiresInSeconds: 300,
-      demoCode: "482910",
-      name: "홍길동",
-    },
-  });
-  assert.match(step2, /auth-citizen-register-form/);
-  assert.match(step2, /010-\*\*\*\*-5678/);
-  assert.match(step2, /482910/);
+  const registerTab = renderAuthModalHtml({ tab: "citizen-register" });
+  assert.match(registerTab, /auth-citizen-register-form/);
+  assert.doesNotMatch(registerTab, /휴대전화/);
 
   const staffTab = renderAuthModalHtml({
     tab: "staff-login",
@@ -61,7 +43,7 @@ test("renderAuthBadge와 renderAuthModalHtml은 3개 탭·본인확인 OTP·XSS 
   assert.match(staffTab, /auth-logout/);
 });
 
-test("loginAccount와 visible은 실계정 사용자 ID 기준으로 본인 민원을 분리하고 세션을 유지한다", async () => {
+test("loginAccount와 visible은 로그인 사용자 ID 기준으로 본인 민원을 분리하고 세션을 유지한다", async () => {
   const calls = [];
   globalThis.fetch = async (url) => {
     calls.push(url);
@@ -70,11 +52,10 @@ test("loginAccount와 visible은 실계정 사용자 ID 기준으로 본인 민�
         ok: true,
         status: 200,
         json: async () => ({
-          id: "USR-CIT-REAL1",
-          loginId: "real_user",
-          displayName: "실제시민",
+          id: "citizen-01",
+          loginId: "citizen_01",
+          displayName: "청주시민",
           role: "citizen",
-          verified: true,
           demo: false,
         }),
       };
@@ -90,22 +71,21 @@ test("loginAccount와 visible은 실계정 사용자 ID 기준으로 본인 민�
   };
 
   const actor = await loginAccount({
-    loginId: "real_user",
-    password: "password123",
+    loginId: "citizen_01",
+    password: "cheongju-citizen-2026!",
   });
-  assert.equal(actor.id, "USR-CIT-REAL1");
-  assert.equal(getActor().id, "USR-CIT-REAL1");
+  assert.equal(actor.id, "citizen-01");
+  assert.equal(getActor().id, "citizen-01");
 
-  // ensureRoleSession은 이미 인증된 동일 역할 실계정을 demo 세션으로 덮어쓰지 않습니다.
   const kept = await ensureRoleSession("citizen");
-  assert.equal(kept.id, "USR-CIT-REAL1");
+  assert.equal(kept.id, "citizen-01");
   assert.ok(!calls.some((u) => u.endsWith("/session")));
 
   const sample = {
     complaints: [
-      { id: "C1", owner: "USR-CIT-REAL1", status: "submitted" },
+      { id: "C1", owner: "citizen-01", status: "submitted" },
       { id: "C2", owner: "citizen-demo", status: "submitted" },
-      { id: "C3", owner: "USR-CIT-REAL1", status: "withdrawn" },
+      { id: "C3", owner: "citizen-01", status: "withdrawn" },
     ],
   };
   assert.deepEqual(

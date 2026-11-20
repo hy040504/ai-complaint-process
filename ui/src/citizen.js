@@ -126,7 +126,7 @@ export function citizenShell(content, path, actor = null) {
   const accountLabel =
     actor && !actor.demo
       ? `${e(actor.displayName || actor.loginId || "내 계정")}`
-      : "로그인·본인확인";
+      : "로그인";
   return `<div class="demo-bar citizen-demo-bar"><div><span class="demo-label">DEMO</span><span>청주 민원 시연 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 시연 서비스입니다.</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen", "selected")}${a("담당자 사이트", "/staff")}${a("응대 검사기", "/lab")}</div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
     ["홈", "/citizen"],
     ["나의 민원", "/citizen/mine"],
@@ -256,7 +256,7 @@ export function citizenUpdates(data) {
 }
 
 /**
- * 로그인·본인확인 계정 정보와 실제로 이용 가능한 메뉴만 제공합니다.
+ * 민원인 계정 로그인 정보와 실제로 이용 가능한 메뉴만 제공합니다.
  *
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
  * @param {object|null} [actor=null] 현재 세션의 사용자 객체입니다.
@@ -265,11 +265,11 @@ export function citizenUpdates(data) {
 export function citizenProfile(data, actor = null) {
   const name = actor?.displayName || "시연 시민";
   const loginHint = actor?.loginId ? ` (${actor.loginId})` : "";
-  const verifiedNote =
+  const accountNote =
     actor && !actor.demo
-      ? "로컬 2단계 본인확인 및 비밀번호(scrypt) 인증이 적용된 계정입니다. 타인의 비공개 민원과 완전히 격리됩니다."
-      : "현재 로컬 시연 계정으로 체험 중입니다. '계정 로그인 · 본인확인 가입'에서 본인확인 계정을 만들어 실제 다중 사용자 격리를 체험할 수 있습니다.";
-  return `<div class="page-content narrow citizen-utility"><div class="page-heading"><div><div class="eyebrow">MY PAGE</div><h1>내 정보</h1><p>나의 민원과 계정 인증 정보를 한곳에서 확인하세요.</p></div></div><section class="citizen-profile-card"><span>${icon("user", 27)}</span><div style="flex:1"><b>${e(name)}${e(loginHint)} ${renderAuthBadge(actor)}</b><p>현재 나의 민원 ${visible(data, true).length}건</p></div><div class="auth-profile-actions"><button type="button" class="btn primary" data-action="open-auth" data-tab="${actor && !actor.demo ? "citizen-login" : "citizen-register"}">${actor && !actor.demo ? "계정 전환" : "본인확인 · 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="btn" data-action="auth-logout">로그아웃</button>' : ""}</div></section><div class="citizen-profile-menu">${[
+      ? "아이디·비밀번호로 로그인된 민원인 계정입니다. 타인의 비공개 민원과 분리되어 관리됩니다."
+      : "현재 시연 계정으로 체험 중입니다. '계정 로그인'에서 민원인 아이디·비밀번호로 로그인하거나 새 계정을 만들 수 있습니다.";
+  return `<div class="page-content narrow citizen-utility"><div class="page-heading"><div><div class="eyebrow">MY PAGE</div><h1>내 정보</h1><p>나의 민원과 로그인 계정 정보를 한곳에서 확인하세요.</p></div></div><section class="citizen-profile-card"><span>${icon("user", 27)}</span><div style="flex:1"><b>${e(name)}${e(loginHint)} ${renderAuthBadge(actor)}</b><p>현재 나의 민원 ${visible(data, true).length}건</p></div><div class="auth-profile-actions"><button type="button" class="btn primary" data-action="open-auth" data-tab="citizen-login">${actor && !actor.demo ? "계정 전환" : "계정 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="btn" data-action="auth-logout">로그아웃</button>' : ""}</div></section><div class="citizen-profile-menu">${[
     ["file", "나의 민원", "/citizen/mine"],
     ["bell", "답변 알림", "/citizen/updates"],
     ["grid", "민원 게시판", "/citizen/board"],
@@ -281,7 +281,7 @@ export function citizenProfile(data, actor = null) {
     )
     .join(
       "",
-    )}</div><div class="info-banner">${icon("shield", 18)} ${e(verifiedNote)}</div></div>`;
+    )}</div><div class="info-banner">${icon("shield", 18)} ${e(accountNote)}</div></div>`;
 }
 
 /**

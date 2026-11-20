@@ -30,9 +30,6 @@ from src.complaints.models import (
     AssistResponse,
     CitizenChatInput,
     CitizenChatResponse,
-    CitizenRegisterInput,
-    CitizenVerifyRequest,
-    CitizenVerifyResponse,
     ComplaintInput,
     ComplaintPath,
     ComplaintResponse,
@@ -49,6 +46,7 @@ from src.complaints.models import (
     PageResponse,
     ProviderStatus,
     ReasonInput,
+    RegisterInput,
     SessionInput,
     StaffEventsQuery,
     TemplateCreateInput,
@@ -94,8 +92,8 @@ def create_api(
     )
     server_status = Tag(name="서버 상태")
     auth_tag = Tag(
-        name="계정 · 본인인증",
-        description="시민 2단계 본인확인 가입·비밀번호(scrypt) 로그인·담당자 부서별 계정 인증(외부 PASS/SSO 미연동)",
+        name="계정 로그인",
+        description="민원인·담당자 아이디·비밀번호(scrypt) 로그인과 민원인 간단 가입(외부 PASS/SSO 미연동)",
     )
     sessions = Tag(
         name="시연 세션",
@@ -297,35 +295,15 @@ def create_api(
             },
         )
 
-    @api.post(
-        "/auth/citizen/verify-request",
-        tags=[auth_tag],
-        responses={200: CitizenVerifyResponse},
-    )
-    def request_citizen_verify(body: CitizenVerifyRequest) -> Response:
-        """시민 회원가입 1단계 본인확인 6자리 인증코드를 발급합니다.
+    @api.post("/auth/register", tags=[auth_tag], responses={201: Actor})
+    def register_citizen_account(body: RegisterInput) -> Response:
+        """아이디·비밀번호·이름으로 새 민원인 계정을 생성하고 즉시 로그인합니다.
 
         Args:
-            body: 신청자 이름과 휴대전화 번호입니다.
+            body: 로그인 아이디·비밀번호·표시 이름입니다.
 
         Returns:
-            챌린지 ID·만료 시간·마스킹된 연락처 응답입니다.
-        """
-        return reply(auth.request_citizen_verification(body))
-
-    @api.post(
-        "/auth/citizen/register",
-        tags=[auth_tag],
-        responses={201: Actor},
-    )
-    def register_citizen_account(body: CitizenRegisterInput) -> Response:
-        """본인확인 6자리 코드를 검증하고 새 시민 계정을 생성해 로그인합니다.
-
-        Args:
-            body: 아이디·비밀번호·이름·본인확인 챌린지·6자리 코드입니다.
-
-        Returns:
-            생성·인증된 시민 `Actor` 모델입니다.
+            생성·로그인된 민원인 `Actor` 모델입니다.
         """
         user = auth.register_citizen(body)
         set_session_actor(user)
@@ -333,7 +311,7 @@ def create_api(
 
     @api.post("/auth/login", tags=[auth_tag], responses={200: Actor})
     def login_account(body: LoginInput) -> Response:
-        """시민·담당자 실계정 아이디와 `scrypt` 해시 비밀번호로 로그인합니다.
+        """민원인·담당자 계정의 아이디와 `scrypt` 비밀번호로 로그인합니다.
 
         Args:
             body: 로그인 아이디·비밀번호·선택 기대 역할입니다.
@@ -353,7 +331,7 @@ def create_api(
 
     @api.get("/auth/me", tags=[auth_tag], responses={200: Actor})
     def auth_me() -> Response:
-        """현재 세션의 검증된 사용자 정보(소속 부서·본인확인 상태 포함)를 반환합니다."""
+        """현재 세션의 로그인 사용자 정보(역할·소속 부서 포함)를 반환합니다."""
         return reply(actor())
 
     @api.post("/session", tags=[sessions], responses={200: Actor})

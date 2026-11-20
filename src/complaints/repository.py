@@ -66,7 +66,7 @@ NORMALIZED_TABLE_NAMES: tuple[str, ...] = (
 # psycopg는 한 execute에 여러 문을 넣지 못하므로 스키마·7테이블·보조 테이블을 순서대로 적용합니다.
 _SCHEMA_STATEMENTS = (
     "CREATE SCHEMA IF NOT EXISTS {schema}",
-    # 1. users : 시민 본인확인·담당자 공무원 계정
+    # 1. users : 민원인·담당자 아이디/비밀번호 계정
     """
     CREATE TABLE IF NOT EXISTS {schema}.users (
         id text PRIMARY KEY,
@@ -75,14 +75,13 @@ _SCHEMA_STATEMENTS = (
         role text NOT NULL CHECK (role IN ('citizen', 'staff')),
         password_hash text NOT NULL,
         department text,
-        verified boolean NOT NULL DEFAULT false,
-        phone_last4 text,
         is_demo boolean NOT NULL DEFAULT false,
         active boolean NOT NULL DEFAULT true,
         created_at timestamptz NOT NULL DEFAULT now(),
         last_login_at timestamptz
     )
     """,
+    "ALTER TABLE {schema}.users DROP COLUMN IF EXISTS verified, DROP COLUMN IF EXISTS phone_last4",
     "CREATE INDEX IF NOT EXISTS idx_app_users_role_dept ON {schema}.users (role, department)",
     # 2. complaints : 민원 본문·상태·버전·작성자/담당자 FK + 하위 호환 payload
     """
@@ -697,8 +696,6 @@ class MemoryRepository:
                 role=old.role,
                 password_hash=old.password_hash,
                 department=old.department,
-                verified=old.verified,
-                phone_last4=old.phone_last4,
                 is_demo=old.is_demo,
                 active=old.active,
                 created_at=old.created_at,
@@ -826,30 +823,30 @@ class PostgresRepository:
         )
         self._sql_get_user_id = sql.SQL(
             "SELECT id, login_id, display_name, role, password_hash, department, "
-            "verified, phone_last4, is_demo, active, created_at, last_login_at "
+            "is_demo, active, created_at, last_login_at "
             "FROM {}.users WHERE id = %s"
         ).format(ident)
         self._sql_get_user_login = sql.SQL(
             "SELECT id, login_id, display_name, role, password_hash, department, "
-            "verified, phone_last4, is_demo, active, created_at, last_login_at "
+            "is_demo, active, created_at, last_login_at "
             "FROM {}.users WHERE lower(login_id) = lower(%s)"
         ).format(ident)
         self._sql_list_users = sql.SQL(
             "SELECT id, login_id, display_name, role, password_hash, department, "
-            "verified, phone_last4, is_demo, active, created_at, last_login_at "
+            "is_demo, active, created_at, last_login_at "
             "FROM {}.users ORDER BY created_at ASC, id ASC"
         ).format(ident)
         self._sql_insert_user = sql.SQL(
             "INSERT INTO {}.users "
             "(id, login_id, display_name, role, password_hash, department, "
-            "verified, phone_last4, is_demo, active, created_at, last_login_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "is_demo, active, created_at, last_login_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         ).format(ident)
         self._sql_seed_user = sql.SQL(
             "INSERT INTO {}.users "
             "(id, login_id, display_name, role, password_hash, department, "
-            "verified, phone_last4, is_demo, active, created_at, last_login_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "is_demo, active, created_at, last_login_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON CONFLICT (id) DO NOTHING"
         ).format(ident)
         self._sql_touch_login = sql.SQL(
@@ -1019,8 +1016,6 @@ class PostgresRepository:
                     user.role,
                     user.password_hash,
                     user.department,
-                    user.verified,
-                    user.phone_last4,
                     user.is_demo,
                     user.active,
                     user.created_at,
@@ -1242,7 +1237,7 @@ class PostgresRepository:
         """`users` 테이블 SELECT 튜플을 `StoredUser` 데이터클래스로 변환합니다.
 
         Args:
-            row: 12개 컬럼 조회 튜플입니다.
+            row: 10개 컬럼 조회 튜플입니다.
 
         Returns:
             복원된 `StoredUser` 인스턴스입니다.
@@ -1255,12 +1250,10 @@ class PostgresRepository:
             role=role,
             password_hash=str(row[4]),
             department=row[5],
-            verified=bool(row[6]),
-            phone_last4=row[7],
-            is_demo=bool(row[8]),
-            active=bool(row[9]),
-            created_at=row[10],
-            last_login_at=row[11],
+            is_demo=bool(row[6]),
+            active=bool(row[7]),
+            created_at=row[8],
+            last_login_at=row[9],
         )
 
     @contextmanager
@@ -1588,8 +1581,6 @@ class PostgresRepository:
                         user.role,
                         user.password_hash,
                         user.department,
-                        user.verified,
-                        user.phone_last4,
                         user.is_demo,
                         user.active,
                         user.created_at,
