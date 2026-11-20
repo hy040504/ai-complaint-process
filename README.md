@@ -471,8 +471,8 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 <img src="docs/assets/eval-200-axis-breakdown.svg" width="100%" alt="청주 민원 200건 5대 테스트 축 실증 검증 결과" />
 
-> **상세 보고서 및 원자료:** [200건 SourceTrail 14쪽 보고서 (MD](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.md) · [PDF)](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.pdf) · [200건 원자료 JSON](rag/reports/lab-5010-eval-200-20261119.json) · [혼합 100건 (`CASE-109`)](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) · [Codex 전용 신규 100건 (`CASE-113`)](docs/cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md) · [Codex 100건 원자료 JSON](rag/reports/lab-5010-eval-100-codex-20261120.json)  
-> **200건 보조 차트:** [결과·사유 분포](docs/assets/eval-200-outcome-reason.svg) · [엔진·지연시간 분포](docs/assets/eval-200-latency-engines.svg) · [지명 추론·4대 한계](docs/assets/eval-200-district-and-gaps.svg)
+> **상세 보고서 및 원자료:** [Codex 100건 6쪽 보고서 (MD](docs/test/청주_민원_100건_Codex_상세분석보고서_2026-11-20.md) · [PDF)](docs/test/청주_민원_100건_Codex_상세분석보고서_2026-11-20.pdf) · [200건 SourceTrail 14쪽 보고서 (MD](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.md) · [PDF)](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.pdf) · [혼합 100건 (`CASE-109`)](docs/cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) · [Codex 전용 신규 100건 (`CASE-113`)](docs/cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md) · [Codex 100건 원자료 JSON](rag/reports/lab-5010-eval-100-codex-20261120.json)  
+> **시각화 차트:** [4단계 누적·Codex 축별 성적](docs/assets/eval-100-codex-progression.svg) · [Codex 판정·지연시간 분포](docs/assets/eval-100-codex-latency-audit.svg) · [200건 결과·사유 분포](docs/assets/eval-200-outcome-reason.svg) · [200건 엔진·지연시간](docs/assets/eval-200-latency-engines.svg) · [200건 지명·4대 한계](docs/assets/eval-200-district-and-gaps.svg)
 
 </details>
 

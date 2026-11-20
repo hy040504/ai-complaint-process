@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320">
+  <style>
+    text { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  </style>
+  <rect width="880" height="320" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
+  <rect x="0" y="0" width="880" height="44" rx="14" fill="#0f766e" />
+  <rect x="0" y="28" width="880" height="16" fill="#0f766e" />
+  <text x="24" y="27" font-size="14.5" font-weight="700" fill="#ffffff">
+    Codex CLI 100건 판정 분기 및 응답 지연시간 분포 (staff_draft MCP 생략 후 30초 초과 0건)
+  </text>
+  <line x1="452" y1="58" x2="452" y2="296" stroke="#e2e8f0" stroke-width="1.2" />
+  <text x="28" y="64" font-size="12.5" font-weight="700" fill="#0f766e">① 최종 판정 갈래 (100건)</text>
+  <text x="28" y="84" font-size="12" font-weight="600" fill="#1e293b">부서 후보 추천 (department_suggestion)</text><rect x="28" y="92" width="270" height="22" rx="6" fill="#e2e8f0" /><rect x="28" y="92" width="118.8" height="22" rx="6" fill="#2563eb" /><text x="308" y="107" font-size="12" font-weight="700" fill="#2563eb">44건 (44%)</text><text x="28" y="142" font-size="12" font-weight="600" fill="#1e293b">담당자 검토 보류 (human_handoff)</text><rect x="28" y="150" width="270" height="22" rx="6" fill="#e2e8f0" /><rect x="28" y="150" width="99.9" height="22" rx="6" fill="#d97706" /><text x="308" y="165" font-size="12" font-weight="700" fill="#d97706">37건 (37%)</text><text x="28" y="200" font-size="12" font-weight="600" fill="#1e293b">FAQ 근거 안내 (faq_answer)</text><rect x="28" y="208" width="270" height="22" rx="6" fill="#e2e8f0" /><rect x="28" y="208" width="51.3" height="22" rx="6" fill="#0d9488" /><text x="308" y="223" font-size="12" font-weight="700" fill="#0d9488">19건 (19%)</text>
+  <text x="478" y="64" font-size="12.5" font-weight="700" fill="#1d4ed8">② 응답 지연시간 구간 분포</text>
+  <text x="478" y="97" font-size="11.5" font-weight="600" fill="#334155">조기차단 (&lt;1s)</text><rect x="576" y="84" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="84" width="35.0" height="18" rx="5" fill="#0ea5e9" /><text x="834" y="97" font-size="11.5" font-weight="700" fill="#0ea5e9">7건</text><text x="478" y="133" font-size="11.5" font-weight="600" fill="#334155">5~15초</text><rect x="576" y="120" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="120" width="120.0" height="18" rx="5" fill="#0d9488" /><text x="834" y="133" font-size="11.5" font-weight="700" fill="#0d9488">24건</text><text x="478" y="169" font-size="11.5" font-weight="600" fill="#334155">15~20초</text><rect x="576" y="156" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="156" width="250.0" height="18" rx="5" fill="#2563eb" /><text x="834" y="169" font-size="11.5" font-weight="700" fill="#2563eb">50건</text><text x="478" y="205" font-size="11.5" font-weight="600" fill="#334155">20~25초</text><rect x="576" y="192" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="192" width="80.0" height="18" rx="5" fill="#4f46e5" /><text x="834" y="205" font-size="11.5" font-weight="700" fill="#4f46e5">16건</text><text x="478" y="241" font-size="11.5" font-weight="600" fill="#334155">25~30초</text><rect x="576" y="228" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="228" width="15.0" height="18" rx="5" fill="#d97706" /><text x="834" y="241" font-size="11.5" font-weight="700" fill="#d97706">3건</text><text x="478" y="277" font-size="11.5" font-weight="600" fill="#334155">30초 초과</text><rect x="576" y="264" width="250" height="18" rx="5" fill="#e2e8f0" /><rect x="576" y="264" width="0.0" height="18" rx="5" fill="#dc2626" /><text x="834" y="277" font-size="11.5" font-weight="700" fill="#dc2626">0건</text>
+  <text x="28" y="306" font-size="10.5" fill="#475569">
+    전체 평균 16.11s (중앙 16.95s · p95 23.64s · 최대 29.33s) | LLM 93건 평균 17.32s | 타지역 조기차단 7건 평균 0.013s
+  </text>
+</svg>

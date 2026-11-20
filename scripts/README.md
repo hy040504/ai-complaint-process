@@ -25,6 +25,7 @@
 | [`실증평가_100건_코덱스.py`](실증평가_100건_코덱스.py) | `CASE-113` 패치 재검증 20건+신규 청주 민원 80건(총 100건) 전수 `codex_cli` 실서버 실증(`--resume`·한도 자동 중단·임시 run 정리) 및 [`lab-5010-eval-100-codex-20261120.json`](../rag/reports/lab-5010-eval-100-codex-20261120.json) 저장 | `.venv-web` + `:5010`/`:8007` |
 | [`실증평가_100건_재검증.py`](실증평가_100건_재검증.py) | `CASE-106~108` 패치 후 기존 문제·노이즈 60건+신규 변형 40건(총 100건) 실서버 재검증·EXAONE 이어하기(`--resume-with-exaone`) 및 [`lab-5010-eval-100-20261120.json`](../rag/reports/lab-5010-eval-100-20261120.json) 저장 | `.venv-web` + `:5010`/`:8007` |
 | [`실증평가_200건_실행.py`](실증평가_200건_실행.py) | `:5010` 실서버에 기존 112건+신규 경계 88건(총 200건)을 호출해 [`lab-5010-eval-200-20261119.json`](../rag/reports/lab-5010-eval-200-20261119.json) 생성 및 임시 run 정리 | `.venv-web` + `:5010`/`:8007` |
+| [`상세분석보고서_100건_코덱스_생성.py`](상세분석보고서_100건_코덱스_생성.py) | 4단계 누적 원자료와 Codex 100건 원자료 기반 SVG 2종·SourceTrail 스타일 [`docs/test/`](../docs/test/README.md) 6쪽 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 | [`상세분석보고서_200건_생성.py`](상세분석보고서_200건_생성.py) | 200건/112건 원자료 비교 기반 SVG 차트 4종·SourceTrail 스타일 [`docs/test/`](../docs/test/README.md) 14쪽 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 | [`상세분석보고서_112건_생성.py`](상세분석보고서_112건_생성.py) | 112건 원자료 JSON 기반 SVG 차트 4종·[`docs/test/`](../docs/test/README.md) 분석 MD/PDF 생성 | `.venv-web` + Chrome/Edge |
 | [`회귀검증_112건_규칙.py`](회귀검증_112건_규칙.py) | LLM 없이 112건 원자료 및 공개 사례 5,015건 규칙(지명·순화·장소·타지역) 1초 내 검증 | `.venv-web` |
