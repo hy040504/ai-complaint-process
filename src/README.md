@@ -92,6 +92,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | --- | --- |
 | `GET /health` | 공개 서버 상태. `assistSearch`·`assistLlm`은 검색 API·LLM 토큰 여부, `aiConnected`는 민원 CRUD 비동기 AI 연결 여부, `sseEnabled`·`citizenChatEnabled`는 실시간 SSE·시민 챗봇 활성화 여부, `authEnabled`·`normalizedSchema`는 운영 인증·7테이블 정규화 활성화 여부 |
 | `GET /staff/db-summary` | 담당자 전용 정규화 7테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) 실시간 SQL 행 수·역할·AI 판정 분포 집계 |
+| `GET /staff/stats` | 담당자 부서 RBAC 소관 범위 기준 운영 KPI 11종·5종 드릴다운 분포(`byStatus`/`byDistrict`/`byCategory`/`byAiOutcome`/`byDepartment`)·정규화 7테이블 요약(`includeSynthetic=1|0`) |
+| `GET /staff/complaints/export.csv` | 담당자 부서 RBAC 소관·필터·정렬 기준 업무 메타데이터 15열 UTF-8 BOM CSV 내보내기(엑셀 수식 주입 중화·미게시 초안/순화 본문 제외) |
 | `POST /auth/login`, `POST /auth/register`, `POST /auth/logout`, `GET /auth/me` | 민원인·담당자 아이디·비밀번호(`scrypt`) 로그인(5회 연속 실패 시 60초 `429` 잠금·세션 회전)·민원인 간단 가입(`loginId`·`password`·`displayName`)·로그아웃(`204`)·세션 조회 |
 | 검사기 웹 `GET /api/v1/health` | `src.lab_web` 전용. `service=lab_web` |
 | 검사기 웹 `GET /api/v1/lab/fields` | 민원 분야·발생 지역·공급자별 사용 가능 여부(`providers`: `available`, `reason`, `resolvedProvider`) 목록 |
@@ -104,7 +106,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /assist/examples` | 기존 Flask 검사기 고정 예시. 세션 불필요 |
 | `POST /assist` | 검색+판정+정책 검사(`rerank` 기본 False·`provider` 선택·읍·면·동 허용). 세션 불필요. 민원 저장 없음 |
 | `POST /assist/stream` | 같은 파이프라인의 진행 안내 NDJSON 뒤 `done` 스트리밍. 세션 불필요 |
-| `POST /citizen/chat`, `POST /citizen/chat/stream` | 시민 민원 도우미 전용 RAG+LLM 응답 및 NDJSON 스트림(세션 필수·`include_staff_outputs=False`·`staffDraft`/`sanitize`/`codex`/`cases` 구조 제거·`automaticTransfer=False`) |
+| `POST /citizen/chat`, `POST /citizen/chat/stream` | 시민 민원 도우미 전용 다중 턴 RAG+LLM 응답 및 NDJSON 스트림(세션 필수·0ms 후속 문맥 보강·`include_staff_outputs=False`·`staffDraft`/`sanitize`/`codex`/`cases` 구조 제거·`automaticTransfer=False`, 로그인 민원인 PostgreSQL 자동 저장 / 비로그인 시연 `history` 임시 대화) |
+| `GET /citizen/chat/sessions`, `GET/DELETE /citizen/chat/sessions/{session_id}` | 로그인 민원인 본인의 챗봇 대화 세션 목록·상세 복원·영구 삭제(타 민원인 `404`·담당자 `403` 격리, 비로그인 시연 목록 조회는 빈 배열+`persisted=false`) |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷(담당자는 `eventCursor` 포함) |
 | `GET /complaints` | 공개 범위 적용 후 검색·페이지 목록 |
@@ -216,4 +219,4 @@ npm --prefix ui test
 
 2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
 
-**미구현:** 운영용 본인인증·담당자 인증, 7테이블 정규화 이관, 담당자 실시간 SSE 푸시(현재 1.5초 폴링 비동기 워커), 시민 챗봇 실연결, 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3)을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. 역할 선택은 로컬 시연이며 운영용 권한 부여 수단이 아니다. 권한 있는 담당자 복구와 실제 보존 기간 정책은 후속 구현이다.
+**미구현:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결, 담당자 실시간 SSE 푸시, 시민 다중 턴 AI 챗봇(로그인 DB 영속 저장), 민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC), PostgreSQL 7테이블 정규화, 담당자 통계 대시보드·안전 CSV 내보내기 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3) 및 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex 100건(`99.0%`) 실증을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. [CASE-114](../docs/cases/사례-114-시민-다중턴챗봇-PG영속저장과-담당자-통계대시보드-CSV내보내기-구현-2026-11-21.md)

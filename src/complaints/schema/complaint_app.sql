@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS complaint_app.job_events (
 CREATE INDEX IF NOT EXISTS idx_app_job_events_job
     ON complaint_app.job_events (job_id, seq_no);
 
--- 보조 3테이블: idempotency, answer_templates, app_meta
+-- 보조 5테이블: idempotency, answer_templates, app_meta, chat_sessions, chat_messages
 CREATE TABLE IF NOT EXISTS complaint_app.idempotency (
     owner         text NOT NULL,
     key           text NOT NULL,
@@ -270,3 +270,31 @@ CREATE TABLE IF NOT EXISTS complaint_app.app_meta (
     key         text        PRIMARY KEY,
     value       text        NOT NULL
 );
+
+-- 시민 AI 챗봇 다중 턴 영구 대화(로그인 민원인 전용, 미제출 개인 대화는 타 사용자·담당자 비공개)
+CREATE TABLE IF NOT EXISTS complaint_app.chat_sessions (
+    id            text        PRIMARY KEY,
+    user_id       text        NOT NULL REFERENCES complaint_app.users(id) ON DELETE CASCADE,
+    title         text        NOT NULL,
+    last_district text,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_chat_sessions_user
+    ON complaint_app.chat_sessions (user_id, updated_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS complaint_app.chat_messages (
+    id          text        PRIMARY KEY,
+    session_id  text        NOT NULL REFERENCES complaint_app.chat_sessions(id) ON DELETE CASCADE,
+    role        text        NOT NULL CHECK (role IN ('user', 'assistant')),
+    content     text        NOT NULL,
+    district    text,
+    outcome     text        CHECK (outcome IS NULL OR outcome IN ('faq_answer', 'department_suggestion', 'human_handoff')),
+    reason_code text,
+    payload     jsonb,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_chat_messages_session
+    ON complaint_app.chat_messages (session_id, created_at ASC, id ASC);

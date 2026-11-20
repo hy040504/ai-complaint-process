@@ -1168,6 +1168,128 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #a7f3d0;
   font-weight: 650;
 }
+.chat-session-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 21px;
+  border-bottom: 1px solid #e7edf7;
+  background: #f5f8ff;
+}
+.chat-session-bar.anon {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.chat-session-notice {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: #3f5578;
+  line-height: 1.5;
+}
+.chat-session-notice b {
+  color: #1e3a6d;
+  font-weight: 700;
+}
+.chat-login-cta {
+  padding: 5px 11px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.chat-session-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chat-saved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f766e;
+}
+.chat-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #bfd3f6;
+  background: #ffffff;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.chat-new-btn:hover {
+  background: #ebf2ff;
+}
+.chat-session-rail {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.chat-session-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d4e0f4;
+  border-radius: 999px;
+  background: #ffffff;
+  max-width: 220px;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+.chat-session-pill.active {
+  border-color: #2f6fed;
+  background: #eaf1ff;
+}
+.chat-session-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px 4px 10px;
+  font-size: 11px;
+  color: #334a70;
+  max-width: 192px;
+  cursor: pointer;
+}
+.chat-session-pick > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-session-pick > small {
+  font-size: 10px;
+  color: #6b81a4;
+  flex-shrink: 0;
+}
+.chat-session-pill.active .chat-session-pick {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+.chat-session-del {
+  padding: 2px 8px 2px 3px;
+  font-size: 13px;
+  line-height: 1;
+  color: #7d90af;
+  cursor: pointer;
+}
+.chat-session-del:hover {
+  color: #b91c1c;
+}
+.chat-session-empty {
+  margin: 0;
+  font-size: 11px;
+  color: #6b81a4;
+}
 .citizen-shell .chat-messages {
   padding: 25px;
   min-height: 350px;

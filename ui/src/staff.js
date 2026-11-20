@@ -12,6 +12,7 @@ import {
   formatPlaceText,
   resolveLlmMeta,
 } from "./llm-meta.js";
+import { buildStaffExportUrl } from "./staff-stats.js";
 
 /**
  * 접수일부터 오늘까지 지난 일수를 구합니다.
@@ -117,6 +118,12 @@ export function staffShell(content, route, data, actor = null) {
     },
     { group: "MANAGE" },
     {
+      icon: "chart",
+      label: "통계 대시보드",
+      path: "/staff/stats",
+      active: route.path === "/staff/stats",
+    },
+    {
       icon: "monitor",
       label: "AI 작업 모니터",
       path: "/staff/monitor",
@@ -148,13 +155,15 @@ export function staffShell(content, route, data, actor = null) {
   ];
   const title = route.path.includes("/detail/")
     ? "민원 상세 검토"
-    : route.path.includes("/monitor")
-      ? "AI 작업 모니터"
-      : route.path === "/staff/api"
-        ? "백엔드 API · Swagger"
-        : route.path === "/staff"
-          ? "접수 대기·검토"
-          : "민원 업무 목록";
+    : route.path === "/staff/stats"
+      ? "업무 통계 대시보드"
+      : route.path.includes("/monitor")
+        ? "AI 작업 모니터"
+        : route.path === "/staff/api"
+          ? "백엔드 API · Swagger"
+          : route.path === "/staff"
+            ? "접수 대기·검토"
+            : "민원 업무 목록";
   const nav = menu
     .map((item) =>
       item.group
@@ -170,7 +179,7 @@ export function staffShell(content, route, data, actor = null) {
   const staffName = actor?.displayName || "김담당";
   const staffDept = actor?.department || "민원과 총괄";
   const avatarChar = staffName.slice(0, 1) || "김";
-  return `<div class="demo-bar staff-demo-bar"><div><span class="demo-label">DEMO</span><span>민원톡톡 <span class="demo-extra">· 개인정보 없는 합성 데이터로 체험하는 업무 콘솔</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff", "selected")}${a("응대 검사기", "/lab")}</div></div><button class="staff-menu-backdrop" data-action="staff-menu-close" aria-label="업무 메뉴 닫기" tabindex="-1"></button><aside class="staff-sidebar" id="staff-sidebar"><div class="staff-console-brand">${a(`<span>MINWON DESK</span><small>${e(staffDept)} · 담당자 콘솔</small>`, "/staff")}<button class="staff-drawer-close icon-btn" data-action="staff-menu-close" aria-label="업무 메뉴 닫기">${icon("close", 19)}</button></div><nav aria-label="담당자 업무 메뉴">${nav}</nav><div class="staff-sidebar-bottom"><div class="staff-sidebar-policy">${icon("shield", 16)}<b>검토 우선 모드</b><p>담당자가 확인한 답변만<br>시민에게 게시됩니다.</p></div><button class="staff-help-link" data-action="staff-help">${icon("help", 16)} 업무 이용 안내 ${icon("chevron", 13)}</button>${a(`${icon("exit", 16)} 시민 사이트로 이동`, "/citizen", "staff-exit-link")}<div class="staff-account"><span class="staff-account-avatar">${e(avatarChar)}</span><div><b>${e(staffName)} ${renderAuthBadge(actor)}</b><p>${e(staffDept)}</p><div class="staff-account-actions"><button type="button" class="staff-auth-link" data-action="open-auth" data-tab="staff-login">${actor && !actor.demo ? "계정 전환" : "담당자 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="staff-auth-link" data-action="auth-logout">로그아웃</button>' : ""}</div></div></div></div></aside><div class="staff-shell staff-workspace"><header class="staff-topbar"><button class="staff-menu-toggle icon-btn" data-action="staff-menu-toggle" aria-controls="staff-sidebar" aria-expanded="false" aria-label="업무 메뉴 열기">${icon("menu", 21)}</button><span class="staff-connection"><i></i> ${actor && !actor.demo ? "인증 세션" : "로컬 시연"}</span><span class="staff-crumb">${e(staffDept)} <i>/</i> ${title}</span><div class="staff-topbar-right"><span>${icon("shield", 13)} 미게시 초안은 시민 비공개</span>${themeButton()}<button class="icon-btn" data-action="staff-help" aria-label="업무 이용 안내">${icon("help", 18)}</button><button type="button" class="staff-mini-avatar" data-action="open-auth" data-tab="staff-login" title="담당자 계정 로그인·전환" aria-label="담당자 계정 로그인">${e(avatarChar)}</button></div></header><nav class="staff-compact-nav" aria-label="담당자 빠른 메뉴">${a("접수·검토", "/staff", "", route.path === "/staff")}${a("전체 민원", "/staff/complaints", "", route.path === "/staff/complaints" && assign !== "mine")}${a("담당 업무", "/staff/complaints?assign=mine", "", assign === "mine")}${a("AI 모니터", "/staff/monitor", "", route.path === "/staff/monitor")}${a("API 문서", "/staff/api", "", route.path === "/staff/api")}</nav><main id="main" tabindex="-1">${content}</main><footer class="staff-footer"><span>민원톡톡 <b>시민의 목소리를 업무로 잇다</b></span><span>7테이블 정규화 · 공식 접수·외부 이관 미연동 · <a href="/swagger" target="_blank" rel="noopener">Swagger API</a></span></footer></div>`;
+  return `<div class="demo-bar staff-demo-bar"><div><span class="demo-label">DEMO</span><span>민원톡톡 <span class="demo-extra">· 개인정보 없는 합성 데이터로 체험하는 업무 콘솔</span></span></div><div class="role-switch">${a("시민 사이트", "/citizen")}${a("담당자 사이트", "/staff", "selected")}${a("응대 검사기", "/lab")}</div></div><button class="staff-menu-backdrop" data-action="staff-menu-close" aria-label="업무 메뉴 닫기" tabindex="-1"></button><aside class="staff-sidebar" id="staff-sidebar"><div class="staff-console-brand">${a(`<span>MINWON DESK</span><small>${e(staffDept)} · 담당자 콘솔</small>`, "/staff")}<button class="staff-drawer-close icon-btn" data-action="staff-menu-close" aria-label="업무 메뉴 닫기">${icon("close", 19)}</button></div><nav aria-label="담당자 업무 메뉴">${nav}</nav><div class="staff-sidebar-bottom"><div class="staff-sidebar-policy">${icon("shield", 16)}<b>검토 우선 모드</b><p>담당자가 확인한 답변만<br>시민에게 게시됩니다.</p></div><button class="staff-help-link" data-action="staff-help">${icon("help", 16)} 업무 이용 안내 ${icon("chevron", 13)}</button>${a(`${icon("exit", 16)} 시민 사이트로 이동`, "/citizen", "staff-exit-link")}<div class="staff-account"><span class="staff-account-avatar">${e(avatarChar)}</span><div><b>${e(staffName)} ${renderAuthBadge(actor)}</b><p>${e(staffDept)}</p><div class="staff-account-actions"><button type="button" class="staff-auth-link" data-action="open-auth" data-tab="staff-login">${actor && !actor.demo ? "계정 전환" : "담당자 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="staff-auth-link" data-action="auth-logout">로그아웃</button>' : ""}</div></div></div></div></aside><div class="staff-shell staff-workspace"><header class="staff-topbar"><button class="staff-menu-toggle icon-btn" data-action="staff-menu-toggle" aria-controls="staff-sidebar" aria-expanded="false" aria-label="업무 메뉴 열기">${icon("menu", 21)}</button><span class="staff-connection"><i></i> ${actor && !actor.demo ? "인증 세션" : "로컬 시연"}</span><span class="staff-crumb">${e(staffDept)} <i>/</i> ${title}</span><div class="staff-topbar-right"><span>${icon("shield", 13)} 미게시 초안은 시민 비공개</span>${themeButton()}<button class="icon-btn" data-action="staff-help" aria-label="업무 이용 안내">${icon("help", 18)}</button><button type="button" class="staff-mini-avatar" data-action="open-auth" data-tab="staff-login" title="담당자 계정 로그인·전환" aria-label="담당자 계정 로그인">${e(avatarChar)}</button></div></header><nav class="staff-compact-nav" aria-label="담당자 빠른 메뉴">${a("접수·검토", "/staff", "", route.path === "/staff")}${a("전체 민원", "/staff/complaints", "", route.path === "/staff/complaints" && assign !== "mine")}${a("담당 업무", "/staff/complaints?assign=mine", "", assign === "mine")}${a("통계", "/staff/stats", "", route.path === "/staff/stats")}${a("AI 모니터", "/staff/monitor", "", route.path === "/staff/monitor")}${a("API 문서", "/staff/api", "", route.path === "/staff/api")}</nav><main id="main" tabindex="-1">${content}</main><footer class="staff-footer"><span>민원톡톡 <b>시민의 목소리를 업무로 잇다</b></span><span>7테이블 정규화 · 공식 접수·외부 이관 미연동 · <a href="/swagger" target="_blank" rel="noopener">Swagger API</a></span></footer></div>`;
 }
 
 /**
@@ -224,7 +233,7 @@ function queueRows(rows) {
     .map(
       (c) =>
         `<div class="staff-queue-item">${a(
-        `<span class="staff-row-code" title="${e(c.id)}">#${e(c.id.split("-").at(-1))}</span><div class="staff-row-content"><div class="staff-row-heading"><h2>${e(c.title)}</h2><span class="staff-row-age">접수 ${daysSince(c.date)}일째</span>${c.messages.length ? `<span class="staff-tag amber">추가 문의 ${c.messages.length}</span>` : ""}${c.visibility === "private" ? `<span class="staff-row-private">${icon("shield", 12)} 비공개</span>` : ""}</div><p class="staff-row-excerpt">원문: ${e(c.body.replace(/\s+/g, " ").slice(0, 82))}${c.body.length > 82 ? "…" : ""}</p><div class="staff-row-meta"><span class="staff-tag navy">${e(c.category)}</span><span>${icon("pin", 11)} ${e(c.district)}</span>${c.department ? `<span class="staff-tag dept" title="시연 배정 부서">${e(c.department)}</span>` : ""}${c.assigned ? '<span class="staff-tag gray">김담당</span>' : !c.department ? '<span class="staff-tag amber">담당자 미지정</span>' : ""}${unpublished(c) ? '<span class="staff-tag gold">검토 전 초안</span>' : ""}${c.job.status === "failed" ? '<span class="staff-tag red">AI 분석 실패</span>' : ""}${c.job.status === "running" ? '<span class="staff-tag blue">AI 분석 중</span>' : ""}${c.published ? '<span class="staff-published-mark">' + icon("check", 11) + " 답변 게시됨</span>" : ""}</div></div><div class="staff-row-state"><span class="badge ${c.status}">${statusNames[c.status]}</span><time>${day(c.date)} 등록</time></div><span class="staff-row-open">${icon("chevron", 16)}</span>`,
+        `<span class="staff-row-code" title="${e(c.id)}">#${e(c.id.split("-").at(-1))}</span><div class="staff-row-content"><div class="staff-row-heading"><h2>${e(c.title)}</h2><span class="staff-row-age">접수 ${daysSince(c.date)}일째</span>${c.isSynthetic ? '<span class="staff-tag gray" title="공개 시연 합성 데이터">시연</span>' : ""}${c.messages.length ? `<span class="staff-tag amber">추가 문의 ${c.messages.length}</span>` : ""}${c.visibility === "private" ? `<span class="staff-row-private">${icon("shield", 12)} 비공개</span>` : ""}</div><p class="staff-row-excerpt">원문: ${e(c.body.replace(/\s+/g, " ").slice(0, 82))}${c.body.length > 82 ? "…" : ""}</p><div class="staff-row-meta"><span class="staff-tag navy">${e(c.category)}</span><span>${icon("pin", 11)} ${e(c.district)}</span>${c.department ? `<span class="staff-tag dept" title="시연 배정 부서">${e(c.department)}</span>` : ""}${c.assigned ? `<span class="staff-tag gray">${e(c.assigneeName || "담당 지정")}</span>` : !c.department ? '<span class="staff-tag amber">담당자 미지정</span>' : ""}${c.aiAssist?.outcome ? `<span class="staff-tag blue">${e(OUTCOME_SHORT_NAMES[c.aiAssist.outcome] || c.aiAssist.outcome)}</span>` : ""}${unpublished(c) ? '<span class="staff-tag gold">검토 전 초안</span>' : ""}${c.job.status === "failed" ? '<span class="staff-tag red">AI 분석 실패</span>' : ""}${c.job.status === "running" ? '<span class="staff-tag blue">AI 분석 중</span>' : ""}${c.published ? '<span class="staff-published-mark">' + icon("check", 11) + " 답변 게시됨</span>" : ""}</div></div><div class="staff-row-state"><span class="badge ${c.status}">${statusNames[c.status]}</span><time>${day(c.date)} 등록</time></div><span class="staff-row-open">${icon("chevron", 16)}</span>`,
         `/staff/detail/${c.id}`,
         "staff-queue-row",
       )}<div class="staff-row-actions"><button class="staff-assign-btn staff-dept-btn" type="button" data-action="open-assign-dept" data-id="${e(c.id)}">${c.department ? "부서 변경" : "부서 배정"}</button><button class="staff-assign-btn" type="button" data-action="assign" data-id="${e(c.id)}">${c.assigned ? "담당 해제" : "내가 담당"}</button></div></div>`,
@@ -232,8 +241,34 @@ function queueRows(rows) {
     .join("");
 }
 
+/** 담당자 큐 정렬 옵션 라벨 표입니다. */
+const SORT_LABELS = {
+  latest: "최신 등록순",
+  oldest_open: "오래된 미처리순",
+  most_followups: "추가 문의 많은순",
+  unpublished_first: "미게시 초안 우선",
+};
+
 /**
- * 서버 스냅샷에서 검색·담당·문의·초안 조건과 페이지를 적용합니다.
+ * 민원 제목·본문·식별자·배정부서 통합 검색 매칭 여부를 검사합니다.
+ *
+ * @param {object} c 검사할 민원 객체입니다.
+ * @param {string} q 사용자 검색어입니다.
+ * @returns {boolean} 검색어가 비었거나 어느 한 필드에 포함되면 true입니다.
+ */
+export function matchesStaffSearch(c, q) {
+  const needle = String(q || "").trim().toLocaleLowerCase();
+  if (!needle) return true;
+  return (
+    String(c.title || "").toLocaleLowerCase().includes(needle) ||
+    String(c.body || "").toLocaleLowerCase().includes(needle) ||
+    String(c.id || "").toLocaleLowerCase().includes(needle) ||
+    String(c.department || "").toLocaleLowerCase().includes(needle)
+  );
+}
+
+/**
+ * 서버 스냅샷에서 통합 검색·AI 판정·시연 토글·정렬과 페이지를 적용합니다.
  *
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
  * @param {URLSearchParams} params 현재 URL의 검색 조건입니다.
@@ -242,15 +277,19 @@ function queueRows(rows) {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function staffQueue(data, params, { landing = false } = {}) {
-  const all = live(data),
-    path = landing ? "/staff" : "/staff/complaints";
+  const includeSynthetic = params.get("synthetic") !== "0";
+  const allRaw = live(data);
+  const all = includeSynthetic ? allRaw : allRaw.filter((c) => !c.isSynthetic);
+  const path = landing ? "/staff" : "/staff/complaints";
   const scope = params.get("scope") || "all",
     q = params.get("q") || "",
     status = params.get("status") || "",
     district = params.get("district") || "",
     category = params.get("category") || "",
     assign = params.get("assign") || "",
-    view = params.get("view") || "";
+    view = params.get("view") || "",
+    aiOutcome = params.get("aiOutcome") || "",
+    sort = SORT_LABELS[params.get("sort")] ? params.get("sort") : "latest";
   let base = all.filter(
     (c) =>
       (!landing || open(c)) &&
@@ -271,7 +310,7 @@ export function staffQueue(data, params, { landing = false } = {}) {
   };
   let rows = base.filter(
     (c) =>
-      (!q || c.title.toLocaleLowerCase().includes(q.toLocaleLowerCase())) &&
+      matchesStaffSearch(c, q) &&
       (!status || c.status === status) &&
       (!district || c.district === district) &&
       (!category || c.category === category) &&
@@ -288,8 +327,33 @@ export function staffQueue(data, params, { landing = false } = {}) {
               ? c.job.status === "failed"
               : view === "published"
                 ? c.published
-                : true)),
+                : true)) &&
+      (!aiOutcome ||
+        (aiOutcome === "none"
+          ? !c.aiAssist
+          : c.aiAssist?.outcome === aiOutcome)),
   );
+  rows = rows.slice().sort((x, y) => {
+    const dx = new Date(x.date).getTime() || 0;
+    const dy = new Date(y.date).getTime() || 0;
+    if (sort === "oldest_open") {
+      const ox = open(x) ? 0 : 1;
+      const oy = open(y) ? 0 : 1;
+      if (ox !== oy) return ox - oy;
+      return dx - dy;
+    }
+    if (sort === "most_followups") {
+      const diff = (y.messages?.length || 0) - (x.messages?.length || 0);
+      return diff !== 0 ? diff : dy - dx;
+    }
+    if (sort === "unpublished_first") {
+      const ux = unpublished(x) ? 0 : 1;
+      const uy = unpublished(y) ? 0 : 1;
+      if (ux !== uy) return ux - uy;
+      return dy - dx;
+    }
+    return dy - dx;
+  });
   const total = rows.length,
     pages = Math.max(1, Math.ceil(total / 8)),
     page = Math.max(1, Math.min(Number(params.get("page")) || 1, pages));
@@ -355,7 +419,11 @@ export function staffQueue(data, params, { landing = false } = {}) {
       view === "published",
     ],
   ];
-  return `<div class="page-content staff-queue-page"><div class="staff-page-title"><h1>${title}</h1><span>${landing ? "M-01" : "M-02"}</span><div class="staff-scope">${a("전체 업무", queryLink(path, params, { scope: "all" }), "", scope === "all")}${a("내 담당·접수 대기", queryLink(path, params, { scope: "mine" }), "", scope === "mine")}</div><small>최신 등록순</small></div>${landing ? `<div class="staff-inbox-banner"><span class="staff-banner-dot"></span><b>접수 대기 민원 ${all.filter((c) => c.status === "submitted").length}건이 있습니다</b><span>담당자 미지정 여부와 민원 내용을 확인해 주세요.</span>${a("접수 대기 보기", "/staff/complaints?status=submitted", "btn primary")}</div>${metrics(all)}` : ""}<div class="staff-section-rule"><h2>${landing ? "검토할 업무 큐" : "민원 검색·검토 목록"}</h2><span>민원·AI 작업·답변 게시 상태를 구분합니다</span></div><div class="staff-filter-chips">${chips.map(([label, count, changes, active]) => a(`${label}<span>${count}</span>`, queryLink(path, params, changes), "staff-filter-chip", active)).join("")}</div><section class="panel staff-queue-panel"><form id="filters" class="staff-filter-form"><div class="search-field">${icon("search", 17)}<input name="q" aria-label="민원 제목 검색" placeholder="민원 제목으로 검색" value="${e(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select><select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select><button class="btn primary" type="submit">검색</button><button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 17)}</button></form><div class="staff-list-caption"><span>총 <b>${total}</b>건</span><span>민원을 선택하면 상세 검토로 이동합니다</span></div><div class="staff-queue-list">${rows.length ? queueRows(rows) : `<div class="empty">${icon("search", 32)}<h2>조건에 맞는 민원이 없습니다</h2><p>검색어나 필터를 변경해 주세요.</p><button class="btn" data-action="reset-filters">검색 조건 초기화</button></div>`}</div><div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div><button class="btn" data-action="page" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>‹</button>${Array.from({ length: pages }, (_, i) => `<button class="btn ${page === i + 1 ? "active" : ""}" data-action="page" data-page="${i + 1}" aria-label="${i + 1}페이지">${i + 1}</button>`).join("")}<button class="btn" data-action="page" data-page="${page + 1}" ${page === pages ? "disabled" : ""}>›</button></div><span>페이지당 8건</span></div></section>${landing ? categoryOverview(all) : ""}</div>`;
+  const exportUrl = buildStaffExportUrl(params);
+  const synToggleHref = queryLink(path, params, {
+    synthetic: includeSynthetic ? "0" : "",
+  });
+  return `<div class="page-content staff-queue-page"><div class="staff-page-title"><h1>${title}</h1><span>${landing ? "M-01" : "M-02"}</span><div class="staff-scope">${a("전체 업무", queryLink(path, params, { scope: "all" }), "", scope === "all")}${a("내 담당·접수 대기", queryLink(path, params, { scope: "mine" }), "", scope === "mine")}</div><div class="staff-queue-top-actions">${a(includeSynthetic ? "시연 데이터 포함" : "실제 민원만", synToggleHref, `btn subtle staff-syn-toggle ${includeSynthetic ? "" : "active"}`)}<a class="btn staff-export-btn" href="${e(exportUrl)}" download>${icon("download", 14)} CSV 내보내기</a></div><small>${SORT_LABELS[sort]}</small></div>${landing ? `<div class="staff-inbox-banner"><span class="staff-banner-dot"></span><b>접수 대기 민원 ${all.filter((c) => c.status === "submitted").length}건이 있습니다</b><span>담당자 미지정 여부와 민원 내용을 확인해 주세요.</span>${a("접수 대기 보기", "/staff/complaints?status=submitted" + (includeSynthetic ? "" : "&synthetic=0"), "btn primary")}</div>${metrics(all)}` : ""}<div class="staff-section-rule"><h2>${landing ? "검토할 업무 큐" : "민원 검색·검토 목록"}</h2><span>민원·AI 작업·답변 게시 상태를 구분합니다</span></div><div class="staff-filter-chips">${chips.map(([label, count, changes, active]) => a(`${label}<span>${count}</span>`, queryLink(path, params, changes), "staff-filter-chip", active)).join("")}</div><section class="panel staff-queue-panel"><form id="filters" class="staff-filter-form"><div class="search-field">${icon("search", 17)}<input name="q" aria-label="민원 통합 검색" placeholder="제목·본문·민원번호·부서 통합 검색" value="${e(q)}"></div><select name="district" aria-label="지역 선택"><option value="">전체 지역</option>${districts.map((d) => `<option ${district === d ? "selected" : ""}>${d}</option>`).join("")}</select><select name="category" aria-label="분야 선택"><option value="">전체 분야</option>${categories.map((c) => `<option ${category === c ? "selected" : ""}>${c}</option>`).join("")}</select><select name="assign" aria-label="담당 선택"><option value="">전체 담당</option><option value="mine" ${assign === "mine" ? "selected" : ""}>내 담당</option><option value="none" ${assign === "none" ? "selected" : ""}>미지정</option></select><select name="aiOutcome" aria-label="AI 판정 선택"><option value="">전체 AI 판정</option><option value="faq_answer" ${aiOutcome === "faq_answer" ? "selected" : ""}>공식 FAQ 안내</option><option value="department_suggestion" ${aiOutcome === "department_suggestion" ? "selected" : ""}>담당 부서 후보</option><option value="human_handoff" ${aiOutcome === "human_handoff" ? "selected" : ""}>담당자 검토</option><option value="none" ${aiOutcome === "none" ? "selected" : ""}>분석 전</option></select><select name="sort" aria-label="정렬 선택"><option value="latest" ${sort === "latest" ? "selected" : ""}>최신 등록순</option><option value="oldest_open" ${sort === "oldest_open" ? "selected" : ""}>오래된 미처리순</option><option value="most_followups" ${sort === "most_followups" ? "selected" : ""}>추가 문의 많은순</option><option value="unpublished_first" ${sort === "unpublished_first" ? "selected" : ""}>미게시 초안 우선</option></select><button class="btn primary" type="submit">검색</button><button class="icon-btn" type="button" data-action="reset-filters" aria-label="검색 조건 초기화">${icon("refresh", 17)}</button></form><div class="staff-list-caption"><span>총 <b>${total}</b>건${includeSynthetic ? "" : " (공개 시연 제외)"}</span><span>민원을 선택하면 상세 검토로 이동합니다</span></div><div class="staff-queue-list">${rows.length ? queueRows(rows) : `<div class="empty">${icon("search", 32)}<h2>조건에 맞는 민원이 없습니다</h2><p>검색어나 필터를 변경해 주세요.</p><button class="btn" data-action="reset-filters">검색 조건 초기화</button></div>`}</div><div class="pagination"><span>${total ? (page - 1) * 8 + 1 : 0}–${Math.min(page * 8, total)} / ${total}건</span><div><button class="btn" data-action="page" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>‹</button>${Array.from({ length: pages }, (_, i) => `<button class="btn ${page === i + 1 ? "active" : ""}" data-action="page" data-page="${i + 1}" aria-label="${i + 1}페이지">${i + 1}</button>`).join("")}<button class="btn" data-action="page" data-page="${page + 1}" ${page === pages ? "disabled" : ""}>›</button></div><span>페이지당 8건</span></div></section>${landing ? categoryOverview(all) : ""}</div>`;
 }
 
 /**

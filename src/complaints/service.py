@@ -1,13 +1,15 @@
 """권한·업무 상태·답변 게시·입력 버전을 검증하는 서비스입니다."""
 
 from collections.abc import Callable, Iterator
+import csv
 from hashlib import sha256
 import inspect
+import io
 from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
-from src.complaints.chat import project_citizen_chat
+from src.complaints.chat import build_multiturn_chat_context, project_citizen_chat
 from src.complaints.departments import (
     load_department_directory,
     valid_department_names,
@@ -15,6 +17,7 @@ from src.complaints.departments import (
 from src.complaints.errors import AppError
 from src.complaints.events import StaffEventBroker, StaffEventType
 from src.complaints.models import (
+    CATEGORIES,
     Actor,
     Answer,
     AnswerInput,
@@ -22,6 +25,9 @@ from src.complaints.models import (
     AnswerVersion,
     AssignmentInput,
     AssistResponse,
+    ChatSessionDetail,
+    ChatSessionListResponse,
+    ChatTurnItem,
     CitizenChatInput,
     CitizenChatResponse,
     Complaint,
@@ -40,7 +46,11 @@ from src.complaints.models import (
     PublicPage,
     PublicWorkspace,
     ReasonInput,
+    StaffExportQuery,
+    StaffOperationalMetrics,
     StaffPage,
+    StaffStatsBucket,
+    StaffStatsResponse,
     StaffWorkspace,
     TemplateCreateInput,
     TemplateListResponse,
@@ -67,6 +77,48 @@ _OUTCOME_STAGE_LABELS: dict[str, str] = {
     "department_suggestion": "AI 분석 완료 (부서 후보) · 담당자 검토 대기",
     "human_handoff": "AI 분석 완료 (담당자 검토) · 담당자 검토 대기",
 }
+
+_STATUS_LABELS: dict[str, str] = {
+    "submitted": "접수 대기",
+    "under_review": "검토 중",
+    "answered": "답변 완료",
+    "closed": "처리 종료",
+    "withdrawn": "철회",
+}
+
+_AI_OUTCOME_LABELS: dict[str, str] = {
+    "faq_answer": "공식 FAQ 안내",
+    "department_suggestion": "담당 부서 후보",
+    "human_handoff": "담당자 검토 필요",
+    "none": "AI 분석 전/미완료",
+}
+
+_JOB_STATUS_LABELS: dict[str, str] = {
+    "queued": "분석 대기",
+    "running": "AI 분석 중",
+    "succeeded": "분석 완료",
+    "failed": "분석 실패",
+    "cancelled": "작업 취소",
+    "superseded": "맥락 변경",
+}
+
+_STATS_DISTRICTS: tuple[str, ...] = ("상당구", "서원구", "흥덕구", "청원구", "모름")
+
+
+def _csv_safe_cell(value: object) -> str:
+    """엑셀 수식 주입(CSV Formula Injection)을 차단하도록 셀 문자열을 정제합니다.
+
+    Args:
+        value: CSV 셀에 기록할 원시 값입니다.
+
+    Returns:
+        수식 선두 문자(`=`, `+`, `-`, `@`, 탭, CR)를 중화한 안전한 문자열입니다.
+    """
+    text = "" if value is None else str(value)
+    text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + text
+    return text
 
 
 class AssistIterFn(Protocol):
@@ -193,6 +245,10 @@ class ComplaintService:
             iter_assist_fn is not None
             and "include_staff_outputs" in inspect.signature(iter_assist_fn).parameters
         )
+        self._supports_history_flag = bool(
+            iter_assist_fn is not None
+            and "conversation_history" in inspect.signature(iter_assist_fn).parameters
+        )
         self._live_lock = Lock()
         self._live_jobs: dict[tuple[str, int, int], tuple[str, list[Event]]] = {}
         self._active_threads: dict[tuple[str, int, int], Thread] = {}
@@ -225,21 +281,153 @@ class ComplaintService:
         """
         self._require_staff(actor)
 
-    def iter_citizen_chat(
-        self, actor: Actor, body: CitizenChatInput
-    ) -> Iterator[dict[str, Any]]:
-        """시민 민원 도우미 질의를 RAG+LLM으로 분석하고 안전한 시민 전용 결과를 스트리밍합니다.
-
-        담당자 초안(`PREFIX-03`)과 직원 보호 순화(`PREFIX-04`)는 생성·노출하지 않습니다.
+    def _can_persist_citizen_chat(self, actor: Actor) -> bool:
+        """현재 세션이 PostgreSQL에 챗봇 대화를 영속 저장할 수 있는 로그인 민원인인지 확인합니다.
 
         Args:
             actor: 서버 세션에서 확인한 사용자입니다.
-            body: 시민이 입력한 질문과 선택 관할·공급자입니다.
+
+        Returns:
+            실계정 로그인 민원인이며 `users` 테이블에 존재하면 True입니다.
+        """
+        return (
+            actor.role == "citizen"
+            and not actor.demo
+            and self.repository.get_user_by_id(actor.id) is not None
+        )
+
+    def _require_persisted_citizen_chat(self, actor: Actor) -> None:
+        """저장된 챗봇 세션 조회·삭제 시 로그인 민원인 권한을 검증합니다.
+
+        담당자는 미제출 개인 시민 챗봇 대화를 열람할 수 없으며, 시연(비로그인)
+        시민은 DB 영속 세션 대신 임시 대화만 사용합니다.
+
+        Args:
+            actor: 요청 사용자입니다.
+
+        Raises:
+            AppError: 담당자면 `403 citizen_required`, 시연 시민이면 `403 login_required`입니다.
+        """
+        if actor.role != "citizen":
+            raise AppError(
+                403,
+                "citizen_required",
+                "민원인 계정에서만 내 챗봇 대화를 관리할 수 있습니다.",
+            )
+        if not self._can_persist_citizen_chat(actor):
+            raise AppError(
+                403,
+                "login_required",
+                "로그인한 민원인 계정만 저장된 대화를 조회·삭제할 수 있습니다.",
+            )
+
+    def list_chat_sessions(self, actor: Actor) -> ChatSessionListResponse:
+        """로그인 민원인의 챗봇 대화 세션 목록을 반환합니다.
+
+        비로그인 시연 시민은 오류 없이 빈 목록과 `persisted=False`를 돌려받으며,
+        담당자는 시민 개인 챗봇 세션에 접근할 수 없습니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 사용자입니다.
+
+        Returns:
+            세션 목록과 영속 저장 가능 여부가 담긴 `ChatSessionListResponse`입니다.
+        """
+        if actor.role != "citizen":
+            raise AppError(
+                403,
+                "citizen_required",
+                "민원인 계정에서만 내 챗봇 대화 목록을 조회할 수 있습니다.",
+            )
+        if not self._can_persist_citizen_chat(actor):
+            return ChatSessionListResponse(sessions=[], persisted=False)
+        return ChatSessionListResponse(
+            sessions=self.repository.list_chat_sessions(actor.id),
+            persisted=True,
+        )
+
+    def get_chat_session(self, actor: Actor, session_id: str) -> ChatSessionDetail:
+        """로그인 민원인 본인이 소유한 챗봇 대화 세션과 전체 발화를 조회합니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 민원인입니다.
+            session_id: 조회할 챗봇 세션 ID입니다.
+
+        Returns:
+            세션 요약과 발화 목록이 담긴 `ChatSessionDetail`입니다.
+        """
+        self._require_persisted_citizen_chat(actor)
+        return self.repository.get_chat_session(session_id, actor.id)
+
+    def delete_chat_session(self, actor: Actor, session_id: str) -> None:
+        """로그인 민원인 본인이 소유한 챗봇 대화 세션을 영구 삭제합니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 민원인입니다.
+            session_id: 삭제할 챗봇 세션 ID입니다.
+        """
+        self._require_persisted_citizen_chat(actor)
+        self.repository.delete_chat_session(session_id, actor.id)
+
+    def iter_citizen_chat(
+        self, actor: Actor, body: CitizenChatInput
+    ) -> Iterator[dict[str, Any]]:
+        """시민 민원 도우미 질의를 다중 턴 문맥과 함께 분석하고 안전한 시민 전용 결과를 스트리밍합니다.
+
+        로그인 민원인은 DB 세션 이력을 자동으로 불러와 문맥에 반영하고 새 교환을
+        저장합니다. 비로그인 시연 시민은 요청 `history` 배열을 사용해 DB 미저장
+        임시 다중 턴 대화를 진행합니다. 담당자 초안(`PREFIX-03`)과 직원 보호
+        순화(`PREFIX-04`)는 생성·노출·저장하지 않습니다.
+
+        Args:
+            actor: 서버 세션에서 확인한 사용자입니다.
+            body: 시민이 입력한 질문·관할·공급자·세션 ID·임시 대화 이력입니다.
 
         Yields:
             진행 안내(`progress`) 또는 시민 투영 완료(`done`) 이벤트 사전입니다.
         """
-        del actor  # 세션 인증은 protect_api·actor()에서 선행 검증됩니다.
+        can_persist = self._can_persist_citizen_chat(actor)
+        active_session_id = body.session_id if can_persist else None
+        history: list[ChatTurnItem]
+        if can_persist and active_session_id:
+            detail = self.repository.get_chat_session(active_session_id, actor.id)
+            history = [
+                ChatTurnItem(role=msg.role, content=msg.content, district=msg.district)
+                for msg in detail.messages[-12:]
+            ]
+        else:
+            history = list(body.history)
+
+        effective_query, effective_district, compact_history = (
+            build_multiturn_chat_context(body.message, body.district, history)
+        )
+
+        def finalize(raw_payload: dict[str, Any]) -> CitizenChatResponse:
+            """시민 안전 투영을 적용하고 로그인 민원인이면 DB에 원자 저장합니다.
+
+            Args:
+                raw_payload: 파이프라인 또는 폴백 원시 결과 사전입니다.
+
+            Returns:
+                세션 저장 메타데이터가 반영된 `CitizenChatResponse`입니다.
+            """
+            projected = project_citizen_chat(
+                raw_payload,
+                original_query=body.message,
+            )
+            if can_persist:
+                saved_sid = self.repository.save_chat_exchange(
+                    user_id=actor.id,
+                    session_id=active_session_id,
+                    user_text=body.message,
+                    user_district=effective_district,
+                    assistant_response=projected,
+                )
+                return projected.model_copy(
+                    update={"session_id": saved_sid, "persisted": True}
+                )
+            return projected
+
         iter_fn = self.iter_assist_fn
         if iter_fn is None:
             yield {
@@ -247,10 +435,10 @@ class ComplaintService:
                 "key": "read",
                 "label": "민원 내용을 읽고 있어요",
             }
-            fallback = project_citizen_chat(
+            fallback = finalize(
                 {
-                    "query": body.message,
-                    "district": body.district,
+                    "query": effective_query,
+                    "district": effective_district,
                     "outcome": "human_handoff",
                     "reason_code": "llm_unavailable",
                     "llm_configured": False,
@@ -264,10 +452,14 @@ class ComplaintService:
             kwargs["provider"] = body.provider
         if self._supports_staff_output_flag:
             kwargs["include_staff_outputs"] = False
+        if self._supports_history_flag and compact_history:
+            kwargs["conversation_history"] = compact_history
 
         done_raw: dict[str, Any] | None = None
         try:
-            for event in iter_fn(body.message, body.district, 5, False, **kwargs):
+            for event in iter_fn(
+                effective_query, effective_district, 5, False, **kwargs
+            ):
                 kind = event.get("type")
                 if kind == "progress":
                     # 시민 챗봇 화면에는 직원용 초안·순화 단계 라벨을 노출하지 않습니다.
@@ -283,8 +475,8 @@ class ComplaintService:
                     break
                 elif kind == "error":
                     done_raw = {
-                        "query": body.message,
-                        "district": body.district,
+                        "query": effective_query,
+                        "district": effective_district,
                         "outcome": "human_handoff",
                         "reason_code": "llm_unavailable",
                         "llm_configured": False,
@@ -292,8 +484,8 @@ class ComplaintService:
                     break
         except Exception:
             done_raw = {
-                "query": body.message,
-                "district": body.district,
+                "query": effective_query,
+                "district": effective_district,
                 "outcome": "human_handoff",
                 "reason_code": "llm_unavailable",
                 "llm_configured": False,
@@ -301,13 +493,13 @@ class ComplaintService:
 
         if done_raw is None:
             done_raw = {
-                "query": body.message,
-                "district": body.district,
+                "query": effective_query,
+                "district": effective_district,
                 "outcome": "human_handoff",
                 "reason_code": "llm_unavailable",
                 "llm_configured": False,
             }
-        yield {"type": "done", "result": project_citizen_chat(done_raw)}
+        yield {"type": "done", "result": finalize(done_raw)}
 
     def run_citizen_chat(
         self, actor: Actor, body: CitizenChatInput
@@ -458,8 +650,35 @@ class ComplaintService:
             complaints=[self.project(actor, row) for row in rows], revision=revision
         )
 
+    @staticmethod
+    def _matches_search(
+        row: PublicComplaint | Complaint, query_text: str, *, include_staff_fields: bool
+    ) -> bool:
+        """민원 제목·본문·식별자(및 담당자 화면의 배정 부서)를 통합 검색합니다.
+
+        Args:
+            row: 검사할 민원 모델입니다.
+            query_text: 사용자가 입력한 검색어입니다.
+            include_staff_fields: 담당자 전용 배정 부서명까지 함께 검색할지 여부입니다.
+
+        Returns:
+            검색어가 비었거나 대상 필드 중 하나에 부분 일치하면 True입니다.
+        """
+        needle = (query_text or "").strip().casefold()
+        if not needle:
+            return True
+        if (
+            needle in row.title.casefold()
+            or needle in row.body.casefold()
+            or needle in row.id.casefold()
+        ):
+            return True
+        if include_staff_fields and isinstance(row, Complaint) and row.department:
+            return needle in row.department.casefold()
+        return False
+
     def page(self, actor: Actor, query: ListQuery) -> PublicPage | StaffPage:
-        """서버에서 검색·필터·페이지 제한을 적용한 목록을 반환합니다.
+        """서버에서 통합 검색·필터·페이지 제한을 적용한 목록을 반환합니다.
 
         Args:
             actor: 조회 사용자입니다.
@@ -469,10 +688,11 @@ class ComplaintService:
             권한에 맞는 페이지와 전체 건수입니다.
         """
         workspace = self.workspace(actor)
+        is_staff = actor.role == "staff"
         rows = [
             row
             for row in workspace.complaints
-            if (not query.q or query.q.casefold() in row.title.casefold())
+            if self._matches_search(row, query.q, include_staff_fields=is_staff)
             and (not query.status or row.status == query.status)
             and (not query.district or row.district == query.district)
             and (not query.category or row.category == query.category)
@@ -684,6 +904,330 @@ class ComplaintService:
                 "department_scope_forbidden",
                 f"소속 부서({actor.department})가 아닌 '{row.department}' 배정 민원은 수정·답변할 수 없습니다.",
             )
+
+    @staticmethod
+    def _in_staff_scope(actor: Actor, row: Complaint) -> bool:
+        """담당자의 부서 RBAC 소관 범위에 속하는 민원인지 판정합니다.
+
+        총괄 담당자(`actor.department is None`)는 모든 민원을 집계·내보내기하며,
+        부서 담당자는 미배정 민원과 본인 소속 부서에 배정된 민원만 포함합니다.
+
+        Args:
+            actor: 통계를 조회하거나 CSV를 내보내는 담당자입니다.
+            row: 검사할 민원 레코드입니다.
+
+        Returns:
+            담당자 소관 범위이면 True입니다.
+        """
+        if not actor.department:
+            return True
+        return not row.department or row.department == actor.department
+
+    @classmethod
+    def _filter_and_sort_staff_rows(
+        cls, rows: list[Complaint], query: StaffExportQuery
+    ) -> list[Complaint]:
+        """담당자 업무 목록의 통합 검색·AI 판정·시연 제외·정렬 조건을 일관되게 적용합니다.
+
+        Args:
+            rows: RBAC 소관 범위 필터를 통과한 활성 민원 목록입니다.
+            query: 검증된 필터·정렬 쿼리 모델입니다.
+
+        Returns:
+            조건과 정렬이 적용된 민원 목록입니다.
+        """
+        filtered: list[Complaint] = []
+        for row in rows:
+            if not query.include_synthetic and row.is_synthetic:
+                continue
+            if not cls._matches_search(row, query.q, include_staff_fields=True):
+                continue
+            if query.status and row.status != query.status:
+                continue
+            if query.district and row.district != query.district:
+                continue
+            if query.category and row.category != query.category:
+                continue
+            if query.assign:
+                has_assignee = row.assigned or bool(row.department)
+                if has_assignee != (query.assign == "mine"):
+                    continue
+            if query.view:
+                if query.view == "followup" and not row.messages:
+                    continue
+                if query.view == "drafts" and not (row.draft and not row.published):
+                    continue
+                if query.view == "failed" and row.job.status != "failed":
+                    continue
+                if query.view == "published" and row.published is None:
+                    continue
+            if query.ai_outcome:
+                if query.ai_outcome == "none":
+                    if row.ai_assist is not None:
+                        continue
+                elif row.ai_assist is None or row.ai_assist.outcome != query.ai_outcome:
+                    continue
+            filtered.append(row)
+
+        if query.sort == "oldest_open":
+            filtered.sort(
+                key=lambda r: (
+                    0 if r.status in ("submitted", "under_review") else 1,
+                    r.date,
+                    r.id,
+                )
+            )
+        elif query.sort == "most_followups":
+            filtered.sort(key=lambda r: (-len(r.messages), -r.date.timestamp(), r.id))
+        elif query.sort == "unpublished_first":
+            filtered.sort(
+                key=lambda r: (
+                    0 if (r.draft and not r.published) else 1,
+                    -r.date.timestamp(),
+                    r.id,
+                )
+            )
+        else:
+            filtered.sort(key=lambda r: (r.date, r.id), reverse=True)
+        return filtered
+
+    def staff_stats(
+        self, actor: Actor, *, include_synthetic: bool = True
+    ) -> StaffStatsResponse:
+        """담당자 RBAC 소관 범위 기준 운영 KPI·드릴다운 차트·정규화 DB 요약을 집계합니다.
+
+        Args:
+            actor: 통계 대시보드를 조회하는 담당자입니다.
+            include_synthetic: 공개 시연 데이터(`DEMO-*`)를 집계에 포함할지 여부입니다.
+
+        Returns:
+            권한 범위가 적용된 `StaffStatsResponse` 모델입니다.
+        """
+        self._require_staff(actor)
+        self.advance_jobs()
+        scoped_all = [
+            self._enrich_live(row)
+            for row in self.repository.all()
+            if row.status != "withdrawn" and self._in_staff_scope(actor, row)
+        ]
+        real_count = sum(1 for row in scoped_all if not row.is_synthetic)
+        synthetic_count = sum(1 for row in scoped_all if row.is_synthetic)
+        rows = (
+            scoped_all
+            if include_synthetic
+            else [row for row in scoped_all if not row.is_synthetic]
+        )
+
+        now = utcnow()
+        open_rows = [row for row in rows if row.status in ("submitted", "under_review")]
+        avg_open_days = (
+            round(
+                sum(
+                    max(0.0, (now - row.date).total_seconds() / 86400.0)
+                    for row in open_rows
+                )
+                / len(open_rows),
+                1,
+            )
+            if open_rows
+            else 0.0
+        )
+        operational = StaffOperationalMetrics(
+            open_count=len(open_rows),
+            submitted_count=sum(1 for r in rows if r.status == "submitted"),
+            under_review_count=sum(1 for r in rows if r.status == "under_review"),
+            answered_count=sum(1 for r in rows if r.status == "answered"),
+            unassigned_count=sum(
+                1 for r in rows if not r.assigned and not r.department
+            ),
+            unpublished_drafts=sum(
+                1 for r in rows if bool(r.draft and not r.published)
+            ),
+            with_followups=sum(1 for r in rows if bool(r.messages)),
+            ai_failed=sum(1 for r in rows if r.job.status == "failed"),
+            ai_running=sum(1 for r in rows if r.job.status == "running"),
+            published_count=sum(1 for r in rows if r.published is not None),
+            avg_open_days=avg_open_days,
+        )
+
+        by_status = [
+            StaffStatsBucket(
+                key=key,
+                label=_STATUS_LABELS[key],
+                count=sum(1 for r in rows if r.status == key),
+                filter_key="status",
+                filter_value=key,
+            )
+            for key in ("submitted", "under_review", "answered", "closed")
+        ]
+        by_district = [
+            StaffStatsBucket(
+                key=dist,
+                label=dist,
+                count=sum(1 for r in rows if r.district == dist),
+                filter_key="district",
+                filter_value=dist,
+            )
+            for dist in _STATS_DISTRICTS
+        ]
+        by_category = [
+            StaffStatsBucket(
+                key=cat,
+                label=cat,
+                count=sum(1 for r in rows if r.category == cat),
+                filter_key="category",
+                filter_value=cat,
+            )
+            for cat in CATEGORIES
+        ]
+        by_ai_outcome = [
+            StaffStatsBucket(
+                key=key,
+                label=_AI_OUTCOME_LABELS[key],
+                count=sum(
+                    1
+                    for r in rows
+                    if (
+                        r.ai_assist is None
+                        if key == "none"
+                        else (r.ai_assist is not None and r.ai_assist.outcome == key)
+                    )
+                ),
+                filter_key="aiOutcome",
+                filter_value=key,
+            )
+            for key in ("faq_answer", "department_suggestion", "human_handoff", "none")
+        ]
+
+        dept_counts: dict[str, int] = {}
+        unassigned_dept_count = 0
+        for row in rows:
+            if row.department:
+                dept_counts[row.department] = dept_counts.get(row.department, 0) + 1
+            else:
+                unassigned_dept_count += 1
+        by_department = [
+            StaffStatsBucket(
+                key=dept,
+                label=dept,
+                count=cnt,
+                filter_key="q",
+                filter_value=dept,
+            )
+            for dept, cnt in sorted(
+                dept_counts.items(), key=lambda pair: (-pair[1], pair[0])
+            )[:10]
+        ]
+        if unassigned_dept_count > 0 or not by_department:
+            by_department.append(
+                StaffStatsBucket(
+                    key="unassigned",
+                    label="부서 미배정",
+                    count=unassigned_dept_count,
+                    filter_key="assign",
+                    filter_value="none",
+                )
+            )
+
+        scope_label = (
+            f"{actor.department} 소관 + 미배정"
+            if actor.department
+            else "청주시 전체 민원 (총괄)"
+        )
+        return StaffStatsResponse(
+            scope_label=scope_label,
+            is_admin_scope=actor.department is None,
+            include_synthetic=include_synthetic,
+            total_complaints=len(rows),
+            real_complaints=real_count,
+            synthetic_complaints=synthetic_count,
+            operational=operational,
+            by_status=by_status,
+            by_district=by_district,
+            by_category=by_category,
+            by_ai_outcome=by_ai_outcome,
+            by_department=by_department,
+            db_summary=self.repository.normalized_summary(),
+        )
+
+    def export_complaints_csv(
+        self, actor: Actor, query: StaffExportQuery
+    ) -> tuple[str, str]:
+        """현재 필터·RBAC 소관 범위의 업무 메타데이터를 안전한 UTF-8 BOM CSV로 생성합니다.
+
+        미게시 AI 초안(`draft`/`ai_original`/`staff_draft`)과 직원 보호 순화
+        (`sanitize`) 본문은 절대 내보내지 않으며, 엑셀 수식 주입 문자를 중화합니다.
+
+        Args:
+            actor: 내보내기를 요청한 담당자입니다.
+            query: 화면 필터·정렬·시연 포함 조건입니다.
+
+        Returns:
+            `(다운로드 파일명, UTF-8 BOM 포함 CSV 문자열)` 튜플입니다.
+        """
+        self._require_staff(actor)
+        self.advance_jobs()
+        scoped = [
+            self._enrich_live(row)
+            for row in self.repository.all()
+            if row.status != "withdrawn" and self._in_staff_scope(actor, row)
+        ]
+        rows = self._filter_and_sort_staff_rows(scoped, query)
+
+        buf = io.StringIO()
+        buf.write("\ufeff")
+        writer = csv.writer(buf, lineterminator="\r\n")
+        writer.writerow(
+            [
+                "민원ID",
+                "등록일",
+                "상태",
+                "관할구",
+                "분야",
+                "제목",
+                "공개구분",
+                "시연데이터",
+                "배정부서",
+                "담당자",
+                "AI판정",
+                "AI사유",
+                "작업상태",
+                "답변게시여부",
+                "추가문의수",
+            ]
+        )
+        for row in rows:
+            ai_outcome_label = (
+                _AI_OUTCOME_LABELS.get(row.ai_assist.outcome, row.ai_assist.outcome)
+                if row.ai_assist is not None
+                else _AI_OUTCOME_LABELS["none"]
+            )
+            ai_reason = row.ai_assist.reason_code if row.ai_assist is not None else ""
+            writer.writerow(
+                [
+                    _csv_safe_cell(row.id),
+                    _csv_safe_cell(row.date.strftime("%Y-%m-%d %H:%M")),
+                    _csv_safe_cell(_STATUS_LABELS.get(row.status, row.status)),
+                    _csv_safe_cell(row.district),
+                    _csv_safe_cell(row.category),
+                    _csv_safe_cell(row.title),
+                    _csv_safe_cell("공개" if row.visibility == "public" else "비공개"),
+                    _csv_safe_cell("시연" if row.is_synthetic else "실제"),
+                    _csv_safe_cell(row.department or "미배정"),
+                    _csv_safe_cell(
+                        row.assignee_name or ("담당 지정" if row.assigned else "미지정")
+                    ),
+                    _csv_safe_cell(ai_outcome_label),
+                    _csv_safe_cell(ai_reason),
+                    _csv_safe_cell(
+                        _JOB_STATUS_LABELS.get(row.job.status, row.job.status)
+                    ),
+                    _csv_safe_cell("게시됨" if row.published is not None else "미게시"),
+                    str(len(row.messages)),
+                ]
+            )
+        filename = f"cheongju-complaints-{utcnow().strftime('%Y%m%d-%H%M')}.csv"
+        return filename, buf.getvalue()
 
     def normalized_summary(self, actor: Actor) -> NormalizedDbSummary:
         """정규화 7테이블의 행 수와 AI·역할 집계를 담당자에게 반환합니다.

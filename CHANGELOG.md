@@ -1,5 +1,12 @@
 # 변경 이력
 
+## 2026-11-21
+
+- **시민 다중 턴 AI 챗봇(PostgreSQL 영속 저장) 및 담당자 RBAC 통계 대시보드·통합 검색·안전 CSV 내보내기 구현 ([CASE-114](docs/cases/사례-114-시민-다중턴챗봇-PG영속저장과-담당자-통계대시보드-CSV내보내기-구현-2026-11-21.md)):**
+  - **시민 다중 턴 챗봇 및 PostgreSQL 세션 저장 (`src/complaints/schema/complaint_app.sql`·`models.py`·`chat.py`·`repository.py`·`service.py`·`api.py`, `src/assist/policy.py`·`pipeline.py`·`__init__.py`, `ui/src/chatbot.js`·`app.js`·`citizen.css`·`themes.css`):** `complaint_app.chat_sessions`·`chat_messages`(`ON DELETE CASCADE`, 안전 투영 `CitizenChatResponse` JSON만 저장)와 `GET/DELETE /api/v1/citizen/chat/sessions*`를 추가했습니다. `build_multiturn_chat_context()`로 추가 LLM 호출 없이(0ms) 짧은 후속 질문·관할 보완에 직전 주제와 구를 보강하고(주제 전환·타 지자체 오염 차단), `conversation_history`를 `PREFIX-01`/`02` 가변 `user` JSON에만 주입해 Prefix Caching을 보존했습니다. 로그인 민원인은 PostgreSQL 자동 저장·복원·삭제(타인 404·담당자 403 격리), 비로그인 시연 시민은 브라우저 `sessionStorage` 임시 저장 + `"로그인하면 대화가 저장됩니다"` 안내를 제공하며 다중 턴 시민 발화를 민원 작성 폼으로 일괄 이관합니다.
+  - **담당자 RBAC 통계 대시보드·큐 통합 검색·안전 CSV 내보내기 (`src/complaints/models.py`·`service.py`·`api.py`, `ui/src/staff-stats.js`·`staff.js`·`app.js`·`icons.js`·`staff.css`·`themes.css`):** `GET /api/v1/staff/stats`(총괄 전체 vs 부서 담당자 미배정+소속 부서 RBAC 강제, `includeSynthetic` 토글, 11종 운영 KPI·5종 드릴다운 분포·7테이블 요약)와 `GET /api/v1/staff/complaints/export.csv`(UTF-8 BOM·엑셀 수식 주입 `=+-@\t\r` 중화·업무 메타데이터 15열·미게시 초안/순화 완전 제외)를 구현했습니다. `#/staff/stats` 클릭형 드릴다운 차트와 큐 통합 검색(제목·본문·ID·부서)·AI 판정 필터·4종 정렬·시연 토글·`queueRows` 담당자 실명(`c.assigneeName`) 수정을 반영했습니다.
+  - **Swagger PDF 및 전수 검증:** [`청주톡톡_민원_업무_API_Swagger.pdf`](docs/청주톡톡_민원_업무_API_Swagger.pdf) **34경로 · 41오퍼레이션 (`1,515,107`바이트)** 갱신, `black` 통과, `mypy` **43모듈 0오류**, `RUN_PG_TESTS=1 pytest src/tests` **`186 passed`**, `rag/tests` **`49 passed(3 skipped)`** + `rag.verify` **`passed: true`**, `회귀검증_112건_규칙.py` **실패 0**, `ui check 27 / test 33/33`, `:5000` 실서버 PostgreSQL + Headless Edge CDP(다중 턴 DB 저장/복원/삭제·RBAC 통계·드릴다운·CSV·라이트/다크 콘솔 오류 `0건`) 통과.
+
 ## 2026-11-20
 
 - **100건 실증 세부 문제 패치 및 `:5010` Codex CLI 전용 신규 100건 실증 평가 (`99/100, 99.0%`) ([CASE-113](docs/cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md)):**

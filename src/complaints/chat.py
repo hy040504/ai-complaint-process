@@ -8,10 +8,16 @@ FAQ 출처·참고 부서명·감지 관할 구만 반환합니다.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
-from src.assist.district import normalize_district
+from src.assist.district import (
+    extract_district,
+    extract_external_jurisdiction,
+    normalize_district,
+)
 from src.complaints.models import (
+    ChatTurnItem,
     CitizenChatResponse,
     CitizenFaqSource,
     District,
@@ -207,7 +213,106 @@ def _build_citizen_message(
     )
 
 
-def project_citizen_chat(raw: dict[str, Any]) -> CitizenChatResponse:
+_FOLLOWUP_CUE_RE = re.compile(
+    r"(?:^(?:그럼|그러면|그렇다면|근데|그런데|그리고|또한|혹시|아|아니|그거|그것|거기|여기|해당|이거|이것)\b"
+    r"|^(?:수수료|비용|가격|처리\s*기간|기간|소요\s*시간|준비물|구비\s*서류|서류|대상|자격|조건|신청\s*방법|접수처|어디|언제|시간|연락처|전화|주소|위치|온라인|방문|주말|야간|대리|예외)"
+    r"|(?:이에요|예요|인데요|입니다|쪽이에요|앞이에요|근처예요|부근이에요|에서는요|은요|는요)\s*[?!.]?$)"
+)
+_NEW_TOPIC_RE = re.compile(r"^(?:다른\s*(?:질문|문의)|별개로|새\s*질문|따로\s*문의)")
+_MAX_HISTORY_ITEMS = 8
+
+
+def build_multiturn_chat_context(
+    message: str,
+    explicit_district: str | None,
+    history: list[ChatTurnItem],
+) -> tuple[str, str | None, list[dict[str, str]]]:
+    """직전 대화 이력을 바탕으로 추가 LLM 호출 없이 검색 질의·관할 구·문맥 목록을 구성합니다.
+
+    짧은 후속 질문(`"그럼 수수료는요?"`, `"오창읍이에요"` 등)에는 직전 사용자 질문의
+    핵심 주제를 검색 질의에 보강하고, 이전 턴에서 확정된 청주시 관할 구를 이어받습니다.
+    반대로 완전히 새로운 주제의 긴 질문이나 타 지자체 주소·새 청주 구가 명시된 경우에는
+    이전 주제가 섞이지 않도록 현재 발화를 우선합니다.
+
+    Args:
+        message: 이번 턴에 시민이 입력한 문의 원문입니다.
+        explicit_district: 사용자가 지역 선택란에 명시한 구 또는 세부 지역입니다.
+        history: 직전 대화 턴 목록(오래된 순)입니다.
+
+    Returns:
+        `(검색·판정에 사용할 질의, 적용할 관할 구 또는 None, 가변 user JSON용 최근 이력 목록)` 튜플입니다.
+    """
+    clean_msg = " ".join((message or "").split())
+    if not history:
+        return clean_msg, explicit_district, []
+
+    trimmed_history = history[-_MAX_HISTORY_ITEMS:]
+    compact_history = [
+        {"role": item.role, "content": " ".join(item.content.split())[:400]}
+        for item in trimmed_history
+        if item.content and item.content.strip()
+    ]
+
+    prior_users = [
+        " ".join(item.content.split())
+        for item in trimmed_history
+        if item.role == "user" and item.content and item.content.strip()
+    ]
+    prev_user = prior_users[-1] if prior_users else ""
+
+    prev_district: str | None = None
+    for item in reversed(trimmed_history):
+        if item.district:
+            gu = normalize_district(item.district)
+            if gu in _VALID_DISTRICTS:
+                prev_district = gu
+                break
+
+    msg_external = extract_external_jurisdiction(clean_msg)
+    msg_district = (
+        extract_district(clean_msg)
+        if not explicit_district and not msg_external
+        else None
+    )
+
+    is_new_topic = bool(_NEW_TOPIC_RE.search(clean_msg))
+    is_followup = (
+        bool(prev_user)
+        and not is_new_topic
+        and not msg_external
+        and (
+            bool(_FOLLOWUP_CUE_RE.search(clean_msg))
+            or len(clean_msg) <= 28
+            or (msg_district is not None and len(clean_msg) <= 45)
+        )
+    )
+
+    effective_query = clean_msg
+    if is_followup and prev_user not in clean_msg:
+        anchor = prev_user[:140]
+        effective_query = f"{anchor} — {clean_msg}"[:2000]
+
+    effective_district = explicit_district
+    if (
+        effective_district is None
+        and msg_district is None
+        and msg_external is None
+        and not is_new_topic
+        and is_followup
+        and prev_district is not None
+    ):
+        effective_district = prev_district
+
+    return effective_query, effective_district, compact_history
+
+
+def project_citizen_chat(
+    raw: dict[str, Any],
+    *,
+    original_query: str | None = None,
+    session_id: str | None = None,
+    persisted: bool = False,
+) -> CitizenChatResponse:
     """응대 파이프라인 결과를 시민 챗봇 전용 계약으로 안전하게 투영합니다.
 
     미게시 담당자 초안(`staff_draft`), 직원 보호 순화(`sanitize`), 내부 프롬프트
@@ -215,6 +320,9 @@ def project_citizen_chat(raw: dict[str, Any]) -> CitizenChatResponse:
 
     Args:
         raw: `run_web_assist` 또는 `iter_web_assist` `done` 결과 사전입니다.
+        original_query: 다중 턴 결합 전 시민이 입력한 원래 질문입니다.
+        session_id: 로그인 시민의 DB 저장 세션 ID입니다.
+        persisted: 이번 턴이 PostgreSQL에 저장되었으면 True입니다.
 
     Returns:
         시민에게 안전하게 반환할 수 있는 `CitizenChatResponse` 모델입니다.
@@ -241,8 +349,14 @@ def project_citizen_chat(raw: dict[str, Any]) -> CitizenChatResponse:
     answer = _build_citizen_message(
         outcome, reason_code, raw_answer, department_hints, district, place_title
     )
+    pipeline_query = str(raw.get("query") or "")
+    display_query = original_query if original_query is not None else pipeline_query
+    effective_query = (
+        pipeline_query if pipeline_query and pipeline_query != display_query else None
+    )
     return CitizenChatResponse(
-        query=str(raw.get("query") or ""),
+        query=display_query,
+        effective_query=effective_query,
         outcome=outcome,
         reason_code=reason_code,
         answer=answer,
@@ -259,4 +373,6 @@ def project_citizen_chat(raw: dict[str, Any]) -> CitizenChatResponse:
         llm_provider=raw.get("llm_provider") or raw.get("llmProvider"),
         llm_configured=bool(raw.get("llm_configured") or raw.get("llmConfigured")),
         demo_notice=DEMO_CHAT_NOTICE,
+        session_id=session_id,
+        persisted=persisted,
     )

@@ -2267,3 +2267,130 @@ body[data-theme="dark"] .auth-badge.demo {
   border-color: #40516d;
   color: #cbd5e1;
 }
+/* 시민 다중 턴 챗봇 세션 바 다크 테마 */
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-bar {
+  background: #142034;
+  border-color: #2d3e5b;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-notice {
+  color: #bfd0e8;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-notice b {
+  color: #e6effd;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-saved-badge {
+  color: #6ee7b7;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-new-btn {
+  background: #1f3250;
+  border-color: #3c5885;
+  color: #cfe0ff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-new-btn:hover {
+  background: #294168;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-pill {
+  background: #1a2942;
+  border-color: #33486b;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-pill.active {
+  background: #223b66;
+  border-color: #60a5fa;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-pick {
+  color: #d6e4f8;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-pill.active .chat-session-pick {
+  color: #ffffff;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-pick > small,
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-empty {
+  color: #9fb5d6;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-del {
+  color: #9cb2d3;
+}
+body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .chat-session-del:hover {
+  color: #fca5a5;
+}
+/* 담당자 통계 대시보드 · CSV 내보내기 다크 테마 */
+body[data-theme="dark"][data-site="staff"] .staff-syn-toggle.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .staff-export-btn {
+  background: #21314b;
+  border-color: #3e5578;
+  color: #e2ecfa;
+}
+body[data-theme="dark"][data-site="staff"] .staff-export-btn:hover {
+  background: #2b4061;
+}
+body[data-theme="dark"][data-site="staff"] .stats-scope-badge {
+  background: #1a3057;
+  border-color: #3b63a3;
+  color: #bfdbfe;
+}
+body[data-theme="dark"][data-site="staff"] .stats-scope-badge.dept {
+  background: #123635;
+  border-color: #256f68;
+  color: #86efac;
+}
+body[data-theme="dark"][data-site="staff"] .stats-chart-card,
+body[data-theme="dark"][data-site="staff"] .stats-db-card {
+  background: #19263b;
+  border-color: #35455f;
+}
+body[data-theme="dark"][data-site="staff"] .stats-chart-card > header > h2,
+body[data-theme="dark"][data-site="staff"] .stats-db-card > header h2 {
+  color: #eaf1fc;
+}
+body[data-theme="dark"][data-site="staff"] .stats-chart-card > header > span,
+body[data-theme="dark"][data-site="staff"] .stats-db-card > header p {
+  color: #adc0dc;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-row:hover,
+body[data-theme="dark"][data-site="staff"] .stats-bar-row:focus-visible {
+  background: #223451;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-label {
+  color: #d7e3f5;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-track {
+  background: #273752;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-fill {
+  background: #60a5fa;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-fill.tone-teal {
+  background: #2dd4bf;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-fill.tone-indigo {
+  background: #818cf8;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-fill.tone-gold {
+  background: #fbbf24;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-val {
+  color: #eef4ff;
+}
+body[data-theme="dark"][data-site="staff"] .stats-bar-val small {
+  color: #a6bad8;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap {
+  border-color: #30425f;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap thead th {
+  background: #1f2f49;
+  color: #dce8fa;
+  border-color: #324666;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td {
+  background: #152135;
+  color: #dbe6f7;
+  border-color: #273752;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap code {
+  color: #93c5fd;
+}

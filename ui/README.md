@@ -30,8 +30,8 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | 사이트 | 기능 |
 | --- | --- |
 | 시민 | 홈·분야별 작성 진입, **민원인 아이디·비밀번호 로그인 및 간단 가입 모달(`auth.js`)·다중 사용자 비공개 민원 격리**, 공개/내 민원 범위 탭·검색·필터·페이지, 작성·수정·철회·영구 삭제(내 민원/상세)·임시 입력 저장, 결론 상자·접힌 답변·처리 이력, 추가 문의·재검토·이용 안내 |
-| 담당자 | **부서별 담당자 실계정 로그인(`staff_admin`·`staff_seowon`·`staff_heungdeok`)·소속 부서 표시·세션 유지**, 접수·검토 업무 큐, 실제 건수 요약·분야별 검토 현황·경과일(`daysSince`)·이전/다음 이동, 제목·지역·분야·담당·초안·추가 문의·시연 실패·게시 필터, 본인 담당 지정·해제 및 청주시 127개 다른 부서 시연 배정(검색·AI 후보 선택·메모), 커스텀 답변 템플릿 추가·삽입·삭제·복원·글자 수·`Ctrl+S`/`⌘S` 초안 저장·미리보기·게시·철회, 확대된 업무 가독성 타이포그래피 |
-| AI 연동·작업 | 시민 등록·수정 시 비동기 RAG+LLM(`EXAONE`/`Codex`/`openai_api` 가드) 자동 실행, 담당자 콘솔 AI 참고 정보 카드(`aiAssist`·`AI 추천 후보`/`유사 사례 참고`·근거·요약·순화), **담당자 실시간 SSE 모니터(`realtime.js` · 단절 시 3초 폴링 대체)**, **시민 AI 민원 도우미(`#/citizen/assistant` · `chatbot.js` · FAQ 출처/감지 구 자동 이관·미게시 초안 차단)** |
+| 담당자 | **부서별 담당자 실계정 로그인(`staff_admin`·`staff_seowon`·`staff_heungdeok`)·소속 부서 표시·세션 유지**, **RBAC 업무 통계 대시보드(`#/staff/stats` · 5종 클릭형 드릴다운 차트 · 시연 제외 토글 · 7테이블 DB 요약)**, 접수·검토 업무 큐, 실제 건수 요약·분야별 검토 현황·경과일(`daysSince`)·이전/다음 이동, **제목·본문·ID·부서 통합 검색·AI 판정·정렬·공개 시연 토글·수식 주입 방어 CSV 내보내기**, 본인 담당 지정·해제 및 청주시 127개 다른 부서 시연 배정(검색·AI 후보 선택·메모), 커스텀 답변 템플릿 추가·삽입·삭제·복원·글자 수·`Ctrl+S`/`⌘S` 초안 저장·미리보기·게시·철회, 확대된 업무 가독성 타이포그래피 |
+| AI 연동·작업 | 시민 등록·수정 시 비동기 RAG+LLM(`EXAONE`/`Codex`/`openai_api` 가드) 자동 실행, 담당자 콘솔 AI 참고 정보 카드(`aiAssist`·`AI 추천 후보`/`유사 사례 참고`·근거·요약·순화), **담당자 실시간 SSE 모니터(`realtime.js` · 단절 시 3초 폴링 대체)**, **시민 다중 턴 AI 민원 도우미(`#/citizen/assistant` · `chatbot.js` · 로그인 DB 세션 자동 저장/복원/삭제 · 비로그인 탭 임시 저장 · 다중 턴 민원 작성 이관 · 미게시 초안 차단)** |
 | 응대 검사기 | `src/lab_web` `:5010` 및 기존 SPA `/#/lab`. 시민 UI 기준 히어로·단계 안내·카드 레이아웃, 4종 엔진 선택·잠금, 읍·면·동 선택, 장소 추적, `분야:` 제외 검색 후 판정(원시 `unverified`·`inferred_from_name` 표기 유지) 및 데이터 JSON ↑·프롬프트 ↓ 표시 |
 | 공통 | 반응형 화면, 레이블·키보드 초점·상태 안내, 라이트/다크 전용 청주시 로고(`citizen-brand.css`)·서비스 SVG·차분한 다크 `:hover`, 빈 결과·서버 로딩·연결/저장 실패·중복 제출 처리 |
 
@@ -61,7 +61,8 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | --- | --- |
 | `src/auth.js` | 민원인·담당자 아이디·비밀번호 2탭 로그인 및 민원인 간단 가입 모달·상태 배지 렌더러 |
 | `src/realtime.js` | 담당자 실시간 SSE(`EventSource`) 클라이언트, `Last-Event-ID` 중복 제거·`resync_required`·장애 시 3초 폴링 대체 전환·상태 배지 |
-| `src/chatbot.js` | 시민 민원 도우미(`/api/v1/citizen/chat/stream`) NDJSON 클라이언트, 갈래별 안전 카드 렌더러, 감지 구 작성 폼 변환 |
+| `src/chatbot.js` | 시민 다중 턴 민원 도우미(`/api/v1/citizen/chat*`) NDJSON·세션 목록/복원/삭제 클라이언트, 비로그인 `sessionStorage` 임시 저장, 세션 바·안전 카드 렌더러, 다중 턴 민원 작성 폼 병합 |
+| `src/staff-stats.js` | 담당자 통계 대시보드(`#/staff/stats`) 6종 KPI·5종 클릭형 드릴다운 차트·정규화 7테이블 요약 및 CSV 내보내기 URL 빌더 |
 | `src/llm-meta.js` | 공급자 배지·제목(`resolveLlmMeta`), 장소 포맷, 4구·읍·면·동·엔진 `<option>` 조립, 판정·사유 라벨 공유 |
 | `src/lab.js`, `src/lab.css` | RAG·LLM 응대 검사기(`/#/lab`). 엔진 선택/잠금, 읍·면·동 선택, `rerank: false`, 데이터 ↑·프롬프트 ↓ 표시 |
 | `minwon-toktok-ui04.html`, `adapters/ui04-adapter.js` | `/design/ui04` 목업 원본과 `/api/v1` 연결 시연 어댑터 |
@@ -73,7 +74,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | `src/store.js` | API 호출·역할 선택·조회 캐시·서버 오류 처리 |
 | `src/icons.js`, `src/styles.css`, `src/readability.css` | 로컬 SVG·반응형 디자인·가독성 |
 | `server.mjs` | 루트 src의 Flask 서버를 실행하는 npm 편의 실행기 |
-| `tests/*.test.mjs` | API·검사기·담당자 참고 카드·`#/staff/api` Swagger·실시간 SSE(`realtime.test.mjs`)·시민 챗봇(`chatbot.test.mjs`)·운영 인증(`auth.test.mjs`) 회귀 |
+| `tests/*.test.mjs` | API·검사기·담당자 참고 카드·`#/staff/api` Swagger·실시간 SSE(`realtime.test.mjs`)·시민 다중 턴 챗봇(`chatbot.test.mjs`)·운영 인증(`auth.test.mjs`)·통계 대시보드/통합 검색/CSV(`staff-stats.test.mjs`) 회귀 |
 
 ```powershell
 npm --prefix ui run check

@@ -3,8 +3,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ANON_CHAT_STORAGE_KEY,
+  buildChatHistoryPayload,
   buildCitizenDraftPayload,
+  hydrateSessionMessages,
+  loadAnonChatMessages,
+  renderChatSessionBar,
   renderCitizenChatBubble,
+  saveAnonChatMessages,
   streamCitizenChat,
 } from "../src/chatbot.js";
 
@@ -152,4 +158,72 @@ test("renderCitizenChatBubble과 buildCitizenDraftPayload는 구 자동 채움·
   assert.match(actionHtml, /서원구 · 서원대학교/);
   assert.match(actionHtml, /서원구 건설과/);
   assert.match(actionHtml, /data-district="서원구"/);
+});
+
+test("다중 턴 이력 변환·드래프트 병합·세션 바 및 비로그인 임시 저장이 안전하게 동작한다", () => {
+  const turns = [
+    { role: "me", text: "흥덕구 대형폐기물 배출 방법 알려주세요", district: "흥덕구" },
+    {
+      role: "ai",
+      text: "신고필증을 부착해 주세요.",
+      result: { district: "흥덕구", answer: "신고필증을 부착해 주세요." },
+    },
+    { role: "me", text: "그럼 수수료는 얼마인가요?", district: null },
+  ];
+  const history = buildChatHistoryPayload(turns);
+  assert.equal(history.length, 3);
+  assert.deepEqual(
+    history.map((h) => h.role),
+    ["user", "assistant", "user"],
+  );
+  assert.equal(history[1].district, "흥덕구");
+
+  const multiDraft = buildCitizenDraftPayload(
+    "그럼 수수료는 얼마인가요?",
+    { district: "흥덕구" },
+    ["흥덕구 대형폐기물 배출 방법 알려주세요", "그럼 수수료는 얼마인가요?"],
+  );
+  assert.equal(multiDraft.title, "흥덕구 대형폐기물 배출 방법 알려주세요");
+  assert.match(multiDraft.body, /대형폐기물/);
+  assert.match(multiDraft.body, /수수료/);
+  assert.equal(multiDraft.district, "흥덕구");
+
+  const hydrated = hydrateSessionMessages({
+    messages: [
+      { role: "user", content: "질문 1", district: "서원구" },
+      {
+        role: "assistant",
+        content: "응답 1",
+        payload: { outcome: "faq_answer", answer: "응답 1", district: "서원구" },
+      },
+    ],
+  });
+  assert.equal(hydrated.length, 2);
+  assert.equal(hydrated[0].role, "me");
+  assert.equal(hydrated[1].result.outcome, "faq_answer");
+
+  const anonBar = renderChatSessionBar({ actor: { role: "citizen", demo: true } });
+  assert.match(anonBar, /로그인하면 대화가 저장됩니다/);
+
+  const savedBar = renderChatSessionBar({
+    actor: { role: "citizen", demo: false },
+    persisted: true,
+    activeSessionId: "CHAT-2026-AAA",
+    sessions: [
+      { id: "CHAT-2026-AAA", title: "대형폐기물 문의", messageCount: 4 },
+    ],
+  });
+  assert.match(savedBar, /내 대화 자동 저장/);
+  assert.match(savedBar, /대형폐기물 문의/);
+  assert.match(savedBar, /2턴/);
+
+  const mem = new Map();
+  const fakeStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => mem.set(k, v),
+    removeItem: (k) => mem.delete(k),
+  };
+  saveAnonChatMessages(turns, fakeStorage);
+  assert.ok(mem.has(ANON_CHAT_STORAGE_KEY));
+  assert.equal(loadAnonChatMessages(fakeStorage).length, 3);
 });

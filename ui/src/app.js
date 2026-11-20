@@ -12,6 +12,7 @@ import {
   staffReviewInfo,
   daysSince,
 } from "./staff.js";
+import { staffStatsPage } from "./staff-stats.js";
 import {
   citizenShell,
   citizenHome,
@@ -59,8 +60,17 @@ import {
 } from "./llm-meta.js";
 import { createStaffEventStream, renderSseStatusBadge } from "./realtime.js";
 import {
+  buildChatHistoryPayload,
   buildCitizenDraftPayload,
+  clearAnonChatMessages,
+  deleteChatSession,
+  fetchChatSessionDetail,
+  fetchChatSessions,
+  hydrateSessionMessages,
+  loadAnonChatMessages,
+  renderChatSessionBar,
   renderCitizenChatBubble,
+  saveAnonChatMessages,
   streamCitizenChat,
 } from "./chatbot.js";
 
@@ -134,6 +144,33 @@ let apiDocsError = "";
 let apiDocsTab = "swagger";
 let apiDocsTag = "";
 let apiDocsQuery = "";
+let staffStats = null;
+let staffStatsLoading = false;
+let staffStatsError = "";
+let staffIncludeSynthetic = true;
+
+/**
+ * 담당자 RBAC 소관 범위 기준 통계 대시보드 데이터를 서버에서 불러옵니다.
+ *
+ * @param {boolean} [force=false] 캐시를 무시하고 다시 조회할지 여부입니다.
+ * @returns {Promise<void>} 통계 조회 완료 프로미스입니다.
+ */
+async function loadStaffStats(force = false) {
+  if (!force && staffStats && staffStats.includeSynthetic === staffIncludeSynthetic) {
+    return;
+  }
+  staffStatsLoading = true;
+  staffStatsError = "";
+  try {
+    staffStats = await api(
+      `/staff/stats?includeSynthetic=${staffIncludeSynthetic ? "1" : "0"}`,
+    );
+  } catch (err) {
+    staffStatsError = err?.message || "업무 통계를 불러오지 못했습니다.";
+  } finally {
+    staffStatsLoading = false;
+  }
+}
 
 /**
  * 담당자 API 문서 화면용 헬스 상태와 OpenAPI 3.1 명세를 불러옵니다.
@@ -223,8 +260,66 @@ let chatMessages = [];
 let chatPending = false;
 let chatLiveLabel = "";
 let chatDistrict = "";
+let chatSessionId = null;
+let chatSessions = [];
+let chatSessionsPersisted = false;
+let chatSessionsLoading = false;
+let chatOwnerId = null;
 let citizenPrompt = null;
 let newlyCreatedId = null;
+
+/**
+ * 계정 로그인·전환·로그아웃 시 이전 계정의 챗봇 메모리 상태를 깨끗이 비웁니다.
+ *
+ * @returns {void}
+ */
+function resetChatRuntimeState() {
+  chatMessages = [];
+  chatSessionId = null;
+  chatSessions = [];
+  chatSessionsPersisted = false;
+  chatSessionsLoading = false;
+  chatOwnerId = null;
+  chatLiveLabel = "";
+}
+
+/**
+ * 현재 시민 세션에 맞춰 DB 저장 대화 목록 또는 비로그인 탭 임시 대화를 준비합니다.
+ *
+ * @param {boolean} [force=false] 저장된 세션 목록을 강제로 다시 불러올지 여부입니다.
+ * @returns {Promise<void>} 대화 상태 동기화 완료 프로미스입니다.
+ */
+async function loadCitizenChatState(force = false) {
+  const actor = getActor();
+  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && !actor.demo);
+  const ownerKey = isLoggedInCitizen ? actor.id : "anon";
+  if (chatOwnerId !== ownerKey) {
+    chatOwnerId = ownerKey;
+    chatSessionId = null;
+    chatSessions = [];
+    chatMessages = [];
+  }
+  if (isLoggedInCitizen) {
+    if (!force && chatSessionsPersisted && chatSessions.length) return;
+    chatSessionsLoading = true;
+    try {
+      const res = await fetchChatSessions();
+      chatSessions = res.sessions;
+      chatSessionsPersisted = res.persisted;
+    } catch {
+      chatSessionsPersisted = false;
+    } finally {
+      chatSessionsLoading = false;
+    }
+    return;
+  }
+  chatSessions = [];
+  chatSessionsPersisted = false;
+  chatSessionId = null;
+  if (!chatMessages.length) {
+    chatMessages = loadAnonChatMessages();
+  }
+}
 let busy = false;
 let loadSequence = 0;
 let sseState = "idle";
@@ -292,6 +387,9 @@ async function syncStaffFromServer() {
       !$("#followup-form textarea:focus") &&
       currentRoute().path !== "/staff/api"
     ) {
+      if (currentRoute().path === "/staff/stats") {
+        await loadStaffStats(true).catch(() => null);
+      }
       render();
     }
   } catch (error) {
@@ -468,8 +566,13 @@ async function loadScreen() {
             ...(route.path === "/staff/api"
               ? [loadBackendApiDocs().catch(() => null)]
               : []),
+            ...(route.path === "/staff/stats"
+              ? [loadStaffStats(true).catch(() => null)]
+              : []),
           ])
-        : Promise.resolve(),
+        : route.path === "/citizen/assistant"
+          ? loadCitizenChatState().catch(() => null)
+          : Promise.resolve(),
     ]);
     if (sequence === loadSequence) {
       if (route.staff && staffStream.getState() === "idle") {
@@ -875,7 +978,18 @@ function monitor() {
  */
 function assistant() {
   const districtChoices = ["", ...districts.filter((d) => d !== "모름")];
-  return `<div class="page-content assistant-page"><a class="back-link" href="#/citizen">← 홈으로</a><section class="panel chat-panel"><div class="chat-heading"><span class="citizen-chat-avatar">${icon("spark", 24)}</span><div><h1>민원 도우미</h1><small><i></i> 청주시 공식 FAQ · 사례 기반 실시간 AI 안내</small></div><span class="mini-chip live-chip">RAG + LLM 연동</span></div><div class="chat-messages" aria-live="polite"><div class="chat-bubble ai"><b>안녕하세요! 불편하신 점이나 궁금한 제도를<br>평소 말하듯이 물어보세요 🙂</b><p>청주시 공식 자주 묻는 민원(FAQ)을 찾아 바로 안내해 드리고,<br>현장 조치나 담당자 확인이 필요하면 민원 작성으로 바로 이어 드려요.</p><small>AI 시연 안내이며 공식 민원 접수·자동 부서 이관은 아닙니다. 미게시 담당자 초안은 노출하지 않습니다.</small></div>${chatMessages.map(renderCitizenChatBubble).join("")}${chatPending ? `<div class="chat-bubble ai citizen-typing" role="status" aria-label="AI 답변 준비 중"><i></i><i></i><i></i><span id="chat-live-label">${esc(chatLiveLabel || "민원 내용을 읽고 있어요")}</span></div>` : ""}</div>${!chatMessages.length ? `<div class="suggestions">${["대형폐기물 배출 방법이 궁금해요", "서원대 후문 가로등이 밤새 깜빡거려요", "전입신고에 필요한 서류를 문의하고 싶어요"].map((s) => button(s, "", 'data-action="chat-suggest" data-text="' + s + '"')).join("")}</div>` : ""}<div class="citizen-chat-tools"><label class="chat-district-wrap" for="chat-district"><span>지역</span><select id="chat-district" aria-label="문의 관할 구 선택" ${chatPending ? "disabled" : ""}>${districtChoices.map((d) => `<option value="${esc(d)}" ${chatDistrict === d ? "selected" : ""}>${d ? esc(d) : "자동 감지"}</option>`).join("")}</select></label><button data-action="citizen-chat-help">${icon("book", 14)} 작성 요령</button>${chatMessages.length ? `<button data-action="chat-reset" ${chatPending ? "disabled" : ""}>${icon("refresh", 14)} 새 대화</button>` : ""}<span>${icon("shield", 14)} 개인정보 입력 주의</span>${link("직접 작성하기", "/citizen/write")}</div><form id="chat-form" class="chat-input"><label class="sr-only" for="chat-input">도우미에게 보낼 내용</label><input id="chat-input" name="message" required maxlength="2000" placeholder="예) 대형폐기물 배출 방법이나 동네 불편 사항을 입력해 주세요" ${chatPending ? "disabled" : ""}>${button(icon("arrow", 20), "primary", 'type="submit" aria-label="보내기" ' + (chatPending ? "disabled" : ""))}</form></section><p class="chat-disclaimer">${icon("shield", 14)} 청주시 공식 FAQ·사례 검색 기반 AI 시연 안내 · 실제 민원은 작성 화면에서 직접 등록해야 담당자가 접수합니다.</p></div>`;
+  const allUserTurns = chatMessages
+    .filter((m) => m.role === "me")
+    .map((m) => m.text);
+  const sessionBarHtml = renderChatSessionBar({
+    actor: getActor(),
+    sessions: chatSessions,
+    activeSessionId: chatSessionId,
+    persisted: chatSessionsPersisted,
+    loading: chatSessionsLoading,
+    pending: chatPending,
+  });
+  return `<div class="page-content assistant-page"><a class="back-link" href="#/citizen">← 홈으로</a><section class="panel chat-panel"><div class="chat-heading"><span class="citizen-chat-avatar">${icon("spark", 24)}</span><div><h1>민원 도우미</h1><small><i></i> 청주시 공식 FAQ · 사례 기반 다중 턴 실시간 AI 안내</small></div><span class="mini-chip live-chip">RAG + LLM 연동</span></div>${sessionBarHtml}<div class="chat-messages" aria-live="polite"><div class="chat-bubble ai"><b>안녕하세요! 불편하신 점이나 궁금한 제도를<br>평소 말하듯이 물어보세요 🙂</b><p>청주시 공식 자주 묻는 민원(FAQ)을 찾아 바로 안내해 드리고,<br>이전 질문을 기억해 추가 질문(“그럼 수수료는요?” 등)도 이어서 답해 드려요.</p><small>AI 시연 안내이며 공식 민원 접수·자동 부서 이관은 아닙니다. 미게시 담당자 초안은 노출하지 않습니다.</small></div>${chatMessages.map((msg) => renderCitizenChatBubble(msg, { allUserTurns })).join("")}${chatPending ? `<div class="chat-bubble ai citizen-typing" role="status" aria-label="AI 답변 준비 중"><i></i><i></i><i></i><span id="chat-live-label">${esc(chatLiveLabel || "민원 내용을 읽고 있어요")}</span></div>` : ""}</div>${!chatMessages.length ? `<div class="suggestions">${["대형폐기물 배출 방법이 궁금해요", "서원대 후문 가로등이 밤새 깜빡거려요", "전입신고에 필요한 서류를 문의하고 싶어요"].map((s) => button(s, "", 'data-action="chat-suggest" data-text="' + s + '"')).join("")}</div>` : ""}<div class="citizen-chat-tools"><label class="chat-district-wrap" for="chat-district"><span>지역</span><select id="chat-district" aria-label="문의 관할 구 선택" ${chatPending ? "disabled" : ""}>${districtChoices.map((d) => `<option value="${esc(d)}" ${chatDistrict === d ? "selected" : ""}>${d ? esc(d) : "자동 감지"}</option>`).join("")}</select></label><button data-action="citizen-chat-help">${icon("book", 14)} 작성 요령</button>${chatMessages.length ? `<button data-action="chat-reset" ${chatPending ? "disabled" : ""}>${icon("refresh", 14)} 새 대화</button>` : ""}<span>${icon("shield", 14)} 개인정보 입력 주의</span>${link("직접 작성하기", "/citizen/write")}</div><form id="chat-form" class="chat-input"><label class="sr-only" for="chat-input">도우미에게 보낼 내용</label><input id="chat-input" name="message" required maxlength="2000" placeholder="예) 대형폐기물 배출 방법이나 이어서 궁금한 조건을 입력해 주세요" ${chatPending ? "disabled" : ""}>${button(icon("arrow", 20), "primary", 'type="submit" aria-label="보내기" ' + (chatPending ? "disabled" : ""))}</form></section><p class="chat-disclaimer">${icon("shield", 14)} 청주시 공식 FAQ·사례 검색 기반 AI 시연 안내 · 실제 민원은 작성 화면에서 직접 등록해야 담당자가 접수합니다.</p></div>`;
 }
 /**
  * guide 화면 동작을 구성합니다.
@@ -985,6 +1099,12 @@ function render() {
   else if (route.path === "/citizen/write") content = writeForm();
   else if (/^\/(citizen|staff)\/detail\//.test(route.path)) content = detail();
   else if (route.path === "/staff") content = dashboard();
+  else if (route.path === "/staff/stats")
+    content = staffStatsPage(staffStats, {
+      loading: staffStatsLoading,
+      error: staffStatsError,
+      includeSynthetic: staffIncludeSynthetic,
+    });
   else if (route.path === "/staff/monitor") content = monitor();
   else if (route.path === "/staff/api") content = swaggerDocs();
   else if (route.path === "/citizen/assistant") content = assistant();
@@ -1059,7 +1179,14 @@ function updateFilter(changes) {
 async function sendChat(text) {
   const trimmed = String(text || "").trim();
   if (chatPending || !trimmed) return;
-  chatMessages.push({ role: "me", text: trimmed });
+  const actor = getActor();
+  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && !actor.demo);
+  const priorHistory = isLoggedInCitizen ? [] : buildChatHistoryPayload(chatMessages);
+  chatMessages.push({
+    role: "me",
+    text: trimmed,
+    district: chatDistrict || null,
+  });
   chatPending = true;
   chatLiveLabel = "민원 내용을 읽고 있어요";
   const scrollChatBottom = () => {
@@ -1073,23 +1200,26 @@ async function sendChat(text) {
   render();
   scrollChatBottom();
   try {
-    const result = await streamCitizenChat(
-      {
-        message: trimmed,
-        district: chatDistrict || null,
+    const reqPayload = {
+      message: trimmed,
+      district: chatDistrict || null,
+      ...(isLoggedInCitizen && chatSessionId ? { sessionId: chatSessionId } : {}),
+      ...(!isLoggedInCitizen && priorHistory.length ? { history: priorHistory } : {}),
+    };
+    const result = await streamCitizenChat(reqPayload, {
+      onProgress: (step) => {
+        chatLiveLabel = step.label;
+        const liveEl = $("#chat-live-label");
+        if (liveEl) liveEl.textContent = chatLiveLabel;
       },
-      {
-        onProgress: (step) => {
-          chatLiveLabel = step.label;
-          const liveEl = $("#chat-live-label");
-          if (liveEl) liveEl.textContent = chatLiveLabel;
-        },
-      },
-    );
+    });
+    const allUserTurns = chatMessages
+      .filter((m) => m.role === "me")
+      .map((m) => m.text);
     try {
       sessionStorage.setItem(
         "complaint-form",
-        JSON.stringify(buildCitizenDraftPayload(trimmed, result)),
+        JSON.stringify(buildCitizenDraftPayload(trimmed, result, allUserTurns)),
       );
     } catch {
       /* 브라우저 탭 저장소 제한 환경은 무시합니다. */
@@ -1100,6 +1230,21 @@ async function sendChat(text) {
       text: result.answer,
       result,
     });
+    if (isLoggedInCitizen && result.sessionId) {
+      chatSessionId = result.sessionId;
+      chatSessionsPersisted = Boolean(result.persisted);
+      fetchChatSessions()
+        .then((res) => {
+          chatSessions = res.sessions;
+          chatSessionsPersisted = res.persisted;
+          if (currentRoute().path === "/citizen/assistant" && !chatPending) {
+            render();
+          }
+        })
+        .catch(() => null);
+    } else if (!isLoggedInCitizen) {
+      saveAnonChatMessages(chatMessages);
+    }
   } catch (error) {
     chatMessages.push({
       role: "ai",
@@ -1109,6 +1254,9 @@ async function sendChat(text) {
         "일시적으로 AI 안내를 불러오지 못했습니다. 아래 버튼으로 민원을 직접 작성해 주세요.",
       result: null,
     });
+    if (!isLoggedInCitizen) {
+      saveAnonChatMessages(chatMessages);
+    }
   } finally {
     chatPending = false;
     chatLiveLabel = "";
@@ -1216,9 +1364,57 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "chat-reset") {
     if (chatPending) return;
+    chatSessionId = null;
     chatMessages = [];
     chatLiveLabel = "";
+    if (!chatSessionsPersisted) clearAnonChatMessages();
     render();
+    return;
+  }
+  if (action === "chat-select-session") {
+    if (chatPending || !id) return;
+    try {
+      const detail = await fetchChatSessionDetail(id);
+      chatSessionId = detail.session?.id || id;
+      chatMessages = hydrateSessionMessages(detail);
+      const lastDist = detail.session?.lastDistrict || "";
+      chatDistrict =
+        lastDist && lastDist !== "모름" && districts.includes(lastDist)
+          ? lastDist
+          : "";
+      render();
+      $(".chat-messages")?.lastElementChild?.scrollIntoView({ block: "nearest" });
+    } catch (err) {
+      toast(err?.message || "저장된 대화를 불러오지 못했습니다.");
+    }
+    return;
+  }
+  if (action === "chat-delete-session") {
+    if (chatPending || !id) return;
+    try {
+      await deleteChatSession(id);
+      chatSessions = chatSessions.filter((s) => s.id !== id);
+      if (chatSessionId === id) {
+        chatSessionId = null;
+        chatMessages = [];
+      }
+      render();
+      toast("저장된 대화를 삭제했습니다.");
+    } catch (err) {
+      toast(err?.message || "대화를 삭제하지 못했습니다.");
+    }
+    return;
+  }
+  if (action === "toggle-stats-synthetic") {
+    staffIncludeSynthetic = !staffIncludeSynthetic;
+    await loadStaffStats(true);
+    render();
+    return;
+  }
+  if (action === "refresh-stats") {
+    await loadStaffStats(true);
+    render();
+    toast("업무 통계를 새로고침했습니다.");
     return;
   }
   if (action === "citizen-notice") {
@@ -1316,6 +1512,8 @@ document.addEventListener("click", async (event) => {
     try {
       staffStream.close();
       await logoutAccount();
+      resetChatRuntimeState();
+      staffStats = null;
       modal.close();
       toast("로그아웃되었습니다.");
       await loadScreen();
@@ -1616,6 +1814,8 @@ document.addEventListener("submit", async (event) => {
       });
       modal.close();
       staffStream.close();
+      resetChatRuntimeState();
+      staffStats = null;
       toast(`${loggedIn.displayName || loggedIn.loginId} 계정으로 로그인했습니다.`);
       const targetHash = isStaffLogin ? "/staff" : "/citizen/mine";
       if ((isStaffLogin && !route.staff) || (!isStaffLogin && route.staff)) {
@@ -1644,6 +1844,7 @@ document.addEventListener("submit", async (event) => {
         displayName: String(values.displayName || "").trim(),
       });
       modal.close();
+      resetChatRuntimeState();
       toast(`${createdActor.displayName} 민원인 계정이 생성되어 로그인했습니다.`);
       if (route.staff) location.hash = "/citizen/mine";
       else await loadScreen();

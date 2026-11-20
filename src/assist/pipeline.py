@@ -551,6 +551,7 @@ def iter_assist(
     llm_fn: Callable[[str, str], str] | object | None = USE_ENV_LLM,
     provider: str | None = None,
     include_staff_outputs: bool = True,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """검색 다음에 LLM 판정을 이어 진행 안내와 최종 결과를 넘깁니다.
 
@@ -564,6 +565,7 @@ def iter_assist(
         provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
         include_staff_outputs: 담당자 전용 산출물(`PREFIX-03` 초안·`PREFIX-04` 순화)을
             함께 생성할지 여부입니다. 시민 챗봇 경로에서는 False로 지정해 생략합니다.
+        conversation_history: 시민 챗봇 다중 턴 직전 대화 요약입니다. 가변 user JSON에만 전달합니다.
 
     Yields:
         `progress` 사건 또는 최종 `done` 결과입니다.
@@ -699,7 +701,12 @@ def iter_assist(
     yield progress("review")
     parts = search_parts(search)
     user_payload = decision_payload(
-        text, effective_district, search, parts, inferred_place=inferred_place
+        text,
+        effective_district,
+        search,
+        parts,
+        inferred_place=inferred_place,
+        conversation_history=conversation_history,
     )
     decision_user = json.dumps(user_payload, ensure_ascii=False, indent=2)
 
@@ -791,7 +798,9 @@ def iter_assist(
             for ref in decision["evidence_refs"]
             if ref["corpus"] == "faq"
         ]
-        faq_user = {"query": text, "faq": selected}
+        faq_user: dict[str, Any] = {"query": text, "faq": selected}
+        if conversation_history:
+            faq_user["conversation_history"] = conversation_history
         faq_json = json.dumps(faq_user, ensure_ascii=False, indent=2)
         faq_usage: CompleteUsage | None = None
         try:
@@ -933,6 +942,7 @@ def run_assist(
     on_progress: Callable[[str, str], None] | None = None,
     provider: str | None = None,
     include_staff_outputs: bool = True,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """검색 → 판정 → 정책 검사 → 조건부 FAQ·순화·담당자 초안 순서로 응대 결과를 만듭니다.
 
@@ -947,6 +957,7 @@ def run_assist(
         provider: 'exaone_api', 'openai_api', 'codex_cli' 중 선택할 LLM 공급자입니다.
         include_staff_outputs: 담당자 전용 산출물(`PREFIX-03` 초안·`PREFIX-04` 순화)을
             함께 생성할지 여부입니다. 시민 챗봇 경로에서는 False로 지정해 생략합니다.
+        conversation_history: 시민 챗봇 다중 턴 직전 대화 요약입니다. 가변 user JSON에만 전달합니다.
 
     Returns:
         세 갈래 결과·근거·정책 실패·단계를 담은 딕셔너리입니다.
@@ -961,6 +972,7 @@ def run_assist(
         llm_fn=llm_fn,
         provider=provider,
         include_staff_outputs=include_staff_outputs,
+        conversation_history=conversation_history,
     ):
         if event["type"] == "progress":
             if on_progress:

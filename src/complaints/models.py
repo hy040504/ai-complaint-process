@@ -499,13 +499,31 @@ class Health(Model):
     normalized_schema: bool = True
 
 
+class ChatTurnItem(Model):
+    """시민 민원 도우미 다중 턴 대화의 단일 발화 항목입니다.
+
+    Attributes:
+        role: 발화 주체(`user` 또는 `assistant`)입니다.
+        content: 발화 본문(1~1000자)입니다.
+        district: 해당 발화 시점의 감지·선택 관할 구입니다.
+    """
+
+    role: Literal["user", "assistant"]
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)
+    ]
+    district: str | None = Field(default=None, max_length=60)
+
+
 class CitizenChatInput(Model):
     """시민 민원 도우미 챗봇 질문 입력 모델입니다.
 
     Attributes:
         message: 시민이 입력한 문의 또는 불편 내용(1~2000자)입니다.
-        district: 선택 관할 구 또는 세부 지역입니다. 비우면 본문에서 자동 추론합니다.
+        district: 선택 관할 구 또는 세부 지역입니다. 비우면 본문·직전 대화에서 자동 추론합니다.
         provider: 선택 LLM 공급자입니다. 비우면 `.env` 기본 공급자를 사용합니다.
+        session_id: 로그인 시민이 이어서 대화할 PostgreSQL 세션 ID입니다.
+        history: 비로그인 임시 대화 시 클라이언트가 전달하는 최근 대화 턴(최대 12건)입니다.
     """
 
     message: Annotated[
@@ -513,15 +531,19 @@ class CitizenChatInput(Model):
     ]
     district: str | None = Field(default=None, max_length=60)
     provider: Provider | None = None
+    session_id: str | None = Field(
+        default=None, pattern=r"^[A-Za-z0-9_-]{1,64}$", max_length=64
+    )
+    history: list[ChatTurnItem] = Field(default_factory=list, max_length=12)
 
-    @field_validator("district", "provider", mode="before")
+    @field_validator("district", "provider", "session_id", mode="before")
     @classmethod
     def clean_chat_optional(cls, value: object, info: ValidationInfo) -> object:
-        """선택 지역·공급자의 공백을 정리하고 관할 지역을 검증합니다.
+        """선택 지역·공급자·세션 ID의 공백을 정리하고 관할 지역을 검증합니다.
 
         Args:
             value: 검증 전 입력 값입니다.
-            info: 검증 대상 필드 정보(`district` 또는 `provider`)입니다.
+            info: 검증 대상 필드 정보(`district`, `provider`, `session_id`)입니다.
 
         Returns:
             정제된 문자열 또는 None입니다.
@@ -529,11 +551,12 @@ class CitizenChatInput(Model):
         Raises:
             ValueError: `district`에 알 수 없는 지역명이 들어오면 발생합니다.
         """
-        is_provider = info.field_name == "provider"
+        field_name = info.field_name
+        is_provider = field_name == "provider"
         cleaned = normalize_optional_text(value, lowercase=is_provider)
         if cleaned is None:
             return None
-        if not is_provider:
+        if field_name == "district":
             text = str(cleaned)
             if text in ("전체", "모름", "자동 감지"):
                 return None
@@ -559,6 +582,7 @@ class CitizenChatResponse(Model):
 
     Attributes:
         query: 분석에 사용한 시민 문의 원문입니다.
+        effective_query: 다중 턴 맥락이 보강된 검색 질의입니다. 보강이 없으면 None입니다.
         outcome: 검증을 거친 세 갈래 결과(`faq_answer`·`department_suggestion`·`human_handoff`)입니다.
         reason_code: 판정 사유 코드입니다.
         answer: 시민에게 표시할 안내 문구입니다.
@@ -572,9 +596,12 @@ class CitizenChatResponse(Model):
         llm_provider: 실제 응답을 만든 LLM 공급자 식별자입니다.
         llm_configured: 이번 호출에서 LLM을 사용했으면 True입니다.
         demo_notice: 시연 서비스 및 비공식 접수 안내 문구입니다.
+        session_id: 로그인 시민의 DB 저장 세션 ID입니다. 비로그인 임시 대화면 None입니다.
+        persisted: 이번 대화가 PostgreSQL에 영구 저장되었으면 True입니다.
     """
 
     query: str
+    effective_query: str | None = None
     outcome: Literal["faq_answer", "department_suggestion", "human_handoff"]
     reason_code: str
     answer: str
@@ -588,6 +615,164 @@ class CitizenChatResponse(Model):
     llm_provider: str | None = None
     llm_configured: bool = False
     demo_notice: str = ""
+    session_id: str | None = None
+    persisted: bool = False
+
+
+class ChatSessionPath(BaseModel):
+    """시민 챗봇 세션 경로 식별자의 형식과 길이를 검사합니다."""
+
+    model_config = ConfigDict(extra="forbid")
+    session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+
+
+class ChatSessionSummary(Model):
+    """로그인 시민의 챗봇 대화 세션 목록 카드 요약입니다."""
+
+    id: str
+    title: str
+    last_district: str | None = None
+    message_count: int = 0
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
+
+
+class ChatMessageRecord(Model):
+    """PostgreSQL에 저장된 시민 챗봇 단일 발화·안전 응답 기록입니다."""
+
+    id: str
+    role: Literal["user", "assistant"]
+    content: str
+    district: str | None = None
+    outcome: Literal["faq_answer", "department_suggestion", "human_handoff"] | None = (
+        None
+    )
+    reason_code: str | None = None
+    payload: CitizenChatResponse | None = None
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class ChatSessionListResponse(Model):
+    """로그인 시민의 챗봇 대화 세션 목록 응답입니다."""
+
+    sessions: list[ChatSessionSummary] = Field(default_factory=list)
+    persisted: bool = True
+
+
+class ChatSessionDetail(Model):
+    """단일 챗봇 대화 세션과 전체 발화 이력 응답입니다."""
+
+    session: ChatSessionSummary
+    messages: list[ChatMessageRecord] = Field(default_factory=list)
+
+
+StaffAiOutcomeFilter = Literal[
+    "faq_answer", "department_suggestion", "human_handoff", "none"
+]
+StaffQueueViewFilter = Literal["followup", "drafts", "failed", "published"]
+StaffQueueSort = Literal["latest", "oldest_open", "most_followups", "unpublished_first"]
+
+
+class StaffStatsQuery(Model):
+    """담당자 통계 대시보드 조회 쿼리 조건입니다."""
+
+    include_synthetic: bool = True
+
+
+class StaffStatsBucket(Model):
+    """담당자 통계 대시보드 차트의 단일 항목과 드릴다운 필터 정보입니다."""
+
+    key: str
+    label: str
+    count: int
+    filter_key: str | None = None
+    filter_value: str | None = None
+
+
+class StaffOperationalMetrics(Model):
+    """담당자 업무 현황 핵심 KPI 지표 묶음입니다."""
+
+    open_count: int = 0
+    submitted_count: int = 0
+    under_review_count: int = 0
+    answered_count: int = 0
+    unassigned_count: int = 0
+    unpublished_drafts: int = 0
+    with_followups: int = 0
+    ai_failed: int = 0
+    ai_running: int = 0
+    published_count: int = 0
+    avg_open_days: float = 0.0
+
+
+class StaffStatsResponse(Model):
+    """담당자 RBAC 소관 범위 기준 통계 대시보드 응답입니다."""
+
+    scope_label: str
+    is_admin_scope: bool
+    include_synthetic: bool = True
+    total_complaints: int = 0
+    real_complaints: int = 0
+    synthetic_complaints: int = 0
+    operational: StaffOperationalMetrics
+    by_status: list[StaffStatsBucket] = Field(default_factory=list)
+    by_district: list[StaffStatsBucket] = Field(default_factory=list)
+    by_category: list[StaffStatsBucket] = Field(default_factory=list)
+    by_ai_outcome: list[StaffStatsBucket] = Field(default_factory=list)
+    by_department: list[StaffStatsBucket] = Field(default_factory=list)
+    db_summary: NormalizedDbSummary
+
+
+class StaffExportQuery(Model):
+    """담당자 업무 목록 CSV 내보내기 필터·정렬 조건입니다."""
+
+    q: str = Field(default="", max_length=120)
+    status: Status | None = None
+    district: District | None = None
+    category: Category | None = None
+    assign: Literal["mine", "none"] | None = None
+    view: StaffQueueViewFilter | None = None
+    ai_outcome: StaffAiOutcomeFilter | None = None
+    sort: StaffQueueSort = "latest"
+    include_synthetic: bool = True
+
+    @field_validator(
+        "status",
+        "district",
+        "category",
+        "assign",
+        "view",
+        "ai_outcome",
+        mode="before",
+    )
+    @classmethod
+    def blank_to_none(cls, value: object) -> object:
+        """빈 쿼리 문자열을 None으로 정규화합니다.
+
+        Args:
+            value: 원시 쿼리 파라미터 값입니다.
+
+        Returns:
+            빈 문자열이면 None, 아니면 원본 값입니다.
+        """
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("sort", mode="before")
+    @classmethod
+    def default_sort_if_blank(cls, value: object) -> object:
+        """정렬 파라미터가 비어 있으면 기본값(`latest`)을 돌려줍니다.
+
+        Args:
+            value: 원시 정렬 파라미터 값입니다.
+
+        Returns:
+            비어 있으면 `'latest'`, 아니면 원본 값입니다.
+        """
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return "latest"
+        return value
 
 
 class AssistInput(Model):

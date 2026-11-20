@@ -28,6 +28,9 @@ from src.complaints.models import (
     AssistFields,
     AssistInput,
     AssistResponse,
+    ChatSessionDetail,
+    ChatSessionListResponse,
+    ChatSessionPath,
     CitizenChatInput,
     CitizenChatResponse,
     ComplaintInput,
@@ -49,6 +52,9 @@ from src.complaints.models import (
     RegisterInput,
     SessionInput,
     StaffEventsQuery,
+    StaffExportQuery,
+    StaffStatsQuery,
+    StaffStatsResponse,
     TemplateCreateInput,
     TemplateListResponse,
     TemplatePath,
@@ -117,7 +123,11 @@ def create_api(
     )
     citizen_chat_tag = Tag(
         name="시민 민원 도우미",
-        description="미게시 초안·순화를 제거하고 청주시 공식 FAQ·참고 부서를 안내하는 시민 전용 실시간 챗봇(공식 접수·이관 아님)",
+        description="미게시 초안·순화를 제거하고 청주시 공식 FAQ·참고 부서를 안내하는 시민 전용 다중 턴 실시간 챗봇(로그인 시 PostgreSQL 저장 · 공식 접수 아님)",
+    )
+    staff_stats_tag = Tag(
+        name="담당자 통계 · 내보내기",
+        description="담당자 부서 RBAC 소관 범위 기준 운영 KPI·드릴다운 차트 집계 및 수식 주입 방어 CSV 내보내기(미게시 초안·순화 제외)",
     )
 
     @api.get("/health", tags=[server_status], responses={200: Health})
@@ -140,6 +150,50 @@ def create_api(
     def staff_db_summary() -> Response:
         """담당자 전용 정규화 7테이블(`users`~`job_events`) 행 수와 집계를 조회합니다."""
         return reply(service.normalized_summary(actor()))
+
+    @api.get(
+        "/staff/stats",
+        tags=[staff_stats_tag],
+        responses={200: StaffStatsResponse},
+    )
+    def staff_stats(query: StaffStatsQuery) -> Response:
+        """담당자 소관 범위 기준 운영 KPI·차트 집계·정규화 DB 요약을 조회합니다.
+
+        총괄 담당자는 전체 민원, 부서 담당자는 미배정과 소속 부서 배정 민원만 집계합니다.
+
+        Args:
+            query: 공개 시연 데이터(`DEMO-*`) 포함 여부를 지정하는 쿼리입니다.
+
+        Returns:
+            운영 KPI·5종 분포 차트·정규화 7테이블 요약이 담긴 `StaffStatsResponse`입니다.
+        """
+        return reply(
+            service.staff_stats(actor(), include_synthetic=query.include_synthetic)
+        )
+
+    @api.get(
+        "/staff/complaints/export.csv",
+        tags=[staff_stats_tag],
+    )
+    def staff_export_csv(query: StaffExportQuery) -> Response:
+        """담당자 현재 필터·소관 범위의 업무 메타데이터를 UTF-8 BOM CSV로 내려받습니다.
+
+        미게시 AI 초안과 직원 보호 순화 본문은 제외하며, 엑셀 수식 주입 문자를 중화합니다.
+
+        Args:
+            query: 통합 검색·상태·구·분야·담당·AI 판정·정렬·시연 포함 조건입니다.
+
+        Returns:
+            `text/csv; charset=utf-8` 첨부 다운로드 응답입니다.
+        """
+        filename, csv_text = service.export_complaints_csv(actor(), query)
+        return Response(
+            csv_text.encode("utf-8"),
+            mimetype="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+            },
+        )
 
     @api.get(
         "/assist/fields",
@@ -294,6 +348,52 @@ def create_api(
                 "X-Accel-Buffering": "no",
             },
         )
+
+    @api.get(
+        "/citizen/chat/sessions",
+        tags=[citizen_chat_tag],
+        responses={200: ChatSessionListResponse},
+    )
+    def list_citizen_chat_sessions() -> Response:
+        """로그인 민원인 본인의 챗봇 대화 세션 목록을 최근 갱신순으로 조회합니다.
+
+        비로그인 시연 시민은 빈 목록과 `persisted=False`를 돌려받으며,
+        담당자는 시민 개인 챗봇 대화에 접근할 수 없습니다.
+        """
+        return reply(service.list_chat_sessions(actor()))
+
+    @api.get(
+        "/citizen/chat/sessions/<session_id>",
+        tags=[citizen_chat_tag],
+        responses={200: ChatSessionDetail},
+    )
+    def get_citizen_chat_session(path: ChatSessionPath) -> Response:
+        """로그인 민원인 본인이 소유한 챗봇 대화 세션과 안전 투영 이력을 조회합니다.
+
+        Args:
+            path: 조회할 챗봇 세션 ID 경로입니다.
+
+        Returns:
+            세션 요약과 발화 이력이 담긴 `ChatSessionDetail`입니다.
+        """
+        return reply(service.get_chat_session(actor(), path.session_id))
+
+    @api.delete(
+        "/citizen/chat/sessions/<session_id>",
+        tags=[citizen_chat_tag],
+        responses={204: None},
+    )
+    def delete_citizen_chat_session(path: ChatSessionPath) -> Response:
+        """로그인 민원인 본인이 소유한 챗봇 대화 세션과 메시지를 삭제합니다.
+
+        Args:
+            path: 삭제할 챗봇 세션 ID 경로입니다.
+
+        Returns:
+            본문 없는 204 응답입니다.
+        """
+        service.delete_chat_session(actor(), path.session_id)
+        return Response(status=204)
 
     @api.post("/auth/register", tags=[auth_tag], responses={201: Actor})
     def register_citizen_account(body: RegisterInput) -> Response:

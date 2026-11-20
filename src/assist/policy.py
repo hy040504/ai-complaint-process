@@ -50,6 +50,7 @@ def decision_payload(
     search: dict[str, Any],
     parts: SearchParts | None = None,
     inferred_place: dict[str, Any] | None = None,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """판정에 넘길 민원·검색 후보 딕셔너리를 만듭니다.
 
@@ -63,6 +64,7 @@ def decision_payload(
         search: 검색 API 응답입니다.
         parts: 이미 구한 검색 조각입니다. 생략하면 `search`에서 한 번 만듭니다.
         inferred_place: 네이버 지도로 추론된 장소 객체입니다.
+        conversation_history: 시민 챗봇 다중 턴 직전 대화 요약 목록입니다(자료 전용).
 
     Returns:
         FAQ·사례·부서 후보를 담은 딕셔너리입니다.
@@ -89,6 +91,8 @@ def decision_payload(
     }
     if inferred_place:
         payload["inferred_place"] = inferred_place
+    if conversation_history:
+        payload["conversation_history"] = conversation_history
     return payload
 
 

@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from threading import Lock
 from typing import Any, Literal, Protocol
+from uuid import uuid4
 
 import psycopg
 from psycopg import sql
@@ -24,6 +25,10 @@ from src.complaints.auth import StoredUser, default_seed_users
 from src.complaints.errors import AppError
 from src.complaints.models import (
     AnswerTemplate,
+    ChatMessageRecord,
+    ChatSessionDetail,
+    ChatSessionSummary,
+    CitizenChatResponse,
     Complaint,
     NormalizedDbSummary,
     Role,
@@ -236,6 +241,32 @@ _SCHEMA_STATEMENTS = (
         value text NOT NULL
     )
     """,
+    # 시민 민원 도우미 다중 턴 대화 저장 테이블(로그인 민원인 전용·안전 투영 JSON만 저장)
+    """
+    CREATE TABLE IF NOT EXISTS {schema}.chat_sessions (
+        id text PRIMARY KEY,
+        user_id text NOT NULL REFERENCES {schema}.users(id) ON DELETE CASCADE,
+        title text NOT NULL,
+        last_district text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_app_chat_sessions_user ON {schema}.chat_sessions (user_id, updated_at DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS {schema}.chat_messages (
+        id text PRIMARY KEY,
+        session_id text NOT NULL REFERENCES {schema}.chat_sessions(id) ON DELETE CASCADE,
+        role text NOT NULL CHECK (role IN ('user', 'assistant')),
+        content text NOT NULL,
+        district text,
+        outcome text CHECK (outcome IS NULL OR outcome IN ('faq_answer', 'department_suggestion', 'human_handoff')),
+        reason_code text,
+        payload jsonb,
+        created_at timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_app_chat_messages_session ON {schema}.chat_messages (session_id, created_at ASC)",
 )
 
 
@@ -433,6 +464,64 @@ class ComplaintRepository(Protocol):
         """정규화 7테이블의 행 수와 AI 판정·사용자 역할 집계를 반환합니다."""
         ...
 
+    def list_chat_sessions(
+        self, user_id: str, limit: int = 30
+    ) -> list[ChatSessionSummary]:
+        """특정 민원인의 챗봇 대화 세션 목록을 최근 갱신순으로 반환합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            limit: 최대 반환 세션 개수입니다.
+        """
+        ...
+
+    def get_chat_session(self, session_id: str, user_id: str) -> ChatSessionDetail:
+        """소유권을 검증해 단일 챗봇 대화 세션과 발화 이력을 반환합니다.
+
+        Args:
+            session_id: 조회할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        ...
+
+    def save_chat_exchange(
+        self,
+        *,
+        user_id: str,
+        session_id: str | None,
+        user_text: str,
+        user_district: str | None,
+        assistant_response: CitizenChatResponse,
+    ) -> str:
+        """시민 발화와 안전 투영된 도우미 응답 한 쌍을 원자적으로 저장합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            session_id: 이어 쓸 기존 세션 ID입니다. None이면 새 세션을 생성합니다.
+            user_text: 시민이 입력한 이번 턴 원문입니다.
+            user_district: 이번 턴에 적용한 관할 구 또는 None입니다.
+            assistant_response: 민감 필드가 제거된 `CitizenChatResponse` 모델입니다.
+
+        Returns:
+            저장된 세션 ID입니다.
+        """
+        ...
+
+    def delete_chat_session(self, session_id: str, user_id: str) -> None:
+        """소유 민원인의 챗봇 대화 세션과 하위 메시지를 연쇄 삭제합니다.
+
+        Args:
+            session_id: 삭제할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        ...
+
 
 class MemoryRepository:
     """프로세스 안의 업무 저장소입니다. 단위 테스트 전용입니다.
@@ -453,6 +542,9 @@ class MemoryRepository:
             AnswerTemplate(id=tpl_id, title=title, content=content, is_default=True)
             for tpl_id, title, content in DEFAULT_ANSWER_TEMPLATES
         ]
+        self._chat_sessions: dict[
+            str, tuple[str, ChatSessionSummary, list[ChatMessageRecord]]
+        ] = {}
         self._lock = Lock()
 
     def all(self) -> list[Complaint]:
@@ -751,6 +843,153 @@ class MemoryRepository:
             user_roles=roles,
         )
 
+    def list_chat_sessions(
+        self, user_id: str, limit: int = 30
+    ) -> list[ChatSessionSummary]:
+        """메모리 저장소에서 특정 민원인의 챗봇 세션 목록을 최근 갱신순으로 반환합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            limit: 최대 반환 세션 수입니다.
+
+        Returns:
+            소유 민원인의 `ChatSessionSummary` 사본 목록입니다.
+        """
+        with self._lock:
+            owned = [
+                summary.model_copy(update={"message_count": len(messages)}, deep=True)
+                for owner, summary, messages in self._chat_sessions.values()
+                if owner == user_id
+            ]
+        owned.sort(key=lambda item: (item.updated_at, item.id), reverse=True)
+        return owned[: max(1, limit)]
+
+    def get_chat_session(self, session_id: str, user_id: str) -> ChatSessionDetail:
+        """메모리 저장소에서 소유권을 검증해 챗봇 세션 상세와 발화 이력을 반환합니다.
+
+        Args:
+            session_id: 조회할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Returns:
+            세션 요약과 메시지 목록이 담긴 `ChatSessionDetail`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 소유자가 다르면 404를 발생합니다.
+        """
+        with self._lock:
+            entry = self._chat_sessions.get(session_id)
+            if entry is None or entry[0] != user_id:
+                raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+            _, summary, messages = entry
+            return ChatSessionDetail(
+                session=summary.model_copy(
+                    update={"message_count": len(messages)}, deep=True
+                ),
+                messages=[msg.model_copy(deep=True) for msg in messages],
+            )
+
+    def save_chat_exchange(
+        self,
+        *,
+        user_id: str,
+        session_id: str | None,
+        user_text: str,
+        user_district: str | None,
+        assistant_response: CitizenChatResponse,
+    ) -> str:
+        """시민 질문과 안전 투영된 도우미 응답을 메모리 세션에 저장합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            session_id: 이어 쓸 기존 세션 ID 또는 None입니다.
+            user_text: 시민이 입력한 질문 원문입니다.
+            user_district: 이번 턴에 적용된 관할 구 또는 None입니다.
+            assistant_response: 시민 전용 안전 응답 모델입니다.
+
+        Returns:
+            생성 또는 갱신된 세션 ID입니다.
+
+        Raises:
+            AppError: 지정한 세션이 없거나 소유자가 다르면 404를 발생합니다.
+        """
+        user_ts = utcnow()
+        assistant_ts = user_ts + timedelta(milliseconds=1)
+        resolved_district = (
+            assistant_response.district
+            if assistant_response.district != "모름"
+            else user_district
+        )
+        with self._lock:
+            if session_id:
+                entry = self._chat_sessions.get(session_id)
+                if entry is None or entry[0] != user_id:
+                    raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+                _, summary, messages = entry
+                resolved_sid = session_id
+                summary = summary.model_copy(
+                    update={
+                        "last_district": resolved_district or summary.last_district,
+                        "updated_at": assistant_ts,
+                    },
+                    deep=True,
+                )
+            else:
+                resolved_sid = f"CHAT-{user_ts.year}-{uuid4().hex[:10].upper()}"
+                title = " ".join(user_text.split())[:60] or "새 대화"
+                summary = ChatSessionSummary(
+                    id=resolved_sid,
+                    title=title,
+                    last_district=resolved_district,
+                    message_count=0,
+                    created_at=user_ts,
+                    updated_at=assistant_ts,
+                )
+                messages = []
+            safe_payload = assistant_response.model_copy(
+                update={"session_id": resolved_sid, "persisted": True}, deep=True
+            )
+            messages.append(
+                ChatMessageRecord(
+                    id=f"CMSG-{uuid4().hex[:12].upper()}",
+                    role="user",
+                    content=user_text,
+                    district=user_district,
+                    created_at=user_ts,
+                )
+            )
+            messages.append(
+                ChatMessageRecord(
+                    id=f"CMSG-{uuid4().hex[:12].upper()}",
+                    role="assistant",
+                    content=safe_payload.answer,
+                    district=resolved_district,
+                    outcome=safe_payload.outcome,
+                    reason_code=safe_payload.reason_code,
+                    payload=safe_payload,
+                    created_at=assistant_ts,
+                )
+            )
+            summary = summary.model_copy(update={"message_count": len(messages)})
+            self._chat_sessions[resolved_sid] = (user_id, summary, messages)
+        return resolved_sid
+
+    def delete_chat_session(self, session_id: str, user_id: str) -> None:
+        """메모리 저장소에서 소유 민원인의 챗봇 세션을 삭제합니다.
+
+        Args:
+            session_id: 삭제할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        with self._lock:
+            entry = self._chat_sessions.get(session_id)
+            if entry is None or entry[0] != user_id:
+                raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+            del self._chat_sessions[session_id]
+
 
 class PostgresRepository:
     """PostgreSQL `complaint_app` 7테이블 정규화 스키마 업무 저장소입니다.
@@ -910,6 +1149,46 @@ class PostgresRepository:
         self._sql_seed_meta = sql.SQL(
             "INSERT INTO {}.app_meta (key, value) VALUES (%s, %s) "
             "ON CONFLICT (key) DO NOTHING RETURNING key"
+        ).format(ident)
+        self._sql_list_chat_sessions = sql.SQL(
+            "SELECT s.id, s.title, s.last_district, count(m.id), s.created_at, s.updated_at "
+            "FROM {}.chat_sessions s "
+            "LEFT JOIN {}.chat_messages m ON m.session_id = s.id "
+            "WHERE s.user_id = %s "
+            "GROUP BY s.id "
+            "ORDER BY s.updated_at DESC, s.id DESC "
+            "LIMIT %s"
+        ).format(ident, ident)
+        self._sql_get_chat_session = sql.SQL(
+            "SELECT id, title, last_district, created_at, updated_at "
+            "FROM {}.chat_sessions WHERE id = %s AND user_id = %s"
+        ).format(ident)
+        self._sql_lock_chat_session = sql.SQL(
+            "SELECT id, title, last_district, created_at, updated_at "
+            "FROM {}.chat_sessions WHERE id = %s AND user_id = %s FOR UPDATE"
+        ).format(ident)
+        self._sql_list_chat_messages = sql.SQL(
+            "SELECT id, role, content, district, outcome, reason_code, payload, created_at "
+            "FROM {}.chat_messages WHERE session_id = %s "
+            "ORDER BY created_at ASC, id ASC"
+        ).format(ident)
+        self._sql_insert_chat_session = sql.SQL(
+            "INSERT INTO {}.chat_sessions "
+            "(id, user_id, title, last_district, created_at, updated_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s)"
+        ).format(ident)
+        self._sql_touch_chat_session = sql.SQL(
+            "UPDATE {}.chat_sessions "
+            "SET last_district = COALESCE(%s, last_district), updated_at = %s "
+            "WHERE id = %s AND user_id = %s"
+        ).format(ident)
+        self._sql_insert_chat_message = sql.SQL(
+            "INSERT INTO {}.chat_messages "
+            "(id, session_id, role, content, district, outcome, reason_code, payload, created_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        ).format(ident)
+        self._sql_delete_chat_session = sql.SQL(
+            "DELETE FROM {}.chat_sessions WHERE id = %s AND user_id = %s"
         ).format(ident)
         with self.connection() as conn:
             for statement in _SCHEMA_STATEMENTS:
@@ -1642,3 +1921,192 @@ class PostgresRepository:
             ai_outcomes=outcomes,
             user_roles=roles,
         )
+
+    def list_chat_sessions(
+        self, user_id: str, limit: int = 30
+    ) -> list[ChatSessionSummary]:
+        """PostgreSQL에서 특정 민원인의 챗봇 세션 목록을 최근 갱신순으로 조회합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            limit: 최대 조회 건수입니다.
+
+        Returns:
+            소유 민원인의 `ChatSessionSummary` 목록입니다.
+        """
+        with self.connection() as conn:
+            rows = conn.execute(
+                self._sql_list_chat_sessions, (user_id, max(1, limit))
+            ).fetchall()
+        return [
+            ChatSessionSummary(
+                id=str(row[0]),
+                title=str(row[1]),
+                last_district=row[2],
+                message_count=int(row[3] or 0),
+                created_at=row[4],
+                updated_at=row[5],
+            )
+            for row in rows
+        ]
+
+    def get_chat_session(self, session_id: str, user_id: str) -> ChatSessionDetail:
+        """PostgreSQL에서 소유권을 검증해 단일 챗봇 세션과 전체 발화를 조회합니다.
+
+        Args:
+            session_id: 조회할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Returns:
+            세션 요약과 발화 이력이 담긴 `ChatSessionDetail`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        with self.connection() as conn:
+            sess = conn.execute(
+                self._sql_get_chat_session, (session_id, user_id)
+            ).fetchone()
+            if sess is None:
+                raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+            msg_rows = conn.execute(
+                self._sql_list_chat_messages, (session_id,)
+            ).fetchall()
+        messages: list[ChatMessageRecord] = []
+        for row in msg_rows:
+            role: Literal["user", "assistant"] = (
+                "assistant" if row[1] == "assistant" else "user"
+            )
+            payload_model = (
+                CitizenChatResponse.model_validate(row[6])
+                if row[6] is not None
+                else None
+            )
+            messages.append(
+                ChatMessageRecord(
+                    id=str(row[0]),
+                    role=role,
+                    content=str(row[2]),
+                    district=row[3],
+                    outcome=row[4],
+                    reason_code=row[5],
+                    payload=payload_model,
+                    created_at=row[7],
+                )
+            )
+        return ChatSessionDetail(
+            session=ChatSessionSummary(
+                id=str(sess[0]),
+                title=str(sess[1]),
+                last_district=sess[2],
+                message_count=len(messages),
+                created_at=sess[3],
+                updated_at=sess[4],
+            ),
+            messages=messages,
+        )
+
+    def save_chat_exchange(
+        self,
+        *,
+        user_id: str,
+        session_id: str | None,
+        user_text: str,
+        user_district: str | None,
+        assistant_response: CitizenChatResponse,
+    ) -> str:
+        """시민 발화와 안전 투영된 도우미 응답 한 쌍을 PostgreSQL에 원자 저장합니다.
+
+        Args:
+            user_id: 소유 민원인의 `users.id`입니다.
+            session_id: 이어 쓸 기존 세션 ID입니다. None이면 새 세션을 만듭니다.
+            user_text: 시민이 입력한 질문 원문입니다.
+            user_district: 이번 턴에 적용된 관할 구 또는 None입니다.
+            assistant_response: 민감 필드가 제거된 `CitizenChatResponse` 모델입니다.
+
+        Returns:
+            저장된 세션 ID입니다.
+
+        Raises:
+            AppError: 지정한 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        user_ts = utcnow()
+        assistant_ts = user_ts + timedelta(milliseconds=1)
+        resolved_district = (
+            assistant_response.district
+            if assistant_response.district != "모름"
+            else user_district
+        )
+        with self.connection() as conn:
+            if session_id:
+                existing = conn.execute(
+                    self._sql_lock_chat_session, (session_id, user_id)
+                ).fetchone()
+                if existing is None:
+                    raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+                resolved_sid = session_id
+                conn.execute(
+                    self._sql_touch_chat_session,
+                    (resolved_district, assistant_ts, resolved_sid, user_id),
+                )
+            else:
+                resolved_sid = f"CHAT-{user_ts.year}-{uuid4().hex[:10].upper()}"
+                title = " ".join(user_text.split())[:60] or "새 대화"
+                conn.execute(
+                    self._sql_insert_chat_session,
+                    (
+                        resolved_sid,
+                        user_id,
+                        title,
+                        resolved_district,
+                        user_ts,
+                        assistant_ts,
+                    ),
+                )
+            safe_payload = assistant_response.model_copy(
+                update={"session_id": resolved_sid, "persisted": True}, deep=True
+            )
+            conn.execute(
+                self._sql_insert_chat_message,
+                (
+                    f"CMSG-{uuid4().hex[:12].upper()}",
+                    resolved_sid,
+                    "user",
+                    user_text,
+                    user_district,
+                    None,
+                    None,
+                    None,
+                    user_ts,
+                ),
+            )
+            conn.execute(
+                self._sql_insert_chat_message,
+                (
+                    f"CMSG-{uuid4().hex[:12].upper()}",
+                    resolved_sid,
+                    "assistant",
+                    safe_payload.answer,
+                    resolved_district,
+                    safe_payload.outcome,
+                    safe_payload.reason_code,
+                    Jsonb(safe_payload.model_dump(mode="json", by_alias=True)),
+                    assistant_ts,
+                ),
+            )
+        return resolved_sid
+
+    def delete_chat_session(self, session_id: str, user_id: str) -> None:
+        """PostgreSQL에서 소유 민원인의 챗봇 세션과 하위 메시지를 연쇄 삭제합니다.
+
+        Args:
+            session_id: 삭제할 챗봇 세션 ID입니다.
+            user_id: 요청한 민원인의 `users.id`입니다.
+
+        Raises:
+            AppError: 세션이 없거나 타인 소유이면 404를 발생합니다.
+        """
+        with self.connection() as conn:
+            deleted = conn.execute(self._sql_delete_chat_session, (session_id, user_id))
+            if deleted.rowcount == 0:
+                raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")

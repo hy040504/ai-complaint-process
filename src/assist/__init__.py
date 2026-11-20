@@ -32,6 +32,7 @@ def run_web_assist(
     provider: str | None = None,
     *,
     include_staff_outputs: bool = True,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """웹 검사기·시민 도우미가 사용하는 응대 파이프라인을 실행합니다.
 
@@ -42,6 +43,7 @@ def run_web_assist(
         rerank: 재정렬 여부입니다.
         provider: 선택한 LLM 공급자입니다.
         include_staff_outputs: 담당자 전용 초안·순화를 함께 생성할지 여부입니다.
+        conversation_history: 시민 다중 턴 챗봇의 직전 대화 이력 목록입니다.
 
     Returns:
         `run_assist`의 결과 딕셔너리입니다.
@@ -53,6 +55,7 @@ def run_web_assist(
         rerank=rerank,
         provider=provider,
         include_staff_outputs=include_staff_outputs,
+        conversation_history=conversation_history,
     )
 
 
@@ -64,6 +67,7 @@ def iter_web_assist(
     provider: str | None = None,
     *,
     include_staff_outputs: bool = True,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """웹 검사기·시민 도우미가 진행 안내와 최종 결과를 순서대로 받습니다.
 
@@ -74,6 +78,7 @@ def iter_web_assist(
         rerank: 재정렬 여부입니다.
         provider: 선택한 LLM 공급자입니다.
         include_staff_outputs: 담당자 전용 초안·순화를 함께 생성할지 여부입니다.
+        conversation_history: 시민 다중 턴 챗봇의 직전 대화 이력 목록입니다.
 
     Yields:
         짧은 진행 안내 또는 최종 응대 결과입니다.
@@ -85,6 +90,7 @@ def iter_web_assist(
         rerank=rerank,
         provider=provider,
         include_staff_outputs=include_staff_outputs,
+        conversation_history=conversation_history,
     )
 
 
