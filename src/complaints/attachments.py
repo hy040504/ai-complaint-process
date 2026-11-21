@@ -15,6 +15,7 @@ import re
 from threading import Lock
 from typing import Literal, Protocol
 from uuid import uuid4
+import zlib
 
 from src.complaints.errors import AppError
 
@@ -40,7 +41,9 @@ _SAFE_NAME_RE = re.compile(r"[^0-9A-Za-z가-힣._ -]+")
 _STORAGE_KEY_RE = re.compile(r"^[0-9a-f]{32}\.(?:jpg|png|webp|pdf)$")
 _PNG_SIG = b"\x89PNG\r\n\x1a\n"
 _PNG_META_CHUNKS = frozenset({b"eXIf", b"tEXt", b"zTXt", b"iTXt", b"tIME"})
-_JPEG_STRIP_MARKERS = frozenset({0xE1, 0xE2, 0xEC, 0xED, 0xEE, 0xFE})
+# APP1~APP15(EXIF·XMP·ICC·IPTC·제조사 노트 등)와 COM을 제거합니다.
+# 색 변환에 필요한 Adobe APP14(`Adobe` 시그니처)만 예외로 보존합니다.
+_JPEG_STRIP_MARKERS = frozenset({*range(0xE1, 0xF0), 0xFE})
 
 
 @dataclass(frozen=True)
@@ -107,6 +110,7 @@ def _strip_jpeg_metadata(data: bytes) -> tuple[bytes, bool]:
     n = len(data)
     stripped = False
     saw_sos = False
+    saw_eoi = False
     while pos < n:
         if data[pos] != 0xFF:
             raise AppError(
@@ -118,17 +122,15 @@ def _strip_jpeg_metadata(data: bytes) -> tuple[bytes, bool]:
             break
         marker = data[pos]
         pos += 1
-        if marker == 0xD9:  # EOI
+        if marker == 0xD9:  # EOI: 이후 바이트(트레일러)는 모두 버립니다.
             out.extend(b"\xff\xd9")
+            saw_eoi = True
+            if pos < n:
+                stripped = True
             break
         if marker == 0x01 or 0xD0 <= marker <= 0xD8:
             out.extend((0xFF, marker))
             continue
-        if marker == 0xDA:  # SOS: 나머지 엔트로피 인코딩 데이터와 EOI 보존
-            saw_sos = True
-            out.extend(b"\xff\xda")
-            out.extend(data[pos:])
-            break
         if pos + 2 > n:
             raise AppError(
                 422, "invalid_attachment", "손상된 JPEG 세그먼트는 첨부할 수 없습니다."
@@ -138,14 +140,35 @@ def _strip_jpeg_metadata(data: bytes) -> tuple[bytes, bool]:
             raise AppError(
                 422, "invalid_attachment", "손상된 JPEG 세그먼트는 첨부할 수 없습니다."
             )
-        if marker in _JPEG_STRIP_MARKERS:
+        segment = data[pos : pos + seg_len]
+        if marker in _JPEG_STRIP_MARKERS and not (
+            marker == 0xEE and segment[2:7] == b"Adobe"
+        ):
             stripped = True
         else:
             out.extend((0xFF, marker))
-            out.extend(data[pos : pos + seg_len])
+            out.extend(segment)
         pos += seg_len
+        if marker == 0xDA:
+            # SOS 헤더 뒤의 엔트로피 데이터는 `FF 00`·RSTn·`FF FF` 외의 마커가 나오기 전까지
+            # 그대로 복사하고, 다음 마커(다음 스캔·DHT·EOI)는 바깥 루프가 계속 처리합니다.
+            saw_sos = True
+            scan_start = pos
+            while pos + 1 < n:
+                if (
+                    data[pos] == 0xFF
+                    and data[pos + 1] not in (0x00, 0xFF)
+                    and not (0xD0 <= data[pos + 1] <= 0xD7)
+                ):
+                    break
+                pos += 1
+            else:
+                pos = n
+            out.extend(data[scan_start:pos])
     if not saw_sos or len(out) < 4:
         raise AppError(422, "invalid_attachment", "이미지 본문이 없는 JPEG 파일입니다.")
+    if not saw_eoi:
+        out.extend(b"\xff\xd9")  # 종료 마커가 잘린 파일은 정상 종료 마커로 마감합니다.
     return bytes(out), stripped
 
 
@@ -181,6 +204,11 @@ def _strip_png_metadata(data: bytes) -> tuple[bytes, bool]:
             raise AppError(
                 422, "invalid_attachment", "손상된 PNG 청크는 첨부할 수 없습니다."
             )
+        stored_crc = int.from_bytes(data[chunk_end - 4 : chunk_end], "big")
+        if zlib.crc32(data[pos + 4 : chunk_end - 4]) & 0xFFFFFFFF != stored_crc:
+            raise AppError(
+                422, "invalid_attachment", "손상된 PNG 청크(CRC 불일치)입니다."
+            )
         if ctype == b"IHDR":
             saw_ihdr = True
         if ctype in _PNG_META_CHUNKS:
@@ -190,6 +218,8 @@ def _strip_png_metadata(data: bytes) -> tuple[bytes, bool]:
         pos = chunk_end
         if ctype == b"IEND":
             saw_iend = True
+            if pos < n:
+                stripped = True  # IEND 뒤 트레일러는 버립니다.
             break
     if not (saw_ihdr and saw_iend):
         raise AppError(422, "invalid_attachment", "완전하지 않은 PNG 이미지입니다.")

@@ -5,6 +5,7 @@ import csv
 from hashlib import sha256
 import inspect
 import io
+import logging
 from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
@@ -629,6 +630,14 @@ class ComplaintService:
             row.model_dump(include=set(PublicComplaint.model_fields))
         )
         public.history = [entry for entry in public.history if entry.public]
+        # 첨부파일은 작성자 본인에게만 보입니다. 공개 민원이라도 타인에게는 목록(파일명 포함)을
+        # 숨기고, 업로더 내부 사용자 ID는 본인 응답에서도 제거합니다.
+        if row.owner != actor.id:
+            public.attachments = []
+        else:
+            public.attachments = [
+                att.model_copy(update={"uploaded_by": ""}) for att in public.attachments
+            ]
         return public
 
     def workspace(self, actor: Actor) -> PublicWorkspace | StaffWorkspace:
@@ -873,7 +882,12 @@ class ComplaintService:
         storage_keys = self.repository.list_attachment_keys(complaint_id)
         self.repository.delete(complaint_id, version, check_owner)
         for key in storage_keys:
-            self.attachment_storage.delete(key)
+            try:
+                self.attachment_storage.delete(key)
+            except OSError:
+                # DB 삭제는 이미 커밋됐으므로 파일 잠금·권한 오류가 요청 실패나 이벤트 누락으로
+                # 이어지지 않게 하고 남은 파일은 고아 정리 대상으로 둡니다.
+                logging.getLogger(__name__).exception("첨부 파일 삭제 실패: %s", key)
         self.events.publish(
             "complaint.deleted",
             complaint_id,
@@ -973,7 +987,8 @@ class ComplaintService:
     ) -> tuple[AttachmentItem, bytes]:
         """민원 열람 권한을 검증한 뒤 첨부파일 메타데이터와 바이트를 반환합니다.
 
-        비공개 민원의 첨부파일은 작성자 본인과 담당자만 열람할 수 있습니다.
+        첨부파일은 공개 민원이라도 작성자 본인과 담당자만 열람할 수 있습니다. 그 외
+        사용자는 존재 여부를 알 수 없도록 404를 받습니다.
 
         Args:
             actor: 파일 열람을 요청한 사용자입니다.
@@ -982,8 +997,13 @@ class ComplaintService:
 
         Returns:
             `(첨부 메타데이터, 파일 바이트열)` 튜플입니다.
+
+        Raises:
+            AppError: 접근 권한이 없거나 첨부파일이 없으면 404를 발생합니다.
         """
-        self.get(actor, complaint_id)
+        row = self.get(actor, complaint_id)
+        if actor.role != "staff" and row.owner != actor.id:
+            raise AppError(404, "not_found", "첨부파일을 찾을 수 없습니다.")
         item, storage_key = self.repository.get_attachment_meta(
             complaint_id, attachment_id
         )

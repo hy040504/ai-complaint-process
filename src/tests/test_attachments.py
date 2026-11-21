@@ -133,6 +133,27 @@ def test_attachment_sanitizer_strips_exif_and_blocks_spoofed_files(
     # VP8X 플래그 바이트(오프셋 12+8=20)의 EXIF(0x08)·XMP(0x04) 비트가 0이어야 합니다.
     assert (webp.data[20] & 0x0C) == 0
 
+    # 3-1. JPEG: EOI 뒤 트레일러·APP3 세그먼트도 제거, Adobe APP14는 보존
+    base = _make_jpeg_with_exif()
+    app3_body = b"META\x00GPS_APP3_SECRET"
+    app3 = b"\xff\xe3" + (len(app3_body) + 2).to_bytes(2, "big") + app3_body
+    adobe_body = b"Adobe\x00\x64\x00\x00\x00\x00\x01"
+    adobe = b"\xff\xee" + (len(adobe_body) + 2).to_bytes(2, "big") + adobe_body
+    tricky = base[:2] + app3 + adobe + base[2:] + b"\xff\xe1\x00\x10TRAILER_GPS_SECRET"
+    jpg2 = validate_and_sanitize_upload(tricky, "tricky.jpg")
+    assert jpg2.exif_stripped is True
+    assert b"GPS_APP3_SECRET" not in jpg2.data
+    assert b"TRAILER_GPS_SECRET" not in jpg2.data
+    assert b"Adobe" in jpg2.data
+    assert jpg2.data.endswith(b"\xff\xd9")
+
+    # 3-2. PNG: CRC가 깨진 청크는 거부
+    bad_png = bytearray(_make_png_with_metadata())
+    bad_png[-13] ^= 0xFF  # IEND(12바이트) 바로 앞, IDAT CRC의 마지막 바이트를 훼손
+    with pytest.raises(AppError) as err_crc:
+        validate_and_sanitize_upload(bytes(bad_png), "bad.png")
+    assert err_crc.value.status == 422
+
     # 4. PDF 허용
     pdf = validate_and_sanitize_upload(_make_minimal_pdf(), "증빙자료.pdf")
     assert pdf.content_type == "application/pdf"
@@ -214,6 +235,60 @@ def _run_attachment_api_suite(app: Any) -> None:
         content_type="application/json",
     )
     assert oversize_json.status_code == 413
+
+    # Content-Length 없는 chunked 본문도 전역 6 MiB가 아니라 64 KiB에서 차단되어야 합니다.
+    chunked = owner.post(
+        "/api/v1/complaints",
+        input_stream=io.BytesIO(b'{"title":"a","body":"' + b"x" * (200 * 1024) + b'"}'),
+        content_type="application/json",
+        headers={"Transfer-Encoding": "chunked"},
+        environ_overrides={"wsgi.input_terminated": True},
+    )
+    # 한도 적용 전에는 본문이 끝까지 파싱되어 422(검증 오류)가 났습니다. 이제는 본문 읽기 단계에서
+    # 거부되며, 입력 파서가 413을 400으로 바꿀 수 있으므로 둘 다 허용하고 422·201은 배제합니다.
+    assert chunked.status_code in (400, 413)
+
+    # 공개 민원의 첨부는 타 시민에게 목록·다운로드 모두 숨겨지고 작성자에게만 보입니다.
+    public_created = owner.post(
+        "/api/v1/complaints",
+        json={
+            "title": "사창동 공개 민원 첨부 비노출 확인",
+            "body": "공개 민원에 현장 사진을 첨부해도 다른 시민에게 보이지 않아야 합니다.",
+            "district": "서원구",
+            "category": "도로·교통",
+            "visibility": "public",
+        },
+    )
+    assert public_created.status_code == 201
+    pub_id = public_created.get_json()["id"]
+    pub_up = owner.post(
+        f"/api/v1/complaints/{pub_id}/attachments",
+        data={"file": (io.BytesIO(_make_jpeg_with_exif()), "공개사진.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert pub_up.status_code == 201
+    pub_att_id = pub_up.get_json()["id"]
+    assert (
+        other.get(f"/api/v1/complaints/{pub_id}/attachments/{pub_att_id}").status_code
+        == 404
+    )
+    other_view = other.get(f"/api/v1/complaints/{pub_id}")
+    assert other_view.status_code == 200
+    assert other_view.get_json()["attachments"] == []
+    owner_view = owner.get(f"/api/v1/complaints/{pub_id}").get_json()
+    assert len(owner_view["attachments"]) == 1
+    assert owner_view["attachments"][0].get("uploadedBy", "") == ""
+    assert (
+        staff.get(f"/api/v1/complaints/{pub_id}/attachments/{pub_att_id}").status_code
+        == 200
+    )
+    assert (
+        owner.post(
+            f"/api/v1/complaints/{pub_id}/delete",
+            json={"version": owner_view["version"]},
+        ).status_code
+        == 204
+    )
 
     # 비공개 민원 생성
     created = owner.post(

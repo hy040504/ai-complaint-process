@@ -98,16 +98,17 @@ def protect_api() -> None:
         and request.path.startswith("/api/v1/complaints/")
         and request.path.endswith("/attachments")
     )
-    if (
-        not is_attachment_upload
-        and request.content_length is not None
-        and request.content_length > 64 * 1024
-    ):
-        raise AppError(
-            413,
-            "payload_too_large",
-            "요청 본문이 허용 크기(64 KiB)를 초과했습니다.",
-        )
+    if not is_attachment_upload:
+        # 전역 한도(업로드용 6 MiB)가 아닌 64 KiB를 이 요청에 적용합니다. 헤더 검사만으로는
+        # `Transfer-Encoding: chunked`(Content-Length 없음) 본문을 막지 못하므로, 본문을
+        # 읽는 시점에도 Werkzeug가 같은 한도로 413을 내도록 요청별 한도를 함께 설정합니다.
+        request.max_content_length = 64 * 1024
+        if request.content_length is not None and request.content_length > 64 * 1024:
+            raise AppError(
+                413,
+                "payload_too_large",
+                "요청 본문이 허용 크기(64 KiB)를 초과했습니다.",
+            )
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("Origin")
         if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
