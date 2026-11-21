@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # 저장소 루트에서 source로 불러 네이티브 DB와 모델 캐시를 지정합니다.
 RAG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# 하위 python 스크립트(restore-dump.sh·apply-schema.sh의 인라인 코드)가 읽으므로 export합니다.
+export RAG_ROOT
 export RAG_ORIGIN_DIR="${RAG_ORIGIN_DIR:-$RAG_ROOT/rag/origin}"
 export RAG_CORPUS_DIR="${RAG_CORPUS_DIR:-$RAG_ORIGIN_DIR}"
 export RAG_DB_DIR="${RAG_DB_DIR:-$RAG_ORIGIN_DIR}"

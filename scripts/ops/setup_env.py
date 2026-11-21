@@ -779,7 +779,7 @@ def download_embedding_model(rag_python: Path) -> None:
         "import os\n"
         "from huggingface_hub import snapshot_download\n"
         f"snapshot_download({EMBEDDING_REPO!r}, revision={EMBEDDING_REVISION!r}, "
-        "cache_dir=os.environ['HF_HOME'])\n"
+        "cache_dir=os.path.join(os.environ['HF_HOME'], 'hub'))\n"
     )
     env = os.environ.copy()
     env["HF_HOME"] = str(cache)
