@@ -2394,3 +2394,52 @@ body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td {
 body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap code {
   color: #93c5fd;
 }
+/* 민원 첨부파일 드롭존·갤러리·라이트박스 다크 테마 */
+body[data-theme="dark"] .attachment-policy-chip {
+  background: #123635;
+  border-color: #256f68;
+  color: #86efac;
+}
+body[data-theme="dark"] .attachment-dropzone {
+  background: #152136;
+  border-color: #3a4f72;
+  color: #cfe0fb;
+}
+body[data-theme="dark"] .attachment-dropzone:hover,
+body[data-theme="dark"] .attachment-dropzone.drag-over {
+  background: #1c2d4a;
+  border-color: #60a5fa;
+}
+body[data-theme="dark"] .attachment-dropzone small {
+  color: #9db2d3;
+}
+body[data-theme="dark"] .attachment-pending-item {
+  background: #17243a;
+  border-color: #334766;
+}
+body[data-theme="dark"] .attachment-pending-item.saved {
+  border-color: #2c6e69;
+  background: #132a2c;
+}
+body[data-theme="dark"] .attachment-item-meta b,
+body[data-theme="dark"] .attachment-card-body b {
+  color: #e6effc;
+}
+body[data-theme="dark"] .attachment-item-meta small,
+body[data-theme="dark"] .attachment-card-body small {
+  color: #a6bad8;
+}
+body[data-theme="dark"] .attachment-remove-btn {
+  background: #3a1f26;
+  border-color: #6b3640;
+  color: #fecaca;
+}
+body[data-theme="dark"] .attachment-card {
+  background: #162238;
+  border-color: #334663;
+}
+body[data-theme="dark"] .attachment-thumb-btn,
+body[data-theme="dark"] .attachment-doc-box {
+  background: #10192b;
+  color: #93c5fd;
+}

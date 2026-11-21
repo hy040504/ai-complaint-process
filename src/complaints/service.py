@@ -9,6 +9,13 @@ from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
+from src.complaints.attachments import (
+    MAX_ATTACHMENTS_PER_COMPLAINT,
+    AttachmentStorage,
+    MemoryAttachmentStorage,
+    new_storage_key,
+    validate_and_sanitize_upload,
+)
 from src.complaints.chat import build_multiturn_chat_context, project_citizen_chat
 from src.complaints.departments import (
     load_department_directory,
@@ -25,6 +32,7 @@ from src.complaints.models import (
     AnswerVersion,
     AssignmentInput,
     AssistResponse,
+    AttachmentItem,
     ChatSessionDetail,
     ChatSessionListResponse,
     ChatTurnItem,
@@ -230,17 +238,22 @@ class ComplaintService:
         *,
         iter_assist_fn: AssistIterFn | None = None,
         auto_start_ai: bool = False,
+        attachment_storage: AttachmentStorage | None = None,
     ) -> None:
-        """업무 저장소 인터페이스와 선택적 AI 실행기를 주입합니다.
+        """업무 저장소 인터페이스와 선택적 AI 실행기·첨부 저장소를 주입합니다.
 
         Args:
             repository: 민원 조회·생성·원자 변경을 제공하는 저장소입니다.
             iter_assist_fn: 검색·판정 스트림을 생성하는 응대 함수입니다.
             auto_start_ai: True이면 민원 등록·수정 직후 백그라운드 AI 분석을 자동 시작합니다.
+            attachment_storage: 검증된 첨부파일 바이트 저장소입니다. 생략하면 메모리 저장소를 씁니다.
         """
         self.repository = repository
         self.iter_assist_fn = iter_assist_fn
         self.auto_start_ai = auto_start_ai
+        self.attachment_storage: AttachmentStorage = (
+            attachment_storage or MemoryAttachmentStorage()
+        )
         self._supports_staff_output_flag = bool(
             iter_assist_fn is not None
             and "include_staff_outputs" in inspect.signature(iter_assist_fn).parameters
@@ -857,7 +870,10 @@ class ComplaintService:
                     403, "owner_required", "민원 작성자만 수행할 수 있는 작업입니다."
                 )
 
+        storage_keys = self.repository.list_attachment_keys(complaint_id)
         self.repository.delete(complaint_id, version, check_owner)
+        for key in storage_keys:
+            self.attachment_storage.delete(key)
         self.events.publish(
             "complaint.deleted",
             complaint_id,
@@ -866,6 +882,157 @@ class ComplaintService:
             job_status=row.job.status,
             stage="민원 삭제",
         )
+
+    def upload_attachment(
+        self,
+        actor: Actor,
+        complaint_id: str,
+        raw_bytes: bytes,
+        raw_filename: str,
+    ) -> AttachmentItem:
+        """민원 작성자 본인의 현장 사진·PDF를 검증·EXIF 제거 후 안전하게 첨부합니다.
+
+        Args:
+            actor: 업로드를 요청한 시민 사용자입니다.
+            complaint_id: 첨부할 민원 식별자입니다.
+            raw_bytes: 업로드된 파일 원시 바이트입니다.
+            raw_filename: 클라이언트가 보낸 원본 파일명입니다.
+
+        Returns:
+            저장된 `AttachmentItem` 공개 메타데이터 모델입니다.
+        """
+        row = self.get(actor, complaint_id)
+        if actor.role != "citizen" or row.owner != actor.id:
+            raise AppError(
+                403, "owner_required", "민원 작성자만 첨부파일을 등록할 수 있습니다."
+            )
+        if row.status in ("withdrawn", "closed"):
+            raise AppError(
+                409,
+                "complaint_closed",
+                "철회되거나 처리 종료된 민원에는 파일을 첨부할 수 없습니다.",
+            )
+        if len(row.attachments) >= MAX_ATTACHMENTS_PER_COMPLAINT:
+            raise AppError(
+                409,
+                "attachment_limit_exceeded",
+                f"민원당 첨부파일은 최대 {MAX_ATTACHMENTS_PER_COMPLAINT}개까지 등록할 수 있습니다.",
+            )
+
+        sanitized = validate_and_sanitize_upload(raw_bytes, raw_filename)
+        storage_key = new_storage_key(sanitized.extension)
+        item = AttachmentItem(
+            id=f"ATT-{utcnow().year}-{uuid4().hex[:12].upper()}",
+            filename=sanitized.filename,
+            content_type=sanitized.content_type,
+            size_bytes=sanitized.size_bytes,
+            is_image=sanitized.is_image,
+            exif_stripped=sanitized.exif_stripped,
+            uploaded_by=actor.id,
+        )
+
+        def check_upload_allowed(locked: Complaint) -> None:
+            """트랜잭션 잠금 안에서 작성자 권한과 민원 상태를 재검증합니다.
+
+            Args:
+                locked: 잠금으로 조회한 최신 민원 레코드입니다.
+            """
+            if locked.status == "withdrawn":
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            if actor.role != "citizen" or locked.owner != actor.id:
+                raise AppError(
+                    403,
+                    "owner_required",
+                    "민원 작성자만 첨부파일을 등록할 수 있습니다.",
+                )
+            if locked.status == "closed":
+                raise AppError(
+                    409,
+                    "complaint_closed",
+                    "처리 종료된 민원에는 파일을 첨부할 수 없습니다.",
+                )
+
+        self.attachment_storage.save(storage_key, sanitized.data)
+        try:
+            saved_row, saved_item = self.repository.add_attachment(
+                complaint_id=complaint_id,
+                item=item,
+                sha256_hex=sanitized.sha256,
+                storage_key=storage_key,
+                max_count=MAX_ATTACHMENTS_PER_COMPLAINT,
+                action_check=check_upload_allowed,
+            )
+        except Exception:
+            self.attachment_storage.delete(storage_key)
+            raise
+        self._publish_row_event("complaint.updated", saved_row)
+        return saved_item
+
+    def download_attachment(
+        self, actor: Actor, complaint_id: str, attachment_id: str
+    ) -> tuple[AttachmentItem, bytes]:
+        """민원 열람 권한을 검증한 뒤 첨부파일 메타데이터와 바이트를 반환합니다.
+
+        비공개 민원의 첨부파일은 작성자 본인과 담당자만 열람할 수 있습니다.
+
+        Args:
+            actor: 파일 열람을 요청한 사용자입니다.
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 조회할 첨부파일 식별자입니다.
+
+        Returns:
+            `(첨부 메타데이터, 파일 바이트열)` 튜플입니다.
+        """
+        self.get(actor, complaint_id)
+        item, storage_key = self.repository.get_attachment_meta(
+            complaint_id, attachment_id
+        )
+        return item, self.attachment_storage.load(storage_key)
+
+    def delete_attachment(
+        self, actor: Actor, complaint_id: str, attachment_id: str
+    ) -> None:
+        """답변 게시 전 작성자 본인의 첨부파일을 DB와 저장소에서 삭제합니다.
+
+        Args:
+            actor: 삭제를 요청한 민원 작성자입니다.
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 삭제할 첨부파일 식별자입니다.
+        """
+        row = self.get(actor, complaint_id)
+        if actor.role != "citizen" or row.owner != actor.id:
+            raise AppError(
+                403, "owner_required", "민원 작성자만 첨부파일을 삭제할 수 있습니다."
+            )
+
+        def check_delete_allowed(locked: Complaint) -> None:
+            """트랜잭션 잠금 안에서 작성자 권한과 미게시 상태를 재검증합니다.
+
+            Args:
+                locked: 잠금으로 조회한 최신 민원 레코드입니다.
+            """
+            if locked.status == "withdrawn":
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            if actor.role != "citizen" or locked.owner != actor.id:
+                raise AppError(
+                    403,
+                    "owner_required",
+                    "민원 작성자만 첨부파일을 삭제할 수 있습니다.",
+                )
+            if locked.published or any(v.kind == "게시" for v in locked.versions):
+                raise AppError(
+                    409,
+                    "already_published",
+                    "답변이 게시된 민원의 증빙 첨부파일은 삭제할 수 없습니다.",
+                )
+
+        saved_row, storage_key = self.repository.delete_attachment(
+            complaint_id=complaint_id,
+            attachment_id=attachment_id,
+            action_check=check_delete_allowed,
+        )
+        self.attachment_storage.delete(storage_key)
+        self._publish_row_event("complaint.updated", saved_row)
 
     def _require_staff(self, actor: Actor) -> None:
         """요청 사용자가 담당자 역할인지 검증합니다.

@@ -90,9 +90,24 @@ def validation_error(error: ValidationError) -> Response:
 
 
 def protect_api() -> None:
-    """인증을 입력 검증보다 먼저 수행하고 다른 출처의 쓰기를 거부합니다."""
+    """인증을 입력 검증보다 먼저 수행하고 다른 출처의 쓰기 및 본문 한도를 검사합니다."""
     if not request.path.startswith("/api/v1/"):
         return
+    is_attachment_upload = (
+        request.method == "POST"
+        and request.path.startswith("/api/v1/complaints/")
+        and request.path.endswith("/attachments")
+    )
+    if (
+        not is_attachment_upload
+        and request.content_length is not None
+        and request.content_length > 64 * 1024
+    ):
+        raise AppError(
+            413,
+            "payload_too_large",
+            "요청 본문이 허용 크기(64 KiB)를 초과했습니다.",
+        )
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("Origin")
         if origin and origin.rstrip("/") != request.host_url.rstrip("/"):

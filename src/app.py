@@ -11,6 +11,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from src.assist import iter_web_assist
 from src.complaints.api import create_api
+from src.complaints.attachments import (
+    MAX_UPLOAD_REQUEST_BYTES,
+    AttachmentStorage,
+    DiskAttachmentStorage,
+    MemoryAttachmentStorage,
+)
 from src.complaints.auth import AuthService
 from src.complaints.config import ROOT, Settings
 from src.complaints.demo_data import seed_public_demo
@@ -62,7 +68,7 @@ def create_app(
         DEMO_LOGIN=config.demo_login,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Strict",
-        MAX_CONTENT_LENGTH=64 * 1024,
+        MAX_CONTENT_LENGTH=MAX_UPLOAD_REQUEST_BYTES,
         SWAGGER_CONFIG={
             "docExpansion": "none",
             "validatorUrl": None,
@@ -83,8 +89,18 @@ def create_app(
     resolved_auto = (
         auto_start_ai if auto_start_ai is not None else (resolved_iter is not None)
     )
+    attachment_storage: AttachmentStorage = (
+        MemoryAttachmentStorage()
+        if config.testing or config.backend == "memory"
+        else DiskAttachmentStorage(
+            config.upload_dir or (ROOT / ".web-data" / "uploads")
+        )
+    )
     service = ComplaintService(
-        repository, iter_assist_fn=resolved_iter, auto_start_ai=resolved_auto
+        repository,
+        iter_assist_fn=resolved_iter,
+        auto_start_ai=resolved_auto,
+        attachment_storage=attachment_storage,
     )
     auth_service = AuthService(repository)
     app.extensions["complaint_service"] = service

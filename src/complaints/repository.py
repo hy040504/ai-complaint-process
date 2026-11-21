@@ -25,11 +25,13 @@ from src.complaints.auth import StoredUser, default_seed_users
 from src.complaints.errors import AppError
 from src.complaints.models import (
     AnswerTemplate,
+    AttachmentItem,
     ChatMessageRecord,
     ChatSessionDetail,
     ChatSessionSummary,
     CitizenChatResponse,
     Complaint,
+    History,
     NormalizedDbSummary,
     Role,
     utcnow,
@@ -267,6 +269,22 @@ _SCHEMA_STATEMENTS = (
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_app_chat_messages_session ON {schema}.chat_messages (session_id, created_at ASC)",
+    # 민원 첨부파일 메타데이터(원본 바이트는 디스크/메모리 저장소에 분리 보관)
+    """
+    CREATE TABLE IF NOT EXISTS {schema}.attachments (
+        id text PRIMARY KEY,
+        complaint_id text NOT NULL REFERENCES {schema}.complaints(id) ON DELETE CASCADE,
+        uploaded_by text REFERENCES {schema}.users(id),
+        filename text NOT NULL,
+        content_type text NOT NULL CHECK (content_type IN ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')),
+        size_bytes integer NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 5242880),
+        sha256 text NOT NULL,
+        storage_key text NOT NULL UNIQUE,
+        exif_stripped boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_app_attachments_complaint ON {schema}.attachments (complaint_id, created_at ASC, id ASC)",
 )
 
 
@@ -522,6 +540,72 @@ class ComplaintRepository(Protocol):
         """
         ...
 
+    def add_attachment(
+        self,
+        *,
+        complaint_id: str,
+        item: AttachmentItem,
+        sha256_hex: str,
+        storage_key: str,
+        max_count: int,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, AttachmentItem]:
+        """민원 잠금 안에서 권한·개수를 검증하고 첨부 메타데이터를 원자 저장합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+            item: 저장할 첨부파일 메타데이터 모델입니다.
+            sha256_hex: 정제된 바이트의 SHA-256 해시입니다.
+            storage_key: 저장소에 기록된 평면 파일 키입니다.
+            max_count: 민원당 최대 허용 첨부 개수입니다.
+            action_check: 잠금된 민원의 작성자·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원, 저장된 첨부 메타데이터)` 튜플입니다.
+        """
+        ...
+
+    def get_attachment_meta(
+        self, complaint_id: str, attachment_id: str
+    ) -> tuple[AttachmentItem, str]:
+        """첨부파일 메타데이터와 내부 저장 키를 조회합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 조회할 첨부파일 식별자입니다.
+
+        Returns:
+            `(첨부 메타데이터, storage_key)` 튜플입니다.
+        """
+        ...
+
+    def list_attachment_keys(self, complaint_id: str) -> list[str]:
+        """민원에 연결된 모든 첨부파일 저장 키 목록을 반환합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+        """
+        ...
+
+    def delete_attachment(
+        self,
+        *,
+        complaint_id: str,
+        attachment_id: str,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, str]:
+        """민원 잠금 안에서 권한을 검증하고 첨부 행을 제거한 뒤 저장 키를 반환합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 삭제할 첨부파일 식별자입니다.
+            action_check: 삭제 권한·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원, 삭제할 storage_key)` 튜플입니다.
+        """
+        ...
+
 
 class MemoryRepository:
     """프로세스 안의 업무 저장소입니다. 단위 테스트 전용입니다.
@@ -545,6 +629,7 @@ class MemoryRepository:
         self._chat_sessions: dict[
             str, tuple[str, ChatSessionSummary, list[ChatMessageRecord]]
         ] = {}
+        self._attachments: dict[tuple[str, str], tuple[AttachmentItem, str, str]] = {}
         self._lock = Lock()
 
     def all(self) -> list[Complaint]:
@@ -668,6 +753,11 @@ class MemoryRepository:
             ]
             for key in stale_keys:
                 del self._keys[key]
+            stale_atts = [
+                att_key for att_key in self._attachments if att_key[0] == complaint_id
+            ]
+            for att_key in stale_atts:
+                del self._attachments[att_key]
 
     def list_templates(self) -> list[AnswerTemplate]:
         """담당자 답변 편집기용 템플릿 목록을 등록순으로 반환합니다.
@@ -990,6 +1080,127 @@ class MemoryRepository:
                 raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
             del self._chat_sessions[session_id]
 
+    def add_attachment(
+        self,
+        *,
+        complaint_id: str,
+        item: AttachmentItem,
+        sha256_hex: str,
+        storage_key: str,
+        max_count: int,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, AttachmentItem]:
+        """메모리 저장소에서 잠금 안에 권한·개수를 검사하고 첨부 메타데이터를 저장합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+            item: 저장할 첨부 메타데이터 모델입니다.
+            sha256_hex: 정제된 바이트의 SHA-256 해시입니다.
+            storage_key: 저장소에 기록된 파일 키입니다.
+            max_count: 민원당 최대 허용 첨부 개수입니다.
+            action_check: 작성자·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원 사본, 저장된 첨부 메타데이터 사본)` 튜플입니다.
+        """
+        with self._lock:
+            current = self._rows.get(complaint_id)
+            if current is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            row = current.model_copy(deep=True)
+            action_check(row)
+            if len(row.attachments) >= max_count:
+                raise AppError(
+                    409,
+                    "attachment_limit_exceeded",
+                    f"민원당 첨부파일은 최대 {max_count}개까지 등록할 수 있습니다.",
+                )
+            stored_item = item.model_copy(deep=True)
+            row.attachments.append(stored_item)
+            row.history.append(
+                History(text=f"시민이 첨부파일 등록: {stored_item.filename}")
+            )
+            row.version += 1
+            self._rows[complaint_id] = row
+            self._attachments[(complaint_id, stored_item.id)] = (
+                stored_item,
+                sha256_hex,
+                storage_key,
+            )
+        return row.model_copy(deep=True), stored_item.model_copy(deep=True)
+
+    def get_attachment_meta(
+        self, complaint_id: str, attachment_id: str
+    ) -> tuple[AttachmentItem, str]:
+        """메모리 저장소에서 첨부 메타데이터와 저장 키를 조회합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 조회할 첨부 식별자입니다.
+
+        Returns:
+            `(첨부 메타데이터 사본, storage_key)` 튜플입니다.
+        """
+        with self._lock:
+            entry = self._attachments.get((complaint_id, attachment_id))
+        if entry is None:
+            raise AppError(404, "not_found", "첨부파일을 찾을 수 없습니다.")
+        return entry[0].model_copy(deep=True), entry[2]
+
+    def list_attachment_keys(self, complaint_id: str) -> list[str]:
+        """메모리 저장소에서 특정 민원의 첨부 저장 키 목록을 반환합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+
+        Returns:
+            연결된 `storage_key` 문자열 목록입니다.
+        """
+        with self._lock:
+            return [
+                storage_key
+                for (cid, _aid), (_item, _sha, storage_key) in self._attachments.items()
+                if cid == complaint_id
+            ]
+
+    def delete_attachment(
+        self,
+        *,
+        complaint_id: str,
+        attachment_id: str,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, str]:
+        """메모리 저장소에서 권한을 검증하고 첨부 항목을 제거합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 삭제할 첨부 식별자입니다.
+            action_check: 삭제 권한·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원 사본, 삭제할 storage_key)` 튜플입니다.
+        """
+        with self._lock:
+            current = self._rows.get(complaint_id)
+            if current is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            entry = self._attachments.get((complaint_id, attachment_id))
+            if entry is None:
+                raise AppError(404, "not_found", "첨부파일을 찾을 수 없습니다.")
+            row = current.model_copy(deep=True)
+            action_check(row)
+            removed_item, _sha, storage_key = entry
+            row.attachments = [
+                att for att in row.attachments if att.id != attachment_id
+            ]
+            row.history.append(
+                History(text=f"시민이 첨부파일 삭제: {removed_item.filename}")
+            )
+            row.version += 1
+            self._rows[complaint_id] = row
+            del self._attachments[(complaint_id, attachment_id)]
+        return row.model_copy(deep=True), storage_key
+
 
 class PostgresRepository:
     """PostgreSQL `complaint_app` 7테이블 정규화 스키마 업무 저장소입니다.
@@ -1189,6 +1400,24 @@ class PostgresRepository:
         ).format(ident)
         self._sql_delete_chat_session = sql.SQL(
             "DELETE FROM {}.chat_sessions WHERE id = %s AND user_id = %s"
+        ).format(ident)
+        self._sql_insert_attachment = sql.SQL(
+            "INSERT INTO {}.attachments "
+            "(id, complaint_id, uploaded_by, filename, content_type, size_bytes, "
+            "sha256, storage_key, exif_stripped, created_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        ).format(ident)
+        self._sql_get_attachment = sql.SQL(
+            "SELECT id, filename, content_type, size_bytes, exif_stripped, "
+            "uploaded_by, created_at, storage_key "
+            "FROM {}.attachments WHERE complaint_id = %s AND id = %s"
+        ).format(ident)
+        self._sql_list_attachment_keys = sql.SQL(
+            "SELECT storage_key FROM {}.attachments WHERE complaint_id = %s"
+        ).format(ident)
+        self._sql_delete_attachment = sql.SQL(
+            "DELETE FROM {}.attachments WHERE complaint_id = %s AND id = %s "
+            "RETURNING filename, storage_key"
         ).format(ident)
         with self.connection() as conn:
             for statement in _SCHEMA_STATEMENTS:
@@ -2110,3 +2339,187 @@ class PostgresRepository:
             deleted = conn.execute(self._sql_delete_chat_session, (session_id, user_id))
             if deleted.rowcount == 0:
                 raise AppError(404, "not_found", "대화 세션을 찾을 수 없습니다.")
+
+    def add_attachment(
+        self,
+        *,
+        complaint_id: str,
+        item: AttachmentItem,
+        sha256_hex: str,
+        storage_key: str,
+        max_count: int,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, AttachmentItem]:
+        """PostgreSQL 행 잠금 안에서 권한·개수를 검사하고 첨부 행과 민원을 원자 갱신합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+            item: 저장할 첨부 메타데이터 모델입니다.
+            sha256_hex: 정제된 바이트의 SHA-256 해시입니다.
+            storage_key: 디스크/스토리지 평면 파일 키입니다.
+            max_count: 민원당 최대 허용 첨부 개수입니다.
+            action_check: 잠금된 민원의 작성자·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원, 저장된 첨부 메타데이터)` 튜플입니다.
+        """
+        with self.connection() as conn:
+            locked = conn.execute(self._sql_lock, (complaint_id,)).fetchone()
+            if locked is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            row = Complaint.model_validate(locked[0])
+            expected = row.version
+            action_check(row)
+            if len(row.attachments) >= max_count:
+                raise AppError(
+                    409,
+                    "attachment_limit_exceeded",
+                    f"민원당 첨부파일은 최대 {max_count}개까지 등록할 수 있습니다.",
+                )
+            uploader_uid = self._resolve_existing_user_id(conn, item.uploaded_by)
+            conn.execute(
+                self._sql_insert_attachment,
+                (
+                    item.id,
+                    complaint_id,
+                    uploader_uid,
+                    item.filename,
+                    item.content_type,
+                    item.size_bytes,
+                    sha256_hex,
+                    storage_key,
+                    item.exif_stripped,
+                    item.created_at,
+                ),
+            )
+            row.attachments.append(item)
+            row.history.append(History(text=f"시민이 첨부파일 등록: {item.filename}"))
+            row.version += 1
+            owner_uid = self._resolve_existing_user_id(conn, row.owner)
+            assignee_uid = self._resolve_existing_user_id(conn, row.assignee_id)
+            conn.execute(
+                self._sql_update,
+                (
+                    row.version,
+                    Jsonb(row.model_dump(mode="json")),
+                    owner_uid,
+                    assignee_uid,
+                    row.title,
+                    row.body,
+                    row.category,
+                    row.department,
+                    row.context_version,
+                    complaint_id,
+                    expected,
+                ),
+            )
+            self._sync_normalized_children(conn, row, owner_uid, assignee_uid)
+        return row, item
+
+    def get_attachment_meta(
+        self, complaint_id: str, attachment_id: str
+    ) -> tuple[AttachmentItem, str]:
+        """PostgreSQL `attachments` 테이블에서 메타데이터와 내부 저장 키를 조회합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 조회할 첨부 식별자입니다.
+
+        Returns:
+            `(첨부 메타데이터, storage_key)` 튜플입니다.
+
+        Raises:
+            AppError: 일치하는 첨부가 없으면 404를 발생합니다.
+        """
+        with self.connection() as conn:
+            found = conn.execute(
+                self._sql_get_attachment, (complaint_id, attachment_id)
+            ).fetchone()
+        if found is None:
+            raise AppError(404, "not_found", "첨부파일을 찾을 수 없습니다.")
+        mime = str(found[2])
+        item = AttachmentItem(
+            id=str(found[0]),
+            filename=str(found[1]),
+            content_type=mime,  # type: ignore[arg-type]
+            size_bytes=int(found[3]),
+            is_image=mime.startswith("image/"),
+            exif_stripped=bool(found[4]),
+            uploaded_by=str(found[5] or ""),
+            created_at=found[6],
+        )
+        return item, str(found[7])
+
+    def list_attachment_keys(self, complaint_id: str) -> list[str]:
+        """PostgreSQL에서 민원에 연결된 모든 첨부 저장 키 목록을 조회합니다.
+
+        Args:
+            complaint_id: 대상 민원 식별자입니다.
+
+        Returns:
+            `storage_key` 문자열 목록입니다.
+        """
+        with self.connection() as conn:
+            rows = conn.execute(
+                self._sql_list_attachment_keys, (complaint_id,)
+            ).fetchall()
+        return [str(r[0]) for r in rows if r and r[0]]
+
+    def delete_attachment(
+        self,
+        *,
+        complaint_id: str,
+        attachment_id: str,
+        action_check: Callable[[Complaint], None],
+    ) -> tuple[Complaint, str]:
+        """PostgreSQL 행 잠금 안에서 권한을 검증하고 첨부 행과 민원을 원자 갱신합니다.
+
+        Args:
+            complaint_id: 소속 민원 식별자입니다.
+            attachment_id: 삭제할 첨부 식별자입니다.
+            action_check: 삭제 권한·상태를 검증하는 콜백입니다.
+
+        Returns:
+            `(갱신된 민원, 삭제할 storage_key)` 튜플입니다.
+
+        Raises:
+            AppError: 민원 또는 첨부가 없으면 404를 발생합니다.
+        """
+        with self.connection() as conn:
+            locked = conn.execute(self._sql_lock, (complaint_id,)).fetchone()
+            if locked is None:
+                raise AppError(404, "not_found", "민원을 찾을 수 없습니다.")
+            row = Complaint.model_validate(locked[0])
+            expected = row.version
+            action_check(row)
+            removed = conn.execute(
+                self._sql_delete_attachment, (complaint_id, attachment_id)
+            ).fetchone()
+            if removed is None:
+                raise AppError(404, "not_found", "첨부파일을 찾을 수 없습니다.")
+            removed_name, storage_key = str(removed[0]), str(removed[1])
+            row.attachments = [
+                att for att in row.attachments if att.id != attachment_id
+            ]
+            row.history.append(History(text=f"시민이 첨부파일 삭제: {removed_name}"))
+            row.version += 1
+            owner_uid = self._resolve_existing_user_id(conn, row.owner)
+            assignee_uid = self._resolve_existing_user_id(conn, row.assignee_id)
+            conn.execute(
+                self._sql_update,
+                (
+                    row.version,
+                    Jsonb(row.model_dump(mode="json")),
+                    owner_uid,
+                    assignee_uid,
+                    row.title,
+                    row.body,
+                    row.category,
+                    row.department,
+                    row.context_version,
+                    complaint_id,
+                    expected,
+                ),
+            )
+            self._sync_normalized_children(conn, row, owner_uid, assignee_uid)
+        return row, storage_key

@@ -150,6 +150,42 @@ class Message(Model):
     date: datetime = Field(default_factory=utcnow)
 
 
+class AttachmentItem(Model):
+    """민원에 첨부된 현장 사진·문서의 공개 안전 메타데이터입니다.
+
+    서버 내부 저장 경로(`storage_key`)는 응답 모델에 포함하지 않습니다.
+    """
+
+    id: str
+    filename: str
+    content_type: Literal["image/jpeg", "image/png", "image/webp", "application/pdf"]
+    size_bytes: int
+    is_image: bool = False
+    exif_stripped: bool = False
+    uploaded_by: str = ""
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class AttachmentListResponse(Model):
+    """민원별 첨부파일 목록 응답입니다."""
+
+    attachments: list[AttachmentItem] = Field(default_factory=list)
+
+
+class AttachmentPath(BaseModel):
+    """첨부파일 조회·삭제 경로의 민원 ID와 첨부 ID 형식을 검사합니다."""
+
+    model_config = ConfigDict(extra="forbid")
+    complaint_id: str = Field(pattern=r"^[A-Za-z0-9-]{1,64}$")
+    attachment_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+
+
+class AttachmentDownloadQuery(Model):
+    """첨부파일 열람 시 강제 다운로드(`download=1`) 여부 쿼리입니다."""
+
+    download: bool = False
+
+
 class Answer(Model):
     """현재 게시된 답변과 서버가 결정한 작성 기원입니다."""
 
@@ -209,6 +245,7 @@ class PublicComplaint(Model):
     is_synthetic: bool = False
     published: Answer | None = None
     messages: list[Message] = Field(default_factory=list)
+    attachments: list[AttachmentItem] = Field(default_factory=list)
     history: list[History] = Field(default_factory=list)
 
 

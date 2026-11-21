@@ -2,10 +2,14 @@
 
 import json
 from collections.abc import Iterator
+import os
+from urllib.parse import quote
 
 from flask import Response, current_app, request, session, stream_with_context
+from flask_openapi3 import FileStorage
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
+from pydantic import BaseModel
 from src.complaints.auth import AuthService
 from src.complaints.http import actor, reply, set_session_actor
 
@@ -28,6 +32,9 @@ from src.complaints.models import (
     AssistFields,
     AssistInput,
     AssistResponse,
+    AttachmentDownloadQuery,
+    AttachmentItem,
+    AttachmentPath,
     ChatSessionDetail,
     ChatSessionListResponse,
     ChatSessionPath,
@@ -63,6 +70,12 @@ from src.complaints.models import (
 )
 from src.complaints.service import ComplaintService, Operation
 from src.llm.settings import provider_availability_map
+
+
+class AttachmentUploadForm(BaseModel):
+    """민원 현장 사진·PDF 멀티파트 파일 업로드 폼 계약입니다."""
+
+    file: FileStorage
 
 
 def create_api(
@@ -585,6 +598,92 @@ def create_api(
             본문 없는 204 응답입니다.
         """
         service.delete_complaint(actor(), path.complaint_id, body.version)
+        return Response(status=204)
+
+    @api.post(
+        "/complaints/<complaint_id>/attachments",
+        tags=[complaints],
+        responses={201: AttachmentItem},
+    )
+    def upload_complaint_attachment(
+        path: ComplaintPath, form: AttachmentUploadForm
+    ) -> Response:
+        """민원 작성자 본인의 현장 사진(JPG·PNG·WebP) 또는 PDF를 첨부합니다.
+
+        서버에서 매직바이트와 최대 크기(5MB)·개수(최대 5개)를 검증하고,
+        이미지의 EXIF 위치·기기 메타데이터를 자동 제거해 저장합니다.
+
+        Args:
+            path: 대상 민원 식별자입니다.
+            form: 멀티파트 업로드 파일(`file`) 폼입니다.
+
+        Returns:
+            저장된 첨부파일의 공개 메타데이터(`AttachmentItem`)입니다.
+        """
+        raw_bytes = form.file.read()
+        raw_filename = form.file.filename or "첨부파일"
+        saved = service.upload_attachment(
+            actor(), path.complaint_id, raw_bytes, raw_filename
+        )
+        return reply(saved, 201)
+
+    @api.get(
+        "/complaints/<complaint_id>/attachments/<attachment_id>",
+        tags=[complaints],
+    )
+    def get_complaint_attachment(
+        path: AttachmentPath, query: AttachmentDownloadQuery
+    ) -> Response:
+        """권한이 허용된 민원의 첨부파일을 안전 헤더와 함께 반환합니다.
+
+        비공개 민원의 첨부파일은 작성자 본인과 담당자만 열람할 수 있습니다.
+        이미지는 기본 `inline` 미리보기(`?download=1`이면 다운로드), PDF는 항상
+        `attachment`로 응답하며 스크립트 실행 방지 CSP 샌드박스 헤더를 붙입니다.
+
+        Args:
+            path: 민원 ID와 첨부파일 ID 경로입니다.
+            query: 강제 다운로드(`download=1`) 여부 쿼리입니다.
+
+        Returns:
+            검증된 첨부파일 바이너리 응답입니다.
+        """
+        item, blob = service.download_attachment(
+            actor(), path.complaint_id, path.attachment_id
+        )
+        ext = os.path.splitext(item.filename)[1] or ""
+        disposition = (
+            "attachment" if (query.download or not item.is_image) else "inline"
+        )
+        encoded = quote(item.filename, safe="")
+        return Response(
+            blob,
+            mimetype=item.content_type,
+            headers={
+                "Content-Disposition": (
+                    f'{disposition}; filename="attachment{ext}"; '
+                    f"filename*=UTF-8''{encoded}"
+                ),
+                "Content-Security-Policy": "default-src 'none'; sandbox",
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    @api.delete(
+        "/complaints/<complaint_id>/attachments/<attachment_id>",
+        tags=[complaints],
+        responses={204: None},
+    )
+    def delete_complaint_attachment(path: AttachmentPath) -> Response:
+        """답변 게시 전 작성자 본인의 첨부파일을 DB와 저장소에서 삭제합니다.
+
+        Args:
+            path: 민원 ID와 첨부파일 ID 경로입니다.
+
+        Returns:
+            본문 없는 204 응답입니다.
+        """
+        service.delete_attachment(actor(), path.complaint_id, path.attachment_id)
         return Response(status=204)
 
     @api.post(

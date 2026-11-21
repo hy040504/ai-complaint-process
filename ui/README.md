@@ -29,7 +29,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 
 | 사이트 | 기능 |
 | --- | --- |
-| 시민 | 홈·분야별 작성 진입, **민원인 아이디·비밀번호 로그인 및 간단 가입 모달(`auth.js`)·다중 사용자 비공개 민원 격리**, 공개/내 민원 범위 탭·검색·필터·페이지, 작성·수정·철회·영구 삭제(내 민원/상세)·임시 입력 저장, 결론 상자·접힌 답변·처리 이력, 추가 문의·재검토·이용 안내 |
+| 시민 | 홈·분야별 작성 진입, **민원인 아이디·비밀번호 로그인 및 간단 가입 모달(`auth.js`)·다중 사용자 비공개 민원 격리**, 공개/내 민원 범위 탭·검색·필터·페이지, **작성·수정·현장 사진/PDF 드래그 앤 드롭 파일 첨부(`attachments.js`, EXIF 자동 제거·상세 라이트박스/삭제)**·철회·영구 삭제(내 민원/상세)·임시 입력 저장, 결론 상자·접힌 답변·처리 이력, 추가 문의·재검토·이용 안내 |
 | 담당자 | **부서별 담당자 실계정 로그인(`staff_admin`·`staff_seowon`·`staff_heungdeok`)·소속 부서 표시·세션 유지**, **RBAC 업무 통계 대시보드(`#/staff/stats` · 5종 클릭형 드릴다운 차트 · 시연 제외 토글 · 7테이블 DB 요약)**, 접수·검토 업무 큐, 실제 건수 요약·분야별 검토 현황·경과일(`daysSince`)·이전/다음 이동, **제목·본문·ID·부서 통합 검색·AI 판정·정렬·공개 시연 토글·수식 주입 방어 CSV 내보내기**, 본인 담당 지정·해제 및 청주시 127개 다른 부서 시연 배정(검색·AI 후보 선택·메모), 커스텀 답변 템플릿 추가·삽입·삭제·복원·글자 수·`Ctrl+S`/`⌘S` 초안 저장·미리보기·게시·철회, 확대된 업무 가독성 타이포그래피 |
 | AI 연동·작업 | 시민 등록·수정 시 비동기 RAG+LLM(`EXAONE`/`Codex`/`openai_api` 가드) 자동 실행, 담당자 콘솔 AI 참고 정보 카드(`aiAssist`·`AI 추천 후보`/`유사 사례 참고`·근거·요약·순화), **담당자 실시간 SSE 모니터(`realtime.js` · 단절 시 3초 폴링 대체)**, **시민 다중 턴 AI 민원 도우미(`#/citizen/assistant` · `chatbot.js` · 로그인 DB 세션 자동 저장/복원/삭제 · 비로그인 탭 임시 저장 · 다중 턴 민원 작성 이관 · 미게시 초안 차단)** |
 | 응대 검사기 | `src/lab_web` `:5010` 및 기존 SPA `/#/lab`. 시민 UI 기준 히어로·단계 안내·카드 레이아웃, 4종 엔진 선택·잠금, 읍·면·동 선택, 장소 추적, `분야:` 제외 검색 후 판정(원시 `unverified`·`inferred_from_name` 표기 유지) 및 데이터 JSON ↑·프롬프트 ↓ 표시 |
@@ -53,7 +53,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 - AI 진행 단계·시작 시각은 백그라운드 워커가 서버 메모리와 담당자 SSE 브로커(`GET /api/v1/staff/events`)로 실시간 푸시하고 완료 시 DB에 커밋하며, SSE 단절 시 UI가 3초 폴링으로 자동 전환합니다(`realtime.js`). AI 성공을 답변 게시·민원 해결 완료로 표시하지 않으며, 이미 작성된 초안을 덮어쓰지 않습니다. [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md) · [CASE-110](../docs/cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md)
 - 연결 실패를 브라우저 저장 성공으로 대체하거나 기존 업무 DB를 초기화하지 않는다. 실제 행정 접수·이관을 수행하지 않는다.
 
-**남은 범위:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 첨부 업로드, 공식 접수·외부 이관, 운영 배포. 상단 역할 선택은 로컬 시연 편의용이며, 실계정 로그인(`auth.js` 모달) 후에는 새로고침·이동 시에도 실계정 세션이 시연 세션으로 덮이지 않고 유지됩니다.
+**남은 범위:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 멀티모달 이미지 분석, 공식 접수·외부 이관, 운영 배포. 상단 역할 선택은 로컬 시연 편의용이며, 실계정 로그인(`auth.js` 모달) 후에는 새로고침·이동 시에도 실계정 세션이 시연 세션으로 덮이지 않고 유지됩니다.
 
 ## 파일과 검증
 
@@ -63,6 +63,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | `src/realtime.js` | 담당자 실시간 SSE(`EventSource`) 클라이언트, `Last-Event-ID` 중복 제거·`resync_required`·장애 시 3초 폴링 대체 전환·상태 배지 |
 | `src/chatbot.js` | 시민 다중 턴 민원 도우미(`/api/v1/citizen/chat*`) NDJSON·세션 목록/복원/삭제 클라이언트, 비로그인 `sessionStorage` 임시 저장, 세션 바·안전 카드 렌더러, 다중 턴 민원 작성 폼 병합 |
 | `src/staff-stats.js` | 담당자 통계 대시보드(`#/staff/stats`) 6종 KPI·5종 클릭형 드릴다운 차트·정규화 7테이블 요약 및 CSV 내보내기 URL 빌더 |
+| `src/attachments.js` | 민원 첨부파일 클라이언트 검증(JPG·PNG·WebP·PDF, 5MB×5개)·업로드/삭제·작성 드롭존·상세 썸네일 갤러리 렌더러 |
 | `src/llm-meta.js` | 공급자 배지·제목(`resolveLlmMeta`), 장소 포맷, 4구·읍·면·동·엔진 `<option>` 조립, 판정·사유 라벨 공유 |
 | `src/lab.js`, `src/lab.css` | RAG·LLM 응대 검사기(`/#/lab`). 엔진 선택/잠금, 읍·면·동 선택, `rerank: false`, 데이터 ↑·프롬프트 ↓ 표시 |
 | `minwon-toktok-ui04.html`, `adapters/ui04-adapter.js` | `/design/ui04` 목업 원본과 `/api/v1` 연결 시연 어댑터 |
@@ -74,7 +75,7 @@ Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또�
 | `src/store.js` | API 호출·역할 선택·조회 캐시·서버 오류 처리 |
 | `src/icons.js`, `src/styles.css`, `src/readability.css` | 로컬 SVG·반응형 디자인·가독성 |
 | `server.mjs` | 루트 src의 Flask 서버를 실행하는 npm 편의 실행기 |
-| `tests/*.test.mjs` | API·검사기·담당자 참고 카드·`#/staff/api` Swagger·실시간 SSE(`realtime.test.mjs`)·시민 다중 턴 챗봇(`chatbot.test.mjs`)·운영 인증(`auth.test.mjs`)·통계 대시보드/통합 검색/CSV(`staff-stats.test.mjs`) 회귀 |
+| `tests/*.test.mjs` | API·검사기·담당자 참고 카드·`#/staff/api` Swagger·실시간 SSE(`realtime.test.mjs`)·시민 다중 턴 챗봇(`chatbot.test.mjs`)·운영 인증(`auth.test.mjs`)·통계 대시보드/통합 검색/CSV(`staff-stats.test.mjs`)·첨부파일(`attachments.test.mjs`) 회귀 |
 
 ```powershell
 npm --prefix ui run check

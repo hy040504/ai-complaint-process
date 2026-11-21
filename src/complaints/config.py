@@ -50,6 +50,7 @@ class Settings:
     schema: str = "complaint_app"
     testing: bool = False
     demo_login: bool = True
+    upload_dir: Path | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -72,6 +73,12 @@ class Settings:
         backend = os.environ.get("COMPLAINT_STORE", "postgresql").strip().lower()
         if backend != "postgresql":
             raise ValueError("시연 서버의 COMPLAINT_STORE는 postgresql 만 허용합니다.")
+        raw_upload_dir = os.environ.get("COMPLAINT_UPLOAD_DIR", "").strip()
+        upload_dir = (
+            Path(raw_upload_dir).expanduser()
+            if raw_upload_dir
+            else secrets_dir / "uploads"
+        )
         return cls(
             secret_key=secret,
             backend="postgresql",
@@ -80,4 +87,5 @@ class Settings:
                 os.environ.get("COMPLAINT_APP_SCHEMA", "complaint_app")
             ),
             demo_login=os.environ.get("COMPLAINT_DEMO_LOGIN", "1") == "1",
+            upload_dir=upload_dir,
         )

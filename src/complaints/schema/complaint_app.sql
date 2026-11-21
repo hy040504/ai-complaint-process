@@ -298,3 +298,20 @@ CREATE TABLE IF NOT EXISTS complaint_app.chat_messages (
 
 CREATE INDEX IF NOT EXISTS idx_app_chat_messages_session
     ON complaint_app.chat_messages (session_id, created_at ASC, id ASC);
+
+-- 민원 첨부파일 메타데이터(원본 파일은 .web-data/uploads/ 보관, EXIF 메타데이터 자동 제거)
+CREATE TABLE IF NOT EXISTS complaint_app.attachments (
+    id            text        PRIMARY KEY,
+    complaint_id  text        NOT NULL REFERENCES complaint_app.complaints(id) ON DELETE CASCADE,
+    uploaded_by   text        REFERENCES complaint_app.users(id),
+    filename      text        NOT NULL,
+    content_type  text        NOT NULL CHECK (content_type IN ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')),
+    size_bytes    integer     NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 5242880),
+    sha256        text        NOT NULL,
+    storage_key   text        NOT NULL UNIQUE,
+    exif_stripped boolean     NOT NULL DEFAULT false,
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_attachments_complaint
+    ON complaint_app.attachments (complaint_id, created_at ASC, id ASC);

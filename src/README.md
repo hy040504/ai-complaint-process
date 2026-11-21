@@ -115,7 +115,8 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /complaints/{complaint_id}` | 허용된 상세만 조회 |
 | `PUT /complaints/{complaint_id}` | 게시 전 본인 원문 수정 |
 | `DELETE /complaints/{complaint_id}` | 본인 글 논리 철회와 사유 저장 |
-| `POST /complaints/{complaint_id}/delete` | 작성자 본인 민원 영구 삭제(버전·작성자 검증, `idempotency` FK 정리 후 204 반환) |
+| `POST /complaints/{complaint_id}/delete` | 작성자 본인 민원 영구 삭제(버전·작성자 검증, `idempotency` FK·첨부 디스크 파일 연쇄 정리 후 204 반환) |
+| `POST /complaints/{complaint_id}/attachments`, `GET/DELETE /complaints/{complaint_id}/attachments/{attachment_id}` | 작성자 본인 현장 사진(JPG·PNG·WebP)·PDF 업로드(매직바이트 검증·EXIF 위치 자동 제거·최대 5개×5MB), 권한 격리 열람/다운로드(비공개 타 시민 `404`·CSP 샌드박스·`nosniff`), 게시 전 삭제(`204`) |
 | `POST /complaints/{complaint_id}/messages` | 본인 추가 문의·검토 재개 |
 | `POST /complaints/{complaint_id}/review` | 본인 재검토 요청 |
 | `PUT /complaints/{complaint_id}/assignment` | 담당자 본인 지정·해제 또는 청주시 127개 현행 부서 시연 배정(`department`·`reason`) |
@@ -181,6 +182,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_CITIZEN_INIT_PASSWORD` | 기본 민원인 계정(`citizen_01`) 초기 비밀번호(로컬 기본 `cheongju-citizen-2026!`) |
 | `COMPLAINT_STAFF_INIT_PASSWORD` | 기본 담당자 계정(`staff_admin`·`staff_seowon`·`staff_heungdeok`) 초기 비밀번호(로컬 기본 `cheongju-staff-2026!`) |
 | `COMPLAINT_DEMO_LOGIN` | `1`, `0`이면 시연 계정 선택 거부(아이디/비밀번호 `/api/v1/auth/*`만 허용) |
+| `COMPLAINT_UPLOAD_DIR` | 첨부파일 디스크 저장 경로(기본 `.web-data/uploads`, Git 제외) |
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
 
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.
@@ -219,4 +221,4 @@ npm --prefix ui test
 
 2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
 
-**미구현:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 파일 첨부, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결, 담당자 실시간 SSE 푸시, 시민 다중 턴 AI 챗봇(로그인 DB 영속 저장), 민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC), PostgreSQL 7테이블 정규화, 담당자 통계 대시보드·안전 CSV 내보내기 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3) 및 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex 100건(`99.0%`) 실증을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. [CASE-114](../docs/cases/사례-114-시민-다중턴챗봇-PG영속저장과-담당자-통계대시보드-CSV내보내기-구현-2026-11-21.md)
+**미구현:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 멀티모달 이미지 AI 분석, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결, 현장 사진·PDF 파일 첨부(EXIF 제거·권한 격리), 담당자 실시간 SSE 푸시, 시민 다중 턴 AI 챗봇(로그인 DB 영속 저장), 민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC), PostgreSQL 7테이블 정규화, 담당자 통계 대시보드·안전 CSV 내보내기 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3) 및 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex 100건(`99.0%`) 실증을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. [CASE-114](../docs/cases/사례-114-시민-다중턴챗봇-PG영속저장과-담당자-통계대시보드-CSV내보내기-구현-2026-11-21.md) · [CASE-115](../docs/cases/사례-115-민원-파일첨부-업로드-EXIF제거-권한격리-구현-2026-11-21.md)
