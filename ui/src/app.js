@@ -1,4 +1,5 @@
 import { icon } from "./icons.js";
+import { SITE, homePath, normalizePath } from "./site.js";
 import { THEME_KEY, readTheme, getTheme, setTheme } from "./theme.js";
 import {
   backendSwaggerPage,
@@ -511,11 +512,17 @@ const staffStream = createStaffEventStream({
  * @returns {object} 현재 경로·쿼리·역할 정보입니다.
  */
 function currentRoute() {
-  const [path, query] = (location.hash.slice(1) || "/citizen").split("?");
+  const [rawPath, query] = (location.hash.slice(1) || homePath()).split("?");
+  const path = normalizePath(rawPath);
+  if (path !== rawPath) {
+    // 다른 사이트의 경로로 들어오면 현재 사이트 홈으로 바로잡습니다.
+    history.replaceState(null, "", `#${path}`);
+    return { path, params: new URLSearchParams(), staff: SITE === "staff" };
+  }
   return {
     path,
     params: new URLSearchParams(query),
-    staff: path.startsWith("/staff"),
+    staff: SITE === "staff",
   };
 }
 /**

@@ -11,12 +11,32 @@ web = Blueprint("web", __name__)
 
 @web.route("/")
 def ui_index() -> Response:
-    """동일 출처에서 시민·담당자 UI를 제공합니다.
+    """시민 사이트 진입 화면을 제공합니다.
 
     Returns:
-        `ui/index.html`입니다.
+        `ui/index.html`(시민 전용 화면)입니다.
     """
     return send_from_directory(ROOT / "ui", "index.html")
+
+
+@web.route("/staff")
+def ui_staff_redirect() -> Response:
+    """끝 슬래시 없는 담당자 주소를 `/staff/`로 보냅니다.
+
+    Returns:
+        `/staff/`로 가는 308 응답입니다.
+    """
+    return Response(status=308, headers={"Location": "/staff/"})
+
+
+@web.route("/staff/")
+def ui_staff_index() -> Response:
+    """담당자 사이트 진입 화면을 제공합니다.
+
+    Returns:
+        `ui/staff.html`(담당자 전용 화면)입니다.
+    """
+    return send_from_directory(ROOT / "ui", "staff.html")
 
 
 @web.route("/src/<path:filename>")

@@ -3,6 +3,7 @@
  */
 import { citizenIdentity, escapeHTML as esc } from "./citizen.js";
 import { icon } from "./icons.js";
+import { SITE } from "./site.js";
 import { themeButton } from "./theme.js";
 import { api, categories, districts } from "./store.js";
 import {
@@ -110,7 +111,7 @@ export function labQuery(values) {
  * @returns {string} 페이지 HTML입니다.
  */
 export function labShell(content) {
-  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · RAG + LLM · 민원은 저장하지 않습니다</span></span></div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><div class="citizen-header-actions"><span class="lab-header-pill">RAG + LLM 검증</span>${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>llm 브랜치 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
+  return `<div class="demo-bar citizen-demo-bar lab-demo-bar"><div><span class="demo-label">LAB</span><span>민원톡톡 <span class="demo-extra">· 응대 검사기 · RAG + LLM · 민원은 저장하지 않습니다</span></span></div></div><div class="citizen-shell citizen-reference lab-shell"><header class="citizen-header"><a class="citizen-identity" href="#/lab" aria-label="응대 검사기 홈">${citizenIdentity()}</a><div class="citizen-header-actions">${SITE === "staff" ? `<a class="btn subtle" href="#/staff">${icon("arrow", 14)} 담당자 콘솔로</a>` : ""}<span class="lab-header-pill">RAG + LLM 검증</span>${themeButton()}<button class="icon-btn" data-action="lab-help" aria-label="검사기 이용 안내">${icon("help", 18)}</button></div></header><main id="main" tabindex="-1">${content}</main><footer><span>민원톡톡 <b>찾은 자료를 확인한 뒤 안내합니다</b></span><span>llm 브랜치 · 민원 저장·공식 접수·외부 이관 없음</span></footer></div>`;
 }
 
 /**

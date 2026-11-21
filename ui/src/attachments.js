@@ -8,6 +8,7 @@
 
 import { escapeHTML as esc } from "./citizen.js";
 import { icon } from "./icons.js";
+import { siteHeaders } from "./site.js";
 
 /** 민원당 최대 첨부파일 개수입니다. */
 export const MAX_ATTACHMENTS = 5;
@@ -115,6 +116,7 @@ export async function uploadComplaintAttachment(
     {
       method: "POST",
       credentials: "same-origin",
+      headers: siteHeaders(),
       body: formData,
     },
   );
@@ -144,6 +146,7 @@ export async function deleteComplaintAttachment(
     {
       method: "DELETE",
       credentials: "same-origin",
+      headers: siteHeaders(),
     },
   );
   if (!res.ok && res.status !== 204) {

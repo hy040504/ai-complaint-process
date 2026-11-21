@@ -25,6 +25,7 @@ from src.complaints.models import ErrorResponse
 from src.complaints.pages import web
 from src.complaints.repository import MemoryRepository, PostgresRepository
 from src.complaints.seed import seed_demo
+from src.complaints.sites import SiteSessionInterface
 from src.complaints.service import AssistIterFn, ComplaintService
 
 
@@ -108,6 +109,8 @@ def create_app(
     # Tailscale Serve 등 로컬 프록시의 X-Forwarded-Proto를 반영해 HTTPS Origin 검사를 통과시킵니다.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)  # type: ignore[method-assign]
     register_http(app)
+    # 시민(/)·담당자(/staff/) 사이트가 서로 다른 세션 쿠키를 쓰도록 합니다.
+    app.session_interface = SiteSessionInterface()
     app.register_api(create_api(service, auth_service))
     app.register_blueprint(web)
 

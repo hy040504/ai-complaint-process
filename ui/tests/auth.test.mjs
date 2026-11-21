@@ -21,7 +21,7 @@ test("renderAuthBadge와 renderAuthModalHtml은 민원인·담당자 로그인 �
     error: "잘못된 <script>오류</script>",
   });
   assert.match(citizenTab, /auth-citizen-login-form/);
-  assert.match(citizenTab, /citizen_01/);
+  assert.doesNotMatch(citizenTab, /citizen_01/, "기본 계정 안내를 노출하지 않는다");
   assert.doesNotMatch(citizenTab, /<script>/);
   assert.doesNotMatch(citizenTab, /본인확인/);
 
@@ -31,6 +31,7 @@ test("renderAuthBadge와 renderAuthModalHtml은 민원인·담당자 로그인 �
 
   const staffTab = renderAuthModalHtml({
     tab: "staff-login",
+    site: "staff",
     actor: {
       displayName: "서원구 건설과 담당자",
       department: "서원구 건설과",
@@ -39,7 +40,11 @@ test("renderAuthBadge와 renderAuthModalHtml은 민원인·담당자 로그인 �
     },
   });
   assert.match(staffTab, /auth-staff-login-form/);
-  assert.match(staffTab, /staff_seowon/);
+  assert.doesNotMatch(staffTab, /staff_seowon|citizen_01/, "기본 계정 안내를 노출하지 않는다");
+  assert.doesNotMatch(staffTab, /data-tab="citizen-login"/, "담당자 사이트는 민원인 탭이 없다");
+  const citizenOnly = renderAuthModalHtml({ tab: "staff-login", site: "citizen" });
+  assert.match(citizenOnly, /auth-citizen-login-form/, "시민 사이트는 담당자 탭 요청도 민원인 화면이다");
+  assert.doesNotMatch(citizenOnly, /auth-staff-login-form/);
   assert.match(staffTab, /auth-logout/);
 });
 

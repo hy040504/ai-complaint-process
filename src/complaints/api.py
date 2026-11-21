@@ -12,6 +12,7 @@ from flask_openapi3.models.tag import Tag
 from pydantic import BaseModel
 from src.complaints.auth import AuthService
 from src.complaints.http import actor, reply, set_session_actor
+from src.complaints.sites import explicit_site, wrong_site_message
 
 from src.complaints.errors import AppError
 from src.assist import (
@@ -418,6 +419,8 @@ def create_api(
         Returns:
             생성·로그인된 민원인 `Actor` 모델입니다.
         """
+        if explicit_site() == "staff":
+            raise AppError(403, "wrong_site", wrong_site_message("staff"))
         user = auth.register_citizen(body)
         set_session_actor(user)
         return reply(user, 201)
@@ -432,6 +435,10 @@ def create_api(
         Returns:
             세션 쿠키가 발급된 `Actor` 모델입니다.
         """
+        site = explicit_site()
+        if site is not None and not body.expected_role:
+            # 사이트가 명시된 요청은 해당 사이트의 계정 유형만 로그인할 수 있습니다.
+            body = body.model_copy(update={"expected_role": site})
         user = auth.login(body)
         set_session_actor(user)
         return reply(user)

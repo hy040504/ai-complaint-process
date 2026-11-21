@@ -7,6 +7,7 @@ from werkzeug.exceptions import HTTPException
 
 from src.complaints.errors import AppError
 from src.complaints.models import Actor, ErrorResponse
+from src.complaints.sites import explicit_site, wrong_site_message
 
 
 def set_session_actor(user: Actor) -> None:
@@ -15,6 +16,9 @@ def set_session_actor(user: Actor) -> None:
     Args:
         user: 인증이 완료된 사용자 `Actor` 모델입니다.
     """
+    site = explicit_site()
+    if site is not None and user.role != site:
+        raise AppError(403, "wrong_site", wrong_site_message(site))
     session.clear()
     session["user_id"] = user.id
     session["role"] = user.role
@@ -30,6 +34,11 @@ def actor() -> Actor:
     Raises:
         AppError: 유효한 세션이 없거나 계정이 비활성 상태이면 발생합니다.
     """
+    site = explicit_site()
+    session_role = session.get("role")
+    if site is not None and session_role is not None and session_role != site:
+        # 사이트별 쿠키가 분리되어 정상 흐름에서는 일어나지 않지만 방어적으로 거부합니다.
+        raise AppError(401, "authentication_required", wrong_site_message(site))
     auth_service = current_app.extensions.get("auth_service")
     if auth_service is not None:
         return auth_service.resolve_session_actor(
