@@ -256,7 +256,7 @@
 
 ## 2026-11-05
 
-- 한 문장을 RAG e5-small로 임베딩해 벡터 숫자만 출력하는 `embed_sentence.py`·`bin/embed-sentence.cmd`를 추가하고, 실행 스크립트·CMD·`rag/검색_시험.sh` 파일명을 한국어로 바꿨다. Windows `start_web.py`는 Flask에 libpq 기본값을 넘긴다. [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md)
+- 한 문장을 RAG e5-small로 임베딩해 벡터 숫자만 출력하는 `embed_sentence.py`·`bin/embed-sentence.cmd`를 추가하고, 실행 스크립트·CMD·`rag/test-search.sh` 파일명을 한국어로 바꿨다. Windows `start_web.py`는 Flask에 libpq 기본값을 넘긴다. [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md)
 
 - 두 원본 기획서 분석(`VoteLab_AI민원_상세기획안_상세분석.md`, `민원AI_계획서_상세분석.md`)과 현재 프로젝트(`src/assist`, `src/rag`, `src/llm`) 계약을 통합하여 AI 정보 전달·응답 하네스, 추후 Prefix Caching 적용을 위한 계층별 고정 시스템 프롬프트(`PREFIX-00~04`) 지침, 개인정보·긴급·처분성·특이민원 안전 가드레일 문서를 `docs/harness/`에 추가했다. [CASE-042](docs/cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
 
@@ -334,7 +334,7 @@
 
 ## 2026-10-30
 
-- Windows에서 꺼낸 Bash 스크립트의 CRLF 줄 끝 때문에 `rag/검색_시험.sh`가 WSL bash에서 `pipefail` 오류로 실패하던 문제를 고쳤다. `*.sh`는 LF로 유지하고 Python 클라이언트 탐색을 보완했다. [CASE-019](docs/cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md)
+- Windows에서 꺼낸 Bash 스크립트의 CRLF 줄 끝 때문에 `rag/test-search.sh`가 WSL bash에서 `pipefail` 오류로 실패하던 문제를 고쳤다. `*.sh`는 LF로 유지하고 Python 클라이언트 탐색을 보완했다. [CASE-019](docs/cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md)
 
 ## 2026-10-28
 

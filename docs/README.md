@@ -12,7 +12,7 @@
 | --- | --- |
 | 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`, 11/04~11/19)](report/README.md), [테스트 분석 (`docs/test/`, 200건·112건)](test/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
-| 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/검색_시험.sh) |
+| 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test-search.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
 | 처음 환경 준비 | Windows [`setup.cmd`](../setup.cmd), Linux [`setup.sh`](../setup.sh), [CASE-054(환경)](cases/사례-054-환경준비-스크립트와-리눅스-실행기-2026-11-06.md) · [CASE-054(업무DB)](cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md) |
 | 응대 검사기 (`llm` 브랜치 기본) | `http://127.0.0.1:5010/`, Windows [`bin/start-lab.cmd`](../bin/start-lab.cmd), Linux [`bin/start-lab.sh`](../bin/start-lab.sh), [검사기 웹](../src/lab_web/README.md), [CASE-057](cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-072](cases/사례-072-검사기-청주지역선택-지명추출-2026-11-09.md) · [CASE-083](cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md) · [CASE-084](cases/사례-084-K-EXAONE-API공급자-추가와-Tabular-구상-2026-11-13.md) · [CASE-085](cases/사례-085-API키-미설정시-LLM선택-비활성화-UI효과-2026-11-13.md) · [CASE-086](cases/사례-086-K-EXAONE-추론강도-최대토큰-파라미터-최적화-2026-11-13.md) · [CASE-087](cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md) · [CASE-088](cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-089](cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md) · [CASE-090](cases/사례-090-검사기-LLM별-데이터-프롬프트-표시와-배치순서-변경-2026-11-13.md) |
@@ -155,7 +155,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 | [CASE-015](cases/사례-015-예시-시민-화면-디자인과-효과-반영-2026-10-31.md) | 2026-10-31 | 시민 화면 파랑 UI, 민원톡톡 헤더, 서비스 아이콘 SVG, 모바일 효과 | 완료 · 로컬 UI |
 | [CASE-014](cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md) | 2026-10-31 | Flask 업무 서버·Swagger·SQLite 저장, UI를 API에 연결 | 완료 · 로컬 서버. 실제 AI·SSE·운영 인증 미구현 |
 | [CASE-013](cases/사례-013-시민과-담당자-웹-UI-구현-2026-10-31.md) | 2026-10-31 | 시민·담당자 로컬 UI와 CRUD·초안·게시 흐름 | 완료 · 로컬 UI |
-| [CASE-019](cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md) | 2026-10-30 | `rag/검색_시험.sh` CRLF로 인한 WSL `pipefail` 수정, `*.sh`는 LF | 완료 |
+| [CASE-019](cases/사례-019-검색-테스트-스크립트-CRLF-수정-2026-10-30.md) | 2026-10-30 | `rag/test-search.sh` CRLF로 인한 WSL `pipefail` 수정, `*.sh`는 LF | 완료 |
 | [CASE-011](cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md) | 2026-10-28 | FAQ·사례 검색 Bash TUI와 원문·출처 표시 | 완료 |
 | [CASE-010](cases/사례-010-네이티브-검색환경-전환-2026-10-28.md) | 2026-10-28 | Docker 제거, 호스트 PostgreSQL 18 + 사용자 검색 서비스 | 완료 |
 | [CASE-009](cases/사례-009-게시판-CRUD와-AI-모니터링-통합설계-2026-10-27.md) | 2026-10-27 | CRUD·AI 모니터 통합 상세설계, 분야별 38개 작업 | 완료 · 설계 문서. 전체 목표 기능은 후속 |

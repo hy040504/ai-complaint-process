@@ -40,10 +40,10 @@ API는 `http://127.0.0.1:8007`, 문서는 `/docs`입니다. DB는 로컬 소켓�
 
 ## 검색 테스트 메뉴
 
-저장소 루트 또는 다른 작업 디렉터리에서 [검색_시험.sh](검색_시험.sh)를 실행하면 한국어 메뉴가 열립니다. Bash와 Python이 필요하며 상태·검색은 실행 중인 API를 사용합니다. 가상환경이 없으면 `python3`를 API 클라이언트로 사용하지만 DB 무결성 검사에는 네이티브 의존성이 설치된 환경이 필요합니다.
+저장소 루트 또는 다른 작업 디렉터리에서 [test-search.sh](test-search.sh)를 실행하면 한국어 메뉴가 열립니다. Bash와 Python이 필요하며 상태·검색은 실행 중인 API를 사용합니다. 가상환경이 없으면 `python3`를 API 클라이언트로 사용하지만 DB 무결성 검사에는 네이티브 의존성이 설치된 환경이 필요합니다.
 
 ```bash
-bash rag/검색_시험.sh
+bash rag/test-search.sh
 bash rag/test-search.sh
 # 다른 디렉터리에서는 스크립트의 절대 경로를 사용합니다.
 ```
@@ -65,11 +65,11 @@ bash rag/test-search.sh
 자동 점검이나 JSON 출력을 원하면 옵션으로 실행합니다.
 
 ```bash
-bash rag/검색_시험.sh --status
-bash rag/검색_시험.sh --search '대형폐기물 배출 방법' --collection faq --limit 3
-bash rag/검색_시험.sh --search '흥덕구 도로 포트홀 보수 요청' --collection routing --district 흥덕구 --rerank
-bash rag/검색_시험.sh --search '여권 발급 방법' --collection faq --json
-bash rag/검색_시험.sh --help
+bash rag/test-search.sh --status
+bash rag/test-search.sh --search '대형폐기물 배출 방법' --collection faq --limit 3
+bash rag/test-search.sh --search '흥덕구 도로 포트홀 보수 요청' --collection routing --district 흥덕구 --rerank
+bash rag/test-search.sh --search '여권 발급 방법' --collection faq --json
+bash rag/test-search.sh --help
 ```
 
 `RAG_API_URL` 또는 `--api-url`로 API 주소를 지정할 수 있습니다. API 오류 시 비정상 종료 코드를 반환합니다. 메뉴에서는 오류를 표시한 뒤 다음 입력을 받습니다. 검색할 때마다 새 모델을 로드하지 않고 API의 공유 모델을 사용합니다. 색상은 일반 터미널에서만 적용하며 `NO_COLOR=1`로 끌 수 있습니다. 긴 결과는 터미널의 스크롤로 확인합니다.
