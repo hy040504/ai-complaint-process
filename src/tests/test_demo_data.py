@@ -7,7 +7,7 @@ from src.complaints.config import ROOT
 from src.complaints.demo_data import mask_text, seed_public_demo
 from src.complaints.repository import MemoryRepository
 
-DATA_DIR: Path = ROOT / "db"
+DATA_DIR: Path = ROOT / "rag" / "origin"
 
 # 마스킹 후 남으면 안 되는 개인정보 형태입니다. 기관 대표번호는 제외합니다.
 _RESIDUAL = [

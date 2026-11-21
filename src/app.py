@@ -120,7 +120,7 @@ def create_app(
     def seed_public_command() -> None:
         """공개 사례·자주 묻는 민원 JSON을 개인정보 마스킹 후 시연 민원으로 넣습니다."""
         click.echo(
-            f"공개 데이터 기반 시연 민원 {seed_public_demo(repository, ROOT / 'db')}건 생성"
+            f"공개 데이터 기반 시연 민원 {seed_public_demo(repository, ROOT / 'rag' / 'origin')}건 생성"
         )
 
     return app

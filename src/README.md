@@ -13,7 +13,7 @@ py -3.12 -m venv .venv-web
 # 선택 사항: 비어 있는 업무 DB에 개인정보 없는 합성 민원 24건 생성
 .\.venv-web\Scripts\python.exe -m flask --app src:create_app seed-demo
 
-# 선택 사항: db/ 공개 민원 사례·FAQ 기반 마스킹 시연 민원 56건 생성
+# 선택 사항: rag/origin/ 공개 민원 사례·FAQ 기반 마스킹 시연 민원 56건 생성
 .\.venv-web\Scripts\python.exe -m flask --app src:create_app seed-public-demo
 
 .\.venv-web\Scripts\python.exe -m src
