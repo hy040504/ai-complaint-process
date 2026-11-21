@@ -3,7 +3,7 @@
 
 한눈에 보기:
     - `json` 폴더의 JSON 파일을 읽어 외래 키 순서대로 단일 트랜잭션으로 삽입합니다.
-    - `--create --sql 02_complaint_app.sql`로 테이블 생성, `--reset`으로 초기화 재적재,
+    - `--create --sql sql/02_complaint_app.sql`로 테이블 생성, `--reset`으로 초기화 재적재,
       `--map-departments`로 `complaint_rag.department_directory` 부서 번호 연결을 지원합니다.
 """
 # =====================================================================
@@ -179,9 +179,9 @@ def main():
     """CLI 인자를 해석해 샘플 8개 JSON을 `complaint_app` 스키마에 적재·검증합니다."""
     ap = argparse.ArgumentParser(description="샘플 JSON 8개를 complaint_app 테이블에 넣는다.")
     ap.add_argument("--dsn", default=os.environ.get("DATABASE_URL"), help="DB 접속 문자열 (또는 환경 변수 DATABASE_URL)")
-    ap.add_argument("--json-dir", default="./json", help="JSON 파일이 있는 폴더 (기본 ./json)")
+    ap.add_argument("--json-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples"), help="JSON 파일이 있는 폴더 (기본 db/samples)")
     ap.add_argument("--create", action="store_true", help="--sql 파일을 먼저 실행해 테이블을 새로 만든다")
-    ap.add_argument("--sql", default="02_complaint_app.sql", help="--create 때 실행할 SQL 파일")
+    ap.add_argument("--sql", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "sql", "02_complaint_app.sql"), help="--create 때 실행할 SQL 파일 (기본 db/sql/02_complaint_app.sql)")
     ap.add_argument("--reset", action="store_true", help="이미 들어 있는 데이터를 모두 지우고 다시 넣는다")
     ap.add_argument("--map-departments", action="store_true", help="ai_results.department_id 를 부서 이름으로 연결한다")
     args = ap.parse_args()
@@ -200,7 +200,7 @@ def main():
 
         cur.execute("SELECT to_regclass(%s)", ("%s.users" % SCHEMA,))
         if cur.fetchone()[0] is None:
-            sys.exit("complaint_app 테이블이 없습니다. 02_complaint_app.sql 을 먼저 실행하거나 --create 를 쓰세요.")
+            sys.exit("complaint_app 테이블이 없습니다. db/sql/02_complaint_app.sql 을 먼저 실행하거나 --create 를 쓰세요.")
 
         if args.reset:
             print("기존 데이터 삭제")

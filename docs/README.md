@@ -43,7 +43,7 @@
 | --- | --- | --- |
 | FAQ·사례 원문 | `rag/origin/자주_묻는_민원.json`, `rag/origin/공개_민원_사례.json` | Git에 포함. 94건·5,015건 |
 | 검색 테이블 정의 | `rag/origin/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
-| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/02_complaint_app.sql` | Git에 포함. **7개 핵심 정규화 테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) + 보조 3테이블(`idempotency`·`answer_templates`·`app_meta`)**, 생성 칼럼 5개·CHECK 27종·`complaint_rag` 교차 FK. [실행 설계](harness/업무DB_실행설계.md) |
+| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/sql/02_complaint_app.sql` | Git에 포함. **7개 핵심 정규화 테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) + 보조 3테이블(`idempotency`·`answer_templates`·`app_meta`)**, 생성 칼럼 5개·CHECK 27종·`complaint_rag` 교차 FK. [실행 설계](harness/업무DB_실행설계.md) |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
 | 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/ops/export-dump.sh` |
 | 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
