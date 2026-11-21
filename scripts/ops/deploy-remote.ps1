@@ -57,64 +57,47 @@ if (git status --porcelain --untracked-files=no) { Write-Warning "커밋하지 �
 Write-Host "배포 대상: $Branch @ $rev  $subject"
 
 $tmp = Join-Path $env:TEMP "acp-deploy-$rev"
+if ([string]::IsNullOrWhiteSpace($tmp) -or $tmp.Length -lt 10) { throw "임시 경로를 만들지 못했습니다." }
 New-Item -ItemType Directory -Force $tmp | Out-Null
 $tar = Join-Path $tmp "release.tar"
 git archive --format=tar -o $tar $Branch
 git ls-tree -r --name-only $Branch | Set-Content -Encoding utf8 (Join-Path $tmp "manifest.txt")
 
-function Invoke-Remote([string]$script, [string]$stdinFile) {
+function Invoke-Remote {
+    # 원격에서 bash 스크립트를 실행합니다. 두 번째 인자가 있으면 스크립트 대신 그 명령을 실행하고
+    # 파일 내용을 표준입력으로 보냅니다(바이너리 안전: 파일 리다이렉트).
+    param([string]$Script, [string]$StdinFile)
     $local = Join-Path $tmp ("remote-" + [guid]::NewGuid().ToString("N") + ".sh")
-    [IO.File]::WriteAllText($local, ($script -replace "`r", ""), (New-Object Text.UTF8Encoding($false)))
-    $stdout = "$local.out"; $stderr = "$local.err"
-    $in = if ($stdinFile) { $stdinFile } else { $local }
-    $cmd = if ($stdinFile) { $script } else { "bash -s" }
+    [IO.File]::WriteAllText($local, ($Script -replace "`r", ""), (New-Object Text.UTF8Encoding($false)))
+    $stdout = "$local.out"
+    $stderr = "$local.err"
+    if ($StdinFile) { $in = $StdinFile; $cmd = $Script } else { $in = $local; $cmd = "bash -s" }
     $p = Start-Process -FilePath $tailcat -ArgumentList @("ssh", "$sshUser@$addr", ('"' + $cmd + '"')) `
         -RedirectStandardInput $in -RedirectStandardOutput $stdout -RedirectStandardError $stderr -NoNewWindow -Wait -PassThru
-    Get-Content $stdout -Encoding utf8 -ErrorAction SilentlyContinue
-    if ($p.ExitCode -ne 0) { Get-Content $stderr -Encoding utf8 -ErrorAction SilentlyContinue | Select-Object -Last 8; throw "원격 명령 실패(exit=$($p.ExitCode))" }
+    if (Test-Path $stdout) { Get-Content $stdout -Encoding utf8 }
+    if ($p.ExitCode -ne 0) {
+        if (Test-Path $stderr) { Get-Content $stderr -Encoding utf8 | Select-Object -Last 8 }
+        throw "원격 명령 실패(exit=$($p.ExitCode))"
+    }
 }
 
-# 1) 이전 배포 파일 정리 + 압축 해제용 임시 위치 준비
-Invoke-Remote @"
-set -e
-D=$RemoteDir
-mkdir -p "`$D"
-cd "`$D"
-if [ -f .deploy-manifest ]; then
-  while IFS= read -r f; do [ -n "`$f" ] && rm -f -- "`$f"; done < .deploy-manifest
-  find . -type d -empty -not -path './.venv*' -not -path './.rag-*' -not -path './.web-data*' -not -path './.git*' -delete 2>/dev/null || true
-fi
-echo ready
-"@ $null
+# 1) 이전 배포 파일 정리
+$cleanup = Get-Content (Join-Path $PSScriptRoot "remote\cleanup.sh") -Raw -Encoding utf8
+Invoke-Remote ($cleanup.Replace("__DIR__", $RemoteDir)) $null
 
 # 2) tar 전송·해제
 Invoke-Remote "cd $RemoteDir && tar -xf - && echo extracted" $tar
 
-# 3) 목록·리비전 기록, 실행 권한
-$manifestLocal = Join-Path $tmp "manifest.txt"
-Invoke-Remote "cat > $RemoteDir/.deploy-manifest" $manifestLocal
-Invoke-Remote @"
-set -e
-cd $RemoteDir
-chmod +x bin/*.sh scripts/ops/*.sh setup.sh rag/test-search.sh 2>/dev/null || true
-echo "$Branch@$rev" > .deploy-rev
-echo "deployed `$(cat .deploy-rev)"
-"@ $null
+# 3) 배포 목록·리비전 기록, 실행 권한
+Invoke-Remote "cat > $RemoteDir/.deploy-manifest" (Join-Path $tmp "manifest.txt")
+$finish = Get-Content (Join-Path $PSScriptRoot "remote\finish.sh") -Raw -Encoding utf8
+Invoke-Remote ($finish.Replace("__DIR__", $RemoteDir).Replace("__BRANCH__", $Branch).Replace("__REV__", $rev)) $null
 
+# 4) 서비스 재시작과 헬스 확인
 if (-not $SkipRestart) {
-    Invoke-Remote @"
-export XDG_RUNTIME_DIR=/run/user/`$(id -u)
-export DBUS_SESSION_BUS_ADDRESS=unix:path=`$XDG_RUNTIME_DIR/bus
-systemctl --user daemon-reload
-systemctl --user restart cheongju-rag.service
-for i in `$(seq 1 40); do curl -sf -m 3 http://127.0.0.1:8007/health >/dev/null && break; sleep 3; done
-systemctl --user restart cheongju-web.service cheongju-lab.service
-sleep 12
-systemctl --user is-active cheongju-rag cheongju-web cheongju-lab
-curl -s -m 10 http://127.0.0.1:5000/api/v1/health; echo
-curl -s -o /dev/null -w "citizen / %{http_code}\n" http://127.0.0.1:5000/
-curl -s -o /dev/null -w "staff /staff/ %{http_code}\n" http://127.0.0.1:5000/staff/
-"@ $null
+    $restart = Get-Content (Join-Path $PSScriptRoot "remote\restart.sh") -Raw -Encoding utf8
+    Invoke-Remote $restart $null
 }
-Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+
+if ($tmp -like "*acp-deploy-*") { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }
 Write-Host "배포 완료: $Branch@$rev"
