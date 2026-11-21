@@ -106,7 +106,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 10px;
   padding: 11px 10px;
   min-height: 43px;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   color: #adbfdf;
   font-size: 14px;
   line-height: 1.55;
@@ -134,7 +134,7 @@ body[data-site="staff"] .role-switch a.selected {
   margin-left: auto;
   background: #d65750;
   color: #fff;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   font-family: ui-monospace, Consolas, monospace;
   padding: 1px 7px;
   font-size: 11px;
@@ -153,7 +153,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-sidebar-policy {
   border: 1px solid #ffffff12;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #ffffff04;
   padding: 14px 12px;
   margin: 0 3px 16px;
@@ -181,7 +181,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 13px;
   text-align: left;
   width: 100%;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
 }
 .staff-help-link > svg:last-child {
   margin-left: auto;
@@ -330,7 +330,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 12px;
   color: #9eabc0;
   border: 1px solid #e0e6f0;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   padding: 3px 8px;
   line-height: 1.5;
 }
@@ -342,7 +342,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-scope {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   padding: 3px;
   background: #eaf0f7;
   margin-left: auto;
@@ -351,7 +351,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-scope > a {
   font-size: 13px;
   padding: 7px 12px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   color: #8b9ab1;
   font-weight: 550;
   white-space: nowrap;
@@ -367,7 +367,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 10px;
   border: 1px solid #c9d9fd;
   background: #eaf1ff;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 13px 16px;
   margin-bottom: 15px;
   font-size: 13px;
@@ -391,7 +391,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .btn {
   border-color: #e0e6f0;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   font-size: 14px;
   padding: 9px 15px;
   color: #536580;
@@ -428,7 +428,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-kpi {
   border: 1px solid #dfe6f1;
   background: #fff;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 18px 18px 16px;
   display: flex;
   flex-direction: column;
@@ -514,7 +514,7 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 6px;
   border: 1px solid #dfe6f1;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: white;
   padding: 7px 13px;
   font-size: 13px;
@@ -546,7 +546,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .panel {
   background: #fff;
   border-color: #dfe6f1;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   box-shadow: none;
 }
 .staff-queue-panel {
@@ -569,7 +569,7 @@ body[data-site="staff"] .role-switch a.selected {
   height: 40px;
   font-size: 13px;
   border: 1px solid #e0e6ef;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #fbfcfe;
   color: #607595;
   padding: 0 11px;
@@ -700,7 +700,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 4px;
   padding: 2px 7px;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   line-height: 1.55;
   font-weight: 500;
   white-space: nowrap;
@@ -751,7 +751,7 @@ body[data-site="staff"] .role-switch a.selected {
   color: #b0bfd6;
 }
 .staff-workspace .badge {
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   font-size: 12px;
   padding: 4px 8px;
   line-height: 1.5;
@@ -783,7 +783,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-category-panel > a {
   border: 1px solid #e7edf6;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #fafcfe;
   padding: 14px 15px;
   display: flex;
@@ -906,7 +906,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-workspace .detail-grid .panel {
   padding: 21px;
   margin-bottom: 18px;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   overflow: hidden;
 }
 .staff-workspace .detail-grid .section-title {
@@ -970,7 +970,7 @@ body[data-site="staff"] .role-switch a.selected {
   height: 34px;
   padding: 0 12px;
   border: 1px solid #c9d6ea;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #fff;
   color: #2f6fed;
   font-size: 13px;
@@ -1163,7 +1163,7 @@ body[data-site="staff"] .role-switch a.selected {
   margin: 8px 15px 16px;
   padding: 12px 13px;
   border: 1px solid #ecdda9;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #fff;
   color: #b09d6d;
   font-size: 13px;
@@ -1200,14 +1200,14 @@ body[data-site="staff"] .role-switch a.selected {
   border-color: #dfe7f3;
   line-height: 1.95;
   min-height: 285px;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
 }
 .staff-workspace .editor-panel input {
   font-size: 13px;
   color: #627ca3;
   background: #fcfdff;
   border-color: #dfe7f3;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
 }
 .staff-workspace :is(input, textarea, select):focus {
   outline: 2px solid #b0c9f7;
@@ -1403,7 +1403,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 body[data-site="staff"] #modal {
   border-color: #dce5f5;
-  border-radius: 13px;
+  border-radius: var(--r-card);
   color: #567198;
 }
 body[data-site="staff"] #modal::backdrop {
@@ -1893,7 +1893,7 @@ body[data-site="staff"] #toast {
   .staff-kpi {
     padding: 15px 14px;
     gap: 8px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .staff-kpi-label {
     font-size: 12px;
@@ -2105,7 +2105,7 @@ body[data-site="staff"] #toast {
   }
   .staff-process {
     margin-bottom: 17px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .staff-process > header {
     padding: 12px 14px;
@@ -2162,7 +2162,7 @@ body[data-site="staff"] #toast {
   }
   .staff-workspace .detail-grid .panel {
     padding: 19px 16px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
     margin-bottom: 17px;
   }
   .staff-workspace .detail-grid h2 {
@@ -2287,7 +2287,7 @@ body[data-site="staff"] #toast {
   }
   body[data-site="staff"] #modal {
     max-width: calc(100% - 30px);
-    border-radius: 14px;
+    border-radius: var(--r-card);
   }
   body[data-site="staff"] .modal-head {
     padding: 19px;
@@ -2423,7 +2423,7 @@ body[data-site="staff"] #toast {
 }
 .staff-workspace .phrase-chip {
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--ink);
   padding: 5px 11px;
@@ -2486,7 +2486,7 @@ body[data-site="staff"] #toast {
   min-width: 0;
   padding: 8px 11px;
   border: 1px solid #d8e1ee;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #fcfdff;
   color: #4f678c;
   font: inherit;
@@ -2562,7 +2562,7 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   border: 1px solid #cad8ed;
   background: #f5f9ff;
   color: #2f5fa8;
@@ -2580,7 +2580,7 @@ body[data-site="staff"] #toast {
   display: inline-flex;
   align-items: stretch;
   border: 1px solid #d5e0ef;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #f8fbff;
   overflow: hidden;
 }
@@ -2615,7 +2615,7 @@ body[data-site="staff"] #toast {
   margin: 0;
   padding: 10px 12px;
   border: 1px dashed #cfdbe9;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   font-size: 12px;
   color: #6b7f9e;
   background: #f8fafd;
@@ -2637,7 +2637,7 @@ body[data-site="staff"] #toast {
 }
 .dept-suggest-btn {
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid #c9dbff;
   background: #edf3ff;
   color: #214e9e;
@@ -2701,7 +2701,7 @@ body[data-site="staff"] #toast {
   flex-direction: column;
   gap: 5px;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: #ffffff;
   border: 1px solid #dbe4f2;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
@@ -2731,7 +2731,7 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 6px;
   padding: 9px 14px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   border: 1px solid #d5e0f0;
   background: #f5f8fd;
   color: #2b3e5d;
@@ -2777,14 +2777,14 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 4px;
   padding: 5px 11px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #eef3fb;
   color: #27426f;
   font-size: 12.5px;
   font-weight: 650;
 }
 .staff-api-frame-wrap {
-  border-radius: 14px;
+  border-radius: var(--r-card);
   overflow: hidden;
   border: 1px solid #d9e3f1;
   background: #f4f7fc;
@@ -2811,7 +2811,7 @@ body[data-site="staff"] #toast {
 }
 .staff-api-table-wrap {
   border: 1px solid #dbe4f2;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   overflow-x: auto;
   background: #ffffff;
 }
@@ -2883,7 +2883,7 @@ body[data-site="staff"] #toast {
   justify-content: center;
   min-width: 60px;
   padding: 4px 9px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -2974,7 +2974,7 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-size: 12.5px;
   font-weight: 700;
   border: 1px solid #c9dcff;
@@ -3029,7 +3029,7 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 10px;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   transition: background 0.14s;
 }
 .stats-bar-row:hover,
@@ -3046,7 +3046,7 @@ body[data-site="staff"] #toast {
 }
 .stats-bar-track {
   height: 11px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #eaf0f9;
   overflow: hidden;
   display: block;
@@ -3054,7 +3054,7 @@ body[data-site="staff"] #toast {
 .stats-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #2f6fed;
   transition: width 0.25s ease;
 }
@@ -3102,7 +3102,7 @@ body[data-site="staff"] #toast {
 }
 .stats-db-table-wrap {
   border: 1px solid #dbe4f2;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   overflow-x: auto;
 }
 .stats-db-table-wrap table {

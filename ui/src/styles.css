@@ -100,7 +100,7 @@ input,
 textarea,
 select {
   border: 1px solid #dce5df;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #fff;
   min-width: 0;
 }
@@ -177,7 +177,7 @@ small {
   font-size: 9px;
   border: 1px solid #bdcec3;
   padding: 0 5px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   letter-spacing: 1px;
   font-weight: 700;
 }
@@ -234,7 +234,7 @@ small {
   width: 40px;
   height: 40px;
   background: var(--teal);
-  border-radius: 13px 13px 13px 3px;
+  border-radius: var(--r-card) var(--r-card) var(--r-card) var(--r-chip);
   color: white;
   display: grid;
   place-items: center;
@@ -291,7 +291,7 @@ small {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   color: #64776a;
   flex-shrink: 0;
 }
@@ -314,7 +314,7 @@ small {
   gap: 9px;
   padding: 11px 20px;
   border: 1px solid #dce5de;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #fff;
   font-size: 13px;
   font-weight: 650;
@@ -420,7 +420,7 @@ small {
   overflow: hidden;
   border: 1px solid #dceadf;
   background: linear-gradient(108deg, #eaf5ec 0%, #edf7f0 53%, #e4f2e8 100%);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   min-height: 336px;
   padding: 36px 43px;
 }
@@ -436,7 +436,7 @@ small {
   background: #fff9;
   padding: 4px 10px;
   border: 1px solid #d9e8da;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   color: #4a7b63;
   margin-bottom: 14px;
 }
@@ -510,7 +510,7 @@ small {
 .quick-card {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-control);
   padding: 19px 10px 16px;
   text-align: center;
   transition:
@@ -529,7 +529,7 @@ small {
   height: 47px;
   margin: 0 auto 11px;
   background: var(--cj-blue-tint);
-  border-radius: 14px;
+  border-radius: var(--r-card);
   color: #598c78;
 }
 .quick-card b {
@@ -668,7 +668,7 @@ small {
   white-space: nowrap;
   font-size: 10px;
   font-weight: 650;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   padding: 4px 8px;
   background: #eff2ee;
   color: #79877e;
@@ -710,7 +710,7 @@ small {
   background: #dcefe3;
   width: 39px;
   height: 39px;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -751,7 +751,7 @@ small {
   border: 1px solid #e2e9e0;
   color: #7c927f;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   white-space: nowrap;
   letter-spacing: 0;
 }
@@ -876,7 +876,7 @@ footer b {
   background: #edf5ef;
   color: #66806d;
   border: 1px solid #e1ebe2;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 13px 17px;
   font-size: 11px;
   margin-bottom: 23px;
@@ -1156,7 +1156,7 @@ td:last-child {
   gap: 12px;
   border: 1px solid #e0e7db;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   cursor: pointer;
 }
 .radio-cards input {
@@ -1290,7 +1290,7 @@ td:last-child {
   min-height: 28px;
   padding: 4px 10px;
   border: 1px solid #d5e2f5;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #f5f9ff;
   color: #31548d;
   font: inherit;
@@ -1324,7 +1324,7 @@ td:last-child {
   min-height: 26px;
   padding: 3px 9px;
   border: 1px solid #f2c9cd;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #fff5f6;
   color: #b83a44;
   font: inherit;
@@ -1342,7 +1342,7 @@ td:last-child {
   color: #738d62;
   padding: 4px 8px;
   border: 1px solid #dce9d6;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   font-size: 9px;
   white-space: nowrap;
 }
@@ -1461,7 +1461,7 @@ td:last-child {
 .answer-disclosure {
   margin-top: 23px;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #f5f8f0;
   font-size: 10px;
   color: #889d74;
@@ -1660,7 +1660,7 @@ td:last-child {
   padding: 12px;
   font-size: 10px;
   color: #a1aa88;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
 }
 .editor-panel > .danger {
   margin-top: 15px;
@@ -1708,7 +1708,7 @@ td:last-child {
   font-size: 12px;
   font-weight: 500;
   padding: 13px 14px;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   color: #899c7c;
 }
 .sidebar nav .active {
@@ -1730,7 +1730,7 @@ td:last-child {
   padding: 17px;
   background: #f6f8f1;
   border: 1px solid #e9efdf;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   margin-bottom: 25px;
 }
 .side-note svg {
@@ -1830,7 +1830,7 @@ td:last-child {
 .staff-alert {
   padding: 15px 20px;
   border: 1px solid #dcebd5;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #eff7e9;
   display: flex;
   align-items: center;
@@ -1875,7 +1875,7 @@ td:last-child {
   height: 31px;
   background: #f8f1e4;
   color: #c1a065;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
 }
 .mi-1 {
   background: #e8f3e4;
@@ -2061,7 +2061,7 @@ td:last-child {
   margin: 0 0 14px;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
 }
 .staff-guide h2 {
   font-size: 13px;
@@ -2128,7 +2128,7 @@ td:last-child {
   align-items: center;
   margin-top: 19px;
   background: #f5f8ef;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   padding: 12px;
   color: #85a270;
   font-size: 10px;
@@ -2145,7 +2145,7 @@ td:last-child {
   font-size: 9px;
   padding: 5px;
   color: #bbc7ac;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
 }
 .stage-steps .done {
   background: #eaf4e3;
@@ -2265,7 +2265,7 @@ details[open] summary svg {
 }
 .chat-bubble {
   max-width: 85%;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   padding: 17px 20px;
   font-size: 12px;
   white-space: pre-wrap;
@@ -2276,13 +2276,13 @@ details[open] summary svg {
   background: #fff;
   border: 1px solid #e2ebd9;
   color: #81996d;
-  border-bottom-left-radius: 3px;
+  border-bottom-left-radius: var(--r-chip);
 }
 .chat-bubble.me {
   background: var(--teal);
   color: #fff;
   align-self: flex-end;
-  border-bottom-right-radius: 3px;
+  border-bottom-right-radius: var(--r-chip);
 }
 .chat-bubble p {
   margin-top: 8px;
@@ -2340,7 +2340,7 @@ details[open] summary svg {
   background: #254b3d;
   color: #fff;
   border: 1px solid #ffffff25;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   box-shadow: 0 8px 30px #17362520;
   font-size: 12px;
   z-index: 200;
@@ -2359,7 +2359,7 @@ details[open] summary svg {
 dialog {
   border: 1px solid #dbe7d3;
   padding: 0;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   width: min(620px, calc(100vw - 32px));
   max-height: 85vh;
   box-shadow: 0 20px 80px #17362530;
@@ -2396,7 +2396,7 @@ dialog::backdrop {
   padding: 20px;
   background: #f7f9f2;
   border: 1px solid #e7eede;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   margin: 18px 0;
 }
 .modal-content h3 {
@@ -2743,7 +2743,7 @@ dialog::backdrop {
   .brand-symbol {
     width: 35px;
     height: 35px;
-    border-radius: 11px 11px 11px 3px;
+    border-radius: var(--r-control) var(--r-control) var(--r-control) var(--r-chip);
   }
   .header-actions {
     gap: 6px;
@@ -2794,7 +2794,7 @@ dialog::backdrop {
   .hero {
     padding: 25px 23px 25px;
     min-height: 440px;
-    border-radius: 15px;
+    border-radius: var(--r-card);
   }
   .hero-copy {
     max-width: 100%;
@@ -2863,7 +2863,7 @@ dialog::backdrop {
   .quick-icon {
     width: 39px;
     height: 39px;
-    border-radius: 12px;
+    border-radius: var(--r-control);
     margin-bottom: 8px;
   }
   .quick-icon svg {
@@ -3659,7 +3659,7 @@ dialog::backdrop {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-size: 10px;
   font-weight: 700;
   vertical-align: middle;
@@ -3690,7 +3690,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   font-size: 13px;
@@ -3702,7 +3702,7 @@ dialog::backdrop {
 }
 .auth-tab {
   padding: 9px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   border: 1px solid #cbd5e1;
   background: #f8fafc;
   color: #334155;
@@ -3731,7 +3731,7 @@ dialog::backdrop {
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #b91c1c;
@@ -3758,7 +3758,7 @@ dialog::backdrop {
 }
 .auth-staff-hints {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   font-size: 11px;
@@ -3818,7 +3818,7 @@ dialog::backdrop {
   display: inline-flex;
   align-items: center;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-size: 10.5px;
   font-weight: 650;
   background: #ecfdf5;
@@ -3832,7 +3832,7 @@ dialog::backdrop {
   gap: 12px;
   padding: 16px 18px;
   border: 1.5px dashed #bfd3f6;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   background: #f6f9ff;
   color: #2f5496;
   cursor: pointer;
@@ -3896,7 +3896,7 @@ dialog::backdrop {
   gap: 10px;
   padding: 8px 10px;
   border: 1px solid #dbe4f2;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #ffffff;
 }
 .attachment-pending-item.saved {
@@ -3907,7 +3907,7 @@ dialog::backdrop {
   width: 40px;
   height: 40px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   flex-shrink: 0;
   background: #eef3fb;
 }
@@ -3916,7 +3916,7 @@ dialog::backdrop {
   height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #eef3fb;
   color: #36568b;
   flex-shrink: 0;
@@ -3940,7 +3940,7 @@ dialog::backdrop {
 .attachment-remove-btn {
   padding: 4px 9px;
   border: 1px solid #f2c9cd;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #fff5f6;
   color: #b83a44;
   font-size: 11px;
@@ -3955,7 +3955,7 @@ dialog::backdrop {
 }
 .attachment-card {
   border: 1px solid #dce5f4;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #ffffff;
   overflow: hidden;
   display: flex;
@@ -4019,6 +4019,6 @@ dialog::backdrop {
   width: 100%;
   max-height: 68vh;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   background: #0f172a14;
 }

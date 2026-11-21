@@ -45,3 +45,22 @@ test("다크 테마가 의존하는 표·제목 규칙이 남아 있다", () => 
   assert.match(themes, /thead/, "다크 표 머리 규칙");
   assert.match(themes, /body\[data-theme="dark"\]/, "다크 테마 선택자");
 });
+
+test("모서리는 px 직접 값 없이 4단계 토큰만 쓴다", () => {
+  for (const name of files) {
+    if (name === "tokens.css") continue;
+    const css = stripComments(readFileSync(new URL(name, dir), "utf8"));
+    const bad = [...css.matchAll(/border(?:-(?:top|bottom)-(?:left|right))?-radius\s*:\s*([^;}]+)/g)]
+      .map((m) => m[1].trim())
+      .filter((v) => /\d+(\.\d+)?px/.test(v));
+    assert.deepEqual(bad, [], `${name}: px 직접 모서리 ${bad.slice(0, 3).join(" | ")}`);
+  }
+});
+
+test("다크 테마 색은 var(--d-*) 토큰을 거치고 tokens.css에 모두 정의돼 있다", () => {
+  const themes = readFileSync(new URL("themes.css", dir), "utf8");
+  const tokens = readFileSync(new URL("tokens.css", dir), "utf8");
+  const used = new Set([...themes.matchAll(/var\((--d-(?:bg|text|line)-\d+)\)/g)].map((m) => m[1]));
+  assert.ok(used.size >= 100, `다크 토큰 사용 수 ${used.size}`);
+  for (const t of used) assert.match(tokens, new RegExp(`${t}:\\s*#[0-9a-fA-F]{6}`), `${t} 미정의`);
+});

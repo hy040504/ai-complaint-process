@@ -117,7 +117,7 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #718099;
 }
 .citizen-shell .btn {
-  border-radius: 10px;
+  border-radius: var(--r-control);
   font-size: 13px;
   padding: 12px 17px;
   border-color: #e0e6f0;
@@ -156,7 +156,7 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #e0e6f0;
   color: #26334b;
   font-size: 13px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: #fcfdff;
 }
 .citizen-shell :is(input, textarea)::placeholder {
@@ -199,7 +199,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .panel {
   border-color: #e3e8f0;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   box-shadow:
     0 2px 3px #16203a03,
     0 7px 20px #16203a03;
@@ -210,7 +210,7 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #526e9c;
   font-size: 12px;
   line-height: 1.8;
-  border-radius: 12px;
+  border-radius: var(--r-control);
 }
 .citizen-shell .prose {
   color: #4a566d;
@@ -277,7 +277,7 @@ body[data-site="citizen"] .role-switch a.selected {
   height: 86px;
   display: grid;
   place-items: center;
-  border-radius: 28px 28px 28px 8px;
+  border-radius: var(--r-card) var(--r-card) var(--r-card) var(--r-chip);
   color: #2f6fed;
   margin-right: 20px;
   transform: rotate(-6deg);
@@ -294,7 +294,7 @@ body[data-site="citizen"] .role-switch a.selected {
   place-items: center;
   width: 35px;
   height: 35px;
-  border-radius: 12px 12px 4px 12px;
+  border-radius: var(--r-control) var(--r-control) var(--r-chip) var(--r-control);
   transform: rotate(13deg);
 }
 .citizen-section-label {
@@ -318,7 +318,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-weight: 500;
   color: #92a0b7;
   border: 1px solid #e1e7f1;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   padding: 2px 5px;
   background: #fff;
 }
@@ -330,7 +330,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-news-list {
   border: 1px solid #e0e6f0;
-  border-radius: 17px;
+  border-radius: var(--r-card);
   background: #fff;
   overflow: hidden;
   box-shadow:
@@ -369,7 +369,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-news-icon {
   height: 39px;
   width: 39px;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -419,7 +419,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-style: normal;
   color: #7587a6;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   background: #f0f4fa;
   line-height: 1.5;
 }
@@ -431,7 +431,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 9px;
   font-style: normal;
   color: #2f6fed;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   font-weight: 650;
 }
 .citizen-news-row > svg {
@@ -462,7 +462,7 @@ body[data-site="citizen"] .role-switch a.selected {
   flex-shrink: 0;
   border: 1px solid #e0e6f0;
   background: #fff;
-  border-radius: 13px;
+  border-radius: var(--r-card);
   padding: 13px 6px;
   scroll-snap-align: start;
   transition:
@@ -513,7 +513,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-ask-zone {
   margin: 22px -4px 0;
   padding: 19px 5px 21px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: linear-gradient(180deg, #2f6fed00, #2f6fed0a);
 }
 .citizen-ask-zone h2 {
@@ -534,7 +534,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 12px;
   background: #fff;
   border: 1.5px solid #2f6fed;
-  border-radius: 17px;
+  border-radius: var(--r-card);
   padding: 17px;
   margin-top: 13px;
   box-shadow: 0 6px 20px #2f6fed20;
@@ -552,7 +552,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: grid;
   place-items: center;
   background: #edf3ff;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   width: 41px;
   height: 41px;
   color: #2f6fed;
@@ -589,7 +589,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-weight: 750;
   padding: 13px 16px;
   white-space: nowrap;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   flex-shrink: 0;
 }
 .citizen-ask-zone > p {
@@ -609,7 +609,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-status-card {
   border: 1px solid #e0e6f0;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: #fff;
   padding: 20px;
   box-shadow: 0 2px 4px #16203a03;
@@ -693,7 +693,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-how-card {
   border: 1px solid #e0e6f0;
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   padding: 21px;
 }
 .citizen-how-card .citizen-section-label {
@@ -715,7 +715,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: grid;
   place-items: center;
   background: #edf3ff;
-  border-radius: 8px;
+  border-radius: var(--r-chip);
   flex-shrink: 0;
 }
 .citizen-how-step b {
@@ -770,7 +770,7 @@ body[data-site="citizen"] .role-switch a.selected {
   background: #ffffffee;
   backdrop-filter: blur(16px);
   border: 1px solid #e0e7f4;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   box-shadow: 0 8px 35px #172a4e16;
 }
 .citizen-bottom-nav > a {
@@ -783,7 +783,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-weight: 550;
   color: #95a3ba;
   min-width: 0;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   transition:
     color 0.16s,
     background 0.16s;
@@ -804,7 +804,7 @@ body[data-site="citizen"] .role-switch a.selected {
   width: 47px;
   color: white;
   background: #2f6fed;
-  border-radius: 15px;
+  border-radius: var(--r-card);
   box-shadow: 0 5px 16px #2f6fed4d;
   margin-top: -23px;
   transition:
@@ -876,7 +876,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-shell .detail-heading {
   background: linear-gradient(135deg, #16203a, #253b61);
   padding: 26px 27px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   border: 1px solid #213552;
   align-items: flex-start;
 }
@@ -886,7 +886,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 12px;
   border: 1px solid #bde3d0;
   background: #edf9f2;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   padding: 17px 19px;
   margin-bottom: 23px;
   animation: citizen-bubble-rise 0.3s ease;
@@ -1095,7 +1095,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-chat-avatar {
   width: 41px;
   height: 41px;
-  border-radius: 13px;
+  border-radius: var(--r-card);
   display: grid;
   place-items: center;
   color: #2f6fed;
@@ -1184,7 +1184,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid #bfd3f6;
   background: #ffffff;
   color: #1e40af;
@@ -1206,7 +1206,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: inline-flex;
   align-items: center;
   border: 1px solid #d4e0f4;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ffffff;
   max-width: 220px;
   flex-shrink: 0;
@@ -1303,7 +1303,7 @@ body[data-site="citizen"] .role-switch a.selected {
   border-color: #b4cbfb;
   background: #f3f7ff;
   color: #3f77dc;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   font-size: 11px;
   padding: 8px 12px;
   white-space: normal;
@@ -1328,7 +1328,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 10px;
   padding: 4px 8px;
   border: 1px solid #e3eaf6;
-  border-radius: 15px;
+  border-radius: var(--r-card);
   white-space: nowrap;
 }
 .citizen-chat-tools > span {
@@ -1346,7 +1346,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 9px;
 }
 .citizen-shell .chat-input input {
-  border-radius: 24px;
+  border-radius: var(--r-card);
   height: 44px;
   padding: 0 17px;
   background: #f6f8fd;
@@ -1371,7 +1371,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-ai-card {
   margin-top: 16px;
   border: 1px solid #e8d8a7;
-  border-radius: 12px;
+  border-radius: var(--r-control);
   background: linear-gradient(180deg, #fffdf6, #fff9e9);
   overflow: hidden;
   white-space: normal;
@@ -1482,7 +1482,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-size: 11px;
   font-weight: 650;
   color: #1e40af;
@@ -1502,7 +1502,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 5px;
   padding: 3px 8px;
   border: 1px solid #d7e2f4;
-  border-radius: 15px;
+  border-radius: var(--r-card);
   background: #f8faff;
   color: #4f668c;
   font-size: 11px;
@@ -1563,7 +1563,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 14px;
   background: white;
   border: 1px solid #e1e7f1;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   padding: 19px;
   margin-bottom: 12px;
   transition:
@@ -1602,7 +1602,7 @@ body[data-site="citizen"] .role-switch a.selected {
   align-items: center;
   gap: 14px;
   border: 1px solid #dce5f6;
-  border-radius: 15px;
+  border-radius: var(--r-card);
   background: #fff;
   padding: 23px;
 }
@@ -1625,7 +1625,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-weight: 500;
   padding: 3px 7px;
   margin-left: 5px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   background: #edf3ff;
   color: #6f92cb;
 }
@@ -1636,7 +1636,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-profile-menu {
   border: 1px solid #e0e6f0;
-  border-radius: 15px;
+  border-radius: var(--r-card);
   background: #fff;
   overflow: hidden;
   margin: 18px 0 22px;
@@ -1669,7 +1669,7 @@ body[data-site="citizen"] #toast {
 }
 body[data-site="citizen"] #modal {
   border-color: #dfe7f6;
-  border-radius: 22px;
+  border-radius: var(--r-card);
   max-width: 540px;
   color: #344666;
   box-shadow: 0 20px 80px #16203a30;
@@ -1690,7 +1690,7 @@ body[data-site="citizen"] .modal-head:before {
   top: 12px;
   width: 38px;
   height: 4px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #dce3ef;
   left: calc(50% - 19px);
 }
@@ -1712,7 +1712,7 @@ body[data-site="citizen"] .modal-content > p {
 body[data-site="citizen"] .modal-content .btn {
   border: 1px solid #e1e7f2;
   font-size: 12px;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 12px 16px;
 }
 body[data-site="citizen"] .modal-content .btn.primary {
@@ -1735,7 +1735,7 @@ body[data-site="citizen"] .modal-content .compare-box {
 .citizen-sheet-tags > span {
   font-size: 10px;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   background: #edf1f7;
   color: #6d80a1;
 }
@@ -1746,7 +1746,7 @@ body[data-site="citizen"] .modal-content .compare-box {
 }
 .citizen-sheet-note {
   background: #f4f7fc;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   padding: 13px;
   color: #8799b5;
   font-size: 11px;
@@ -1919,7 +1919,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-welcome-symbol {
     width: 60px;
     height: 60px;
-    border-radius: 20px;
+    border-radius: var(--r-card);
     margin-right: 13px;
   }
   .citizen-welcome-symbol > svg {
@@ -1929,7 +1929,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     height: 26px;
     width: 26px;
     font-size: 10px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .citizen-welcome p {
     font-size: 11px;
@@ -2183,7 +2183,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     font-weight: 600;
   }
   .citizen-news-list {
-    border-radius: 16px;
+    border-radius: var(--r-card);
   }
   .citizen-news-row {
     padding: 11px 13px;
@@ -2193,7 +2193,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-news-icon {
     height: 36px;
     width: 36px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
     font-size: 20px;
   }
   .citizen-news-copy > b {
@@ -2233,7 +2233,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     min-height: 77px;
     gap: 7px;
     padding: 13px 5px;
-    border-radius: 12px;
+    border-radius: var(--r-control);
   }
   .citizen-service > span {
     width: 38px;
@@ -2253,7 +2253,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-ask-zone {
     margin: 12px -3px 0;
     padding: 15px 3px 18px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .citizen-ask-zone h2 {
     font-size: 19px;
@@ -2262,13 +2262,13 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-askbar {
     padding: 13px 12px;
     gap: 10px;
-    border-radius: 16px;
+    border-radius: var(--r-card);
     margin-top: 12px;
   }
   .citizen-ask-icon {
     height: 33px;
     width: 33px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .citizen-ask-icon > svg {
     width: 20px;
@@ -2285,7 +2285,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-ask-go {
     padding: 12px 11px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
     font-size: 11px;
   }
   .citizen-ask-go > svg {
@@ -2306,7 +2306,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-status-card {
     padding: 17px 15px;
-    border-radius: 14px;
+    border-radius: var(--r-card);
   }
   .citizen-status-card .citizen-section-label {
     margin-bottom: 14px;
@@ -2366,7 +2366,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-bottom-nav .citizen-fab .bottom-icon {
     height: 46px;
     width: 46px;
-    border-radius: 15px;
+    border-radius: var(--r-card);
     margin-top: -20px;
   }
   .citizen-bottom-nav > a:hover {
@@ -2463,7 +2463,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-shell .detail-heading {
     padding: 20px 18px 53px;
-    border-radius: 14px;
+    border-radius: var(--r-card);
     margin-bottom: 19px;
   }
   .citizen-shell .detail-heading h1 {
@@ -2611,7 +2611,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-chat-avatar {
     height: 35px;
     width: 35px;
-    border-radius: 10px;
+    border-radius: var(--r-control);
   }
   .citizen-chat-avatar > svg {
     width: 21px;
@@ -2752,7 +2752,7 @@ body[data-site="citizen"] .modal-content .compare-box {
     max-width: none;
     max-height: 85dvh;
     border: 0;
-    border-radius: 23px 23px 0 0;
+    border-radius: var(--r-card) var(--r-card) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
     box-shadow: 0 -10px 50px #16203a16;
   }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 두 사이트 공통 컴포넌트·모션 규칙입니다 (CASE-120). 다른 CSS 뒤에 로드합니다.
  *  1. 상태 칩 5색: styles/citizen/staff/themes에 흩어져 있던 정의를 이 한 곳으로 모았습니다.
  *  2. 모션: 120·220·420ms와 이징 1개. 호버 들림·눌림·부유·맥동·라이브 점·스켈레톤·새 행 플래시.
@@ -195,4 +195,23 @@
 @keyframes cj-flash {
   0% { background: var(--cj-flash); }
   100% { background: transparent; }
+}
+
+/* 담당자 사이드바: 활성 항목의 왼쪽 막대가 자라나며 나타남(마크업 변경 없음) */
+.staff-nav-link { position: relative; }
+.staff-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: var(--r-pill);
+  background: var(--cj-blue);
+  transform: translateY(-50%);
+  transition: height var(--dur-base) var(--ease-out);
+}
+.staff-nav-link.active::before { height: 60%; }
+@media (prefers-reduced-motion: reduce) {
+  .staff-nav-link::before { transition: none; }
 }
