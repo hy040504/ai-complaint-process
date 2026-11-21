@@ -277,7 +277,7 @@ def test_rejects_short_body(client: FlaskClient) -> None:
 
 def test_launcher_cmd_uses_crlf() -> None:
     """Windows cmd.exe가 명령을 깨지 않도록 CRLF를 유지합니다."""
-    path = Path(__file__).resolve().parents[2] / "검사기-시작.cmd"
+    path = Path(__file__).resolve().parents[2] / "bin/start-lab.cmd"
     data = path.read_bytes()
     assert data.count(b"\n") > 0
     assert data.count(b"\r\n") == data.count(b"\n")

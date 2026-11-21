@@ -10,11 +10,11 @@ from pathlib import Path
 
 from src.app import create_app
 
-_SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+_SCRIPTS = Path(__file__).resolve().parents[1] / "scripts" / "run"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from 콘솔_기동 import apply_windows_libpq  # noqa: E402
+from start_console import apply_windows_libpq  # noqa: E402
 
 
 def main() -> None:

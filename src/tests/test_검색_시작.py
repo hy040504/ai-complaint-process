@@ -11,8 +11,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def start_search() -> ModuleType:
-    """scripts/검색_시작.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "검색_시작.py"
+    """scripts/run/start_search.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "run" / "start_search.py"
     spec = importlib.util.spec_from_file_location("start_search", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

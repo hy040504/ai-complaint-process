@@ -18,11 +18,11 @@ if not defined BOOTSTRAP (
     exit /b 1
 )
 if /I "%BOOTSTRAP:~-6%"=="py.exe" (
-    "%BOOTSTRAP%" -3.12 "%cd%\scripts\setup_env.py" %*
+    "%BOOTSTRAP%" -3.12 "%cd%\scripts\ops\setup_env.py" %*
 ) else if /I "%BOOTSTRAP%"=="py" (
-    py -3.12 "%cd%\scripts\setup_env.py" %*
+    py -3.12 "%cd%\scripts\ops\setup_env.py" %*
 ) else (
-    "%BOOTSTRAP%" "%cd%\scripts\setup_env.py" %*
+    "%BOOTSTRAP%" "%cd%\scripts\ops\setup_env.py" %*
 )
 set "ERR=%ERRORLEVEL%"
 if not "%ERR%"=="0" pause

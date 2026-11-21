@@ -4,7 +4,7 @@
 
 **기준: 2026-11-19 UTC.** 이 문서는 청주 민원 **AI 완충지대**에서 언어 모델이 역할·RAG·응답·서버 경계를 어떻게 인식해야 하는지를 한곳에 모은다. 개발자가 코드를 고칠 때와, 모델이 시스템 지시를 따를 때 같은 계약을 본다.
 
-> **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/응대_비교.py`가 한다. 민원 CRUD 비동기 AI 워커·담당자 참고(`aiAssist`)·`#/lab`(`CASE-093`)까지 연결했으며, 담당자 실시간 SSE 푸시(현재 1.5초 폴링)·운영 인증·공식 이관은 미구현이다.
+> **구현:** 1차 판정·조건부 FAQ 안내·담당자 초안·순화는 `src/assist`가 [`PREFIX-00`](prompts/PREFIX-00.txt)~[`PREFIX-04`](prompts/PREFIX-04.txt)를 사용한다. PREFIX 조립 적격은 `src/assist/prefix_cache.py`가 검사한다. openai_api `cached_tokens` 실측은 키가 있을 때 `scripts/eval/compare_assist.py`가 한다. 민원 CRUD 비동기 AI 워커·담당자 참고(`aiAssist`)·`#/lab`(`CASE-093`)까지 연결했으며, 담당자 실시간 SSE 푸시(현재 1.5초 폴링)·운영 인증·공식 이관은 미구현이다.
 
 ---
 
@@ -91,7 +91,7 @@ flowchart LR
 
 | 경로 | 서버 응답 | LLM과의 관계 |
 | --- | --- | --- |
-| `POST /api/v1/assist`, `/assist/stream`, `src/lab_web` `:5010`, `민원-응대.cmd` | 안내문 또는 검토 사유, 검색 근거, `assist.codex`, `automaticTransfer: false`. 민원을 **저장하지 않음** | 위 4절 파이프라인 |
+| `POST /api/v1/assist`, `/assist/stream`, `src/lab_web` `:5010`, `bin/ask-assist.cmd` | 안내문 또는 검토 사유, 검색 근거, `assist.codex`, `automaticTransfer: false`. 민원을 **저장하지 않음** | 위 4절 파이프라인 |
 | `GET /api/v1/health` | `assistSearch`·`assistLlm`은 검색·토큰 여부. `aiConnected`는 CRUD 비동기 워커 연결 상태(`iter_assist_fn`) | `testing=True` 등 미연결 시 false |
 | 시민 CRUD `/#/citizen` | 저장된 글·게시된 답변만. 미게시 초안(`aiDraft`/`staffDraft`)·AI 원본 미노출 | 등록 시 비동기 분석, 미게시 초안 비공개 |
 | 담당자 `/#/staff` | `aiAssist` 참고 카드·초안·게시·이력·배정. 1.5초 폴링 | 분석 결과 참고·초안 채우기 (SSE 미구현) |

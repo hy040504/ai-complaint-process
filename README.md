@@ -75,14 +75,14 @@
 | 화면 | 주소 | 실행 |
 | --- | --- | --- |
 | 환경 준비 | 가상환경·PostgreSQL·임베딩 모델 | Windows [`setup.cmd`](setup.cmd) · Linux [`setup.sh`](setup.sh). `--check`는 설치 없이 확인 |
-| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`검사기-시작.cmd`](검사기-시작.cmd)(PostgreSQL·검색 API 원클릭 자동 기동) · Linux [`start-lab.sh`](start-lab.sh) |
+| 응대 검사기 웹 | `http://127.0.0.1:5010/` | 검색 후 판정. Windows [`bin/start-lab.cmd`](bin/start-lab.cmd)(PostgreSQL·검색 API 원클릭 자동 기동) · Linux [`bin/start-lab.sh`](bin/start-lab.sh) |
 | 기존 시연 Flask | `http://127.0.0.1:5000/#/citizen` (및 `/#/staff`, `/#/staff/api`, `/#/lab`, `/design/ui04`) | 민원 CRUD·UI04 목업 어댑터·담당자 백엔드 API 콘솔 서버. 이 브랜치 기본 검사기는 `:5010` |
-| 민원 응대 | [`민원-응대.cmd`](민원-응대.cmd) · [`ask-assist.sh`](ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
-| 문장 임베딩 | [`문장-임베딩.cmd`](문장-임베딩.cmd) · [`embed-sentence.sh`](embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
-| RAG 기동 | [`검색-시작.cmd`](검색-시작.cmd) · [`start-search.sh`](start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
+| 민원 응대 | [`bin/ask-assist.cmd`](bin/ask-assist.cmd) · [`bin/ask-assist.sh`](bin/ask-assist.sh) | 꺼진 localhost 검색 API는 자동 시작, 기본 재정렬 끔 |
+| 문장 임베딩 | [`bin/embed-sentence.cmd`](bin/embed-sentence.cmd) · [`bin/embed-sentence.sh`](bin/embed-sentence.sh) | 벡터 출력 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
+| RAG 기동 | [`bin/start-search.cmd`](bin/start-search.cmd) · [`bin/start-search.sh`](bin/start-search.sh) | Windows는 PostgreSQL·검색 API를 별도 창. Linux는 `:8007` 검색 API |
 | API 문서 | `http://127.0.0.1:5000/docs` · `/swagger` · `/#/staff/api` | 자체 호스팅 한국어 Swagger 포털(세션 전환·다크 동기화·색인) · [Flask 설치](src/README.md) · [Swagger PDF](docs/청주톡톡_민원_업무_API_Swagger.pdf) |
-| 업무 보고서 | [11/19 종합 보고서 PDF](docs/report/업무보고_20261119.pdf) · [11/18 PDF](docs/report/업무보고_20261118.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 추상화(쉬운 한국어) 11/19 200건 실증·취약 10건 보완·배너/AI 구조 그림·검증 결과 + `UI 수정 보고서(2026-11-19)` 12장 무수정 8쪽 PDF · [`업무보고_20261119_pdf_생성.py`](scripts/업무보고_20261119_pdf_생성.py) |
-| 테스트 보고서 | [200건 분석 (MD](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.md)/[PDF)](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.pdf) · [112건 기준](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [모음(`docs/test/`)](docs/test/README.md) | 200건 재실측(95.0%) SourceTrail 14쪽 PDF·SVG 4종·전수 표 · [`상세분석보고서_200건_생성.py`](scripts/상세분석보고서_200건_생성.py) |
+| 업무 보고서 | [11/19 종합 보고서 PDF](docs/report/업무보고_20261119.pdf) · [11/18 PDF](docs/report/업무보고_20261118.pdf) · [모음(`docs/report/`)](docs/report/README.md) | `업무보고_20261111` 틀 기반 추상화(쉬운 한국어) 11/19 200건 실증·취약 10건 보완·배너/AI 구조 그림·검증 결과 + `UI 수정 보고서(2026-11-19)` 12장 무수정 8쪽 PDF · [`daily_report_20261119.py`](scripts/reports/daily_report_20261119.py) |
+| 테스트 보고서 | [200건 분석 (MD](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.md)/[PDF)](docs/test/청주_민원_200건_상세분석보고서_2026-11-19.pdf) · [112건 기준](docs/test/청주_민원_112건_상세분석보고서_2026-11-17.md) · [모음(`docs/test/`)](docs/test/README.md) | 200건 재실측(95.0%) SourceTrail 14쪽 PDF·SVG 4종·전수 표 · [`analysis_report_200.py`](scripts/reports/analysis_report_200.py) |
 | 검색 CLI/API | `http://127.0.0.1:8007/docs` | [검색 실행](rag/README.md) · [데이터 사전](rag/origin/README.md) |
 | 개발 기록 | [문서 목차](docs/README.md) | [사례 색인](docs/cases/README.md) |
 
@@ -126,9 +126,9 @@
 | 검색 | 벡터 + 한국어 BM25 + RRF + 재정렬, CLI/API | 구현 완료 |
 | 개발 하네스 | 작업 규칙·구조·데이터 계약·평가·운영·실행 계획 | 기본 문서 완료 |
 | 부서 검증 | 현행 이름·별칭·내부 ID 정리 | 공식 업무분장·관할 보완 필요 |
-| 외부 LLM 예제 | [독립 호출 예제](scripts/외부_LLM_예제.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
+| 외부 LLM 예제 | [독립 호출 예제](scripts/run/external_llm_example.py) · [실행 안내](docs/harness/외부_LLM_API_호출.md) | 구현 · 민원 RAG와 분리된 대화 예제 |
 | AI 판정·응답 | 검색 후 판정 JSON·정책 검사·조건부 FAQ 생성 | CLI/`POST /api/v1/assist`·`src/lab_web` `:5010`·민원 CRUD 비동기 워커(`:5000`) · K-EXAONE 2.5·GPT-6 Luna(가드)·Codex CLI 선택 · 초안 평가 개발 26/26 · 보류 3/3 · 400문항 아님 · openai_api 캐시 실측은 키 후속 |
-| 시연 웹 | 시민·담당자·`#/lab`, **민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC)**, **현장 사진·PDF 파일 첨부(EXIF 자동 제거·비공개 `404` 격리)**, 다크/라이트·투명 로고·시민 영구 삭제·**시민 다중 턴 AI 챗봇(PG 영속)**·**담당자 실시간 SSE 푸시·통계 대시보드·CSV 내보내기**·127부서 배정·커스텀 템플릿 | Flask·Swagger(**36경로·44오퍼레이션**)·PostgreSQL `complaint_app` (**7테이블 정규화 + `chat_sessions`/`chat_messages`/`attachments` + 보조 3테이블**) · Windows `웹-시작.cmd` · 외부 PASS/SSO·공식 이관은 후속 |
+| 시연 웹 | 시민·담당자·`#/lab`, **민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC)**, **현장 사진·PDF 파일 첨부(EXIF 자동 제거·비공개 `404` 격리)**, 다크/라이트·투명 로고·시민 영구 삭제·**시민 다중 턴 AI 챗봇(PG 영속)**·**담당자 실시간 SSE 푸시·통계 대시보드·CSV 내보내기**·127부서 배정·커스텀 템플릿 | Flask·Swagger(**36경로·44오퍼레이션**)·PostgreSQL `complaint_app` (**7테이블 정규화 + `chat_sessions`/`chat_messages`/`attachments` + 보조 3테이블**) · Windows `bin/start-web.cmd` · 외부 PASS/SSO·공식 이관은 후속 |
 | 응대 검사기 | `:5010` 작성 → 장소추적·검색 → 엔진선택 판정 → 기록 클릭 시 폼 복원 (시민 UI 톤 통일·다크 토글) | 업무 DB 없음 · `.rag-cache/lab-runs` 파일 기록 · 키 미설정 공급자 비활성화 · MCP NDJSON 핸드셰이크 |
 | Jev 확장 | 기본 LLM + RAG의 판정 성능과 비교 후 추가 | 후속 단계 · 초기 필수 아님 |
 
@@ -351,11 +351,11 @@ setup.cmd --check
 ./setup.sh --check
 ```
 
-Windows에서 추출한 응대 검사기를 열려면 [`검사기-시작.cmd`](검사기-시작.cmd) 또는 [`웹-시작.cmd`](웹-시작.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. 백엔드 검색 서비스(PostgreSQL·검색 API)가 꺼져 있으면 자동으로 감지하여 함께 기동합니다. Linux는 [`start-lab.sh`](start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
+Windows에서 추출한 응대 검사기를 열려면 [`bin/start-lab.cmd`](bin/start-lab.cmd) 또는 [`bin/start-web.cmd`](bin/start-web.cmd)를 실행합니다. `http://127.0.0.1:5010/`이 열리고, 민원 JSON은 검색 후 판정합니다. 백엔드 검색 서비스(PostgreSQL·검색 API)가 꺼져 있으면 자동으로 감지하여 함께 기동합니다. Linux는 [`bin/start-lab.sh`](bin/start-lab.sh)입니다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md) · [CASE-074](docs/cases/사례-074-검사기-백엔드검색서비스-자동기동-2026-11-10.md)
 
 ```mermaid
 flowchart TD
-    CMD["검사기-시작.cmd (원클릭 실행)"] --> WEB["웹 서버 기동<br/>:5010 (Flask)"]
+    CMD["bin/start-lab.cmd (원클릭 실행)"] --> WEB["웹 서버 기동<br/>:5010 (Flask)"]
     WEB --> CHK{"백엔드 검색 서비스 점검<br/>(ensure_backend_services)"}
     CHK -->|postmaster.pid 잔여| CLN["stale 락 파일 안전 삭제"]
     CLN --> DB["PostgreSQL 시작 (:5432)"]
@@ -375,21 +375,21 @@ flowchart TD
 ```
 
 ```bat
-웹-시작.cmd
+bin/start-web.cmd
 ```
 
-Windows에서 검색 DB와 API를 다시 켜려면 [`검색-시작.cmd`](검색-시작.cmd)입니다. Linux 검색 API는 [`start-search.sh`](start-search.sh)입니다. 검색 API가 꺼져 있으면 [`민원-응대.cmd`](민원-응대.cmd) 또는 [`ask-assist.sh`](ask-assist.sh)가 localhost에서 `python -m rag serve`를 시작합니다. PostgreSQL이 꺼져 있으면 Windows는 `검색-시작.cmd`가 먼저 필요합니다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+Windows에서 검색 DB와 API를 다시 켜려면 [`bin/start-search.cmd`](bin/start-search.cmd)입니다. Linux 검색 API는 [`bin/start-search.sh`](bin/start-search.sh)입니다. 검색 API가 꺼져 있으면 [`bin/ask-assist.cmd`](bin/ask-assist.cmd) 또는 [`bin/ask-assist.sh`](bin/ask-assist.sh)가 localhost에서 `python -m rag serve`를 시작합니다. PostgreSQL이 꺼져 있으면 Windows는 `bin/start-search.cmd`가 먼저 필요합니다. [CASE-035](docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 ```bat
-민원-응대.cmd 대형폐기물 배출 방법이 궁금합니다
-민원-응대.cmd --example faq
-민원-응대.cmd --no-start --example faq
-문장-임베딩.cmd --raw 나무가 쓰러짐
+bin/ask-assist.cmd 대형폐기물 배출 방법이 궁금합니다
+bin/ask-assist.cmd --example faq
+bin/ask-assist.cmd --no-start --example faq
+bin/embed-sentence.cmd --raw 나무가 쓰러짐
 ```
 
 ```bash
-./ask-assist.sh --example faq
-./embed-sentence.sh --raw '나무가 쓰러짐'
+./bin/ask-assist.sh --example faq
+./bin/embed-sentence.sh --raw '나무가 쓰러짐'
 ```
 
 **메뉴로 직접 검색해 보기:** [검색 테스트 TUI](rag/검색_시험.sh)를 실행하면 상태 확인, FAQ·사례 검색, 예제 질의, 재정렬·관할 설정을 사용할 수 있습니다.
@@ -447,11 +447,11 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 
 | 검증 영역 | 실행 명령 · 환경 | 관찰된 결과 |
 | --- | --- | --- |
-| **Codex CLI 전용 신규 100건 실증 (`CASE-113`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_코덱스.py` | **`99 / 100 (99.0%)` 통과** (`patch_reverify_20` **20/20** · 신규 비중복 `fresh_codex_80` **79/80**, B/C/D/E축 **100%**, `staff_draft` **71/71**, 평균 **`16.11s`** / 최대 `29.33s` / 조기차단 `0.013s`, `automaticTransfer=True` **0건**) |
-| **패치 후 `:5010` 혼합 100건 재검증 (`CASE-109`)** | `.venv-web\Scripts\python.exe scripts/실증평가_100건_재검증.py` | **`98 / 100 (98.0%)` 통과**(실응답 `98/99, 99.0%`: 기존 미통과 **10/10**·노이즈 **13/13** 전원 해소, 신규 변형 **39/40**, `0.011s` 조기차단, `automaticTransfer=True` **0건**) |
-| **단독 검사기 `:5010` 200건 실증 (`CASE-105`)** | `.venv-web\Scripts\python.exe scripts/실증평가_200건_실행.py` | **`190 / 200 (95.0%)` 의미 통과** (11/17 112건 재측정 **108/112, +14건** · 신규 **82/88**, EXAONE **14/14 완주**, 조기차단 **0.012s**, `automaticTransfer=True` **0건**) |
+| **Codex CLI 전용 신규 100건 실증 (`CASE-113`)** | `.venv-web\Scripts\python.exe scripts/eval/live_eval_100_codex.py` | **`99 / 100 (99.0%)` 통과** (`patch_reverify_20` **20/20** · 신규 비중복 `fresh_codex_80` **79/80**, B/C/D/E축 **100%**, `staff_draft` **71/71**, 평균 **`16.11s`** / 최대 `29.33s` / 조기차단 `0.013s`, `automaticTransfer=True` **0건**) |
+| **패치 후 `:5010` 혼합 100건 재검증 (`CASE-109`)** | `.venv-web\Scripts\python.exe scripts/eval/live_eval_100_recheck.py` | **`98 / 100 (98.0%)` 통과**(실응답 `98/99, 99.0%`: 기존 미통과 **10/10**·노이즈 **13/13** 전원 해소, 신규 변형 **39/40**, `0.011s` 조기차단, `automaticTransfer=True` **0건**) |
+| **단독 검사기 `:5010` 200건 실증 (`CASE-105`)** | `.venv-web\Scripts\python.exe scripts/eval/live_eval_200.py` | **`190 / 200 (95.0%)` 의미 통과** (11/17 112건 재측정 **108/112, +14건** · 신규 **82/88**, EXAONE **14/14 완주**, 조기차단 **0.012s**, `automaticTransfer=True` **0건**) |
 | **백엔드 통합 테스트** | `RUN_PG_TESTS=1 .venv-web\Scripts\python.exe -m pytest src/tests -q -p no:cacheprovider` | **`189 passed`** (`CASE-115` 파일 첨부·EXIF 제거·격리·연쇄 삭제 + `CASE-114` 다중 턴 챗봇·RBAC 통계·CSV + `CASE-113`·`CASE-111` 실 PG 포함 0 실패) |
-| **112건 · 5,015건 규칙 회귀** | `.venv-web\Scripts\python.exe scripts/회귀검증_112건_규칙.py` | **112건 규칙 실패 `0`**, 공개 사례 `5,015`건 구 적중 **`762`** (`+11`, 오분류 `17` 유지, 외부 오탐 **`0`**) |
+| **112건 · 5,015건 규칙 회귀** | `.venv-web\Scripts\python.exe scripts/eval/regression_112_rules.py` | **112건 규칙 실패 `0`**, 공개 사례 `5,015`건 구 적중 **`762`** (`+11`, 오분류 `17` 유지, 외부 오탐 **`0`**) |
 | **포맷 · 정적 타입 · UI · CDP** | `black --check` · `mypy` · `npm --prefix ui run check` · `ui test` · Edge CDP | `black` **통과** · `src/` **45모듈** `mypy` **오류 0건** · UI 문법 **29개** · UI 단위 **36 / 36** · `:5000` 첨부/챗봇/통계 Edge E2E **0오류** |
 | **RAG 단위 · DB 무결성** | `.venv\Scripts\python.exe -m pytest rag/tests` · `-m rag.verify` | `rag/tests` **49 passed, 3 skipped**(Windows PG 템플릿 미구성) · `rag.verify` **`passed: true`** (`94`·`5,015`·`127`) |
 
@@ -483,7 +483,7 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 | 문맥 기반 순화 트리거 | `"꺼져"` 오탐(`B02·B14·E17`) + 초성·은유 비꼬기 미감지 | `PREFIX-01 sanitize_needed` + `sarcasm_mockery` + `_FACILITY_OFF_RE` 확장 + `도장만 찍`/`세금으로 놀` 은유 보강 (**D축 100%**) | `PREFIX-01/04`, `followup.py`, `pipeline.py` |
 | 도로+번지 · `address`/`ac` · HTTP 400 방어 | `place=[]` 주소 탈락, 인접 번지 누락, 대량 호출 HTTP 400 지연 | `address`·`all.address`·`ac` 동명 파싱, 도로+번지 직접/±1·±2 탐침, HTTP 400/429 60초 서킷브레이커 (**B축 100%**) | `place_tool.py`, `district.py` |
 | 일반시설·관공서·기반시설·가족 불용어 | `"초등학교"`/`"청주시청"`/`"하수구"`/`"부모"` 노이즈 및 상충 구 배지 | `_GENERIC_PLACE_NOUNS`·`_ADMIN_OFFICE_NOUNS`·생활 기반시설·가족/신고 일반명사 불용어 보강·사례 235쌍 색인 (**노이즈 재발 0건**) | `place_tool.py`, `district.py` |
-| 명확 불가 FAQ · JSON 복구 · 오류 축약 · 지연/폴백 | `A24` 보수 보류, `N32` JSON 쉼표 누락, `A15` 24KB 덤프, `N18` 180s 타임아웃, `staff_draft` MCP 지연 | `PREFIX-01` 명확 불가 규칙, `_repair_json_text`+1회 재시도, `_extract_codex_error`(240자), `staff_draft` `_disable_mcp`, EXAONE `8192`/타임아웃 `low` 재시도, 미고정 폴백 (**Codex 100건 `99.0%` · 평균 `16.11s`**) | `PREFIX-01.txt`, `complete.py`, `settings.py`, `pipeline.py`, `scripts/실증평가_100건_코덱스.py` |
+| 명확 불가 FAQ · JSON 복구 · 오류 축약 · 지연/폴백 | `A24` 보수 보류, `N32` JSON 쉼표 누락, `A15` 24KB 덤프, `N18` 180s 타임아웃, `staff_draft` MCP 지연 | `PREFIX-01` 명확 불가 규칙, `_repair_json_text`+1회 재시도, `_extract_codex_error`(240자), `staff_draft` `_disable_mcp`, EXAONE `8192`/타임아웃 `low` 재시도, 미고정 폴백 (**Codex 100건 `99.0%` · 평균 `16.11s`**) | `PREFIX-01.txt`, `complete.py`, `settings.py`, `pipeline.py`, `scripts/eval/live_eval_100_codex.py` |
 
 <details>
 <summary><strong>11/17 112건 기준선 요약 및 패치·검증 사례 인덱스 (`CASE-093 ~ CASE-115`)</strong></summary>
@@ -542,10 +542,10 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 ai-complaint-process/
 ├── README.md / CHANGELOG.md / AGENTS.md
 ├── setup.cmd / setup.sh          # 가상환경·PostgreSQL·임베딩 모델 준비. --check 는 확인만
-├── 웹-시작.cmd / start-web.sh    # Flask 시작. Linux는 포그라운드 :5000
-├── 검색-시작.cmd / start-search.sh
-├── 민원-응대.cmd / ask-assist.sh
-├── 문장-임베딩.cmd / embed-sentence.sh
+├── bin/start-web.cmd / bin/start-web.sh    # Flask 시작. Linux는 포그라운드 :5000
+├── bin/start-search.cmd / bin/start-search.sh
+├── bin/ask-assist.cmd / bin/ask-assist.sh
+├── bin/embed-sentence.cmd / bin/embed-sentence.sh
 ├── .env.example                  # 응대 LLM 공급자 예시
 ├── src/
 │   ├── app.py                    # Flask 팩토리

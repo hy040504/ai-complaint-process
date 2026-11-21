@@ -14,7 +14,7 @@
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-Windows에서는 저장소 루트의 [`웹-시작.cmd`](../웹-시작.cmd) 또는 [`검사기-시작.cmd`](../검사기-시작.cmd)를 실행하면 추출한 응대 검사기(`:5010`)를 연다. 민원 웹(`python -m src`, `:5000`) SPA의 기본 화면은 시민 화면(`#/citizen`)이며, `/#/lab` 해시와 `/design/ui04` 목업도 제공한다.
+Windows에서는 저장소 루트의 [`bin/start-web.cmd`](../bin/start-web.cmd) 또는 [`bin/start-lab.cmd`](../bin/start-lab.cmd)를 실행하면 추출한 응대 검사기(`:5010`)를 연다. 민원 웹(`python -m src`, `:5000`) SPA의 기본 화면은 시민 화면(`#/citizen`)이며, `/#/lab` 해시와 `/design/ui04` 목업도 제공한다.
 
 - 추출한 응대 검사기 웹: http://127.0.0.1:5010/
 - 시민·담당자 민원 웹 (기본): http://127.0.0.1:5000/#/citizen

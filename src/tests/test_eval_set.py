@@ -18,8 +18,8 @@ from src.assist.eval_set import (
 
 @pytest.fixture(scope="module")
 def eval_runner() -> ModuleType:
-    """scripts/응대_평가.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "응대_평가.py"
+    """scripts/eval/evaluate_assist.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "eval" / "evaluate_assist.py"
     spec = importlib.util.spec_from_file_location("assist_eval_runner", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

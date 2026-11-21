@@ -13,13 +13,13 @@
 | `rag.evaluate` | API 예제에서 기대 문서/부서가 상위 5개 안에 있는지, 검색 전용 계약 | 자동 답변 정확도, 범위 밖 탐지율, 운영 임계값 |
 
 ```bash
-source scripts/네이티브_환경.sh
+source scripts/ops/native-env.sh
 RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 .venv/bin/python -m rag.verify
 python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 ```
 
-`scripts/검색DB_준비.sh`로 준비한 테스트 템플릿과 DB 생성 권한을 사용한다. `RUN_PG_TESTS=1`을 빼면 격리 DB 테스트 3개를 건너뛴다. 템플릿에는 확장만 포함하며 운영 데이터는 복사하지 않는다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
+`scripts/ops/prepare-db.sh`로 준비한 테스트 템플릿과 DB 생성 권한을 사용한다. `RUN_PG_TESTS=1`을 빼면 격리 DB 테스트 3개를 건너뛴다. 템플릿에는 확장만 포함하며 운영 데이터는 복사하지 않는다. API 포트를 바꿨으면 평가 명령에도 `--api-url`을 지정한다.
 
 수동 검색 확인은 [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴)를 사용할 수 있다. 2026-10-28에는 네이티브 환경에서 화면 회귀 2개를 포함한 전체 테스트 27개가 통과했다. [CASE-011](../cases/사례-011-검색-테스트-터미널-메뉴-추가-2026-10-28.md)
 
@@ -32,7 +32,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 | SQL·RRF·토큰화·지역 필터 | 코드·격리 DB 테스트, 색인 호환성, 관련 검색 회귀 |
 | 임베딩·재정렬 모델 | 모델 리비전·색인 호환성, 검색 회귀, 같은 입력의 품질·시간 비교 |
 | API 입력·출력 | 정상 입력, `400/422/503` 경로, 검색 전용 계약, CLI 호환성 |
-| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 초안 평가셋은 `scripts/응대_평가.py`(기본 개발셋) |
+| LLM 판정·FAQ 응답 연결 | 아래 판정·답변 평가, 출처·조건 검사, 장애 대체 경로; 초안 평가셋은 `scripts/eval/evaluate_assist.py`(기본 개발셋) |
 | 시연 웹·민원 업무 서버 | 등록·영속화·조회·답변 교환·역할·상태 전이·중복 제출·AI 실패 시 민원 보존; 현재 미구현 |
 | 후속 Jev·LoRA 도입 | 같은 검색 근거·보류 평가셋으로 기본 LLM + RAG와 각각 비교 |
 
@@ -59,7 +59,7 @@ python3 -m rag.evaluate --output .rag-cache/reports/retrieval-current.json
 
 2026-11-06 e5-small-ko 색인에서 `python -m rag.evaluate --output rag/reports/retrieval-e5-small-ko.json` 10건이 통과했다. FAQ 5개·부서 4개는 기대 문서/부서가 1위였고, 범위 밖 1개는 `retrieval_only`·`requires_gate`만 확인한다. 자동 답변 정확도 측정이 아니다. [검색 보고서](../../rag/reports/retrieval-e5-small-ko.json)
 
-2026-11-06 `scripts/응대_평가.py`는 초안 응대 평가셋의 **갈래**만 본다. 문항은 유형별 29건(개발 26·보류 3)이다. 기본 실행은 개발셋이며 보류 문항은 프롬프트 조정에 쓰지 않는다. `FAQ_성인여권`과 `FAQ_생활쓰레기시간`은 검색 Hit가 있어도 FAQ 본문에 질문 항목이 없어 `human_handoff`/`condition_unclear`가 맞다. 조건 부족 사유는 코드가 `faq_answer`를 막는다. 개발셋 26/26은 운영 모델 선정이 아니다. 2026-11-07 보류 3건은 `--split holdout --output rag/reports/assist-eval-holdout.json`으로 3/3이다. 이 결과로 PREFIX를 고치지 않는다. 400문항은 제안이다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [보류 보고서](../../rag/reports/assist-eval-holdout.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-064](../cases/사례-064-초안응대평가셋확대-2026-11-06.md)
+2026-11-06 `scripts/eval/evaluate_assist.py`는 초안 응대 평가셋의 **갈래**만 본다. 문항은 유형별 29건(개발 26·보류 3)이다. 기본 실행은 개발셋이며 보류 문항은 프롬프트 조정에 쓰지 않는다. `FAQ_성인여권`과 `FAQ_생활쓰레기시간`은 검색 Hit가 있어도 FAQ 본문에 질문 항목이 없어 `human_handoff`/`condition_unclear`가 맞다. 조건 부족 사유는 코드가 `faq_answer`를 막는다. 개발셋 26/26은 운영 모델 선정이 아니다. 2026-11-07 보류 3건은 `--split holdout --output rag/reports/assist-eval-holdout.json`으로 3/3이다. 이 결과로 PREFIX를 고치지 않는다. 400문항은 제안이다. [초안 응대 보고서](../../rag/reports/assist-eval-draft.json) · [보류 보고서](../../rag/reports/assist-eval-holdout.json) · [문항](../../rag/assist_eval_queries.json) · [CASE-064](../cases/사례-064-초안응대평가셋확대-2026-11-06.md)
 
 PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인한다. openai_api `cached_tokens`는 `.env`의 키가 비어 건너뛰었다. [조립 보고서](../../rag/reports/prefix-cache-assembly.json) · [비교](../../rag/reports/assist-provider-compare.json)
 
@@ -69,7 +69,7 @@ PREFIX 조립 적격은 `src.assist.prefix_cache.prefix_cache_report`가 확인�
 
 ## 추가할 한국어 평가셋
 
-여섯 묶음의 초안 29건은 [`rag/assist_eval_queries.json`](../../rag/assist_eval_queries.json)에 있고, `scripts/응대_평가.py`가 개발셋만 기본 실행한다. [모델 제안서](../../plan/모델_선정과_미세조정_제안.md)의 초기 비교용 **400문항은 제안**이며 아직 검수·작성이 없다. 초안을 400문항 완료로 표시하지 않는다. 초기 모델 평가에 Jev 실행을 요구하지 않는다.
+여섯 묶음의 초안 29건은 [`rag/assist_eval_queries.json`](../../rag/assist_eval_queries.json)에 있고, `scripts/eval/evaluate_assist.py`가 개발셋만 기본 실행한다. [모델 제안서](../../plan/모델_선정과_미세조정_제안.md)의 초기 비교용 **400문항은 제안**이며 아직 검수·작성이 없다. 초안을 400문항 완료로 표시하지 않는다. 초기 모델 평가에 Jev 실행을 요구하지 않는다.
 
 | 묶음 | 반드시 포함할 상황 |
 | --- | --- |

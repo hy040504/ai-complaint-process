@@ -11,8 +11,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def embed_sentence() -> ModuleType:
-    """scripts/문장_임베딩.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "문장_임베딩.py"
+    """scripts/run/embed_sentence.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "run" / "embed_sentence.py"
     spec = importlib.util.spec_from_file_location("embed_sentence", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

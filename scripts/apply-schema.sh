@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-# English alias for 검색스키마_적용.sh
-set -euo pipefail
-exec "$(cd "$(dirname "$0")" && pwd)/검색스키마_적용.sh" "$@"

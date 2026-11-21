@@ -19,9 +19,9 @@ py -3.12 -m venv .venv-web
 .\.venv-web\Scripts\python.exe -m src
 ```
 
-처음 환경은 저장소 루트의 [`setup.cmd`](../setup.cmd) 또는 Linux [`setup.sh`](../setup.sh)로 가상환경·DB·모델을 준비한다. `--check`는 설치 없이 확인만 한다. `llm` 브랜치의 검사기 웹은 [`src/lab_web`](lab_web/README.md)이다. `python -m src.lab_web` 또는 [`검사기-시작.cmd`](../검사기-시작.cmd)로 `http://127.0.0.1:5010/`을 연다. 민원 JSON은 `POST /api/v1/lab/complaints`로 받는다. 기존 민원 CRUD는 `python -m src`(:5000)이다. 업무 서버 포트는 `COMPLAINT_PORT`, 검사기 웹 포트는 `LAB_WEB_PORT`다.
+처음 환경은 저장소 루트의 [`setup.cmd`](../setup.cmd) 또는 Linux [`setup.sh`](../setup.sh)로 가상환경·DB·모델을 준비한다. `--check`는 설치 없이 확인만 한다. `llm` 브랜치의 검사기 웹은 [`src/lab_web`](lab_web/README.md)이다. `python -m src.lab_web` 또는 [`bin/start-lab.cmd`](../bin/start-lab.cmd)로 `http://127.0.0.1:5010/`을 연다. 민원 JSON은 `POST /api/v1/lab/complaints`로 받는다. 기존 민원 CRUD는 `python -m src`(:5000)이다. 업무 서버 포트는 `COMPLAINT_PORT`, 검사기 웹 포트는 `LAB_WEB_PORT`다.
 
-한 문장의 임베딩과 pgvector 이웃은 [`문장-임베딩.cmd`](../문장-임베딩.cmd)다. RAG `.venv`의 현재 프로필로 벡터를 만든 뒤 FAQ·공개 사례를 따로 조회하고, `--raw`는 숫자만 출력한다. 검색 API·LLM은 쓰지 않는다. [`민원-응대.cmd`](../민원-응대.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/민원_응대.py`](../scripts/민원_응대.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`검색-시작.cmd`](../검색-시작.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/콘솔_기동.py`](../scripts/콘솔_기동.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
+한 문장의 임베딩과 pgvector 이웃은 [`bin/embed-sentence.cmd`](../bin/embed-sentence.cmd)다. RAG `.venv`의 현재 프로필로 벡터를 만든 뒤 FAQ·공개 사례를 따로 조회하고, `--raw`는 숫자만 출력한다. 검색 API·LLM은 쓰지 않는다. [`bin/ask-assist.cmd`](../bin/ask-assist.cmd)로 민원 문장을 넣어 RAG+LLM 응대를 볼 수 있다. 구현은 [`scripts/run/assist_cli.py`](../scripts/run/assist_cli.py)다. Windows에서 PostgreSQL과 검색 API를 다시 켜려면 [`bin/start-search.cmd`](../bin/start-search.cmd)다. 새 콘솔 기동·포트 확인은 [`scripts/run/start_console.py`](../scripts/run/start_console.py)를 공유한다. localhost 검색 API가 꺼져 있으면 별도 창에서 `python -m rag serve`를 시작하고 health ready를 기다린다. 원격 주소는 자동 시작하지 않으며 `--no-start`로 끌 수 있다. 검색 실행 파일은 `RAG_PYTHON` 또는 `.venv`이고, Flask용 `.venv-web`은 FastAPI·uvicorn이 있을 때만 쓴다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`이며 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. [CASE-035](../docs/cases/사례-035-응대-CMD-검색API-자동시작-2026-11-05.md) · [CASE-036](../docs/cases/사례-036-Windows-RAG-PostgreSQL-로컬기동-2026-11-05.md)
 
 실행 의존성만 설치하려면 `src/requirements.txt`를 사용한다. Linux에서는 `python3.12 -m venv .venv-web`로 준비하고 `.venv-web/bin/python`을 사용한다. 환경 준비 후 `npm --prefix ui run dev`도 같은 Flask 서버를 실행하는 편의 명령이다.
 
@@ -163,7 +163,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_PORT` | `5000`, localhost에만 바인딩 |
 | `LAB_WEB_PORT` | 검사기 웹, 기본 `5010` |
 | `RAG_API_URL` | 검색 API, 기본 `http://127.0.0.1:8007` |
-| `RAG_PYTHON` | `민원-응대.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
+| `RAG_PYTHON` | `bin/ask-assist.cmd`가 검색 서버를 띄울 Python. 없으면 `.venv` |
 | `RAG_SERVE_WAIT_SECONDS` | 검색 API 준비 대기, 기본 180 |
 | `COMPLAINT_LLM_PROVIDER` | `exaone_api`, `openai_api`, `codex_cli`, 또는 기존 호환용 `legacy`(기본값) |
 | `EXAONE_API_KEY` | `exaone_api` 선택 시 LG AI연구원 EXAONE 무료 API 키. `.env`에만 보관 |
@@ -188,11 +188,11 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.
 `COMPLAINT_LLM_PROVIDER=exaone_api`(또는 검사기 화면에서 K-EXAONE 선택)이면 `EXAONE_API_KEY`로 `https://api.exaone.ai/v1/chat/completions`(또는 `EXAONE_URL`) Chat Completions API의 `k-exaone_v2.5`(또는 `EXAONE_MODEL`)를 호출하며, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·`EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 전달해 추론 토큰(`reasoning_tokens`)을 포함한 충분한 토큰 한도와 코드 울타리 정리(`strip_code_fence`)를 적용합니다. 일시적인 HTTP 429(`rate_limit_exceeded`·동시 요청 한도)에는 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도(일일 한도 `x-day-rate-limit-remaining: 0` 시 즉시 종료)하고, 판정 API 실패 시 후속 초안·순화 호출을 연달아 보내지 않습니다. `openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
-풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 `resolve_district_and_place`·네이버 `address`/`ac`(HTTP 400/429 60초 서킷브레이커)·공개 사례 235쌍 도로+번지 색인으로 사전 추적한 지역·`inferred_place`를 사용자 JSON에 실어 보냅니다(`validate_decision`의 `'담당자 연결'` 예외 보류 가드 포함). MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `민원-응대.cmd`와 Flask를
+풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 `resolve_district_and_place`·네이버 `address`/`ac`(HTTP 400/429 60초 서킷브레이커)·공개 사례 235쌍 도로+번지 색인으로 사전 추적한 지역·`inferred_place`를 사용자 JSON에 실어 보냅니다(`validate_decision`의 `'담당자 연결'` 예외 보류 가드 포함). MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `bin/ask-assist.cmd`와 Flask를
 다시 실행합니다. 모든 공급자는 검색 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약을 그대로 유지합니다. 민원 CRUD 백그라운드 분석에서도 `aiAssist`·`aiCandidate`·`draft`는 담당자 전용 응답에만 포함하고 시민 응답(`PublicComplaint`·`PublicWorkspace`)에서는 제거하며, `automaticTransfer=False`·자동 게시 금지 원칙을 지킵니다.
 시스템 지시와 민원·검색 후보 JSON은 분리합니다. PREFIX 조립 적격은
 [`src/assist/prefix_cache.py`](assist/prefix_cache.py)가 검사하고, openai_api
-`cached_tokens`는 키가 있을 때 [`scripts/응대_비교.py`](../scripts/응대_비교.py)가
+`cached_tokens`는 키가 있을 때 [`scripts/eval/compare_assist.py`](../scripts/eval/compare_assist.py)가
 기록합니다. `.env` 파일은 비교 스크립트가 쓰지 않습니다.
 [지침](../docs/harness/시스템_프롬프트와_프리픽스_캐싱_지침.md) · [CASE-062](../docs/cases/사례-062-PREFIX캐시조립-공급자비교-초안평가-2026-11-06.md).
 

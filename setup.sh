@@ -48,4 +48,4 @@ if [[ "$check_only" -eq 0 && "$need_apt" -eq 1 ]]; then
   sudo apt-get install -y python3.12-venv postgresql-18 postgresql-18-pgvector
 fi
 
-exec python3.12 "$ROOT/scripts/setup_env.py" "$@"
+exec python3.12 "$ROOT/scripts/ops/setup_env.py" "$@"

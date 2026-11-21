@@ -40,9 +40,9 @@ flowchart TD
 | [src/llm](../../src/README.md) | Luna·Codex·기존 호환 LLM 공급자. JSON HTTP는 `src.rag.http`를 재사용 |
 | [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 시스템 접두는 [`prompts/`](prompts/README.md) |
 | [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
-| [웹_시작.py](../../scripts/웹_시작.py) | Windows에서 Flask 시작과 시민 화면 열기 |
-| [민원_응대.py](../../scripts/민원_응대.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
-| [문장_임베딩.py](../../scripts/문장_임베딩.py) | 한 문장 임베딩 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
+| [start_web.py](../../scripts/run/start_web.py) | Windows에서 Flask 시작과 시민 화면 열기 |
+| [assist_cli.py](../../scripts/run/assist_cli.py) | Windows에서 민원 문장 → 검색 API + LLM 응대. 꺼진 localhost API는 `python -m rag serve` 자동 시작 |
+| [embed_sentence.py](../../scripts/run/embed_sentence.py) | 한 문장 임베딩 뒤 FAQ·사례 pgvector 이웃. `--raw`는 숫자만 |
 | [verify.py](../../rag/verify.py), [evaluate.py](../../rag/evaluate.py) | 실제 DB 대조와 API 검색 회귀 확인 |
 
 ## 적재 계약

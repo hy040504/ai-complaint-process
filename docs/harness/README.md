@@ -6,7 +6,7 @@
 
 계획 갱신 기준일은 **2026-11-21 KST**다. LLM 완충지대 원문 프롬프트는 [`prompts/`](prompts/README.md)다.
 
-현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `민원-응대.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 운영 모델 선정·외부 PASS/SSO·공식 이관·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
+현재는 검색 계층과 기본 하네스, 로컬 응대 계층(`python -m rag assist`, `src/lab_web` `:5010`, Windows `bin/ask-assist.cmd`)이 있다. Codex MCP stdio는 줄 단위 JSON-RPC다. 기본 임베딩은 CPU용 `dragonkue/multilingual-e5-small-ko`(384차원)이다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`다. 최종 운영 모델 선정·외부 PASS/SSO·공식 이관·자동 검증 CI는 후속이다. Jev는 기준 성능 확보 후 확장한다.
 
 CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고받는 서버를 포함한다. 2026-10-31 [시민·담당자 UI](../../ui/README.md)와 루트 `src/`의 [Flask 업무 서버·Swagger](../../src/README.md)를 구현했다. 2026-11-05 `src/`를 `complaints`·`rag`·`llm`·`assist`로 나눴다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md). 2026-11-15~2026-11-20에는 민원 웹(`:5000`)에 비동기 `src.assist` 워커(`CASE-093`), 담당자 실시간 SSE 푸시(`/api/v1/staff/events`) 및 시민 AI 챗봇 실연결(`/api/v1/citizen/chat/stream`, `CASE-110`), **민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`, `scrypt`·부서 RBAC)과 PostgreSQL `complaint_app` 7테이블 정규화(`CASE-111`)**를 구현했다. 외부 PASS/행정 SSO·다중 워커 브로커(현 단계 제외)·공식 행정 이관은 후속이다. 검색 위 판정·검사기는 [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md)에 있다. 기존 RAG 지식·환경은 분리한다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
@@ -37,9 +37,9 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 패치·사례 추적 | [문서 목차](../README.md#변경패치-목록), [사례 색인](../cases/README.md) | 지금까지 어떤 변경이 적용됐는가? |
 | 웹·민원 서버 설계 | [시연 웹 계획](../../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·답변 교환·저장과 AI 응대를 어떻게 연결하는가? |
 | 수동 검색 시험 | [검색 테스트 메뉴](../../rag/README.md#검색-테스트-메뉴) | FAQ·부서 사례와 원본 근거를 어떻게 확인하는가? |
-| 민원 문장 RAG+LLM 응대 | [`민원-응대.cmd`](../../민원-응대.cmd), [`민원_응대.py`](../../scripts/민원_응대.py) | 검색 API 위에서 검사기와 같은 연결을 어떻게 보는가? 꺼진 localhost API는 자동 시작하는가? |
-| 한 문장 임베딩과 pgvector 이웃 | [`문장-임베딩.cmd`](../../문장-임베딩.cmd), [`문장_임베딩.py`](../../scripts/문장_임베딩.py) | 벡터 뒤에 FAQ·사례를 코사인으로 보는가? `--raw`는 숫자만인가? |
-| Windows 검색 DB·API 기동 | [`검색-시작.cmd`](../../검색-시작.cmd), [`검색_시작.py`](../../scripts/검색_시작.py) | 사용자 디렉터리 PostgreSQL과 `:8007`을 어떻게 다시 켜는가? |
+| 민원 문장 RAG+LLM 응대 | [`bin/ask-assist.cmd`](../../bin/ask-assist.cmd), [`assist_cli.py`](../../scripts/run/assist_cli.py) | 검색 API 위에서 검사기와 같은 연결을 어떻게 보는가? 꺼진 localhost API는 자동 시작하는가? |
+| 한 문장 임베딩과 pgvector 이웃 | [`bin/embed-sentence.cmd`](../../bin/embed-sentence.cmd), [`embed_sentence.py`](../../scripts/run/embed_sentence.py) | 벡터 뒤에 FAQ·사례를 코사인으로 보는가? `--raw`는 숫자만인가? |
+| Windows 검색 DB·API 기동 | [`bin/start-search.cmd`](../../bin/start-search.cmd), [`start_search.py`](../../scripts/run/start_search.py) | 사용자 디렉터리 PostgreSQL과 `:8007`을 어떻게 다시 켜는가? |
 | 변경 검증 | [평가 기준](evaluation.md) | 무엇을 실행하고 결과를 어떻게 해석하는가? |
 | 서버·색인 관리 | [네이티브 운영 안내](네이티브_운영.md), [운영 절차](runbook.md) | 상태 확인·갱신·복구를 어떻게 수행하는가? |
 | 다음 구현 | [실행 계획](../../plan/harness-roadmap.md) | 어떤 순서로 만들고 언제 완료로 보는가? |
@@ -55,7 +55,7 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 검색 실행 | 네이티브 PostgreSQL·Python, 적재, 하이브리드 검색 CLI/API 구현 | 처리량·지연 측정 확대 |
 | 데이터 검증 | 입력 검증, 원자적 색인 갱신, 원본/DB 대조 구현 | FAQ 현행성·부서 업무분장 검증 기록 |
 | 테스트 | 백엔드·DB 통합 189개, RAG 49개(Windows 3 skipped), UI 36개, 112건·5,015건 규칙 회귀, `:5010` 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex CLI 전용 신규 100건(`99.0%` + 표적 `5/5`) 실증, 초안 평가셋 29건(개발 26/26·보류 3/3) | 400문항 검수, 운영 임계값 |
-| 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04 조립(`early_external_reject`·병렬 `03∥04`·`PREFIX-02/03/04` `_disable_mcp`·JSON 복구/1회 재시도·EXAONE `high<=8192`/`low<=4096`+타임아웃 `low` 재시도), 코드 정책 검사(`validate_decision` 예외 보류), `회귀검증_112건_규칙.py`·`실증평가_100건_코덱스.py` | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록 |
+| 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04 조립(`early_external_reject`·병렬 `03∥04`·`PREFIX-02/03/04` `_disable_mcp`·JSON 복구/1회 재시도·EXAONE `high<=8192`/`low<=4096`+타임아웃 `low` 재시도), 코드 정책 검사(`validate_decision` 예외 보류), `regression_112_rules.py`·`live_eval_100_codex.py` | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록 |
 | 시연 웹·업무 서버 | Flask·Swagger(**36경로 · 44오퍼레이션**)·PostgreSQL `complaint_app` **7테이블 정규화 + `chat_sessions`/`attachments`**·시민/담당자 UI·**민원인/담당자 아이디·비밀번호 로그인(`CASE-111`)**·**현장 사진·PDF 파일 첨부(EXIF 제거·격리, `CASE-115`)**·비동기 CRUD AI 워커(`CASE-093`)·담당자 실시간 SSE 푸시(`BE07`/`UI08`)·**시민 다중 턴 AI 챗봇 및 담당자 RBAC 통계 대시보드(`#/staff/stats`)·안전 CSV 내보내기(`CASE-114`)** | 외부 PASS/SSO·다중 인스턴스 브로커(현 단계 제외)·멀티모달 이미지 분석·공식 이관 |
 | 실행 기록 | 적재 메타데이터, 검색 시간, 기존 보고서 | 요청 단위 추적, 설정·정책 버전, 민감정보 제외 |
 | 사례 기록 | 번호별 색인·양식, 구축·설계 이력과 미해결 데이터 사례 | 변경마다 사례 상태·근거와 현재 기준 문서 갱신 |
@@ -80,4 +80,4 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 
 실제 동작은 코드와 재현 가능한 실행 결과로 확인하고, 의도한 정책은 이 문서와 결정 기록으로 확인한다. 불일치가 생기면 어느 쪽을 바꿀지 작업 맥락에 맞게 판단해 함께 정리한다. 과거 테스트 결과에는 실행 당시의 의미를 남기며 새 변경이 검증된 것처럼 재사용하지 않는다.
 
-외부 LLM 독립 예제는 [../../scripts/외부_LLM_예제.py](../../scripts/외부_LLM_예제.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.
+외부 LLM 독립 예제는 [../../scripts/run/external_llm_example.py](../../scripts/run/external_llm_example.py)를 사용한다. 토큰은 `PUBLIC_LLM_TOKEN` 환경변수로 전달하며, 민원 RAG 통합·최종 모델 선택은 후속 작업이다.

@@ -27,12 +27,12 @@ python3 -m rag status
 python3 -m rag search '여권을 처음 발급받으려면 어떤 서류가 필요한가요?' --collection faq
 python3 -m rag search '711번 버스가 정류장에 서지 않고 지나갔습니다' --collection routing
 python3 -m rag assist --example faq
-# Windows: 민원-응대.cmd --example faq
-# Linux: ./ask-assist.sh --example faq
-# 검색 API가 꺼져 있으면 민원-응대.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
-# 한 문장 벡터와 pgvector 이웃: 문장-임베딩.cmd 나무가 쓰러짐
-# Linux: ./embed-sentence.sh '나무가 쓰러짐'
-# 벡터 숫자만: 문장-임베딩.cmd --raw 나무가 쓰러짐
+# Windows: bin/ask-assist.cmd --example faq
+# Linux: ./bin/ask-assist.sh --example faq
+# 검색 API가 꺼져 있으면 bin/ask-assist.cmd가 localhost에서 python -m rag serve 를 자동 시작한다.
+# 한 문장 벡터와 pgvector 이웃: bin/embed-sentence.cmd 나무가 쓰러짐
+# Linux: ./bin/embed-sentence.sh '나무가 쓰러짐'
+# 벡터 숫자만: bin/embed-sentence.cmd --raw 나무가 쓰러짐
 # 환경 준비: setup.cmd / ./setup.sh  (--check 는 확인만)
 ```
 
@@ -142,12 +142,12 @@ FAQ와 사례에서 이 과정을 **각각 실행**합니다. 두 종류의 문�
 백업과 데이터 변경 검토 후 [네이티브 운영 안내](../docs/harness/네이티브_운영.md)에 따라 실행합니다.
 
 ```bash
-source scripts/네이티브_환경.sh
+source scripts/ops/native-env.sh
 .venv/bin/python -m rag.verify
 RUN_PG_TESTS=1 .venv/bin/python -m pytest rag/tests -q -p no:cacheprovider
 ```
 
-`RUN_PG_TESTS=1`로 전체 테스트를 실행합니다. `scripts/검색DB_준비.sh`가 확장을 설치한 `complaint_rag_test_template`을 준비하므로 테스트 계정에는 DB 생성 권한만 필요하며 superuser는 필요하지 않습니다.
+`RUN_PG_TESTS=1`로 전체 테스트를 실행합니다. `scripts/ops/prepare-db.sh`가 확장을 설치한 `complaint_rag_test_template`을 준비하므로 테스트 계정에는 DB 생성 권한만 필요하며 superuser는 필요하지 않습니다.
 
 2026-10-25 코드·주석 점검에서 코드·격리 DB 검증 **25개가 통과**했습니다. 변경 범위와 검색 결과 대조는 [CASE-006](../docs/cases/사례-006-한국어-주석과-커밋-규칙-정비와-검색-조회-최적화-2026-10-25.md)에 기록합니다.
 

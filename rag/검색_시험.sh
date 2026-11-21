@@ -2,7 +2,7 @@
 # 검색 API를 시험하는 메뉴입니다. 서비스·원본·색인을 변경하지 않습니다.
 # 줄 끝은 LF만 사용합니다. Windows CRLF는 WSL bash에서 set -o pipefail을 실패시킵니다.
 set -uo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../scripts/네이티브_환경.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../scripts/ops/native-env.sh"
 cd "$RAG_ROOT" || exit 1
 # 네이티브 Linux venv, Windows venv, 시스템 python3/python 순으로 클라이언트를 고릅니다.
 if [[ -x "$RAG_ROOT/.venv/bin/python" ]]; then

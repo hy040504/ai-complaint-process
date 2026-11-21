@@ -11,8 +11,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def setup_env() -> ModuleType:
-    """scripts/setup_env.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "setup_env.py"
+    """scripts/ops/setup_env.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "ops" / "setup_env.py"
     spec = importlib.util.spec_from_file_location("setup_env", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

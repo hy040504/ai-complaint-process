@@ -11,8 +11,8 @@ import pytest
 
 @pytest.fixture(scope="module")
 def start_web() -> ModuleType:
-    """scripts/웹_시작.py를 한 번만 불러옵니다."""
-    path = Path(__file__).resolve().parents[2] / "scripts" / "웹_시작.py"
+    """scripts/run/start_web.py를 한 번만 불러옵니다."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "run" / "start_web.py"
     spec = importlib.util.spec_from_file_location("start_web", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
