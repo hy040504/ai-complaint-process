@@ -9,7 +9,7 @@ import time
 
 from src.complaints.config import ROOT
 from src.complaints.models import DepartmentEntry
-from src.rag import departments_via_api
+from src.search_client import departments_via_api
 
 _DISTRICTS: tuple[str, ...] = ("상당구", "서원구", "흥덕구", "청원구")
 _CASES_PATH = ROOT / "rag" / "origin" / "공개_민원_사례.json"

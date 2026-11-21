@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
 from src.assist import run_assist
 from src.assist.eval_set import load_eval_spec, select_items, validate_eval_spec
 from src.llm.settings import llm_settings, load_llm_env_file
-from src.rag import search_available
+from src.search_client import search_available
 
 REPORT_PATH = ROOT / "rag" / "reports" / "assist-eval-draft.json"
 HOLDOUT_REPORT_PATH = ROOT / "rag" / "reports" / "assist-eval-holdout.json"

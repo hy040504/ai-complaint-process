@@ -14,7 +14,7 @@ from src.assist.followup import (
 from src.assist.pipeline import run_assist
 from src.assist.prompts import DECISION_SYSTEM, STAFF_DRAFT_SYSTEM
 from src.llm.complete import format_codex_stdin
-from src.rag import search_parts
+from src.search_client import search_parts
 
 
 def _search() -> dict:

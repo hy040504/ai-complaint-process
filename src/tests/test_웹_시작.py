@@ -43,7 +43,11 @@ def test_main_checks_backend_services(
     browser_opened = []
 
     monkeypatch.setattr(start_web.Path, "is_file", lambda self: True)
-    monkeypatch.setattr(start_web.subprocess, "run", lambda *args, **kwargs: type("Proc", (), {"returncode": 0})())
+    monkeypatch.setattr(
+        start_web.subprocess,
+        "run",
+        lambda *args, **kwargs: type("Proc", (), {"returncode": 0})(),
+    )
     monkeypatch.setattr(start_web, "port_open", lambda port: True)
     monkeypatch.setattr(start_web, "wait_until_ready", lambda url: True)
     monkeypatch.setattr(
@@ -51,10 +55,11 @@ def test_main_checks_backend_services(
         "ensure_backend_services",
         lambda wait_seconds=60.0: backend_checked.append(True) or True,
     )
-    monkeypatch.setattr(start_web.webbrowser, "open", lambda url: browser_opened.append(url))
+    monkeypatch.setattr(
+        start_web.webbrowser, "open", lambda url: browser_opened.append(url)
+    )
 
     exit_code = start_web.main()
     assert exit_code == 0
     assert len(backend_checked) == 1
     assert len(browser_opened) == 1
-

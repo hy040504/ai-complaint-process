@@ -1,6 +1,6 @@
 """RAG 검색과 LLM을 이어 주는 응대 계층입니다.
 
-`src.rag`로 FAQ·사례를 찾고 `src.llm`으로 판정·조건부 안내를 만든 뒤
+`src.search_client`로 FAQ·사례를 찾고 `src.llm`으로 판정·조건부 안내를 만든 뒤
 코드 정책 검사로 자동 이관을 막습니다. 민원 CRUD는 `src.complaints`가
 담당하며 이 패키지는 글을 저장하지 않습니다.
 """
@@ -12,7 +12,7 @@ from src.assist.constants import EXAMPLES
 from src.assist.pipeline import iter_assist, render_assist, run_assist
 from src.assist.policy import validate_decision
 from src.llm import complete_chat, llm_configured, parse_json_object
-from src.rag import search_api_url, search_available
+from src.search_client import search_api_url, search_available
 
 
 def assist_examples() -> list[dict[str, Any]]:

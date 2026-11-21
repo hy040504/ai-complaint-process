@@ -62,7 +62,7 @@ FAQ의 여러 접수기관·온라인/방문 경로·층수/연면적 조건을 
 
 **2026-10-31 구현 갱신:** 루트 [`src/`](../../src/README.md)에 Flask·Swagger·Pydantic 업무 API를 구현했다. 작성자는 시연 세션에서 결정하고 초안·게시본·AI 원본·내부 이력의 역할별 응답 분리와 기대 버전·멱등성·맥락 검사를 적용한다. 현재 API·길이·오류·저장 계약은 [서버 안내](../../src/README.md)를 따른다. 작업자·SSE는 후속이다. [CASE-014](../cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)
 
-**2026-11-05 구현 갱신:** 업무 API는 `src/complaints`에 두고, 검색 클라이언트·LLM·응대 연결은 `src/rag`·`src/llm`·`src/assist`로 분리했다. 민원은 PostgreSQL `complaint_app` jsonb, 검색은 `complaint_rag`이며 행을 섞지 않는다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+**2026-11-05 구현 갱신:** 업무 API는 `src/complaints`에 두고, 검색 클라이언트·LLM·응대 연결은 `src/search_client`·`src/llm`·`src/assist`로 분리했다. 민원은 PostgreSQL `complaint_app` jsonb, 검색은 `complaint_rag`이며 행을 섞지 않는다. [CASE-026](../cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 
 시연 웹은 게시판과 민원 작성·답변 교환 서버를 구현할 계획이다. 다음은 미구현 업무 데이터 계약 제안이며 현재 `complaint_rag` 테이블에 이미 추가된 필드가 아니다.
 

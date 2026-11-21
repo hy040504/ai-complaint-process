@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from src.rag.client import require_search_contract, search_via_api
+from src.search_client.client import require_search_contract, search_via_api
 
 RAG_TOOL_NAME = "search_complaint_rag"
 DISTRICTS = ("상당구", "서원구", "흥덕구", "청원구")

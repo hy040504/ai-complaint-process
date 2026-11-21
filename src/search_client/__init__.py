@@ -5,14 +5,14 @@
 저장소와 섞지 않습니다.
 """
 
-from src.rag.client import (
+from src.search_client.client import (
     departments_via_api,
     require_search_contract,
     search_api_url,
     search_available,
     search_via_api,
 )
-from src.rag.evidence import (
+from src.search_client.evidence import (
     SearchParts,
     case_hits,
     compact_case,
@@ -23,7 +23,7 @@ from src.rag.evidence import (
     hit_excerpt,
     search_parts,
 )
-from src.rag.http import http_json
+from src.search_client.http import http_json
 
 __all__ = [
     "SearchParts",

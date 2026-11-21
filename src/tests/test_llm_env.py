@@ -337,7 +337,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
     import io
     import urllib.error
     from email.message import Message
-    from src.rag import http as rag_http
+    from src.search_client import http as rag_http
 
     sleeps: list[float] = []
     monkeypatch.setattr(rag_http.time, "sleep", lambda sec: sleeps.append(sec))
@@ -413,7 +413,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
 def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
     """TimeoutError는 한국어 메시지로 변환하고 EXAONE 429는 대응 안내를 덧붙입니다."""
     import src.llm.complete as complete
-    from src.rag import http as rag_http
+    from src.search_client import http as rag_http
 
     def timeout_urlopen(req: object, timeout: int = 180) -> object:
         """소켓 읽기 시간 초과(TimeoutError)를 재현하는 모의 urlopen입니다."""

@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 
 from src.assist import run_assist
 from src.llm.settings import llm_settings, load_llm_env_file
-from src.rag import search_available
+from src.search_client import search_available
 
 CASES = (
     {

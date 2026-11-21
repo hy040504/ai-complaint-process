@@ -1,6 +1,6 @@
 # 민원 웹·RAG·LLM 백엔드
 
-프로젝트 루트의 `src/`는 Flask 시연 서버와 응대 계층이다. 민원 웹(`complaints`), 검색 클라이언트(`rag`), LLM 공급자(`llm`), 둘을 잇는 응대(`assist`)로 나눈다. 시민·담당자 UI와 API, Swagger는 같은 출처에서 제공한다. 민원·추가 문의·초안·게시 답변·시연 작업 이벤트는 PostgreSQL `complaint_app`에 저장한다. 검색 색인·임베딩 엔진은 루트 `rag/`와 `complaint_rag`에 있고 `src/rag`는 그 API만 호출한다.
+프로젝트 루트의 `src/`는 Flask 시연 서버와 응대 계층이다. 민원 웹(`complaints`), 검색 클라이언트(`rag`), LLM 공급자(`llm`), 둘을 잇는 응대(`assist`)로 나눈다. 시민·담당자 UI와 API, Swagger는 같은 출처에서 제공한다. 민원·추가 문의·초안·게시 답변·시연 작업 이벤트는 PostgreSQL `complaint_app`에 저장한다. 검색 색인·임베딩 엔진은 루트 `rag/`와 `complaint_rag`에 있고 `src/search_client`는 그 API만 호출한다.
 
 ## 설치와 실행
 
@@ -43,7 +43,7 @@ py -3.12 -m venv .venv-web
 
 ## 정적 타입과 구성
 
-백엔드는 민원 웹, RAG 검색 클라이언트, LLM 공급자, 둘을 잇는 응대 계층으로 나눈다. 루트 `rag/`는 PostgreSQL 색인·임베딩 엔진이고, `src/rag`는 그 검색 API를 호출하는 클라이언트다. 민원 `complaint_app`과 검색 `complaint_rag`는 섞지 않는다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
+백엔드는 민원 웹, RAG 검색 클라이언트, LLM 공급자, 둘을 잇는 응대 계층으로 나눈다. 루트 `rag/`는 PostgreSQL 색인·임베딩 엔진이고, `src/search_client`는 그 검색 API를 호출하는 클라이언트다. 민원 `complaint_app`과 검색 `complaint_rag`는 섞지 않는다. [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md) · [CASE-031](../docs/cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md)
 
 ```mermaid
 flowchart LR
@@ -51,7 +51,7 @@ flowchart LR
     UI[시민·담당자 UI] --> APP[src/app.py]
     APP --> W[src/complaints 민원 웹]
     APP --> A
-    A --> R[src/rag 검색 클라이언트]
+    A --> R[src/search_client 검색 클라이언트]
     A --> L[src/llm 공급자]
     L --> MCP[rag_mcp NDJSON]
     W --> APPDB[(PostgreSQL complaint_app)]
@@ -62,7 +62,7 @@ flowchart LR
     L --> M[OpenAI API, EXAONE API 또는 Codex CLI]
 ```
 
-읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 발생 지역은 청주시 4개 구 및 읍·면·동 전 지역을 지원하며 미지정 시 `src/assist/district.py`가 본문 지명을 자동 추론한다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 실제 프롬프트(내부 호환 키 `prompt`) 전문이며, `llmProvider`·`llmModel`은 실제 실행한 LLM 엔진과 모델명을 담는다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.rag.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
+읽을 때는 `app.py → complaints/api.py → complaints/service.py → complaints/repository.py` 순서로 따라가면 된다. `llm` 브랜치 검사기는 `src/lab_web` → `assist/pipeline.py`가 `rag` 다음에 `llm`을 호출한다. 발생 지역은 청주시 4개 구 및 읍·면·동 전 지역을 지원하며 미지정 시 `src/assist/district.py`가 본문 지명을 자동 추론한다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 실제 프롬프트(내부 호환 키 `prompt`) 전문이며, `llmProvider`·`llmModel`은 실제 실행한 LLM 엔진과 모델명을 담는다. 검색 히트는 `search_parts`로 한 번 꺼내고, 환경 LLM은 `llm_settings()`를 요청당 한 번 읽는다. JSON HTTP는 `src.search_client.http.http_json`을 검색과 LLM이 같이 쓴다. 민원 웹 모듈은 `src.complaints`에서 직접 import한다.
 
 | 위치 | 책임·타입 경계 |
 | --- | --- |
@@ -186,7 +186,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `COMPLAINT_PYTHON` | npm 실행기에 사용할 Python 실행 파일 선택 |
 
 저장소 루트 `.env`에서 공급자와 키를 읽습니다. 예시는 [`.env.example`](../.env.example)입니다.
-`COMPLAINT_LLM_PROVIDER=exaone_api`(또는 검사기 화면에서 K-EXAONE 선택)이면 `EXAONE_API_KEY`로 `https://api.exaone.ai/v1/chat/completions`(또는 `EXAONE_URL`) Chat Completions API의 `k-exaone_v2.5`(또는 `EXAONE_MODEL`)를 호출하며, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·`EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 전달해 추론 토큰(`reasoning_tokens`)을 포함한 충분한 토큰 한도와 코드 울타리 정리(`strip_code_fence`)를 적용합니다. 일시적인 HTTP 429(`rate_limit_exceeded`·동시 요청 한도)에는 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도(일일 한도 `x-day-rate-limit-remaining: 0` 시 즉시 종료)하고, 판정 API 실패 시 후속 초안·순화 호출을 연달아 보내지 않습니다. `openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
+`COMPLAINT_LLM_PROVIDER=exaone_api`(또는 검사기 화면에서 K-EXAONE 선택)이면 `EXAONE_API_KEY`로 `https://api.exaone.ai/v1/chat/completions`(또는 `EXAONE_URL`) Chat Completions API의 `k-exaone_v2.5`(또는 `EXAONE_MODEL`)를 호출하며, `EXAONE_REASONING_EFFORT`·`EXAONE_MAX_TOKENS`·`EXAONE_TEMPERATURE`·`EXAONE_TOP_P`를 함께 전달해 추론 토큰(`reasoning_tokens`)을 포함한 충분한 토큰 한도와 코드 울타리 정리(`strip_code_fence`)를 적용합니다. 일시적인 HTTP 429(`rate_limit_exceeded`·동시 요청 한도)에는 `src/search_client/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도(일일 한도 `x-day-rate-limit-remaining: 0` 시 즉시 종료)하고, 판정 API 실패 시 후속 초안·순화 호출을 연달아 보내지 않습니다. `openai_api`이면 `OPENAI_API_KEY`로 Responses API의 `gpt-6-luna`·`medium`을 요청합니다. `codex_cli`이면 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 `codex exec -`로 실행하고
 긴 프롬프트는 표준 입력으로 보냅니다. Windows npm `codex.cmd`는 `cmd.exe` 제한을 피하려고 `node`와 `codex.js`로
 풀어 실행합니다. `OPENAI_API_KEY`를 하위 프로세스에 전달하지 않습니다. Codex에는 `search_complaint_rag` 및 `lookup_navermap_place` MCP 도구를 제공하며, 사용자 설정의 다른 MCP는 `--ignore-user-config`로 읽지 않습니다. API 직접 호출(`exaone_api`·`openai_api`)에도 `src/assist/district.py`가 `resolve_district_and_place`·네이버 `address`/`ac`(HTTP 400/429 60초 서킷브레이커)·공개 사례 235쌍 도로+번지 색인으로 사전 추적한 지역·`inferred_place`를 사용자 JSON에 실어 보냅니다(`validate_decision`의 `'담당자 연결'` 예외 보류 가드 포함). MCP Python은 `-u`이고 stdio는 줄 단위 JSON-RPC입니다. 업무 저장소는 시작 때 `complaint_app.complaints.version`이 없으면 채웁니다. 키를 바꾼 뒤에는 `bin/ask-assist.cmd`와 Flask를
 다시 실행합니다. 모든 공급자는 검색 `retrieval_only=true`·`decision="requires_gate"` 및 코드 정책 검증 계약을 그대로 유지합니다. 민원 CRUD 백그라운드 분석에서도 `aiAssist`·`aiCandidate`·`draft`는 담당자 전용 응답에만 포함하고 시민 응답(`PublicComplaint`·`PublicWorkspace`)에서는 제거하며, `automaticTransfer=False`·자동 게시 금지 원칙을 지킵니다.
@@ -213,7 +213,7 @@ npm --prefix ui test
 
 2026-11-16 Windows / Python 3.12 `.venv-web`에서 다크 테마 청주시 로고·호버·검사기 UI 다듬기·담당자 폰트 확대·시민 영구 삭제(`POST /complaints/{complaint_id}/delete`, `CASE-094`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **153개 통과**, 핵심 **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **17개 통과**, 헤드리스 Edge 다크 전수 대비(`:5000` 24/24·`:5010` 0오류)·호버 19종·시민 상세/목록 삭제 E2E를 확인했다. [CASE-094](../docs/cases/사례-094-다크테마-청주시로고-호버-검사기UI-담당자폰트-시민민원삭제-2026-11-16.md)
 
-2026-11-15 Windows / Python 3.12 `.venv-web`에서 민원 웹 CRUD·`#/staff`·`#/lab`에 `src.assist` 비동기 통합(`CASE-093`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **151개 통과**, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/rag` **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **16개 통과**, 격리 DB(`complaint_app_e2e`) `:5000`+`:8007` 실서버 모델별(`exaone_api`, `codex_cli`, `openai_api` 가드) E2E 검증을 확인했다. [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
+2026-11-15 Windows / Python 3.12 `.venv-web`에서 민원 웹 CRUD·`#/staff`·`#/lab`에 `src.assist` 비동기 통합(`CASE-093`) 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **151개 통과**, `src/app.py`·`src/complaints`·`src/assist/pipeline.py`·`src/llm`·`src/lab_web`·`src/search_client` **30개 모듈** `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **17개 통과**·`npm --prefix ui test` **16개 통과**, 격리 DB(`complaint_app_e2e`) `:5000`+`:8007` 실서버 모델별(`exaone_api`, `codex_cli`, `openai_api` 가드) E2E 검증을 확인했다. [CASE-093](../docs/cases/사례-093-민원웹-CRUD-검사기-LLM-RAG-실시간통합-2026-11-15.md)
 
 2026-11-13 Windows / Python 3.12 `.venv-web`에서 `main` 비응대 기능(`UI02~04`, `db/`, 생성 칼럼·CHECK, `demo_data`) 병합 후 `RUN_PG_TESTS=1 pytest src/tests -q -p no:cacheprovider` **147개 통과**, 핵심 패키지 30개 파일 `mypy --config-file src/mypy.ini` 오류 없음, `npm --prefix ui run check` **16개 통과**·`npm --prefix ui test` **12개 통과**를 확인했다. [CASE-092](../docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)
 

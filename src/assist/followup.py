@@ -12,7 +12,7 @@ from typing import Any
 
 from src.assist.constants import CORPORA
 from src.assist.policy import decision_payload
-from src.rag.evidence import SearchParts
+from src.search_client.evidence import SearchParts
 
 RISK_SIGNALS = (
     "profanity_insult",

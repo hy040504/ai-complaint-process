@@ -34,10 +34,10 @@ flowchart TD
 | [ingest.py](../../rag/ingest.py) | 벡터 재사용·체크포인트·한 트랜잭션으로 데이터 반영 |
 | [search.py](../../rag/search.py) | 두 검색기·RRF·재정렬·부서 후보 집계 |
 | [api.py](../../rag/api.py), [__main__.py](../../rag/__main__.py) | HTTP API와 표준 라이브러리 CLI 클라이언트 |
-| [assist.py](../../rag/assist.py) | CLI 호환 진입점. 구현은 `src/assist`·`src/llm`·`src/rag` |
+| [assist.py](../../rag/assist.py) | CLI 호환 진입점. 구현은 `src/assist`·`src/llm`·`src/search_client` |
 | [src/complaints](../../src/README.md) | 민원 웹 CRUD·세션·정적 UI·Swagger |
-| [src/rag](../../src/README.md) | 검색 API 클라이언트와 검색 전용 계약. `http_json` 전송과 `search_parts` 한 번 순회 |
-| [src/llm](../../src/README.md) | Luna·Codex·기존 호환 LLM 공급자. JSON HTTP는 `src.rag.http`를 재사용 |
+| [src/search_client](../../src/README.md) | 검색 API 클라이언트와 검색 전용 계약. `http_json` 전송과 `search_parts` 한 번 순회 |
+| [src/llm](../../src/README.md) | Luna·Codex·기존 호환 LLM 공급자. JSON HTTP는 `src.search_client.http`를 재사용 |
 | [src/assist](../../src/README.md) | RAG와 LLM을 잇는 판정·정책 검사. 시스템 접두는 [`prompts/`](prompts/README.md) |
 | [src/](../../src/README.md), [ui/](../../ui/README.md) | Flask 앱 팩토리·시민·담당자·검사기 화면 |
 | [start_web.py](../../scripts/run/start_web.py) | Windows에서 Flask 시작과 시민 화면 열기 |
@@ -86,14 +86,14 @@ flowchart TD
 
 ## LLM 응대 계층
 
-검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/rag` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `src/lab_web` `:5010`도 이 계층을 쓴다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문이다.
+검색 API·DB 구조는 유지하고 그 위에 `src/assist`가 `src/search_client` 검색과 `src/llm` 판정을 연결한다. CLI `python -m rag assist`는 같은 함수의 호환 진입점이다. Flask `POST /api/v1/assist`·`/assist/stream`과 `src/lab_web` `:5010`도 이 계층을 쓴다. 응답의 `codex`는 모델에 넣은 사용자 JSON과 Codex stdin 전문이다.
 
 1. FAQ·사례별 검색 결과를 받은 뒤 LLM이 의도·근거·처리 경로를 구조화해 제안한다. 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결한다.
 2. 코드가 출처·부서 후보·필수 조건과 출력 계약을 검사한다. FAQ 현행성 허용 목록은 아직 없다.
 3. FAQ 안내가 허용된 경우에만 같은 LLM을 다시 호출해 답변을 생성한다. 답변과 근거를 검사하고 실패하면 담당자 검토로 보낸다.
 4. 부서 후보·담당자 검토 안내는 템플릿이다. 검사기는 파이프라인 전체가 아니라 짧은 진행 안내만 보여 준다.
 
-`COMPLAINT_LLM_PROVIDER` 또는 검사기 UI 엔진 버튼으로 `exaone_api`(Chat Completions, `k-exaone_v2.5`, `settings_for_role()` 단계별 추론 차등 — `EXAONE_DECISION_REASONING_EFFORT=high`/`EXAONE_DECISION_MAX_TOKENS=8192`·타임아웃 시 `low`/`<=4096` 1회 재시도, `EXAONE_FAST_REASONING_EFFORT=low`/`<=4096`), `openai_api`(Responses API, `gpt-6-luna`·`medium`), 또는 `codex_cli`(읽기 전용 임시 작업공간, `decision`만 `search_complaint_rag` + `lookup_navermap_place` MCP, `faq_answer`/`staff_draft`/`sanitize`는 `_disable_mcp` 비도구 실행, 실패 시 `_extract_codex_error` 240자 축약)를 고른다. 기존 호환 토큰은 `legacy`다. 사전 관할 검증(`resolve_district_and_place`)이 랜드마크·도로+번지·네이버 지도(`address`·`ac` 동명 파싱, `청주시` 접두 정규화, 본문 동명 일치·예정지/입점 지점 감점·복합시설 본체 우선순위, HTTP 400/429 60초 서킷브레이커, 상충 구 장소 배지 제거)·공개 사례 235쌍 단일 구 도로+번지 색인을 거쳐 순수 타 지자체 주소(도+시 약칭 포함, 거주지·청주 운수 예외 제외)로 판정하면 `early_external_reject`로 `:8007` 검색·`PREFIX-01`·`PREFIX-03`을 생략한다. `validate_decision`이 `'담당자 연결'` 예외 요청을 보류 전환하고, `out_of_scope` 판정은 고정 초안을 쓰며, `PREFIX-03`·`PREFIX-04`는 경량 JSON 복구(`_repair_json_text`)·1회 형식 재시도와 동시 필요 시 `ThreadPoolExecutor` 병렬 실행(`exaone_api` 1.05s 스태거)을 적용한다. HTTP 429 응답 시 `src/rag/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도하고, 미고정(`provider=None`) 한도·타임아웃 시에만 `COMPLAINT_LLM_AUTO_FALLBACK`으로 1회 자동 폴백하며 판정 API 실패 시 후속 연쇄 호출·이전 `usage` 오염을 막는다. 판정과 생성은 같은 모델 설정을 재사용하되 프롬프트·입출력·평가를 구분한다. 고정 시스템 지시와 가변 user JSON을 섞지 않는다. 계층형 `PREFIX-00`~`PREFIX-04` 조립 적격 검증은 구현했으며 `openai_api` 프리픽스 캐시 실측은 키 확보 후속이다. [AI 입출력 하네스](AI_정보전달과_응답_하네스.md) · [프리픽스 캐싱 지침](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](../cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-042](../cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md) · [CASE-088](../cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-106](../cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-113](../cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md)
+`COMPLAINT_LLM_PROVIDER` 또는 검사기 UI 엔진 버튼으로 `exaone_api`(Chat Completions, `k-exaone_v2.5`, `settings_for_role()` 단계별 추론 차등 — `EXAONE_DECISION_REASONING_EFFORT=high`/`EXAONE_DECISION_MAX_TOKENS=8192`·타임아웃 시 `low`/`<=4096` 1회 재시도, `EXAONE_FAST_REASONING_EFFORT=low`/`<=4096`), `openai_api`(Responses API, `gpt-6-luna`·`medium`), 또는 `codex_cli`(읽기 전용 임시 작업공간, `decision`만 `search_complaint_rag` + `lookup_navermap_place` MCP, `faq_answer`/`staff_draft`/`sanitize`는 `_disable_mcp` 비도구 실행, 실패 시 `_extract_codex_error` 240자 축약)를 고른다. 기존 호환 토큰은 `legacy`다. 사전 관할 검증(`resolve_district_and_place`)이 랜드마크·도로+번지·네이버 지도(`address`·`ac` 동명 파싱, `청주시` 접두 정규화, 본문 동명 일치·예정지/입점 지점 감점·복합시설 본체 우선순위, HTTP 400/429 60초 서킷브레이커, 상충 구 장소 배지 제거)·공개 사례 235쌍 단일 구 도로+번지 색인을 거쳐 순수 타 지자체 주소(도+시 약칭 포함, 거주지·청주 운수 예외 제외)로 판정하면 `early_external_reject`로 `:8007` 검색·`PREFIX-01`·`PREFIX-03`을 생략한다. `validate_decision`이 `'담당자 연결'` 예외 요청을 보류 전환하고, `out_of_scope` 판정은 고정 초안을 쓰며, `PREFIX-03`·`PREFIX-04`는 경량 JSON 복구(`_repair_json_text`)·1회 형식 재시도와 동시 필요 시 `ThreadPoolExecutor` 병렬 실행(`exaone_api` 1.05s 스태거)을 적용한다. HTTP 429 응답 시 `src/search_client/http.py`가 `retry-after-ms`/`retry-after`와 지수 백오프로 최대 2회 재시도하고, 미고정(`provider=None`) 한도·타임아웃 시에만 `COMPLAINT_LLM_AUTO_FALLBACK`으로 1회 자동 폴백하며 판정 API 실패 시 후속 연쇄 호출·이전 `usage` 오염을 막는다. 판정과 생성은 같은 모델 설정을 재사용하되 프롬프트·입출력·평가를 구분한다. 고정 시스템 지시와 가변 user JSON을 섞지 않는다. 계층형 `PREFIX-00`~`PREFIX-04` 조립 적격 검증은 구현했으며 `openai_api` 프리픽스 캐시 실측은 키 확보 후속이다. [AI 입출력 하네스](AI_정보전달과_응답_하네스.md) · [프리픽스 캐싱 지침](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [안전 가드레일](AI_안전_보안_가드레일.md) · [CASE-022](../cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-023](../cases/사례-023-GPT-6-Luna-공급자-선택-2026-11-05.md) · [CASE-042](../cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md) · [CASE-088](../cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md) · [CASE-106](../cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) · [CASE-113](../cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md)
 
 LLM 호출은 검색 API 프로세스와 분리한다. Jev는 이후 판정 어댑터의 대체 또는 추가 검토 모듈로 비교하며 초기 실행 의존성에 넣지 않는다.
 

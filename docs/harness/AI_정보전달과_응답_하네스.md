@@ -3,7 +3,7 @@
 [하네스 안내](README.md) · [판정 정책](decision-policy.md) · [시스템 프롬프트·프리픽스 캐싱](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [AI 안전·보안 가드레일](AI_안전_보안_가드레일.md)
 
 **기준: 2026-11-19 UTC · 상태: 로컬 응대 계층(`src/assist`) + 시연 웹 비동기 CRUD AI(`CASE-093`) 구현 + 기획서 통합 지침.**
-이 문서는 현재 프로젝트 구현([`src/assist`](../../src/README.md), [`src/rag`](../../src/README.md), [`src/llm`](../../src/README.md))과 두 기획서 분석 자료([`민원AI_계획서_상세분석.md`](../../plan/archive/민원AI_계획서_상세분석.md), [`VoteLab_AI민원_상세기획안_상세분석.md`](../../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md)), 그리고 웹 MVP 상세설계([`민원_웹_MVP_상세설계와_분야별_작업계획.md`](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md))를 종합하여 **AI(LLM)에게 어떤 정보를 어떻게 보내고(Input), AI로부터 어떤 응답을 받아 어떻게 검증·제공할지(Output)** 정의한다.
+이 문서는 현재 프로젝트 구현([`src/assist`](../../src/README.md), [`src/search_client`](../../src/README.md), [`src/llm`](../../src/README.md))과 두 기획서 분석 자료([`민원AI_계획서_상세분석.md`](../../plan/archive/민원AI_계획서_상세분석.md), [`VoteLab_AI민원_상세기획안_상세분석.md`](../../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md)), 그리고 웹 MVP 상세설계([`민원_웹_MVP_상세설계와_분야별_작업계획.md`](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md))를 종합하여 **AI(LLM)에게 어떤 정보를 어떻게 보내고(Input), AI로부터 어떤 응답을 받아 어떻게 검증·제공할지(Output)** 정의한다.
 
 > [!IMPORTANT]
 > **구현 범위와 기획안의 구분:** 현재 코드로 구현된 AI 경로는 사전 관할·장소 추적(`resolve_district_and_place`, 순수 타지역 `early_external_reject`), 검색(`POST /search`) 뒤 1차 판정 JSON(`PREFIX-01`), 코드 정책 검사(`validate_decision`), 조건부 FAQ 안내(`PREFIX-02`), 담당자 초안(`PREFIX-03`, `out_of_scope` 시 LLM 생략)·특이민원 순화(`PREFIX-04`, 필요 시 `PREFIX-03`과 병렬 실행)이며, 민원 게시판 CRUD(`complaint_app`)에는 비동기 백그라운드 워커 + 1.5초 폴링(`CASE-093`)까지 연결했습니다. 담당자 실시간 SSE 푸시, 개인정보 자동 마스킹 필터, 공식 행정 이관은 **후속 구현 범위**이며 완료된 기능으로 표시하지 않는다.
@@ -66,7 +66,7 @@ AI에게 정보를 보낼 때는 **시스템 프롬프트(Static Prefix)**와 **
 
 1. **공개 사례의 과거 답변 원문(`evidence.answer`) 제외:**
    - 공개 민원 사례(`routing_cases`)의 과거 처리 답변은 당시 시점·개별 상황의 기록이므로 현재 청주시의 일반 정책 안내 근거로 사용할 수 없다.
-   - [`src/rag/evidence.py`](../../src/rag/evidence.py)의 `compact_case()`처럼 LLM 판정 입력에는 민원 제목(`title`)과 요지(`summary`), 부서 검증 상태만 전달하고 과거 답변 본문은 넣지 않는다.
+   - [`src/search_client/evidence.py`](../../src/search_client/evidence.py)의 `compact_case()`처럼 LLM 판정 입력에는 민원 제목(`title`)과 요지(`summary`), 부서 검증 상태만 전달하고 과거 답변 본문은 넣지 않는다.
 2. **부서 미확정·검토 필요 사례의 부서 후보 승격 금지:**
    - `department_current`가 없거나 `department_status="review_required"`인 사례(미래산업과 계열 10건, 과거 안전정책과 17건)는 검색 히트(`case_candidates`)로 참고할 수는 있으나, `department_candidates` 확정 후보 목록에 올리지 않는다.
 3. **검색 원시 점수의 확률 오용 방지:**

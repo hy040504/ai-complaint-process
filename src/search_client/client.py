@@ -11,7 +11,7 @@ import os
 from typing import Any
 import urllib.parse
 
-from src.rag.http import http_json
+from src.search_client.http import http_json
 
 
 def search_api_url() -> str:

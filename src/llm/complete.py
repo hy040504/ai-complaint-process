@@ -29,7 +29,7 @@ from src.llm.settings import (
     EXAONE_REASONING_EFFORTS,
     llm_settings,
 )
-from src.rag.http import http_json
+from src.search_client.http import http_json
 
 
 class CompleteUsage(TypedDict):

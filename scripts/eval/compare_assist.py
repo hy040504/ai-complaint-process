@@ -26,7 +26,7 @@ from src.llm.settings import (
     optional_env,
     use_provider,
 )
-from src.rag import search_available
+from src.search_client import search_available
 
 CASES = (
     {

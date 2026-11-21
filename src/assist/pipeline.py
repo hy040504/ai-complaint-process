@@ -57,7 +57,7 @@ from src.llm.settings import (
     settings_for_provider,
     settings_for_role,
 )
-from src.rag import (
+from src.search_client import (
     SearchParts,
     compact_faq,
     require_search_contract,

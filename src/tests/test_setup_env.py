@@ -45,7 +45,9 @@ def test_hub_snapshot_dir(setup_env: ModuleType, tmp_path: Path) -> None:
     )
 
 
-def test_model_cached_false_without_config(setup_env: ModuleType, tmp_path: Path) -> None:
+def test_model_cached_false_without_config(
+    setup_env: ModuleType, tmp_path: Path
+) -> None:
     """config.json이 없으면 모델 캐시가 없는 것으로 봅니다."""
     assert setup_env.model_cached(tmp_path) is False
 

@@ -3,7 +3,7 @@
 from src.assist import run_assist
 from src.complaints.config import APP_SCHEMA_SQL
 from src.llm import llm_configured, llm_settings
-from src.rag import require_search_contract, search_parts
+from src.search_client import require_search_contract, search_parts
 
 
 def _search() -> dict:
@@ -60,10 +60,10 @@ def test_packages_are_importable() -> None:
     import src.assist
     import src.complaints
     import src.llm
-    import src.rag
+    import src.search_client
 
     assert src.complaints.ComplaintService is not None
-    assert src.rag.search_via_api is not None
+    assert src.search_client.search_via_api is not None
     assert src.llm.complete_chat is not None
     assert src.assist.run_assist is not None
 

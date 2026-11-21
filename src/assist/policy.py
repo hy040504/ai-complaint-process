@@ -15,7 +15,7 @@ from src.assist.constants import (
     SCOPES,
 )
 from src.assist.district import extract_external_jurisdiction
-from src.rag.evidence import (
+from src.search_client.evidence import (
     SearchParts,
     compact_case,
     compact_faq,

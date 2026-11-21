@@ -119,7 +119,7 @@
   - 검증: `ui check` **17개**·`ui test` **18/18**, `RUN_PG_TESTS=1 pytest src/tests` **156 passed**, `mypy` **31개 모듈 0오류**, `pytest rag/tests` **48 passed(3 skipped)** + `rag.verify` **`passed: true`**, 실서버 Edge `verify_staff_features.mjs` + `audit_dark_ui.mjs` **24/24** + PG DB `complaints` 3행/`answer_templates` 5행 보존 확인.
 
 - **담당자 사이트 다른 부서 배정 및 답변 템플릿 커스텀 추가·삭제 구현 ([CASE-095](docs/cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md)):**
-  - 다른 부서 배정(`src/rag/client.py`, `src/complaints/departments.py`·`models.py`·`service.py`·`api.py`, `ui/src/llm-meta.js`·`staff.js`·`app.js`): 기존 `내가 담당`/`담당 해제` 외에 `GET /api/v1/departments`(`:8007/departments` 우선 + `공개_민원_사례.json` 127개 부서 fallback)와 확장된 `PUT /api/v1/complaints/{id}/assignment`(`department`·`reason`)를 추가하고, 목록·상세에 검색/구별 필터링 및 AI 추천 후보 원클릭 선택 모달(`#assign-dept-form`)을 구현했습니다(`automatic_transfer=False`·시민 비공개 경계 유지).
+  - 다른 부서 배정(`src/search_client/client.py`, `src/complaints/departments.py`·`models.py`·`service.py`·`api.py`, `ui/src/llm-meta.js`·`staff.js`·`app.js`): 기존 `내가 담당`/`담당 해제` 외에 `GET /api/v1/departments`(`:8007/departments` 우선 + `공개_민원_사례.json` 127개 부서 fallback)와 확장된 `PUT /api/v1/complaints/{id}/assignment`(`department`·`reason`)를 추가하고, 목록·상세에 검색/구별 필터링 및 AI 추천 후보 원클릭 선택 모달(`#assign-dept-form`)을 구현했습니다(`automatic_transfer=False`·시민 비공개 경계 유지).
   - 답변 템플릿 커스텀 추가·삭제(`src/complaints/repository.py`·`schema/complaint_app.sql`·`service.py`·`api.py`, `ui/src/app.js`·`staff.css`·`themes.css`): `complaint_app.answer_templates`·`app_meta`(최초 1회 기본 5종 시드) 테이블과 `GET/POST /api/v1/templates`, `DELETE /api/v1/templates/{id}`, `POST /api/v1/templates/reset`을 추가해 편집 중 답변을 유지한 채 템플릿 추가(`현재 편집 중 답변 불러오기` 지원)·삽입·삭제·기본 복원이 가능하도록 구현했습니다.
   - 검증: `npm --prefix ui run check` **17개**·`npm --prefix ui test` **18/18 통과**, `RUN_PG_TESTS=1 pytest src/tests` **156 passed**, `mypy` **31개 모듈 0오류**, Edge 다크 24/24(0건) 및 부서 배정·템플릿 CRUD 실브라우저 E2E 확인.
 
@@ -138,7 +138,7 @@
 
 ## 2026-11-13
 
-- **`origin/main` 비응대 기능 선택 병합 ([CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)):** `llm` 브랜치의 응대 검사기(`:5010` `src/lab_web`) 및 `src/assist`·`src/llm`·`src/rag`·`docs/harness/prompts/` 로직은 그대로 보존하고, `origin/main`에 있던 비응대 기능 두 축을 편입했습니다(Docker 파일 3종은 `AGENTS.md` 원칙에 따라 제외). ① 업무 DB(`db/` 실행 SQL·`load_samples.py`·샘플 JSON, `PublicComplaint.is_synthetic`, `complaint_app.complaints` 생성 칼럼 5개·색인 2개·`CHECK` 제약 3종·`DEMO-PUB-` 백필, `src/complaints/demo_data.py`, `seed-public-demo` CLI, [`업무DB_실행설계.md`](docs/harness/업무DB_실행설계.md), [`사례-054-업무DB...`](docs/cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md)). ② 시민 UI02~04·편집기(`/design/ui04` + `ui04-adapter.js`, `:5000` `#/citizen` 기본 해시 정렬·`#/lab` 보존, `PHRASES` 문구 바·글자 수·`Ctrl+S`/`⌘S`·`staffPager`·`nextStepBox`·`foldAnswer`·`daysSince`). 병합 후 `RUN_PG_TESTS=1 pytest src/tests` **147개 통과**, `mypy` 30개 모듈 0오류, `ui` 문법 16개·단위 테스트 12개 통과, Flask `/design/ui04` 및 `:5010` `/api/v1/health` 200 응답을 확인했습니다.
+- **`origin/main` 비응대 기능 선택 병합 ([CASE-092](docs/cases/사례-092-main브랜치-UI04-업무DB-비응대기능-병합-2026-11-13.md)):** `llm` 브랜치의 응대 검사기(`:5010` `src/lab_web`) 및 `src/assist`·`src/llm`·`src/search_client`·`docs/harness/prompts/` 로직은 그대로 보존하고, `origin/main`에 있던 비응대 기능 두 축을 편입했습니다(Docker 파일 3종은 `AGENTS.md` 원칙에 따라 제외). ① 업무 DB(`db/` 실행 SQL·`load_samples.py`·샘플 JSON, `PublicComplaint.is_synthetic`, `complaint_app.complaints` 생성 칼럼 5개·색인 2개·`CHECK` 제약 3종·`DEMO-PUB-` 백필, `src/complaints/demo_data.py`, `seed-public-demo` CLI, [`업무DB_실행설계.md`](docs/harness/업무DB_실행설계.md), [`사례-054-업무DB...`](docs/cases/사례-054-업무DB-실행구조와-설계-정합-2026-11-06.md)). ② 시민 UI02~04·편집기(`/design/ui04` + `ui04-adapter.js`, `:5000` `#/citizen` 기본 해시 정렬·`#/lab` 보존, `PHRASES` 문구 바·글자 수·`Ctrl+S`/`⌘S`·`staffPager`·`nextStepBox`·`foldAnswer`·`daysSince`). 병합 후 `RUN_PG_TESTS=1 pytest src/tests` **147개 통과**, `mypy` 30개 모듈 0오류, `ui` 문법 16개·단위 테스트 12개 통과, Flask `/design/ui04` 및 `:5010` `/api/v1/health` 200 응답을 확인했습니다.
 
 - **패치 후속 최적화·문서·검증 최종 점검 ([CASE-091](docs/cases/사례-091-패치-주석-코드최적화-문서디자인-최종점검-2026-11-13.md)):** `styles.css`에 `.llm-engine-badge[data-provider="legacy"]` 스타일을 추가하고, `app.js`에서 `applyLlmSection()` 헬퍼로 `showResult()`의 데이터/프롬프트 섹션 갱신 중복을 제거했으며 `updateLlmAvailability()`가 `.env 기본` 버튼 `<small>`에 해석된 기본 엔진명을 표시하도록 개선했습니다(`ui/tests/lab.test.mjs` 단위 테스트 추가). `README.md`·`src/README.md`·`src/lab_web/README.md`·`docs/README.md`를 `CASE-089`~`091` 기준으로 동기화·디자인 정돈하고, 전체 테스트(`src/tests` 140통과, `ui` 12통과, `mypy` 11파일, `rag/tests` 48통과/3건너뜀, `rag.verify`, `:5010` 실응답)를 검증했습니다.
 
@@ -146,7 +146,7 @@
 
 - 최근 패치([CASE-083](docs/cases/사례-083-서원대후문-장소추적-MCP연동-위치인식-2026-11-13.md)~[CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)) 전반의 한국어 docstring/JSDoc 누락(`pipeline.py`·`app.py`·`complete.py`·`lab.test.mjs`)과 `test_place_tool.py` 미사용 import를 보완하고, `src/lab_web/models.py` 중복 검증기(`blank_optional_to_none`) 통합 및 `src/llm/complete.py` `_as_int`/`_first_int`의 `bool` 배제·`0` 토큰 보존을 적용한다. 하네스 문서 4종(`AI_안전_보안_가드레일.md`·`AI_정보전달과_응답_하네스.md`·`architecture.md`·`시스템_프롬프트와_프리픽스_캐싱_지침.md`)과 `README.md` 상단 배지·빠른 탐색·Mermaid·환경변수 표·검증 근거를 최신화한다. [CASE-089](docs/cases/사례-089-패치-주석-하네스문서-최적화-디자인-개선-2026-11-13.md)
 
-- 전체 연동 점검 중 확인된 EXAONE HTTP 429(동시 요청 600·초당 한도 1) 연쇄 실패와 스트림·환경변수 누락을 보완한다. `src/rag/http.py`에 `retry-after-ms`/`retry-after`와 지수 백오프(최대 2회, 일일 한도 소진 시 즉시 중단)·`TimeoutError` 한국어 안내를 추가하고, `src/assist/pipeline.py`는 판정 API/CLI 실패 시 `llm_unavailable`로 조기 종료해 후속 `sanitize`/`staff_draft` 중복 429를 막는다. `EXAONE_URL`·`EXAONE_MODEL` 격리 로딩 및 `app.js`/`ui/src/lab.js`의 개행 없는 NDJSON EOF 플러시·422/오류 후 중복 재시도 차단을 반영하고 `:5010` 검사기 웹을 최신 코드로 재기동한다. [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
+- 전체 연동 점검 중 확인된 EXAONE HTTP 429(동시 요청 600·초당 한도 1) 연쇄 실패와 스트림·환경변수 누락을 보완한다. `src/search_client/http.py`에 `retry-after-ms`/`retry-after`와 지수 백오프(최대 2회, 일일 한도 소진 시 즉시 중단)·`TimeoutError` 한국어 안내를 추가하고, `src/assist/pipeline.py`는 판정 API/CLI 실패 시 `llm_unavailable`로 조기 종료해 후속 `sanitize`/`staff_draft` 중복 429를 막는다. `EXAONE_URL`·`EXAONE_MODEL` 격리 로딩 및 `app.js`/`ui/src/lab.js`의 개행 없는 NDJSON EOF 플러시·422/오류 후 중복 재시도 차단을 반영하고 `:5010` 검사기 웹을 최신 코드로 재기동한다. [CASE-088](docs/cases/사례-088-EXAONE-429-재시도와-스트림-오류-전체점검-2026-11-13.md)
 
 - 최근 LLM·MCP·검사기 UI 패치 전반(CASE-083~086)의 주석·docstring·버그·성능·문서를 점검·정비한다. `resolve_district_and_place` 통합 및 `_allow_fallback` 가드로 네이버 지도 중복·재귀 조회를 제거하고, `showResult` 주소 키(`road_address`/`jibun_address`) 누락과 비활성화 단추 비동기 `localStorage` 복원 경쟁 버그를 수정한다. OpenAI `usage_from_openai`의 `reasoning_tokens` 생략 호환과 `mypy` 타입 검사를 정비하고, `PREFIX-01`·`README.md` 디자인·`docs/README.md`·`src/README.md`·`src/lab_web/README.md`를 최신화한다. [CASE-087](docs/cases/사례-087-패치-주석-코드최적화-문서디자인-개선-2026-11-13.md)
 
@@ -258,7 +258,7 @@
 
 - 한 문장을 RAG e5-small로 임베딩해 벡터 숫자만 출력하는 `embed_sentence.py`·`bin/embed-sentence.cmd`를 추가하고, 실행 스크립트·CMD·`rag/test-search.sh` 파일명을 한국어로 바꿨다. Windows `start_web.py`는 Flask에 libpq 기본값을 넘긴다. [CASE-043](docs/cases/사례-043-문장-임베딩과-한국어-스크립트명-2026-11-05.md)
 
-- 두 원본 기획서 분석(`VoteLab_AI민원_상세기획안_상세분석.md`, `민원AI_계획서_상세분석.md`)과 현재 프로젝트(`src/assist`, `src/rag`, `src/llm`) 계약을 통합하여 AI 정보 전달·응답 하네스, 추후 Prefix Caching 적용을 위한 계층별 고정 시스템 프롬프트(`PREFIX-00~04`) 지침, 개인정보·긴급·처분성·특이민원 안전 가드레일 문서를 `docs/harness/`에 추가했다. [CASE-042](docs/cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
+- 두 원본 기획서 분석(`VoteLab_AI민원_상세기획안_상세분석.md`, `민원AI_계획서_상세분석.md`)과 현재 프로젝트(`src/assist`, `src/search_client`, `src/llm`) 계약을 통합하여 AI 정보 전달·응답 하네스, 추후 Prefix Caching 적용을 위한 계층별 고정 시스템 프롬프트(`PREFIX-00~04`) 지침, 개인정보·긴급·처분성·특이민원 안전 가드레일 문서를 `docs/harness/`에 추가했다. [CASE-042](docs/cases/사례-042-AI-입출력-프리픽스-캐싱-하네스-2026-11-05.md)
 
 - 시연 웹이 쓰지 않는 `db/app/complaints.sqlite3`와 `.web-data` sqlite·구 Flask 로그를 삭제하고, 추적 `db/app` 안내 폴더를 없앤다. Flask 세션 키와 검색 PostgreSQL은 유지한다. [CASE-041](docs/cases/사례-041-잔여-SQLite-삭제-2026-11-05.md)
 
@@ -288,7 +288,7 @@
 
 - 검색 임베딩 기본값을 CPU용 `intfloat/multilingual-e5-small`(384차원)로 바꿨다. 기존 BGE-M3 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지한다. Windows `bin/ask-assist.cmd`로 민원 문장을 넣으면 실행 중인 검색 API 위에서 RAG+LLM 응대를 보여 준다. [CASE-029](docs/cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md)
 
-- README 배너·검사기 그림을 한국어 카드와 네 패키지 칩으로 맞추고, 지금 됨/검사기/아직 표와 백엔드 패키지 표를 넣었다. JSON HTTP는 `src.rag.http` 한 곳으로 모으고, 응대 한 요청에서 검색 조각과 환경 LLM 설정을 재사용한다. [CASE-028](docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
+- README 배너·검사기 그림을 한국어 카드와 네 패키지 칩으로 맞추고, 지금 됨/검사기/아직 표와 백엔드 패키지 표를 넣었다. JSON HTTP는 `src.search_client.http` 한 곳으로 모으고, 응대 한 요청에서 검색 조각과 환경 LLM 설정을 재사용한다. [CASE-028](docs/cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md)
 
 - Flask `src/`를 민원 웹(`complaints`), 검색 클라이언트(`rag`), LLM 공급자(`llm`), 둘을 잇는 응대 계층(`assist`)으로 나눴다. CLI `python -m rag assist`는 같은 연결 함수를 쓰고, 민원 CRUD와 검색 색인은 섞지 않는다. [CASE-026](docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
 

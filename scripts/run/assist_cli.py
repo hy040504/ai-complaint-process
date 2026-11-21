@@ -25,7 +25,7 @@ if str(_SCRIPTS) not in sys.path:
 from start_console import apply_windows_libpq, port_open, spawn_console
 from src.assist import EXAMPLES, render_assist, run_assist
 from src.llm.settings import load_llm_env_file
-from src.rag import search_api_url, search_available
+from src.search_client import search_api_url, search_available
 
 LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "0.0.0.0"})
 DEFAULT_WAIT_SECONDS = 180.0

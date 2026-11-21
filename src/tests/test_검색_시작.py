@@ -74,11 +74,17 @@ def test_ensure_backend_services_starts_missing(
 
     monkeypatch.setattr(start_search, "clean_stale_postmaster_pid", lambda: False)
     monkeypatch.setattr(start_search, "postgres_ready", lambda: False)
-    monkeypatch.setattr(start_search, "start_postgres", lambda: started.append("postgres"))
-    monkeypatch.setattr(start_search, "port_open", lambda host, port: False)
-    monkeypatch.setattr(start_search, "start_search_api", lambda: started.append("search_api"))
     monkeypatch.setattr(
-        start_search, "wait_for_port", lambda host, port, timeout: waited.append(port) or True
+        start_search, "start_postgres", lambda: started.append("postgres")
+    )
+    monkeypatch.setattr(start_search, "port_open", lambda host, port: False)
+    monkeypatch.setattr(
+        start_search, "start_search_api", lambda: started.append("search_api")
+    )
+    monkeypatch.setattr(
+        start_search,
+        "wait_for_port",
+        lambda host, port, timeout: waited.append(port) or True,
     )
 
     assert start_search.ensure_backend_services(wait_seconds=5.0) is True

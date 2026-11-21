@@ -19,7 +19,13 @@ from src.complaints.models import (
     AssistResponse as AssistResponse,
     ProviderStatus as ProviderStatus,
 )
-from src.lab_web.constants import CATEGORIES, DISTRICT_AREAS, DISTRICTS, Category, District
+from src.lab_web.constants import (
+    CATEGORIES,
+    DISTRICT_AREAS,
+    DISTRICTS,
+    Category,
+    District,
+)
 from src.llm.settings import Provider, normalize_optional_text
 
 Title = Annotated[
@@ -61,9 +67,7 @@ class LabComplaint(Model):
 
     @field_validator("district", "provider", mode="before")
     @classmethod
-    def blank_optional_to_none(
-        cls, value: object, info: ValidationInfo
-    ) -> object:
+    def blank_optional_to_none(cls, value: object, info: ValidationInfo) -> object:
         """빈 문자열·공백 입력은 None으로 정규화하고 공급자 ID는 소문자로 맞춥니다.
 
         Args:
@@ -73,9 +77,7 @@ class LabComplaint(Model):
         Returns:
             비어 있지 않으면 정제한 문자열, 비어 있으면 None입니다.
         """
-        return normalize_optional_text(
-            value, lowercase=(info.field_name == "provider")
-        )
+        return normalize_optional_text(value, lowercase=(info.field_name == "provider"))
 
 
 class LlmEnvelope(Model):

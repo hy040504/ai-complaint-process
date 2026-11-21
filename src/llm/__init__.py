@@ -21,7 +21,7 @@ from src.llm.rag_tool import (
     search_complaint_rag,
 )
 from src.llm.settings import llm_configured, llm_settings, optional_env
-from src.rag.http import http_json
+from src.search_client.http import http_json
 
 __all__ = [
     "PLACE_TOOL_NAME",

@@ -37,7 +37,7 @@
 | 검색 원본 JSON·검색 스키마·덤프 | `rag/origin/` | [데이터 사전](rag/origin/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 시연 웹 업무 스키마 | `src/complaints/schema/` | [서버 안내](src/README.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 본문 구성·임베딩·검색 | `rag/` | [구조](docs/harness/architecture.md), [평가](docs/harness/evaluation.md) |
-| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/rag/`, `docs/harness/prompts/`, `python -m rag assist`, `src/lab_web` `:5010` | [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md), [실제 프리픽스](docs/harness/prompts/README.md), [판정 정책](docs/harness/decision-policy.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md) |
+| LLM 판정·답변·검토 안내 연결 | `src/assist/`, `src/llm/`, `src/search_client/`, `docs/harness/prompts/`, `python -m rag assist`, `src/lab_web` `:5010` | [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md), [실제 프리픽스](docs/harness/prompts/README.md), [판정 정책](docs/harness/decision-policy.md), [안전 가드레일](docs/harness/AI_안전_보안_가드레일.md) |
 | 추출 응대 검사기 웹·민원 JSON 수신 | `src/lab_web/`, `python -m src.lab_web`, `:5010` | [검사기 웹](src/lab_web/README.md), [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) |
 | 시연 웹·민원 등록·답변·상태 저장 서버 | `src/complaints/`, `src/app.py`, `ui/` | [서버·API 안내](src/README.md), [웹·민원 서버 계획](plan/시연_웹_게시판과_민원_서버_구현계획.md), [데이터 계약](docs/harness/data-contracts.md) |
 | 실행·적재·복구 | `scripts/`, `rag/` | [운영 절차](docs/harness/runbook.md) |
