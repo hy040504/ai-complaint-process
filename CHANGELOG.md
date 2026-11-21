@@ -2,6 +2,8 @@
 
 ## 2026-11-21
 
+- **프로젝트 폴더·파일 구조 정비 ([CASE-116](docs/cases/사례-116-프로젝트-폴더-파일-구조-정비-2026-11-21.md)):** `scripts/`를 `ops`·`run`·`eval`·`reports`로 분류하고 영문 이름 하나로 통합했으며, 루트 실행 파일을 `bin/`으로, `docs/report`·`docs/test`를 `docs/reports/{daily,analysis}`로, Swagger PDF를 `docs/api/`로, 초기 기획 자료를 `plan/archive/`로 옮겼습니다. `db/`는 `sql`·`samples`·`docs`로 정리하고 `rag/origin/`과 중복이던 JSON을 제거했으며, `src/rag`는 `src/search_client`로 이름을 바꾸고 `repository.py`·`service.py`·`place_tool.py`의 일부를 분리했습니다. 동작 변경 없음. `pytest` `189 passed`·`rag` `49 passed`·mypy 0오류·링크 검사 깨짐 0. Linux 셸 스크립트는 `bash`가 없어 검증하지 못했습니다.
+
 - **민원 파일 첨부 업로드 · 이미지 EXIF 자동 제거 · 비공개 권한 격리 구현 ([CASE-115](docs/cases/사례-115-민원-파일첨부-업로드-EXIF제거-권한격리-구현-2026-11-21.md)):**
   - **매직바이트 검증 · 무의존성 EXIF 제거 · 안전 저장소 (`src/complaints/attachments.py`·`config.py`·`http.py`·`src/app.py`):** 외부 이미지 라이브러리 없이 표준 라이브러리만으로 `JPG`·`PNG`·`WebP`·`PDF` 매직바이트 검증(최대 5MB × 민원당 5개, 위조 확장자 차단)과 JPEG `APP1/APP2/COM`·PNG `eXIf/tEXt/iTXt/zTXt/tIME`·WebP `EXIF/XMP` 메타데이터 자동 제거를 구현했습니다. 운영 파일은 Git 제외 `.web-data/uploads/`에 추측 불가 평면 키로 원자 저장하며, `protect_api()`에서 첨부 업로드 외 모든 일반 JSON API의 기존 `64 KiB` 한도(`413`)를 보존했습니다.
   - **PostgreSQL `attachments` · 권한 격리 API · UI (`schema/complaint_app.sql`·`models.py`·`repository.py`·`service.py`·`api.py`, `ui/src/attachments.js`·`app.js`·`staff.js`·`icons.js`·`styles.css`·`themes.css`):** `POST/GET/DELETE /api/v1/complaints/{complaint_id}/attachments*`를 추가해 비공개 민원 첨부의 타 시민 접근을 `404`로 차단하고 CSP 샌드박스·`nosniff` 헤더·답변 게시 후 삭제 금지(`409`)·민원 영구 삭제 시 디스크 연쇄 정리를 강제했습니다. `#/citizen/write` 드래그 앤 드롭 업로드, 시민·담당자 상세 썸네일 갤러리·이미지 라이트박스·PDF 다운로드·담당자 큐 `첨부 N` 배지를 라이트/다크 테마로 연동했습니다.

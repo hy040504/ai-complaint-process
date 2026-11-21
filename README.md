@@ -542,27 +542,34 @@ API와 DB 포트는 localhost에만 바인딩되어 있습니다. 입력·출력
 ai-complaint-process/
 ├── README.md / CHANGELOG.md / AGENTS.md
 ├── setup.cmd / setup.sh          # 가상환경·PostgreSQL·임베딩 모델 준비. --check 는 확인만
-├── bin/start-web.cmd / bin/start-web.sh    # Flask 시작. Linux는 포그라운드 :5000
-├── bin/start-search.cmd / bin/start-search.sh
-├── bin/ask-assist.cmd / bin/ask-assist.sh
-├── bin/embed-sentence.cmd / bin/embed-sentence.sh
 ├── .env.example                  # 응대 LLM 공급자 예시
-├── src/
+├── bin/                          # 사용자가 실행하는 진입점(.cmd/.sh 쌍): start-web·start-lab·start-search·ask-assist·embed-sentence
+├── src/                          # 업무 서버·응대 파이프라인
 │   ├── app.py                    # Flask 팩토리
-│   ├── complaints/               # 민원 웹 CRUD·아이디/비밀번호 로그인(scrypt/RBAC)·7테이블 정규화·SSE·시민 챗봇·127부서·템플릿
-│   ├── rag/                      # 검색 API·부서 사전 클라이언트
-│   ├── llm/                      # K-EXAONE 2.5(차등 추론)·Luna·Codex CLI·도로+번지 장소추적
-│   ├── assist/                   # 조기 타지역 차단·지명/거주지 분리·병렬 PREFIX-03∥04 응대 파이프라인
-│   └── lab_web/                  # 추출 응대 검사기 웹 (:5010) · LLM 선택·다크 테마·기록 폼 복원
-├── ui/                           # 시민(로그인·AI 챗봇)·담당자(부서 로그인·실시간 SSE 모니터)·검사기 화면 · 다크 테마
-├── scripts/                      # 200건·혼합 100건·Codex 100건 실증·SourceTrail 보고서·112건/5,015건 회귀·업무 PDF 스크립트
-├── docs/                         # 목차·사례(`CASE-113`)·하네스·배너·실증 SVG 차트
-│   ├── report/                   # 일자별 업무보고 PDF 전용 폴더
-│   ├── test/                     # 민원 실증 테스트 상세 분석 보고서 전용 폴더
-│   └── harness/prompts/          # PREFIX-00~04 시스템 접두 원문
-├── rag/                          # 검색 엔진·색인·CLI. 원본은 origin/
-├── db/                           # 업무 DB 실행 SQL·샘플 적재기·공개 시연 JSON. 정식 검색 색인은 rag/origin/
-├── plan/                         # 원본 계획서·MVP 실행 계획
+│   ├── complaints/               # 민원 웹 CRUD·로그인(scrypt/RBAC)·첨부·SSE·시민 챗봇·127부서·템플릿
+│   │   ├── repository/           #   저장소: schema(DDL·상수) · base(프로토콜) · memory · postgres
+│   │   ├── service.py            #   업무 서비스(권한·상태·AI 워커), staff_reports.py가 통계·CSV·검색 계산
+│   │   └── schema/               #   complaint_app 실행 DDL
+│   ├── search_client/            # 검색 API·부서 사전 클라이언트 (루트 rag/ 엔진과 구별)
+│   ├── llm/                      # K-EXAONE 2.5·Luna·Codex CLI·장소추적(place_tool + place_words 목록)
+│   ├── assist/                   # 타지역 차단·지명 분리·병렬 PREFIX-03∥04 응대 파이프라인
+│   ├── lab_web/                  # 응대 검사기 웹 (:5010)
+│   └── tests/                    # 백엔드 테스트
+├── rag/                          # 검색 엔진·색인·CLI. 원본은 origin/ (FAQ·사례 JSON의 유일한 위치)
+├── ui/                           # 시민·담당자·검사기 화면. 목업은 ui/mockups/
+├── scripts/                      # 스크립트 (자세한 안내: scripts/README.md)
+│   ├── ops/                      #   환경·DB·덤프·서비스 설치
+│   ├── run/                      #   서버·CLI 기동 본체
+│   ├── eval/                     #   실증·회귀·평가
+│   └── reports/                  #   업무보고·분석 보고서·Swagger PDF 생성
+├── db/                           # 업무 DB 설계 참고본: sql/ · samples/ · docs/ · load_samples.py
+├── docs/                         # 목차·사례·하네스·배너
+│   ├── cases/                    #   개발 기록(CASE-NNN)
+│   ├── harness/                  #   기준 문서·prompts/(PREFIX-00~04 원문)
+│   ├── reports/                  #   daily/(업무보고 PDF) · analysis/(실증 분석 보고서)
+│   ├── api/                      #   Swagger PDF
+│   └── assets/                   #   배너·차트 SVG
+├── plan/                         # 현행 구현 계획. 초기 기획 자료는 plan/archive/
 └── PACKET/                       # 수집기·부서 정규화
 ```
 
