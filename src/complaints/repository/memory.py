@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import timedelta
 from threading import Lock
 from uuid import uuid4
@@ -300,6 +301,30 @@ class MemoryRepository:
                 created_at=old.created_at,
                 last_login_at=utcnow(),
             )
+
+    def update_user_password(self, user_id: str, password_hash: str) -> None:
+        """메모리 사용자의 비밀번호 해시를 바꿉니다.
+
+        Args:
+            user_id: 대상 사용자 ID입니다.
+            password_hash: 새 해시 문자열입니다.
+        """
+        with self._lock:
+            old = self._users.get(user_id)
+            if old is not None:
+                self._users[user_id] = replace(old, password_hash=password_hash)
+
+    def set_user_active(self, user_id: str, active: bool) -> None:
+        """메모리 사용자의 활성 상태를 바꿉니다.
+
+        Args:
+            user_id: 대상 사용자 ID입니다.
+            active: 활성 상태 여부입니다.
+        """
+        with self._lock:
+            old = self._users.get(user_id)
+            if old is not None:
+                self._users[user_id] = replace(old, active=active)
 
     def list_users(self) -> list[StoredUser]:
         """메모리에 저장된 전체 사용자 계정을 반환합니다."""

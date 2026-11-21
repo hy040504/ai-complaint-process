@@ -137,6 +137,24 @@ class ComplaintRepository(Protocol):
         """
         ...
 
+    def update_user_password(self, user_id: str, password_hash: str) -> None:
+        """사용자의 비밀번호 해시를 새 값으로 바꿉니다.
+
+        Args:
+            user_id: 대상 `users.id`입니다.
+            password_hash: 새 `scrypt` 해시 문자열입니다.
+        """
+        ...
+
+    def set_user_active(self, user_id: str, active: bool) -> None:
+        """사용자 계정을 활성화하거나 비활성화합니다.
+
+        Args:
+            user_id: 대상 `users.id`입니다.
+            active: 활성 상태로 둘지 여부입니다.
+        """
+        ...
+
     def list_users(self) -> list[StoredUser]:
         """저장된 전체 사용자 계정 목록을 반환합니다."""
         ...

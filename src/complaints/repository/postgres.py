@@ -141,6 +141,12 @@ class PostgresRepository:
         self._sql_touch_login = sql.SQL(
             "UPDATE {}.users SET last_login_at = now() WHERE id = %s"
         ).format(ident)
+        self._sql_update_password = sql.SQL(
+            "UPDATE {}.users SET password_hash = %s WHERE id = %s"
+        ).format(ident)
+        self._sql_set_active = sql.SQL(
+            "UPDATE {}.users SET active = %s WHERE id = %s"
+        ).format(ident)
         self._sql_upsert_message = sql.SQL(
             "INSERT INTO {}.messages "
             "(id, complaint_id, kind, origin, author_user_id, body, published_version_id, created_at) "
@@ -945,6 +951,26 @@ class PostgresRepository:
         """
         with self.connection() as conn:
             conn.execute(self._sql_touch_login, (user_id,))
+
+    def update_user_password(self, user_id: str, password_hash: str) -> None:
+        """PostgreSQL 사용자의 비밀번호 해시를 바꿉니다.
+
+        Args:
+            user_id: 대상 `users.id`입니다.
+            password_hash: 새 `scrypt` 해시 문자열입니다.
+        """
+        with self.connection() as conn:
+            conn.execute(self._sql_update_password, (password_hash, user_id))
+
+    def set_user_active(self, user_id: str, active: bool) -> None:
+        """PostgreSQL 사용자의 활성 상태를 바꿉니다.
+
+        Args:
+            user_id: 대상 `users.id`입니다.
+            active: 활성 상태 여부입니다.
+        """
+        with self.connection() as conn:
+            conn.execute(self._sql_set_active, (active, user_id))
 
     def list_users(self) -> list[StoredUser]:
         """PostgreSQL `users` 테이블의 전체 사용자 목록을 반환합니다."""

@@ -4,6 +4,8 @@
 `src.assist`를 호출합니다.
 """
 
+import os
+
 import click
 from flask_openapi3.models.info import Info
 from flask_openapi3.openapi import OpenAPI
@@ -20,12 +22,14 @@ from src.complaints.attachments import (
 from src.complaints.auth import AuthService
 from src.complaints.config import ROOT, Settings
 from src.complaints.demo_data import seed_public_demo
+from src.complaints.errors import AppError
 from src.complaints.http import register_http, validation_error
 from src.complaints.models import ErrorResponse
 from src.complaints.pages import web
 from src.complaints.repository import MemoryRepository, PostgresRepository
 from src.complaints.seed import seed_demo
 from src.complaints.sites import SiteSessionInterface
+from src.complaints.user_admin import create_staff, reset_password, set_active
 from src.complaints.service import AssistIterFn, ComplaintService
 
 
@@ -125,5 +129,91 @@ def create_app(
         click.echo(
             f"공개 데이터 기반 시연 민원 {seed_public_demo(repository, ROOT / 'rag' / 'origin')}건 생성"
         )
+
+    def read_new_password(env_name: str) -> str:
+        """환경변수 또는 숨김 프롬프트에서 새 비밀번호를 받습니다.
+
+        Args:
+            env_name: 비밀번호를 담은 환경변수 이름입니다.
+
+        Returns:
+            비밀번호 원문입니다. 명령줄 인자로는 받지 않습니다.
+        """
+        value = os.environ.get(env_name, "")
+        if value:
+            return value
+        return str(click.prompt("비밀번호", hide_input=True, confirmation_prompt=True))
+
+    @app.cli.command("create-staff")
+    @click.option(
+        "--login-id", required=True, help="로그인 아이디(영문·숫자·_.- 3~32자)"
+    )
+    @click.option("--name", "display_name", required=True, help="이력에 표시할 이름")
+    @click.option("--department", default="", help="소속 부서. 비우면 총괄 담당자")
+    @click.option(
+        "--password-env",
+        default="COMPLAINT_NEW_PASSWORD",
+        show_default=True,
+        help="비밀번호를 담은 환경변수 이름. 없으면 숨김 프롬프트로 입력",
+    )
+    def create_staff_command(
+        login_id: str, display_name: str, department: str, password_env: str
+    ) -> None:
+        """담당자 계정을 만듭니다."""
+        try:
+            user = create_staff(
+                repository,
+                login_id=login_id,
+                display_name=display_name,
+                department=department or None,
+                password=read_new_password(password_env),
+            )
+        except AppError as error:
+            raise click.ClickException(error.message) from error
+        click.echo(f"담당자 계정 생성: {user.login_id} ({user.department or '총괄'})")
+
+    @app.cli.command("reset-password")
+    @click.option("--login-id", required=True, help="대상 로그인 아이디")
+    @click.option("--password-env", default="COMPLAINT_NEW_PASSWORD", show_default=True)
+    def reset_password_command(login_id: str, password_env: str) -> None:
+        """계정의 비밀번호를 새 값으로 바꿉니다."""
+        try:
+            user = reset_password(
+                repository, login_id=login_id, password=read_new_password(password_env)
+            )
+        except AppError as error:
+            raise click.ClickException(error.message) from error
+        click.echo(f"비밀번호 변경: {user.login_id}")
+
+    @app.cli.command("deactivate-user")
+    @click.option("--login-id", required=True, help="대상 로그인 아이디")
+    def deactivate_user_command(login_id: str) -> None:
+        """계정을 비활성화합니다. 비활성 계정은 로그인과 기존 세션이 거부됩니다."""
+        try:
+            user = set_active(repository, login_id=login_id, active=False)
+        except AppError as error:
+            raise click.ClickException(error.message) from error
+        click.echo(f"비활성화: {user.login_id}")
+
+    @app.cli.command("activate-user")
+    @click.option("--login-id", required=True, help="대상 로그인 아이디")
+    def activate_user_command(login_id: str) -> None:
+        """비활성 계정을 다시 활성화합니다."""
+        try:
+            user = set_active(repository, login_id=login_id, active=True)
+        except AppError as error:
+            raise click.ClickException(error.message) from error
+        click.echo(f"활성화: {user.login_id}")
+
+    @app.cli.command("list-users")
+    def list_users_command() -> None:
+        """시연 계정을 제외한 계정 목록을 표시합니다(비밀번호 해시는 출력하지 않음)."""
+        for user in repository.list_users():
+            if user.is_demo:
+                continue
+            state = "활성" if user.active else "비활성"
+            click.echo(
+                f"{user.login_id}\t{user.role}\t{user.department or '-'}\t{state}\t{user.display_name}"
+            )
 
     return app
