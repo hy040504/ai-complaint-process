@@ -23,6 +23,7 @@
 
 | 번호 | 문서 | 기록일 | 유형 | 작업 상태 |
 | --- | --- | --- | --- | --- |
+| CASE-118 | [시연 민원 웹 무료 외부 공개(Cloudflare Quick Tunnel)](사례-118-무료-외부-공개-Cloudflare-Quick-Tunnel-2026-11-21.md) | 2026-11-21 | 운영·보안·배포·검증 | 완료 · 민원 웹 `:5000`만 `trycloudflare` 주소로 공개(검사기·검색 API 비공개), `cloudflared` SHA-256 검증 설치, HTTPS Secure 쿠키·HSTS, 프록시 경유 시 Swagger·목업 `404` · `201`/외부·공개 경유 로그인·CSRF·잠금 검증 · 주소 가변·IP 속도 제한 미구현 |
 | CASE-117 | [시민·담당자 사이트 분리와 원격 서버 배포(main 기준)](사례-117-시민·담당자-사이트-분리와-원격-서버-배포-2026-11-21.md) | 2026-11-21 | 구현·구조·보안·운영·배포·검증 | 완료 · `/`(시민)·`/staff/`(담당자) 주소와 세션 쿠키 분리·교차 로그인 `403`, 계정 관리 CLI, `deploy-remote.ps1`, 서버 `navy2025` 가동 · `199`/`39`/브라우저·서버 검증 통과 · 원격 push·LLM 키는 미수행 |
 | CASE-116 | [프로젝트 폴더·파일 구조 정비(scripts 분류·bin 이동·db/docs/plan 정리·모듈 분리)](사례-116-프로젝트-폴더-파일-구조-정비-2026-11-21.md) | 2026-11-21 | 개선·구조·문서·검증 | 완료(일부) · `scripts/{ops,run,eval,reports}`·`bin/`·`db/{sql,samples,docs}`·`docs/reports`·`plan/archive`·`src/search_client`·`repository/` 패키지·`staff_reports`·`place_words` · `189`/`49`/링크 0 · 일부 대형 모듈·가상환경 통합·Linux 셸 검증은 미구현 |
 | CASE-115 | [민원 파일 첨부 업로드 · 이미지 EXIF 자동 제거 · 비공개 권한 격리 구현](사례-115-민원-파일첨부-업로드-EXIF제거-권한격리-구현-2026-11-21.md) | 2026-11-21 | 구현·보안·개인정보보호·백엔드·DB·UI·문서·검증 | 완료 · JPG/PNG/WebP/PDF 매직바이트 검증·EXIF 자동 제거·`.web-data/uploads`·`attachments` PG 테이블·비공개 `404` 격리·연쇄 정리 + 작성 드롭존·상세 라이트박스 + Swagger 36경로 · `189`/`49`/`36`/Edge E2E `0오류` 통과 |
