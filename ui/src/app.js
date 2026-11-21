@@ -1,4 +1,5 @@
 import { icon } from "./icons.js";
+import { afterRender } from "./motion.js";
 import { SITE, homePath, normalizePath } from "./site.js";
 import { THEME_KEY, readTheme, getTheme, setTheme } from "./theme.js";
 import {
@@ -622,7 +623,7 @@ async function loadScreen() {
   if (route.path === "/lab") {
     staffStream.close();
     app.innerHTML = labShell(
-      '<div class="panel empty" role="status">검사기를 준비하고 있습니다…</div>',
+      '<div class="skeleton-stack" role="status" aria-label="불러오는 중"><i></i><i></i><i></i><i></i><span class="sr-only">불러오는 중입니다</span></div>',
     );
     try {
       await Promise.all([loadLabExamples(), loadLabFields()]);
@@ -639,7 +640,7 @@ async function loadScreen() {
     staffStream.close();
   }
   app.innerHTML = shell(
-    '<div class="page-content"><div class="panel empty" role="status">서버에서 민원을 불러오고 있습니다…</div></div>',
+    '<div class="page-content"><div class="skeleton-stack" role="status" aria-label="불러오는 중"><i></i><i></i><i></i><i></i><span class="sr-only">불러오는 중입니다</span></div></div>',
   );
   try {
     const session = await ensureRoleSession(route.staff ? "staff" : "citizen", {
@@ -1256,6 +1257,7 @@ function render() {
     }
   }
   document.title = `${route.path === "/lab" ? "응대 검사기" : route.staff ? "담당자 업무 포털" : "청주톡톡"} · 시민의 목소리에 더 가까이`;
+  afterRender(app, route.path, location.hash);
 }
 /**
  * updateFilter 화면 동작을 구성합니다.

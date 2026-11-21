@@ -186,7 +186,7 @@ export function staffStatsPage(
   const kpiHtml = `<div class="stats-kpi-grid">${kpis
     .map(
       (k) =>
-        `<a class="staff-kpi" href="${esc(k.href)}"><span class="staff-kpi-label">${esc(k.label)}</span><strong>${esc(k.value)}<small>${esc(k.unit)}</small></strong><span class="staff-kpi-sub ${esc(k.tone)}">${esc(k.sub)}</span></a>`,
+        `<a class="staff-kpi" href="${esc(k.href)}"><span class="staff-kpi-label">${esc(k.label)}</span><strong><span data-countup="${esc(k.value)}" data-ck="stats-kpi-${esc(k.label)}">${esc(k.value)}</span><small>${esc(k.unit)}</small></strong><span class="staff-kpi-sub ${esc(k.tone)}">${esc(k.sub)}</span></a>`,
     )
     .join("")}</div>`;
 

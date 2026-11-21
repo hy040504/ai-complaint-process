@@ -1,15 +1,6 @@
 ﻿@charset "UTF-8";
 :root {
-  --teal: #087f72;
-  --teal-dark: #086459;
-  --teal-soft: #eaf5f1;
-  --ink: #203832;
-  --muted: #75827d;
-  --line: #e6ece8;
-  --bg: #f7f9f7;
-  --blue: #477bba;
-  --amber: #b38134;
-  --radius: 14px;
+  /* 색·반경 토큰은 tokens.css에서 정의합니다. */
   font-family:
     "Pretendard",
     "Noto Sans KR",
@@ -346,9 +337,9 @@ small {
   background: var(--teal-dark);
 }
 .btn.subtle {
-  background: #eef6f1;
-  color: var(--teal);
-  border-color: #deeee3;
+  background: var(--cj-blue-tint);
+  color: var(--cj-blue-deep);
+  border-color: #d5e2fa;
 }
 .btn.danger {
   background: #b34e49;
@@ -537,7 +528,7 @@ small {
   width: 47px;
   height: 47px;
   margin: 0 auto 11px;
-  background: #e9f4ef;
+  background: var(--cj-blue-tint);
   border-radius: 14px;
   color: #598c78;
 }
@@ -677,7 +668,7 @@ small {
   white-space: nowrap;
   font-size: 10px;
   font-weight: 650;
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 4px 8px;
   background: #eff2ee;
   color: #79877e;
@@ -689,23 +680,7 @@ small {
   background: currentColor;
 }
 /* 처리 상태 색은 사용자 UI 수정 명세(철회 흰색 → 접수 회색 → 검토 중 노랑 → 답변 완료 초록)를 따른다. */
-.badge.under_review {
-  background: #fff6d8;
-  color: #8a6510;
-}
-.badge.answered {
-  background: #e4f4e7;
-  color: #2f7d46;
-}
-.badge.submitted {
-  background: #eef0ee;
-  color: #6b756c;
-}
-.badge.withdrawn {
-  background: #ffffff;
-  color: #5e665f;
-  box-shadow: inset 0 0 0 1px #cfd6cc;
-}
+
 .job-running {
   background: #e5f3ee;
   color: #368c70;
@@ -714,7 +689,6 @@ small {
   background: #eaf1f9;
   color: #5c88b9;
 }
-.badge.closed,
 .job-cancelled,
 .job-superseded {
   background: #f0f1ef;
@@ -902,7 +876,7 @@ footer b {
   background: #edf5ef;
   color: #66806d;
   border: 1px solid #e1ebe2;
-  border-radius: 9px;
+  border-radius: 10px;
   padding: 13px 17px;
   font-size: 11px;
   margin-bottom: 23px;
@@ -1182,7 +1156,7 @@ td:last-child {
   gap: 12px;
   border: 1px solid #e0e7db;
   padding: 16px;
-  border-radius: 9px;
+  border-radius: 10px;
   cursor: pointer;
 }
 .radio-cards input {
@@ -1368,26 +1342,12 @@ td:last-child {
   color: #738d62;
   padding: 4px 8px;
   border: 1px solid #dce9d6;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 9px;
   white-space: nowrap;
 }
 /* 답변 배지 색은 사용자 UI 수정 명세의 4가지 구분을 따른다. */
-.origin-badge.ai {
-  background: #e4f4e7;
-  color: #2f7d46;
-  border-color: #c6e5cd;
-}
-.origin-badge.ai_edited {
-  background: #fff3cc;
-  color: #7a5a06;
-  border-color: #f1dc9b;
-}
-.origin-badge.staff {
-  background: #111111;
-  color: #ffffff;
-  border-color: #111111;
-}
+
 /* 시민 상세 맨 위의 처리 요약: 결론을 먼저, 지금 상태와 다음 단계를 칸으로 나눈다. */
 .next-step-box {
   padding: 18px 20px;
@@ -1467,13 +1427,13 @@ td:last-child {
   margin: 20px 0;
 }
 .avatar {
-  background: #e7eee1;
+  background: var(--cj-blue-tint);
   width: 35px;
   height: 35px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #6c8c5b;
+  color: var(--cj-blue-deep);
   font-weight: 600;
   font-size: 12px;
   flex-shrink: 0;
@@ -1501,7 +1461,7 @@ td:last-child {
 .answer-disclosure {
   margin-top: 23px;
   padding: 12px;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #f5f8f0;
   font-size: 10px;
   color: #889d74;
@@ -1542,7 +1502,7 @@ td:last-child {
 .progress-list li:before {
   content: "";
   width: 1px;
-  background: #e5ecdd;
+  background: var(--cj-line);
   position: absolute;
   left: 13px;
   top: 25px;
@@ -1598,8 +1558,8 @@ td:last-child {
   position: absolute;
   left: -3px;
   top: 5px;
-  background: #8dae77;
-  border: 2px solid #e5eedc;
+  background: var(--cj-blue);
+  border: 2px solid var(--cj-blue-tint);
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -1752,7 +1712,7 @@ td:last-child {
   color: #899c7c;
 }
 .sidebar nav .active {
-  background: #edf6e9;
+  background: var(--cj-blue-tint);
   color: var(--teal);
   font-weight: 650;
 }
@@ -1770,7 +1730,7 @@ td:last-child {
   padding: 17px;
   background: #f6f8f1;
   border: 1px solid #e9efdf;
-  border-radius: 9px;
+  border-radius: 10px;
   margin-bottom: 25px;
 }
 .side-note svg {
@@ -1870,7 +1830,7 @@ td:last-child {
 .staff-alert {
   padding: 15px 20px;
   border: 1px solid #dcebd5;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #eff7e9;
   display: flex;
   align-items: center;
@@ -2101,7 +2061,7 @@ td:last-child {
   margin: 0 0 14px;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 10px;
 }
 .staff-guide h2 {
   font-size: 13px;
@@ -2168,7 +2128,7 @@ td:last-child {
   align-items: center;
   margin-top: 19px;
   background: #f5f8ef;
-  border-radius: 7px;
+  border-radius: 6px;
   padding: 12px;
   color: #85a270;
   font-size: 10px;
@@ -2436,7 +2396,7 @@ dialog::backdrop {
   padding: 20px;
   background: #f7f9f2;
   border: 1px solid #e7eede;
-  border-radius: 9px;
+  border-radius: 10px;
   margin: 18px 0;
 }
 .modal-content h3 {
@@ -3742,7 +3702,7 @@ dialog::backdrop {
 }
 .auth-tab {
   padding: 9px 10px;
-  border-radius: 9px;
+  border-radius: 10px;
   border: 1px solid #cbd5e1;
   background: #f8fafc;
   color: #334155;
@@ -3771,7 +3731,7 @@ dialog::backdrop {
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #b91c1c;
@@ -3798,7 +3758,7 @@ dialog::backdrop {
 }
 .auth-staff-hints {
   padding: 10px 12px;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   font-size: 11px;
@@ -3936,7 +3896,7 @@ dialog::backdrop {
   gap: 10px;
   padding: 8px 10px;
   border: 1px solid #dbe4f2;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #ffffff;
 }
 .attachment-pending-item.saved {

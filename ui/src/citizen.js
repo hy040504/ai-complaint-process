@@ -162,7 +162,7 @@ function summary(data, actor) {
   ]
     .map(([key, label]) =>
       a(
-        `<strong>${mine.filter((c) => c.status === key).length}<small>건</small></strong><span>${label}</span>`,
+        `<strong><span data-countup="${mine.filter((c) => c.status === key).length}" data-ck="citizen-count-${key}">${mine.filter((c) => c.status === key).length}</span><small>건</small></strong><span>${label}</span>`,
         `/citizen/mine?status=${key}`,
       ),
     )

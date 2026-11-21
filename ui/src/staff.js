@@ -220,7 +220,7 @@ function metrics(rows) {
       "green",
     ],
   ];
-  return `<div class="staff-kpi-grid">${items.map(([label, count, sub, key, tone]) => a(`<span class="staff-kpi-label">${label}</span><strong>${count}<small>건</small></strong><span class="staff-kpi-sub ${tone}">${sub}</span>`, `/staff/complaints?${["drafts", "published"].includes(key) ? "view" : "status"}=${key}`, "staff-kpi")).join("")}</div>`;
+  return `<div class="staff-kpi-grid">${items.map(([label, count, sub, key, tone]) => a(`<span class="staff-kpi-label">${label}</span><strong><span data-countup="${count}" data-ck="staff-kpi-${key}">${count}</span><small>건</small></strong><span class="staff-kpi-sub ${tone}">${sub}</span>`, `/staff/complaints?${["drafts", "published"].includes(key) ? "view" : "status"}=${key}`, "staff-kpi")).join("")}</div>`;
 }
 
 /**

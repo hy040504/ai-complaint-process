@@ -153,7 +153,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-sidebar-policy {
   border: 1px solid #ffffff12;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #ffffff04;
   padding: 14px 12px;
   margin: 0 3px 16px;
@@ -330,7 +330,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 12px;
   color: #9eabc0;
   border: 1px solid #e0e6f0;
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 3px 8px;
   line-height: 1.5;
 }
@@ -428,7 +428,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-kpi {
   border: 1px solid #dfe6f1;
   background: #fff;
-  border-radius: 11px;
+  border-radius: 10px;
   padding: 18px 18px 16px;
   display: flex;
   flex-direction: column;
@@ -569,7 +569,7 @@ body[data-site="staff"] .role-switch a.selected {
   height: 40px;
   font-size: 13px;
   border: 1px solid #e0e6ef;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #fbfcfe;
   color: #607595;
   padding: 0 11px;
@@ -700,7 +700,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 4px;
   padding: 2px 7px;
   font-size: 12px;
-  border-radius: 5px;
+  border-radius: 6px;
   line-height: 1.55;
   font-weight: 500;
   white-space: nowrap;
@@ -751,7 +751,7 @@ body[data-site="staff"] .role-switch a.selected {
   color: #b0bfd6;
 }
 .staff-workspace .badge {
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 12px;
   padding: 4px 8px;
   line-height: 1.5;
@@ -759,27 +759,7 @@ body[data-site="staff"] .role-switch a.selected {
   min-width: 66px;
 }
 /* 처리 상태 색: 시민 화면과 같은 명세 색을 쓴다 */
-.staff-workspace .badge.withdrawn {
-  background: #fff;
-  color: #5e665f;
-  box-shadow: inset 0 0 0 1px #cfd6cc;
-}
-.staff-workspace .badge.submitted {
-  background: #eef0ee;
-  color: #6b756c;
-}
-.staff-workspace .badge.under_review {
-  background: #fff6d8;
-  color: #8a6510;
-}
-.staff-workspace .badge.answered {
-  background: #e4f4e7;
-  color: #2f7d46;
-}
-.staff-workspace .badge.closed {
-  background: #f0f2f7;
-  color: #8f9cb2;
-}
+
 .staff-workspace .pagination {
   padding: 17px;
   color: #9daec4;
@@ -990,7 +970,7 @@ body[data-site="staff"] .role-switch a.selected {
   height: 34px;
   padding: 0 12px;
   border: 1px solid #c9d6ea;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #fff;
   color: #2f6fed;
   font-size: 13px;
@@ -1227,7 +1207,7 @@ body[data-site="staff"] .role-switch a.selected {
   color: #627ca3;
   background: #fcfdff;
   border-color: #dfe7f3;
-  border-radius: 7px;
+  border-radius: 6px;
 }
 .staff-workspace :is(input, textarea, select):focus {
   outline: 2px solid #b0c9f7;
@@ -1272,21 +1252,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 12px;
 }
 /* 답변 배지: AI 검토(초록), AI 수정(노랑), 담당자 답변(검정) */
-.staff-workspace .origin-badge.ai {
-  border-color: #c6e5cd;
-  background: #e4f4e7;
-  color: #2f7d46;
-}
-.staff-workspace .origin-badge.ai_edited {
-  border-color: #f1dc9b;
-  background: #fff3cc;
-  color: #7a5a06;
-}
-.staff-workspace .origin-badge.staff {
-  border-color: #111111;
-  background: #111111;
-  color: #ffffff;
-}
+
 .staff-workspace .answer-disclosure {
   background: #fcf8ec;
   color: #b9a575;
@@ -2196,7 +2162,7 @@ body[data-site="staff"] #toast {
   }
   .staff-workspace .detail-grid .panel {
     padding: 19px 16px;
-    border-radius: 11px;
+    border-radius: 10px;
     margin-bottom: 17px;
   }
   .staff-workspace .detail-grid h2 {
@@ -2596,7 +2562,7 @@ body[data-site="staff"] #toast {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: 7px;
+  border-radius: 6px;
   border: 1px solid #cad8ed;
   background: #f5f9ff;
   color: #2f5fa8;
@@ -2917,7 +2883,7 @@ body[data-site="staff"] #toast {
   justify-content: center;
   min-width: 60px;
   padding: 4px 9px;
-  border-radius: 7px;
+  border-radius: 6px;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.04em;

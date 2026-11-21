@@ -165,21 +165,6 @@ body[data-theme="dark"] .modal-content .origin-badge {
   border-color: #675638;
   color: #edd589;
 }
-body[data-theme="dark"] .modal-content .origin-badge.ai {
-  background: #173a27;
-  border-color: #2b5a40;
-  color: #9fdcb4;
-}
-body[data-theme="dark"] .modal-content .origin-badge.ai_edited {
-  background: #463816;
-  border-color: #6e5927;
-  color: #f3d77f;
-}
-body[data-theme="dark"] .modal-content .origin-badge.staff {
-  background: #233046;
-  border-color: #53698c;
-  color: #ecf3ff;
-}
 body[data-theme="dark"] .modal-content .timeline li {
   border-color: #354760;
 }
@@ -562,21 +547,6 @@ body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-sh
   background: #423921;
   border-color: #675638;
   color: #edd589;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .origin-badge.ai {
-  background: #173a27;
-  border-color: #2b5a40;
-  color: #9fdcb4;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .origin-badge.staff {
-  background: #233046;
-  border-color: #53698c;
-  color: #ecf3ff;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .origin-badge.ai_edited {
-  background: #463816;
-  border-color: #6e5927;
-  color: #f3d77f;
 }
 body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .answer-disclosure {
   background: #332d20;
@@ -1068,24 +1038,6 @@ body[data-theme="dark"][data-site="staff"] .staff-tag.red {
 body[data-theme="dark"][data-site="staff"] .staff-tag.gray {
   background: #303a4b;
   color: #ccd5e2;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.submitted {
-  background: #33363a;
-  color: #c8cec9;
-}
-body[data-theme="dark"][data-site="staff"]
-  .staff-workspace
-  .badge.under_review {
-  background: #4a3b12;
-  color: #f1d27a;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.answered {
-  background: #173a27;
-  color: #9fdcb4;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.closed {
-  background: #303a4b;
-  color: #c3cddd;
 }
 body[data-theme="dark"][data-site="staff"] .staff-workspace .pagination {
   color: #bdc9dc;
@@ -1620,27 +1572,6 @@ body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-sh
   background: #28364d;
   color: #d3deef;
 }
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .badge.withdrawn {
-  background: #162133;
-  color: #d6e0f0;
-  box-shadow: inset 0 0 0 1px #52647e;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .badge.submitted {
-  background: #2d3646;
-  color: #d7dfeb;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .badge.under_review {
-  background: #463815;
-  color: #f4d67c;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .badge.answered {
-  background: #183d28;
-  color: #9de0b5;
-}
-body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell .badge.closed {
-  background: #2a3446;
-  color: #c7d3e5;
-}
 body[data-theme="dark"]:is([data-site="citizen"], [data-site="lab"]) .citizen-shell :is(.complaint-form > label, .form-grid label) {
   color: #dce6f7;
 }
@@ -1801,21 +1732,6 @@ body[data-theme="dark"][data-site="staff"] .staff-workspace .origin-badge {
   border-color: #675638;
   color: #edd589;
 }
-body[data-theme="dark"][data-site="staff"] .staff-workspace .origin-badge.ai {
-  background: #173a27;
-  border-color: #2b5a40;
-  color: #9fdcb4;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .origin-badge.ai_edited {
-  background: #463816;
-  border-color: #6e5927;
-  color: #f3d77f;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .origin-badge.staff {
-  background: #233046;
-  border-color: #53698c;
-  color: #ecf3ff;
-}
 body[data-theme="dark"][data-site="staff"] .staff-workspace .phrase-chip {
   background: #213048;
   border-color: #3d5170;
@@ -1871,11 +1787,6 @@ body[data-theme="dark"][data-site="staff"] .staff-workspace .btn.danger {
 body[data-theme="dark"][data-site="staff"] .staff-workspace .btn.danger:hover {
   background: #923535;
   border-color: #b84b4b;
-}
-body[data-theme="dark"][data-site="staff"] .staff-workspace .badge.withdrawn {
-  background: #182336;
-  color: #d6e0f0;
-  box-shadow: inset 0 0 0 1px #52647e;
 }
 body[data-theme="dark"][data-site="staff"] .staff-workspace .badge:is(.job-queued, .job-cancelled, .job-superseded) {
   background: #2b384d;

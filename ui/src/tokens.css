@@ -1,0 +1,92 @@
+/*
+ * 시민·담당자 사이트가 함께 쓰는 디자인 토큰입니다 (CASE-120).
+ * 색·상태·모서리·그림자·간격·모션 값을 한곳에서 정의하고, 기존 변수(--teal 등)는
+ * 이 토큰으로 연결해 라이트와 다크의 브랜드색이 어긋나지 않게 합니다.
+ * 모든 글자·배경 조합은 WCAG 4.5:1 이상이며 ui/tests/tokens.test.mjs가 검사합니다.
+ */
+:root {
+  /* 브랜드: 청주 블루 하나를 중심으로 */
+  --cj-ink: #16203a;
+  --cj-ink-2: #5b6b85;
+  --cj-blue: #2f6fed;
+  --cj-blue-deep: #1e4fc7;
+  --cj-blue-tint: #e8f0ff;
+  --cj-line: #e0e6f0;
+  --cj-bg: #f6f8fc;
+  --cj-surface: #ffffff;
+  --cj-row-hover: #f2f7ff;
+  --cj-flash: #cfe0ff;
+
+  /* 상태: 같은 뜻은 두 사이트에서 같은 색 */
+  --st-wait-bg: #fff3d6;
+  --st-wait-fg: #8a5a00;
+  --st-review-bg: #e8f0ff;
+  --st-review-fg: #1e40af;
+  --st-done-bg: #e3f5ec;
+  --st-done-fg: #166b47;
+  --st-closed-bg: #edf1f6;
+  --st-closed-fg: #475569;
+  --st-fail-bg: #fdebeb;
+  --st-fail-fg: #a32727;
+  --st-withdrawn-fg: #5b6b85;
+  --st-withdrawn-ring: #c9d6ee;
+
+  /* 모서리 4단계 */
+  --r-chip: 6px;
+  --r-control: 10px;
+  --r-card: 16px;
+  --r-pill: 999px;
+
+  /* 그림자 3단계 */
+  --e1: 0 1px 2px rgba(22, 32, 58, 0.06);
+  --e2: 0 6px 18px rgba(22, 32, 58, 0.08);
+  --e3: 0 14px 34px rgba(22, 32, 58, 0.14);
+
+  /* 간격 (4px 기준) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* 모션: 시간 3종과 이징 1개 */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* 기존 변수를 토큰에 연결해 이중 브랜드색(청록/파랑)을 해소합니다 */
+  --teal: var(--cj-blue);
+  --teal-dark: var(--cj-blue-deep);
+  --teal-soft: var(--cj-blue-tint);
+  --ink: var(--cj-ink);
+  --muted: var(--cj-ink-2);
+  --line: var(--cj-line);
+  --bg: var(--cj-bg);
+  --blue: var(--cj-blue);
+  --amber: var(--st-wait-fg);
+  --radius: var(--r-card);
+}
+
+/* 다크 테마는 상태 칩과 강조 배경만 교체합니다(기존 themes.css의 면·글자색은 그대로) */
+body[data-theme="dark"] {
+  --cj-row-hover: rgba(111, 160, 255, 0.1);
+  --cj-flash: rgba(111, 160, 255, 0.32);
+  --st-wait-bg: rgba(232, 184, 74, 0.16);
+  --st-wait-fg: #f2c96b;
+  --st-review-bg: rgba(111, 160, 255, 0.18);
+  --st-review-fg: #a9c6ff;
+  --st-done-bg: rgba(70, 200, 140, 0.16);
+  --st-done-fg: #7fddb0;
+  --st-closed-bg: rgba(159, 176, 204, 0.16);
+  --st-closed-fg: #bfcbe0;
+  --st-fail-bg: rgba(255, 110, 110, 0.16);
+  --st-fail-fg: #ffa3a3;
+  --st-withdrawn-fg: #9fb0cc;
+  --st-withdrawn-ring: rgba(159, 176, 204, 0.4);
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --e2: 0 6px 18px rgba(0, 0, 0, 0.32);
+  --e3: 0 14px 34px rgba(0, 0, 0, 0.5);
+}

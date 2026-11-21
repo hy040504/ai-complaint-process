@@ -202,7 +202,7 @@ body[data-site="lab"] .lab-evidence li {
   gap: 8px;
   align-items: center;
   padding: 10px 13px;
-  border-radius: 11px;
+  border-radius: 10px;
   border: 1px solid #e3e8f0;
   background: #fafcff;
 }

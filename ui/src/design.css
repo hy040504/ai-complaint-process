@@ -1,0 +1,198 @@
+/*
+ * 두 사이트 공통 컴포넌트·모션 규칙입니다 (CASE-120). 다른 CSS 뒤에 로드합니다.
+ *  1. 상태 칩 5색: styles/citizen/staff/themes에 흩어져 있던 정의를 이 한 곳으로 모았습니다.
+ *  2. 모션: 120·220·420ms와 이징 1개. 호버 들림·눌림·부유·맥동·라이브 점·스켈레톤·새 행 플래시.
+ *  3. 사용자가 "동작 줄이기"를 켜면 움직임은 모두 멈춥니다.
+ */
+
+/* ── 1. 상태 칩 ── */
+:is(html body .badge, html body[data-site] .citizen-shell .badge, html body[data-site] .staff-workspace .badge).submitted {
+  background: var(--st-wait-bg);
+  color: var(--st-wait-fg);
+  box-shadow: none;
+}
+:is(html body .badge, html body[data-site] .citizen-shell .badge, html body[data-site] .staff-workspace .badge).under_review {
+  background: var(--st-review-bg);
+  color: var(--st-review-fg);
+  box-shadow: none;
+}
+:is(html body .badge, html body[data-site] .citizen-shell .badge, html body[data-site] .staff-workspace .badge).answered {
+  background: var(--st-done-bg);
+  color: var(--st-done-fg);
+  box-shadow: none;
+}
+:is(html body .badge, html body[data-site] .citizen-shell .badge, html body[data-site] .staff-workspace .badge).closed {
+  background: var(--st-closed-bg);
+  color: var(--st-closed-fg);
+  box-shadow: none;
+}
+:is(html body .badge, html body[data-site] .citizen-shell .badge, html body[data-site] .staff-workspace .badge).withdrawn {
+  background: transparent;
+  color: var(--st-withdrawn-fg);
+  box-shadow: inset 0 0 0 1px var(--st-withdrawn-ring);
+}
+:is(html body .badge, html body[data-site] .staff-workspace .badge).job-failed {
+  background: var(--st-fail-bg);
+  color: var(--st-fail-fg);
+}
+
+/* 답변 출처 태그(origin-badge): 검정이던 담당자 태그를 브랜드색으로, 나머지는 상태 색 체계로 통일 */
+:is(html body[data-site][data-theme][data-theme] .origin-badge, html body[data-site][data-theme][data-theme] .modal-content .origin-badge) {
+  background: var(--st-closed-bg);
+  color: var(--st-closed-fg);
+  border-color: transparent;
+}
+:is(html body[data-site][data-theme][data-theme] .origin-badge, html body[data-site][data-theme][data-theme] .modal-content .origin-badge).ai {
+  background: var(--st-done-bg);
+  color: var(--st-done-fg);
+}
+:is(html body[data-site][data-theme][data-theme] .origin-badge, html body[data-site][data-theme][data-theme] .modal-content .origin-badge).ai_edited {
+  background: var(--st-wait-bg);
+  color: var(--st-wait-fg);
+}
+:is(html body[data-site][data-theme][data-theme] .origin-badge, html body[data-site][data-theme][data-theme] .modal-content .origin-badge).staff {
+  background: var(--cj-blue-deep);
+  color: #ffffff;
+  border-color: var(--cj-blue-deep);
+}
+
+/* ── 2. 스켈레톤(불러오는 중) ── */
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-5);
+  max-width: 920px;
+  margin: 0 auto;
+}
+.skeleton-stack > i {
+  display: block;
+  height: 18px;
+  border-radius: var(--r-chip);
+  background: linear-gradient(90deg, var(--cj-line) 25%, var(--cj-bg) 50%, var(--cj-line) 75%);
+  background-size: 200% 100%;
+}
+.skeleton-stack > i:nth-child(1) { width: 38%; height: 28px; }
+.skeleton-stack > i:nth-child(2) { width: 92%; height: 96px; border-radius: var(--r-card); }
+.skeleton-stack > i:nth-child(3) { width: 78%; }
+.skeleton-stack > i:nth-child(4) { width: 64%; }
+
+/* ── 3. 모션(동작 줄이기를 켜지 않은 사용자만) ── */
+@media (prefers-reduced-motion: no-preference) {
+  /* 호버 들림: 작은 카드·지표·서비스 버튼 */
+  .citizen-service,
+  .citizen-status-card,
+  .citizen-how-card,
+  .citizen-recent,
+  .staff-kpi {
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+  .citizen-service:hover,
+  .citizen-status-card:hover,
+  .citizen-how-card:hover,
+  .citizen-recent:hover,
+  .staff-kpi:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--e3);
+  }
+
+  /* 눌림 피드백 */
+  .btn,
+  .icon-btn,
+  .citizen-service,
+  .staff-kpi,
+  .chip,
+  .staff-assign-btn {
+    transition-property: transform, background, color, border-color, box-shadow;
+    transition-duration: var(--dur-fast), var(--dur-base), var(--dur-base), var(--dur-base), var(--dur-base);
+    transition-timing-function: var(--ease-out);
+  }
+  .btn:active,
+  .icon-btn:active,
+  .citizen-service:active,
+  .staff-kpi:active,
+  .staff-assign-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* 담당자 업무 큐: 호버 시 왼쪽 막대와 화살표 이동 */
+  .staff-queue-item {
+    transition:
+      background var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+  }
+  .staff-queue-item:hover {
+    background: var(--cj-row-hover);
+    box-shadow: inset 4px 0 0 var(--cj-blue);
+  }
+  .staff-row-open {
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      color var(--dur-base);
+  }
+  .staff-queue-item:hover .staff-row-open {
+    transform: translateX(5px);
+    color: var(--cj-blue);
+  }
+  .staff-nav-link {
+    transition:
+      background var(--dur-base) var(--ease-out),
+      color var(--dur-base),
+      padding-left var(--dur-base) var(--ease-out);
+  }
+
+  /* 시민 홈: 히어로 아이콘 부유, 접수 입력줄 맥동 */
+  .citizen-welcome-symbol {
+    animation: cj-float 3.4s ease-in-out infinite;
+  }
+  .citizen-askbar {
+    animation: cj-pulse 2.6s ease-out 1.2s infinite;
+    transition:
+      box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+  .citizen-askbar:hover,
+  .citizen-askbar:focus-within {
+    animation: none;
+  }
+
+  /* 담당자: 실시간 연결·진행 중 표시 점 */
+  .staff-connection > i,
+  .connection.sse-live > i,
+  .connection.sse-connected > i {
+    animation: cj-live 1.6s ease-in-out infinite;
+  }
+
+  /* 로딩 스켈레톤과 새 행 플래시 */
+  .skeleton-stack > i {
+    animation: cj-shimmer 1.4s linear infinite;
+  }
+  .row-flash {
+    animation: cj-flash 2.6s ease-out;
+  }
+}
+
+@keyframes cj-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes cj-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(47, 111, 237, 0.4); }
+  70% { box-shadow: 0 0 0 14px rgba(47, 111, 237, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(47, 111, 237, 0); }
+}
+@keyframes cj-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+@keyframes cj-shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes cj-flash {
+  0% { background: var(--cj-flash); }
+  100% { background: transparent; }
+}
