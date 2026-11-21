@@ -36,7 +36,7 @@ DEFAULT_UI_PDF = Path(
 DEFAULT_SCENES_DIR = Path(
     r"C:\Users\user\.gemini\antigravity-cli\brain\3197986d-ee70-477b-9852-28bbba3b7616\scratch"
 )
-OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "report" / "업무보고_20261118.pdf"
+OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "reports" / "daily" / "업무보고_20261118.pdf"
 
 
 @dataclass(frozen=True)
@@ -655,7 +655,7 @@ def build_report_html(scenes_dir: Path, ui_pdf_path: Path) -> str:
 
 
 def main() -> None:
-    """11월 18일 종합 업무보고 PDF(`docs/report/업무보고_20261118.pdf`)를 생성합니다.
+    """11월 18일 종합 업무보고 PDF(`docs/reports/daily/업무보고_20261118.pdf`)를 생성합니다.
 
     Raises:
         FileNotFoundError: 원본 UI 보고서 PDF 또는 Swagger 캡처 PNG가 없을 때 발생합니다.

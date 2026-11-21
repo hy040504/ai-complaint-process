@@ -25,7 +25,7 @@ if str(ROOT) not in sys.path:
 from scripts.보고서_공통 import render_html_to_pdf
 
 ASSETS_DIR = ROOT / "docs" / "assets"
-REPORT_DIR = ROOT / "docs" / "test"
+REPORT_DIR = ROOT / "docs" / "reports" / "analysis"
 DEFAULT_EVAL_200_JSON = ROOT / "rag" / "reports" / "lab-5010-eval-200-20261119.json"
 DEFAULT_EVAL_112_JSON = ROOT / "rag" / "reports" / "lab-5010-eval-112-20261117.json"
 OUT_MD_PATH = REPORT_DIR / "청주_민원_200건_상세분석보고서_2026-11-19.md"
@@ -835,11 +835,11 @@ def build_markdown_report(
 
     return f"""# 청주 민원 단독 응대 검사기(:5010) 200건 실증 상세 분석 보고서
 
-[테스트 보고서 모음](README.md) · [112건 11/17 기준 보고서](청주_민원_112건_상세분석보고서_2026-11-17.md) · [프로젝트 소개](../../README.md) · [원자료 JSON](../../rag/reports/lab-5010-eval-200-20261119.json)
+[테스트 보고서 모음](README.md) · [112건 11/17 기준 보고서](청주_민원_112건_상세분석보고서_2026-11-17.md) · [프로젝트 소개](../../../README.md) · [원자료 JSON](../../../rag/reports/lab-5010-eval-200-20261119.json)
 
 > **기준일:** 2026-11-19 KST (`POST http://127.0.0.1:5010/api/v1/lab/complaints` 실서버 200건 전수 호출)  
 > **구성:** 11/17 기준선 **112건** 전수 동일 재측정 + `CASE-100·103·104` 패치 검증 및 고난도 경계 스트레스 **88건** = **총 200건** (청주 {stats.cheongju_cases}건 · 타지역 {stats.control_cases}건)  
-> **PDF 판:** [`청주_민원_200건_상세분석보고서_2026-11-19.pdf`](청주_민원_200건_상세분석보고서_2026-11-19.pdf) · **생성 스크립트:** [`scripts/reports/analysis_report_200.py`](../../scripts/reports/analysis_report_200.py)
+> **PDF 판:** [`청주_민원_200건_상세분석보고서_2026-11-19.pdf`](청주_민원_200건_상세분석보고서_2026-11-19.pdf) · **생성 스크립트:** [`scripts/reports/analysis_report_200.py`](../../../scripts/reports/analysis_report_200.py)
 
 ---
 
@@ -853,17 +853,17 @@ def build_markdown_report(
 | `codex_cli` 응답 속도 | 평균 {stats.baseline_codex_avg:.2f}s | **LLM 평균 {codex_llm_avg:.2f}s** | 중앙 **{codex_llm_med:.2f}s** · 순수 조기 차단({len(early_fast)}건) 평균 **{early_fast_avg:.3f}s** (`D28` 순화 6.53s 포함 {len(early_rows)}건) |
 | `exaone_api` 교차 성능 | 완주 6/10 ({stats.baseline_exaone_ok_avg:.2f}s) | **LLM 완주 {len(stats.exaone_ok_times)}건 ({ex_ok_avg:.2f}s)** | 11/17 200s 초과(`B19·B20`) 및 순화 지연(`D19`)의 `high/low` 차등·병렬 실행 후 실측 결과 |
 
-![5대 테스트 축별 200건 실증 검증 결과](../assets/eval-200-axis-breakdown.svg)
+![5대 테스트 축별 200건 실증 검증 결과](../../assets/eval-200-axis-breakdown.svg)
 
 ---
 
 ## 2. 추세와 구성 (시각화 도표 4종)
 
-![판정 분기 및 사유 코드 분포](../assets/eval-200-outcome-reason.svg)
+![판정 분기 및 사유 코드 분포](../../assets/eval-200-outcome-reason.svg)
 
-![LLM 엔진별 응답 속도 및 CASE-103 효과](../assets/eval-200-latency-engines.svg)
+![LLM 엔진별 응답 속도 및 CASE-103 효과](../../assets/eval-200-latency-engines.svg)
 
-![청주시 관할 구 감지 분포 및 한계 해소 비교](../assets/eval-200-district-and-gaps.svg)
+![청주시 관할 구 감지 분포 및 한계 해소 비교](../../assets/eval-200-district-and-gaps.svg)
 
 ### 5대 테스트 축별 요약 비교
 

@@ -23,7 +23,7 @@ DEFAULT_SCENES_DIR = Path(
     r"C:\Users\user\.gemini\antigravity-cli\brain\3197986d-ee70-477b-9852-28bbba3b7616\scratch\test_scenes"
 )
 OUTPUT_PDF_PATH = (
-    Path(__file__).resolve().parents[2] / "docs" / "report" / "업무보고_20261116.pdf"
+    Path(__file__).resolve().parents[2] / "docs" / "reports" / "daily" / "업무보고_20261116.pdf"
 )
 
 

@@ -29,7 +29,7 @@ DEFAULT_SCENES_DIR = Path(
     r"C:\Users\user\.gemini\antigravity-cli\brain\3197986d-ee70-477b-9852-28bbba3b7616\scratch"
 )
 DEFAULT_CHART_SVG = ROOT_DIR / "docs" / "assets" / "eval-112-axis-breakdown.svg"
-OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "report" / "업무보고_20261117.pdf"
+OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "reports" / "daily" / "업무보고_20261117.pdf"
 
 
 @dataclass(frozen=True)
@@ -715,7 +715,7 @@ def _build_page1_main_report_html() -> str:
       <div class="bullet-item">- <span class="highlight-tag">동+번지수·장소 오매칭 개선</span> : '봉명동1349'처럼 띄어쓰기 없는 주소 경계와 청주 단일 구 8대 시설('청주국제공항'·'문암생태공원'·'청남대' 등) 인식을 보강하고, '지역'·'접수'·'신청'·'궁금합니다' 등 일반 단어가 네이버 지도 상호로 잘못 잡히던 오류를 차단</div>
       <div class="bullet-item">- <span class="highlight-tag">타지역 동명이인·관할 외 방어</span> : '대전 유성구 봉명동'·'서울 종로구 사직동'처럼 청주와 이름이 겹치는 타지역 민원을 흥덕구·서원구로 오인하지 않도록 분리하고, 관할 외(out_of_scope) 건은 부서 추천까지 담당자 검토로 안전 보류</div>
       <div class="section-title">2. 112건 시각화 분석 보고서 제작 &amp; 검사기(:5010) 기록 복원 (CASE-098·099)</div>
-      <div class="bullet-item">- <span class="highlight-tag">112건 상세 보고서 &amp; 폼 복원</span> : :5010 오른쪽 테스트 기록 클릭 시 당시 입력 제목·분야·지역·엔진·본문을 폼에 복원하도록 개선하고, 5대 축 SVG 차트 4종과 112건 전수 표를 수록한 6쪽 상세 분석 보고서(docs/test/) 및 보고서 전용 폴더(docs/report/) 통합</div>
+      <div class="bullet-item">- <span class="highlight-tag">112건 상세 보고서 &amp; 폼 복원</span> : :5010 오른쪽 테스트 기록 클릭 시 당시 입력 제목·분야·지역·엔진·본문을 폼에 복원하도록 개선하고, 5대 축 SVG 차트 4종과 112건 전수 표를 수록한 6쪽 상세 분석 보고서(docs/reports/analysis/) 및 보고서 전용 폴더(docs/reports/daily/) 통합</div>
       <div class="section-title">3. 민원 웹(:5000) 한국어 Swagger API 포털 &amp; 담당자 콘솔 문서 구현 (CASE-101)</div>
       <div class="bullet-item">- <span class="highlight-tag">한국어 Swagger UI &amp; 콘솔(#/staff/api)</span> : /docs·/swagger에 자체 정적 자산 기반 한국어 Swagger 포털(담당자·시민 세션 원클릭 연결, 헬스 배지, 통합 필터 opsFilter)을 구축하고 담당자 사이드바에 '#/staff/api' 요약 카드·엔드포인트 빠른 색인(28개)·임베드 UI 연결</div>
       <div class="bullet-item">- <span class="highlight-tag">Authorize 빈 창 해결 &amp; 대비 검수</span> : HttpOnly 세션 방식상 비어 있던 무기능 Authorize 모달을 제거하고, 라이트·다크 테마 스크린샷 및 WCAG 대비(4.5 미만 0건)·복사 아이콘·iframe 실시간 테마 동기화 전수 점검 및 OpenAPI PDF 재생성 완료</div>

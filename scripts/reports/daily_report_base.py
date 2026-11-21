@@ -380,7 +380,8 @@ if __name__ == "__main__":
         Path(r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261109.pdf"),
         Path(__file__).resolve().parents[2]
         / "docs"
-        / "report"
+        / "reports"
+        / "daily"
         / "업무보고_20261109.pdf",
     ]
     generate_pdf(targets)

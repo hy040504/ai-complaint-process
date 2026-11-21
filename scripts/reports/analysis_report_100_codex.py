@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 from scripts.보고서_공통 import render_html_to_pdf  # noqa: E402
 
 ASSETS_DIR = ROOT / "docs" / "assets"
-REPORT_DIR = ROOT / "docs" / "test"
+REPORT_DIR = ROOT / "docs" / "reports" / "analysis"
 JSON_112 = ROOT / "rag" / "reports" / "lab-5010-eval-112-20261117.json"
 JSON_200 = ROOT / "rag" / "reports" / "lab-5010-eval-200-20261119.json"
 JSON_MIX100 = ROOT / "rag" / "reports" / "lab-5010-eval-100-20261120.json"
@@ -349,12 +349,12 @@ def _build_markdown(
     lines: list[str] = [
         "# 청주 민원 AI 완충지대(:5010) Codex CLI 전용 100건 실증 상세 분석 보고서",
         "",
-        "[테스트 보고서 모음](README.md) · [프로젝트 소개](../../README.md) · [CASE-113](../cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md) · [원자료 JSON](../../rag/reports/lab-5010-eval-100-codex-20261120.json)",
+        "[테스트 보고서 모음](README.md) · [프로젝트 소개](../../../README.md) · [CASE-113](../../cases/사례-113-100건실증-세부문제-패치와-Codex-CLI-신규100건-실증평가-2026-11-20.md) · [원자료 JSON](../../../rag/reports/lab-5010-eval-100-codex-20261120.json)",
         "",
         "- **평가 일시:** 2026-11-20 KST",
         "- **대상 서버 · 모델:** 단독 응대 검사기 `http://127.0.0.1:5010/api/v1/lab/complaints` · 전수 `codex_cli` (`gpt-6-luna`)",
         "- **평가 구성:** 총 **100건** = `patch_reverify_20` **20건**(`CASE-109` 패치 대상 5건 + 핵심 경계 15건) + 기존 평가셋과 겹치지 않는 신규 청주 민원 `fresh_codex_80` **80건**(`K01`~`K80`)",
-        "- **실행 스크립트:** [`scripts/eval/live_eval_100_codex.py`](../../scripts/eval/live_eval_100_codex.py) (`--workers 3 --stagger 0.35`, 총 소요 `541.5s`, 임시 `lab-runs` 100건 자동 정리 완료)",
+        "- **실행 스크립트:** [`scripts/eval/live_eval_100_codex.py`](../../../scripts/eval/live_eval_100_codex.py) (`--workers 3 --stagger 0.35`, 총 소요 `541.5s`, 임시 `lab-runs` 100건 자동 정리 완료)",
         "",
         "---",
         "",
@@ -369,7 +369,7 @@ def _build_markdown(
         f"| **타지역 조기 차단 (`{early['count']}건`)** | **평균 `{early['avg']:.3f}s`** | 최대 `{early['max']:.3f}s` (`K45` 대전시 유성구 봉명동 동명이인 포함) |",
         f"| **안전·무결성 경계** | **`automatic_transfer=True 0건`** | `staff_draft` **`{summary['staff_draft_ok']}/{summary['staff_draft_total']} (100%)`** · JSON 오류 `0건` · 오류 덤프 `0건` |",
         "",
-        "![4단계 누적 실증 추이 및 Codex 100건 축별 성적](../assets/eval-100-codex-progression.svg)",
+        "![4단계 누적 실증 추이 및 Codex 100건 축별 성적](../../assets/eval-100-codex-progression.svg)",
         "",
         "---",
         "",
@@ -391,7 +391,7 @@ def _build_markdown(
         [
             "| **종합 (자동이관 0건)** | " + " | ".join(tot_cells) + " |",
             "",
-            "![Codex 100건 판정 분기 및 응답 지연시간 분포](../assets/eval-100-codex-latency-audit.svg)",
+            "![Codex 100건 판정 분기 및 응답 지연시간 분포](../../assets/eval-100-codex-latency-audit.svg)",
             "",
             "---",
             "",

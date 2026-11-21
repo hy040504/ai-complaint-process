@@ -25,7 +25,7 @@ from report_common import render_html_to_pdf  # noqa: E402
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_JSON = ROOT_DIR / "rag" / "reports" / "lab-5010-eval-112-20261117.json"
 ASSETS_DIR = ROOT_DIR / "docs" / "assets"
-REPORT_DIR = ROOT_DIR / "docs" / "test"
+REPORT_DIR = ROOT_DIR / "docs" / "reports" / "analysis"
 OUT_MD_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.md"
 OUT_PDF_PATH = REPORT_DIR / "청주_민원_112건_상세분석보고서_2026-11-17.pdf"
 
@@ -616,11 +616,11 @@ def build_markdown_report(rows: list[dict[str, Any]], stats: EvalStats) -> str:
 
     return f"""# 청주 민원 단독 응대 검사기(:5010) 112건 실증 상세 분석 보고서
 
-[테스트 보고서 모음](README.md) · [업무보고서 모음](../report/README.md) · [프로젝트 소개](../../README.md) · [CASE-097](../cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [원자료 JSON](../../rag/reports/lab-5010-eval-112-20261117.json)
+[테스트 보고서 모음](README.md) · [업무보고서 모음](../../reports/daily/README.md) · [프로젝트 소개](../../../README.md) · [CASE-097](../../cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) · [원자료 JSON](../../../rag/reports/lab-5010-eval-112-20261117.json)
 
 > **기준일:** 2026-11-17 KST (`POST http://127.0.0.1:5010/api/v1/lab/complaints` 실서버 전수 호출)  
 > **대상:** 청주 한정 민원 **110건** + 타 지자체 대조군 **2건**(`C09` 대전 유성구 · `C20` 세종 조치원읍) = **총 112건**  
-> **PDF 판:** [`청주_민원_112건_상세분석보고서_2026-11-17.pdf`](청주_민원_112건_상세분석보고서_2026-11-17.pdf) · **생성 스크립트:** [`scripts/reports/analysis_report_112.py`](../../scripts/reports/analysis_report_112.py)
+> **PDF 판:** [`청주_민원_112건_상세분석보고서_2026-11-17.pdf`](청주_민원_112건_상세분석보고서_2026-11-17.pdf) · **생성 스크립트:** [`scripts/reports/analysis_report_112.py`](../../../scripts/reports/analysis_report_112.py)
 
 ---
 
@@ -634,17 +634,17 @@ def build_markdown_report(rows: list[dict[str, Any]], stats: EvalStats) -> str:
 | `codex_cli` 응답 속도 | **평균 {codex_avg:.2f}s** | 최소 {min(stats.codex_times):.2f}s · 중앙 {codex_med:.2f}s · 최대 {max(stats.codex_times):.2f}s (HTTP 오류 0건) |
 | `exaone_api` 교차 10건 | **완료 6건 평균 {exaone_ok_avg:.2f}s** | `B19·B20` 200s 타임아웃, `D19` 순화 지연, `C19·D20` 429/오류 안전 보류 |
 
-![5대 테스트 축별 실증 검증 결과](../assets/eval-112-axis-breakdown.svg)
+![5대 테스트 축별 실증 검증 결과](../../assets/eval-112-axis-breakdown.svg)
 
 ---
 
 ## 2. 판정 분기 및 응답 시간·지역 분포 시각화
 
-![판정 분기 및 사유 코드 분포](../assets/eval-112-outcome-reason.svg)
+![판정 분기 및 사유 코드 분포](../../assets/eval-112-outcome-reason.svg)
 
-![LLM 엔진별 응답 시간 및 안정성 비교](../assets/eval-112-latency-engines.svg)
+![LLM 엔진별 응답 시간 및 안정성 비교](../../assets/eval-112-latency-engines.svg)
 
-![청주시 관할 구 분포 및 코드 한계](../assets/eval-112-district-and-gaps.svg)
+![청주시 관할 구 분포 및 코드 한계](../../assets/eval-112-district-and-gaps.svg)
 
 ---
 

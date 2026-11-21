@@ -1,7 +1,7 @@
 """Flask 민원 웹 OpenAPI 스펙을 Swagger 스타일 한글 PDF로 내보냅니다.
 
 실행 서버가 없어도 메모리 저장소 앱에서 `/openapi/openapi.json`을 읽고,
-Chrome 인쇄로 `docs/청주톡톡_민원_업무_API_Swagger.pdf`를 만듭니다.
+Chrome 인쇄로 `docs/api/청주톡톡_민원_업무_API_Swagger.pdf`를 만듭니다.
 검색 API(`:8007/docs`)는 대상이 아닙니다.
 """
 
@@ -20,7 +20,7 @@ from src import create_app
 from src.complaints.config import ROOT, Settings
 from src.complaints.repository import MemoryRepository
 
-DEFAULT_OUTPUT = ROOT / "docs" / "청주톡톡_민원_업무_API_Swagger.pdf"
+DEFAULT_OUTPUT = ROOT / "docs" / "api" / "청주톡톡_민원_업무_API_Swagger.pdf"
 CHROME_CANDIDATES = (
     Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
     Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),

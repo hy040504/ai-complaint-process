@@ -20,7 +20,7 @@ Windows에서는 저장소 루트의 [`bin/start-web.cmd`](../bin/start-web.cmd)
 - 시민·담당자 민원 웹 (기본): http://127.0.0.1:5000/#/citizen
 - ui04 목업 + 서버 어댑터: http://127.0.0.1:5000/design/ui04
 - 기존 SPA 검사기: http://127.0.0.1:5000/#/lab
-- Swagger: http://127.0.0.1:5000/docs · 인쇄본 [Swagger PDF](../docs/청주톡톡_민원_업무_API_Swagger.pdf)
+- Swagger: http://127.0.0.1:5000/docs · 인쇄본 [Swagger PDF](../docs/api/청주톡톡_민원_업무_API_Swagger.pdf)
 - Node.js가 있으면 `npm --prefix ui run dev`도 같은 Flask 서버를 실행한다.
 - 포트 변경은 `$env:COMPLAINT_PORT = '5001'`을 설정한다.
 - `index.html`을 직접 열지 않고 Flask 주소로 접속한다.

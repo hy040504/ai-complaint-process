@@ -32,7 +32,7 @@ ROOT_DIR = _SCRIPTS_DIR.parents[1]
 DEFAULT_UI_PDF = Path(
     r"C:\Users\user\Documents\카카오톡 받은 파일\UI_수정_보고_2026-11-19.pdf"
 )
-OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "report" / "업무보고_20261119.pdf"
+OUTPUT_PDF_PATH = ROOT_DIR / "docs" / "reports" / "daily" / "업무보고_20261119.pdf"
 
 
 @dataclass(frozen=True)
@@ -715,7 +715,7 @@ def build_report_html(ui_pdf_path: Path) -> str:
 
 
 def main() -> None:
-    """11월 19일 종합 업무보고 PDF(`docs/report/업무보고_20261119.pdf`)를 생성합니다.
+    """11월 19일 종합 업무보고 PDF(`docs/reports/daily/업무보고_20261119.pdf`)를 생성합니다.
 
     Raises:
         FileNotFoundError: 원본 UI 보고서 PDF가 없을 때 발생합니다.

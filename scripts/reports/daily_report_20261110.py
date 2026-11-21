@@ -22,16 +22,16 @@ CHROME_CANDIDATES = (
 UI_CHANGE_PDF_CANDIDATES = (
     Path(r"C:\Users\user\Documents\카카오톡 받은 파일\UI_변경_2026-11-10.pdf"),
     Path(
-        r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\UI_변경_2026-11-10.pdf"
+        r"C:\Users\user\Desktop\RISK\ai-complaint-process\docs\reports\daily\source\UI_변경_2026-11-10.pdf"
     ),
-    Path(__file__).resolve().parents[2] / "docs" / "UI_변경_2026-11-10.pdf",
+    Path(__file__).resolve().parents[2] / "docs" / "reports" / "daily" / "source" / "UI_변경_2026-11-10.pdf",
 )
 
 OUTPUT_PDF_PATH_1 = Path(
     r"C:\Users\user\Documents\카카오톡 받은 파일\업무보고_20261110.pdf"
 )
 OUTPUT_PDF_PATH_2 = (
-    Path(__file__).resolve().parents[2] / "docs" / "report" / "업무보고_20261110.pdf"
+    Path(__file__).resolve().parents[2] / "docs" / "reports" / "daily" / "업무보고_20261110.pdf"
 )
 
 

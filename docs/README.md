@@ -10,7 +10,7 @@
 
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/report/`, 11/04~11/19)](report/README.md), [테스트 분석 (`docs/test/`, 200건·112건)](test/README.md), [2026-11-05 진행 보고](진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/reports/daily/`, 11/04~11/19)](reports/daily/README.md), [테스트 분석 (`docs/reports/analysis/`, 200건·112건)](reports/analysis/README.md), [2026-11-05 진행 보고](reports/진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test-search.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
@@ -29,7 +29,7 @@
 | AI 입출력 계약·프리픽스 캐싱 규칙·안전 가드레일 | [입출력 하네스](harness/AI_정보전달과_응답_하네스.md), [캐싱 지침](harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [안전 가드레일](harness/AI_안전_보안_가드레일.md) |
 | 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) |
 | CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
-| Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](tools/export_swagger_pdf.py) |
+| Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](api/청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](../scripts/reports/export_swagger_pdf.py) |
 | LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) |
 
 ## 현재 구현과 데이터 위치
@@ -65,7 +65,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 | [CASE-111](cases/사례-111-운영-본인담당자-인증과-PostgreSQL-7테이블-정규화-구현-2026-11-20.md) | 2026-11-20 | 민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`: `scrypt`·5회 `429` 잠금·부서 RBAC·2탭 로그인 모달·간단 가입·다중 사용자 격리; OTP 본인확인 제거로 간소화) 및 PostgreSQL 7테이블 정규화(`users`~`job_events`·`automatic_transfer=false` CHECK·`complaint_rag` 교차 FK·자동 백필·`GET /api/v1/staff/db-summary`), Swagger PDF 30경로 갱신 및 `179`/`29`/실PG·Edge E2E 검증 | 완료 |
 | [CASE-110](cases/사례-110-담당자-실시간-SSE-푸시와-시민-AI-챗봇-실연결-구현-2026-11-20.md) | 2026-11-20 | 담당자 실시간 SSE 푸시(`GET /api/v1/staff/events`, `StaffEventBroker`·`Last-Event-ID`·`resync_required`·3초 대체) 및 시민 AI 챗봇 실연결(`POST /api/v1/citizen/chat(/stream)`, 비공개 초안/순화 구조 차단·`include_staff_outputs=False`), Swagger PDF 25경로 갱신 및 `176`/`27`/Edge E2E 검증 | 완료 |
 | [CASE-109](cases/사례-109-패치후-100건-실증재검증-98퍼센트와-생활시설-노이즈보강-2026-11-20.md) | 2026-11-20 | 패치 후 `:5010` 100건 실증 재검증(`98/100, 98.0%`, 실응답 `98/99, 99.0%`; 기존 미통과 10/10·노이즈 13/13 전원 해소·신규 39/40 통과), `하수구` 등 생활 기반시설 14종 불용어 보강·중복/스레드안전 최적화·전수 주석/README 3단계 추이표 정비(`src/tests 172`) | 완료 |
-| [CASE-108](cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) | 2026-11-20 | 11/19 종합 업무보고 8쪽 PDF([`업무보고_20261119.pdf`](report/업무보고_20261119.pdf)), `report_common.py` UI 캡처 공용화, 저장소 114 Py/21 JS 전수 docstring/JSDoc·`db/load_samples.py`·`compare_assist.py` 정비, `README.md`/`docs/README.md` 가독성 개편 및 최종 검증 | 완료 |
+| [CASE-108](cases/사례-108-11월19일-업무보고-코드공통화-전체주석-최종검증-2026-11-20.md) | 2026-11-20 | 11/19 종합 업무보고 8쪽 PDF([`업무보고_20261119.pdf`](reports/daily/업무보고_20261119.pdf)), `report_common.py` UI 캡처 공용화, 저장소 114 Py/21 JS 전수 docstring/JSDoc·`db/load_samples.py`·`compare_assist.py` 정비, `README.md`/`docs/README.md` 가독성 개편 및 최종 검증 | 완료 |
 | [CASE-107](cases/사례-107-패치정비-주석JSDoc-코드최적화-README디자인-최종검증-2026-11-20.md) | 2026-11-20 | 패치 정비: `place_tool`/`district` 중복 추론·미사용 import 제거, `eval_set --strict`, 테스트 모의 docstring 21건·JSDoc 보완, `decision-policy`/`architecture`/`README` 정비 및 전수 검증(`171`/`49`/`22`) | 완료 |
 | [CASE-106](cases/사례-106-단독검사기-200건-미통과-10건과-노이즈-개선패치-및-실서버-재검증-2026-11-19.md) | 2026-11-19 | 200건 실증 비통과 10건(`B12·A35·A31·C09·B22~B24·B35·F05·F09`)·장소 노이즈 13건·`C32`/`D20` 경계 패치(`address`/`ac` 파싱, HTTP 400 서킷브레이커, 사례 도로+번지 색인, 일반시설/관공서 필터, `PREFIX-01` 예외/조건 가드, `staff_draft` 4096 상한) 및 `:5010` 표적 12건·`src/tests 171` 통과 | 완료 |
 | [CASE-105](cases/사례-105-단독검사기-5010-200건-실증평가와-SourceTrail-분석보고서-2026-11-19.md) | 2026-11-19 | `:5010` 200건(기존 112건 재측정+신규 88건) 재실증 (`190/200, 95.0%`·D축 100%·EXAONE 14/14·조기차단 0.012s), SourceTrail 스타일 14쪽 PDF·SVG 4종 생성 및 잔여 한계 4과제 식별 | 완료 |
@@ -74,8 +74,8 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 | [CASE-102](cases/사례-102-Swagger포털-1117보고서-주석-최적화-README디자인-최종점검-2026-11-18.md) | 2026-11-18 | `CASE-101` Swagger 포털·`daily_report_20261117.py` 주석/f-string 교정, `api-docs.js`/`app.js` 캐시·중복 제거, `#/staff/api` 다크 색인 대비·README 3행 디자인 개선 및 최종 검증 | 완료 |
 | [CASE-101](cases/사례-101-민원웹-5000-백엔드-Swagger-포털과-담당자콘솔-API문서-구현-2026-11-17.md) | 2026-11-17 | `:5000` `/docs`·`/swagger` 한국어 대화형 Swagger 포털(`?embed=1`·다크 동기화·세션 전환), 담당자 `#/staff/api` 콘솔·빠른 색인, `api.py` 태그 정정 및 Swagger PDF 재생성 | 완료 |
 | [CASE-100](cases/사례-100-문맥기반-순화판단과-지명장소추론-결함보완-2026-11-17.md) | 2026-11-17 | `PREFIX-01` 문맥 `sanitize_needed`·`sarcasm_mockery` 순화, `district.py` 동+숫자·단일구 랜드마크·동명이인 타지역 차단, `policy.py` `out_of_scope` 강제, `place_tool.py` 서술어 배제·불용어·우선정렬 보완 | 완료 |
-| [CASE-099](cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) | 2026-11-17 | 112건 실증 SVG 차트 4종·MD/6쪽 PDF 상세 분석 보고서 생성, `docs/test/` 분리, `report_common.py` 중복 제거 및 README 차트 디자인 개선 | 완료 |
-| [CASE-098](cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md) | 2026-11-17 | `:5010` 테스트 기록 클릭 시 입력 폼(`fillComplaintForm`) 자동 복원, 11/16 종합 업무보고 5쪽 PDF 작성 및 `docs/report/` 일괄 통합·주석/코드 최적화 | 완료 |
+| [CASE-099](cases/사례-099-112건-시각화분석보고서와-테스트폴더-분리-최종점검-2026-11-17.md) | 2026-11-17 | 112건 실증 SVG 차트 4종·MD/6쪽 PDF 상세 분석 보고서 생성, `docs/reports/analysis/` 분리, `report_common.py` 중복 제거 및 README 차트 디자인 개선 | 완료 |
+| [CASE-098](cases/사례-098-검사기-기록-폼복원과-업무보고-전용폴더-통합-2026-11-17.md) | 2026-11-17 | `:5010` 테스트 기록 클릭 시 입력 폼(`fillComplaintForm`) 자동 복원, 11/16 종합 업무보고 5쪽 PDF 작성 및 `docs/reports/daily/` 일괄 통합·주석/코드 최적화 | 완료 |
 | [CASE-097](cases/사례-097-단독검사기-5010-청주한정-112건-실증테스트와-한계식별-2026-11-17.md) | 2026-11-17 | 단독 검사기(`:5010`) 청주 한정 110건(+타지역 2건=112건) 5대 축 실증 테스트, 탐지·지명 한계 3건 식별 및 주석·부서명 캐시·README 정리 | 완료 |
 | [CASE-096](cases/사례-096-패치-주석-최적화-문서디자인-최종점검-2026-11-16.md) | 2026-11-16 | 최근 패치(CASE-094·095) 주석/docstring/JSDoc 보완, TTL/더미검증/세션 캐시 최적화, 문서 디자인·정합 최종 점검 및 검증 | 완료 |
 | [CASE-095](cases/사례-095-담당자-부서배정-및-답변템플릿-추가삭제-2026-11-16.md) | 2026-11-16 | 담당자 사이트 청주시 127개 다른 부서 배정(검색·AI 후보 선택·해제) 및 답변 템플릿 커스텀 추가·삭제·복원(`answer_templates` DB) | 완료 |
@@ -137,7 +137,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 | [CASE-033](cases/사례-033-민원웹-Swagger-PDF-2026-11-05.md) | 2026-11-05 | Flask `/docs` Swagger를 OpenAPI 스냅샷 PDF로 `docs/`에 저장 | 완료 · 로컬 문서 |
 | [CASE-032](cases/사례-032-호환모듈-제거-2026-11-05.md) | 2026-11-05 | 루트 호환 모듈 삭제, `src.complaints` 직접 import | 완료 · 로컬 |
 | [CASE-031](cases/사례-031-업무저장-PostgreSQL-통일-2026-11-05.md) | 2026-11-05 | 시연 웹·임베딩 캐시를 PostgreSQL로 통일 | 완료 · 로컬. 7테이블 정규화는 후속 |
-| [진행 보고](진행보고-2026-11-05.md) | 2026-11-05 | CASE-023~034을 보고용으로 요약한 문서 | 로컬 문서 |
+| [진행 보고](reports/진행보고-2026-11-05.md) | 2026-11-05 | CASE-023~034을 보고용으로 요약한 문서 | 로컬 문서 |
 | [CASE-030](cases/사례-030-임베딩-주석-문서-최적화-2026-11-05.md) | 2026-11-05 | e5-small·CMD 주석·README 디자인·중복 토큰화 정리 | 완료 · 로컬. 재임베딩은 후속 |
 | [CASE-029](cases/사례-029-가벼운-임베딩과-응대-CMD-2026-11-05.md) | 2026-11-05 | CPU용 e5-small 임베딩 기본값과 `bin/ask-assist.cmd` | 완료 · 재임베딩은 후속 |
 | [CASE-028](cases/사례-028-README-디자인과-검색조각-최적화-2026-11-05.md) | 2026-11-05 | README 히어로·배너와 검색 조각·HTTP 재사용 | 완료 · 로컬 |
@@ -188,7 +188,7 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 | [MVP 실행 계획](../plan/harness-roadmap.md) | 우선순위, 완료 조건, 결정 기록 | 다음 작업 계획. 로컬 웹은 일부 구현됨 |
 | [LLM + RAG 우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md) | 사용자 변경 요구, 이전 계획과 차이, 초기 흐름, Jev 후속 확장 | 2026-10-25 결정과 구현 제안 구분 |
 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·작성·상세·민원 교환 서버, 데이터·API 제안·완료 조건 | 범위 문서. 로컬 Flask·UI는 구현, 공식 이관·실제 AI는 미구현 |
-| [청주톡톡 민원 업무 API Swagger PDF](청주톡톡_민원_업무_API_Swagger.pdf) | Flask `/docs`·`#/staff/api`와 같은 OpenAPI 3.1 경로·모델 인쇄본. 검색 `:8007/docs`는 제외 | 2026-11-17 재생성 (`22` 경로·`28` 오퍼레이션). API 변경 시 스크립트 재실행 |
+| [청주톡톡 민원 업무 API Swagger PDF](api/청주톡톡_민원_업무_API_Swagger.pdf) | Flask `/docs`·`#/staff/api`와 같은 OpenAPI 3.1 경로·모델 인쇄본. 검색 `:8007/docs`는 제외 | 2026-11-17 재생성 (`22` 경로·`28` 오퍼레이션). API 변경 시 스크립트 재실행 |
 | [웹 상세설계·분야별 작업계획](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) | UI·백엔드·AI·DB 그림·전체 38개 작업표, 도판 7개·CRUD·SSE·DB/API·인수 시나리오 16개 | 2026-10-27 요구 반영 설계. SSE·실제 AI 등은 미구현 |
 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) | LLM 후보·실행 조건·평가·LoRA·후속 Jev 후보 | 조사·제안; 모델 미선정·실측 전 |
 
@@ -198,11 +198,11 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 
 | 자료 | 읽을 때 구분할 점 |
 | --- | --- |
-| [AI 민원 프로세스 분석](../plan/민원AI_계획서_상세분석.md) · [원본 PDF](../plan/civil_complaint_plan_enhanced_redacted.pdf) | 전체 사업·시민/담당자 서비스 구상 |
-| [VoteLab 상세 기획안 분석](../plan/VoteLab_AI민원_상세기획안_상세분석.md) · [원본 PDF](<../plan/보트랩 VoteLab _ AI 민원 상세 기획안 - 산학공동.pdf>) | 장기 화면·API·TAXO·인수 조건의 설계 자료 |
+| [AI 민원 프로세스 분석](../plan/archive/민원AI_계획서_상세분석.md) · [원본 PDF](../plan/archive/civil_complaint_plan_enhanced_redacted.pdf) | 전체 사업·시민/담당자 서비스 구상 |
+| [VoteLab 상세 기획안 분석](../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md) · [원본 PDF](<../plan/archive/보트랩 VoteLab _ AI 민원 상세 기획안 - 산학공동.pdf>) | 장기 화면·API·TAXO·인수 조건의 설계 자료 |
 | [수집·정규화 코드](../PACKET/) | 현재 원본 수집 방식의 구현 근거 |
 | [기존 검증 보고서](../rag/reports/) | 실행 당시의 결과; 새 변경의 통과를 자동 보장하지 않음 |
-| [2026-10-30 DB 설계 복사본](../plan/db%20설계%201차/2026-10-30/README.md) | 당시 SQL 설명. 실행용 검색 DDL은 `rag/origin/schema/`, 업무 DDL은 `src/complaints/schema/` |
+| [2026-10-30 DB 설계 복사본](../plan/archive/db%20설계%201차/2026-10-30/README.md) | 당시 SQL 설명. 실행용 검색 DDL은 `rag/origin/schema/`, 업무 DDL은 `src/complaints/schema/` |
 
 계획서의 일정·기술 스택·목표 수치·화면과 API 개수는 현재 구현 실적이 아닙니다. 초기 MVP의 최신 방향은 [LLM + RAG 우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)을 따릅니다. 원래 상세 기획안의 TAXO 자동 배정·전체 행정 연계는 첫 CLI의 필수 범위가 아닙니다. 현재 구현은 루트 README, 코드, 해당 검증 결과를 함께 확인합니다.
 
