@@ -4,7 +4,7 @@
 import { icon } from "./icons.js";
 import { serviceIcon } from "./service-icons.js";
 import { themeButton } from "./theme.js";
-import { visible, statusNames } from "./store.js";
+import { visible, statusNames, isRealAccount } from "./store.js";
 import { renderAuthBadge } from "./auth.js";
 
 export const citizenNotices = [
@@ -123,12 +123,11 @@ export function citizenShell(content, path, actor = null) {
     (target.endsWith("/mine") && path.includes("/detail/")) ||
     (target.endsWith("/assistant") && path.endsWith("/write")) ||
     (target.endsWith("/profile") && path.endsWith("/guide"));
-  const accountLabel =
-    actor && !actor.demo
-      ? `${e(actor.displayName || actor.loginId || "내 계정")}`
-      : "로그인";
-  const realAccount = Boolean(actor && !actor.demo);
-  return `<div class="demo-bar citizen-demo-bar"><div>${realAccount ? "" : '<span class="demo-label">DEMO</span>'}<span>청주톡톡 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 서비스입니다.</span></span></div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
+  const accountLabel = isRealAccount(actor)
+    ? `${e(actor.displayName || actor.loginId || "내 계정")}`
+    : "로그인";
+  const showDemo = Boolean(actor?.demo);
+  return `<div class="demo-bar citizen-demo-bar"><div>${showDemo ? '<span class="demo-label">DEMO</span>' : ""}<span>청주톡톡 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 서비스입니다.</span></span></div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
     ["홈", "/citizen"],
     ["나의 민원", "/citizen/mine"],
     ["민원 게시판", "/citizen/board"],
@@ -148,7 +147,10 @@ export function citizenShell(content, path, actor = null) {
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-function summary(data) {
+function summary(data, actor) {
+  if (!actor) {
+    return `<section class="citizen-status-card"><div class="citizen-section-label"><h2>로그인 없이 시작해요</h2></div><p class="citizen-empty-note">로그인하지 않아도 민원을 남길 수 있어요. 게스트로 접수한 민원은 이 브라우저에서 확인하고, 로그인하면 내 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></section>`;
+  }
   const mine = visible(data, true);
   const recent =
     mine.find((c) => ["submitted", "under_review"].includes(c.status)) ||
@@ -198,8 +200,8 @@ function serviceButtons() {
  * @param {object} data 현재 역할로 조회한 업무 스냅샷입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
-export function citizenHome(data) {
-  return `<div class="citizen-home-layout"><div class="citizen-home-main"><section class="citizen-welcome"><div><span>청주시 AI 스마트 민원</span><h1>작은 불편도, 궁금한 일도<br><em>청주톡톡</em>에 남겨주세요.</h1><p>부서를 몰라도 괜찮아요. 평소 말하듯 시작해 보세요.</p></div><span class="citizen-welcome-symbol" aria-hidden="true">${icon("chat", 42)}<i>톡!</i></span></section><section class="citizen-news-section citizen-reveal"><div class="citizen-section-label"><h2>우리 동네 소식 <span>시연 이용 안내</span></h2>${a("전체보기 ›", "/citizen/news")}</div>${noticeRows()}</section><section class="citizen-services-section citizen-reveal"><div class="citizen-section-label"><h2>자주 찾는 서비스</h2>${a("전체 보기 ›", "/citizen/services")}</div><div class="citizen-service-rail" aria-label="자주 찾는 서비스, 가로로 넘겨보세요" tabindex="0">${serviceButtons()}</div><p class="citizen-rail-hint">${icon("arrow", 12)} 옆으로 넘겨 더 많은 서비스를 찾아보세요</p></section><section class="citizen-ask-zone citizen-reveal"><h2>궁금한 건 <em>말하듯이</em> 물어보세요</h2><a class="citizen-askbar" href="#/citizen/assistant"><span class="citizen-ask-icon">${icon("chat", 24)}</span><span class="citizen-ask-copy"><b>여기를 눌러 대화를 시작하세요</b><span>예) 우리집 앞 가로등이 깜빡거려요</span></span><span class="citizen-ask-go">접수 시작 ${icon("arrow", 15)}</span></a><p>${icon("spark", 13)} RAG + LLM 민원 도우미 연결 · 공식 접수·자동 이관은 진행하지 않아요</p></section><div class="citizen-mobile-status">${summary(data)}</div></div><aside class="citizen-home-aside"><div class="citizen-desktop-status">${summary(data)}</div><section class="citizen-how-card"><div class="citizen-section-label"><h2>이렇게 이용하세요</h2>${icon("shield", 18)}</div>${[
+export function citizenHome(data, actor = null) {
+  return `<div class="citizen-home-layout"><div class="citizen-home-main"><section class="citizen-welcome"><div><span>청주시 AI 스마트 민원</span><h1>작은 불편도, 궁금한 일도<br><em>청주톡톡</em>에 남겨주세요.</h1><p>부서를 몰라도 괜찮아요. 평소 말하듯 시작해 보세요.</p></div><span class="citizen-welcome-symbol" aria-hidden="true">${icon("chat", 42)}<i>톡!</i></span></section><section class="citizen-news-section citizen-reveal"><div class="citizen-section-label"><h2>우리 동네 소식 <span>시연 이용 안내</span></h2>${a("전체보기 ›", "/citizen/news")}</div>${noticeRows()}</section><section class="citizen-services-section citizen-reveal"><div class="citizen-section-label"><h2>자주 찾는 서비스</h2>${a("전체 보기 ›", "/citizen/services")}</div><div class="citizen-service-rail" aria-label="자주 찾는 서비스, 가로로 넘겨보세요" tabindex="0">${serviceButtons()}</div><p class="citizen-rail-hint">${icon("arrow", 12)} 옆으로 넘겨 더 많은 서비스를 찾아보세요</p></section><section class="citizen-ask-zone citizen-reveal"><h2>궁금한 건 <em>말하듯이</em> 물어보세요</h2><a class="citizen-askbar" href="#/citizen/assistant"><span class="citizen-ask-icon">${icon("chat", 24)}</span><span class="citizen-ask-copy"><b>여기를 눌러 대화를 시작하세요</b><span>예) 우리집 앞 가로등이 깜빡거려요</span></span><span class="citizen-ask-go">접수 시작 ${icon("arrow", 15)}</span></a><p>${icon("spark", 13)} RAG + LLM 민원 도우미 연결 · 공식 접수·자동 이관은 진행하지 않아요</p></section><div class="citizen-mobile-status">${summary(data, actor)}</div></div><aside class="citizen-home-aside"><div class="citizen-desktop-status">${summary(data, actor)}</div><section class="citizen-how-card"><div class="citizen-section-label"><h2>이렇게 이용하세요</h2>${icon("shield", 18)}</div>${[
     [
       "01",
       "말하듯 편하게",
@@ -267,7 +269,7 @@ export function citizenProfile(data, actor = null) {
   const name = actor?.displayName || "시연 시민";
   const loginHint = actor?.loginId ? ` (${actor.loginId})` : "";
   const accountNote =
-    actor && !actor.demo
+    isRealAccount(actor)
       ? "아이디·비밀번호로 로그인된 민원인 계정입니다. 타인의 비공개 민원과 분리되어 관리됩니다."
       : "현재 시연 계정으로 체험 중입니다. '계정 로그인'에서 민원인 아이디·비밀번호로 로그인하거나 새 계정을 만들 수 있습니다.";
   return `<div class="page-content narrow citizen-utility"><div class="page-heading"><div><div class="eyebrow">MY PAGE</div><h1>내 정보</h1><p>나의 민원과 로그인 계정 정보를 한곳에서 확인하세요.</p></div></div><section class="citizen-profile-card"><span>${icon("user", 27)}</span><div style="flex:1"><b>${e(name)}${e(loginHint)} ${renderAuthBadge(actor)}</b><p>현재 나의 민원 ${visible(data, true).length}건</p></div><div class="auth-profile-actions"><button type="button" class="btn primary" data-action="open-auth" data-tab="citizen-login">${actor && !actor.demo ? "계정 전환" : "계정 로그인"}</button>${actor && !actor.demo ? '<button type="button" class="btn" data-action="auth-logout">로그아웃</button>' : ""}</div></section><div class="citizen-profile-menu">${[
@@ -307,4 +309,13 @@ export function showCitizenIntro() {
     intro.classList.add("leaving");
     setTimeout(() => intro.remove(), 230);
   }, 800);
+}
+
+/**
+ * 로그인하지 않은 방문자가 내 민원이 필요한 화면에 들어왔을 때 안내합니다.
+ *
+ * @returns {string} 로그인 또는 게스트 접수를 안내하는 화면 HTML입니다.
+ */
+export function citizenVisitorGate() {
+  return `<div class="page-content narrow"><div class="empty panel">${icon("file", 40)}<h1>로그인하면 내 민원을 모아볼 수 있어요</h1><p>민원 작성과 AI 민원 도우미는 로그인 없이 게스트로 바로 이용할 수 있어요.<br>게스트로 접수한 민원은 이 브라우저에서 확인하고, 로그인하면 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></div></div>`;
 }

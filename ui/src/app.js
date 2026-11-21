@@ -22,6 +22,7 @@ import {
   citizenUpdates,
   citizenProfile,
   citizenNotices,
+  citizenVisitorGate,
   showCitizenIntro,
 } from "./citizen.js";
 import {
@@ -30,6 +31,8 @@ import {
   api,
   getActor,
   ensureRoleSession,
+  ensureGuestSession,
+  isRealAccount,
   loginAccount,
   logoutAccount,
   registerCitizenAccount,
@@ -369,7 +372,7 @@ function resetChatRuntimeState() {
  */
 async function loadCitizenChatState(force = false) {
   const actor = getActor();
-  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && !actor.demo);
+  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && isRealAccount(actor));
   const ownerKey = isLoggedInCitizen ? actor.id : "anon";
   if (chatOwnerId !== ownerKey) {
     chatOwnerId = ownerKey;
@@ -639,9 +642,11 @@ async function loadScreen() {
     '<div class="page-content"><div class="panel empty" role="status">서버에서 민원을 불러오고 있습니다…</div></div>',
   );
   try {
-    await ensureRoleSession(route.staff ? "staff" : "citizen");
+    const session = await ensureRoleSession(route.staff ? "staff" : "citizen", {
+      allowVisitor: !route.staff,
+    });
     await Promise.all([
-      refresh(),
+      session ? refresh() : Promise.resolve(read()),
       route.staff
         ? Promise.all([
             loadLabFields().catch(() => null),
@@ -718,7 +723,7 @@ function pageHeading(eyebrow, title, sub, action = "") {
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 function home() {
-  return citizenHome(data);
+  return citizenHome(data, getActor());
 }
 /**
  * 민원 게시판 표의 본문 행(`<tr>`)을 렌더링합니다.
@@ -820,7 +825,8 @@ function writeForm() {
     /* 손상된 임시 입력 대신 빈 양식을 제공합니다. */
   }
   const value = item || draft;
-  return `<div class="page-content narrow">${pageHeading("YOUR VOICE MATTERS", item ? "민원 수정" : "작은 목소리도 소중히 듣겠습니다", "일상에서 느낀 불편이나 궁금한 점을 편하게 남겨주세요.")}<div class="form-steps"><span class="active"><b>1</b> 민원 내용 작성</span><i></i><span><b>2</b> 담당자 검토</span><i></i><span><b>3</b> 답변 확인</span></div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 서비스</b>입니다. <b>주민등록번호·전화번호·계좌번호</b>는 제목과 내용에 쓰지 마세요. 청주시 공식 접수로 연결되지 않습니다.</span></div><form id="complaint-form" class="panel complaint-form" data-id="${item?.id || ""}" data-version="${item?.version || ""}"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="title">제목 <em>*</em></label><input id="title" name="title" required minlength="2" maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(value.title || "")}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="title-count">${(value.title || "").length}/120</span></div><div class="form-grid"><div><label for="category">민원 분야 <em>*</em></label><select id="category" name="category" required>${categories.map((c) => `<option ${c === (value.category || route.params.get("category")) ? "selected" : ""}>${c}</option>`).join("")}</select></div><div><label for="district">관할 구 <em>*</em></label><select id="district" name="district" required><option value="">지역을 선택해 주세요</option>${districts.map((d) => `<option ${d === value.district ? "selected" : ""}>${d}</option>`).join("")}</select></div></div><label for="body">상세 내용 <em>*</em></label><textarea id="body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(value.body || "")}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 현장 사진·PDF는 아래에서 첨부할 수 있습니다.</span><span id="body-count">${(value.body || "").length}/2,000</span></div>${renderWriteAttachmentField({ pendingFiles: pendingUploadFiles, existingAttachments: item?.attachments || [], complaintId: item?.id || "" })}<label>공개 범위</label><div class="radio-cards"><label><input type="radio" name="visibility" value="private" ${value.visibility !== "public" ? "checked" : ""}><span><b>${icon("shield", 16)} 비공개</b><small>나와 담당자만 확인할 수 있어요.</small></span></label><label><input type="radio" name="visibility" value="public" ${value.visibility === "public" ? "checked" : ""}><span><b>${icon("user", 16)} 공개</b><small>다른 시민도 내용을 볼 수 있어요.</small></span></label></div><div class="consent"><label><input type="checkbox" name="consent" required> 시연용 데이터 저장 및 공식 민원 미접수 안내를 확인했습니다. <em>*</em></label></div><div class="form-footer">${link("취소", "/citizen/mine", "btn")}${button("임시 저장", "", 'type="button" data-action="save-form"')}${button(`${item ? "수정 내용 저장" : "민원 등록하기"} ${icon("arrow", 17)}`, "primary", 'type="submit"')}</div></form></div>`;
+  const forcePrivate = !getActor() || Boolean(getActor()?.guest);
+  return `<div class="page-content narrow">${pageHeading("YOUR VOICE MATTERS", item ? "민원 수정" : "작은 목소리도 소중히 듣겠습니다", "일상에서 느낀 불편이나 궁금한 점을 편하게 남겨주세요.")}<div class="form-steps"><span class="active"><b>1</b> 민원 내용 작성</span><i></i><span><b>2</b> 담당자 검토</span><i></i><span><b>3</b> 답변 확인</span></div><div class="info-banner">${icon("help", 20)}<span>이곳은 <b>시연 서비스</b>입니다. <b>주민등록번호·전화번호·계좌번호</b>는 제목과 내용에 쓰지 마세요. 청주시 공식 접수로 연결되지 않습니다.</span></div><form id="complaint-form" class="panel complaint-form" data-id="${item?.id || ""}" data-version="${item?.version || ""}"><div class="section-title"><h2>민원 내용</h2><span><em>*</em> 필수 입력 항목</span></div><label for="title">제목 <em>*</em></label><input id="title" name="title" required minlength="2" maxlength="120" placeholder="민원 내용을 한눈에 알 수 있도록 작성해 주세요." value="${esc(value.title || "")}"><div class="field-hint"><span>이름, 연락처 등 개인정보는 제목에 적지 마세요.</span><span id="title-count">${(value.title || "").length}/120</span></div><div class="form-grid"><div><label for="category">민원 분야 <em>*</em></label><select id="category" name="category" required>${categories.map((c) => `<option ${c === (value.category || route.params.get("category")) ? "selected" : ""}>${c}</option>`).join("")}</select></div><div><label for="district">관할 구 <em>*</em></label><select id="district" name="district" required><option value="">지역을 선택해 주세요</option>${districts.map((d) => `<option ${d === value.district ? "selected" : ""}>${d}</option>`).join("")}</select></div></div><label for="body">상세 내용 <em>*</em></label><textarea id="body" name="body" rows="9" required minlength="10" maxlength="2000" placeholder="어디에서, 언제, 어떤 일이 있었나요?&#10;구체적인 상황과 요청 사항을 작성해 주시면 검토에 도움이 됩니다.">${esc(value.body || "")}</textarea><div class="field-hint"><span>최소 10자 이상 작성해 주세요. 현장 사진·PDF는 아래에서 첨부할 수 있습니다.</span><span id="body-count">${(value.body || "").length}/2,000</span></div>${renderWriteAttachmentField({ pendingFiles: pendingUploadFiles, existingAttachments: item?.attachments || [], complaintId: item?.id || "" })}${forcePrivate ? `<label>공개 범위</label><div class="info-banner">${icon("shield", 18)}<span>로그인하지 않고 접수하면 <b>비공개</b>로만 받아요. 로그인하면 공개 여부도 고를 수 있어요.</span></div><input type="hidden" name="visibility" value="private">` : `<label>공개 범위</label><div class="radio-cards"><label><input type="radio" name="visibility" value="private" ${value.visibility !== "public" ? "checked" : ""}><span><b>${icon("shield", 16)} 비공개</b><small>나와 담당자만 확인할 수 있어요.</small></span></label><label><input type="radio" name="visibility" value="public" ${value.visibility === "public" ? "checked" : ""}><span><b>${icon("user", 16)} 공개</b><small>다른 시민도 내용을 볼 수 있어요.</small></span></label></div>`}<div class="consent"><label><input type="checkbox" name="consent" required> 시연용 데이터 저장 및 공식 민원 미접수 안내를 확인했습니다. <em>*</em></label></div><div class="form-footer">${link("취소", "/citizen/mine", "btn")}${button("임시 저장", "", 'type="button" data-action="save-form"')}${button(`${item ? "수정 내용 저장" : "민원 등록하기"} ${icon("arrow", 17)}`, "primary", 'type="submit"')}</div></form></div>`;
 }
 /**
  * missing 화면 동작을 구성합니다.
@@ -848,7 +854,11 @@ function detail() {
   const owner = c.owner === myId;
   const answerOfficer = (route.staff && c.assigneeName) || "김담당";
   const answerAvatar = answerOfficer.slice(0, 1) || "김";
-  return `<div class="page-content">${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>시연 서버에 민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button type="button" data-action="withdraw" data-id="${c.id}">민원 철회</button><button type="button" class="danger-link" data-action="delete-complaint" data-id="${c.id}">민원 삭제</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${renderDetailAttachmentsPanel(c, { isOwner: owner, isStaff: route.staff, uploading: detailAttachmentUploading })}${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">${esc(answerAvatar)}</span><div><b>${esc(answerOfficer)} <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
+  const guestNote =
+    !route.staff && owner && getActor()?.guest
+      ? `<div class="info-banner">${icon("help", 20)}<span><b>게스트로 이용 중이에요.</b> 이 민원은 이 브라우저에서만 확인할 수 있어요. 로그인하거나 가입하면 내 계정에 연결돼요. <button type="button" class="auth-inline-link" data-action="open-auth" data-tab="citizen-login">로그인</button></span></div>`
+      : "";
+  return `<div class="page-content">${guestNote}${!route.staff && newlyCreatedId === c.id ? `<div class="citizen-receipt" role="status"><span>${icon("check", 24)}</span><div><b>민원이 등록되었어요</b><p>${c.id} · 청주시 공식 접수는 아닙니다.</p></div><button data-action="close-receipt" aria-label="등록 확인 닫기">${icon("close", 17)}</button></div>` : ""}<a class="back-link" href="#/${route.staff ? "staff/complaints" : "citizen/board"}">← 민원 목록으로</a>${route.staff ? staffPager(c) : ""}<div class="detail-heading"><div><div class="eyebrow">${c.id} <span>·</span> ${c.visibility === "private" ? "비공개 민원" : "공개 시연 민원"}</div><h1>${esc(c.title)}</h1><p>${esc(c.district)} <span>·</span> ${esc(c.category)} <span>·</span> ${date(c.date)} <span>·</span> 내용 버전 ${c.contextVersion}</p></div>${badge(c)}</div>${route.staff ? staffProcess(c) : ""}<div class="detail-grid ${route.staff ? "staff-detail" : ""}"><div><section class="panel detail-body"><div class="section-title"><h2>${icon("file", 20)} 민원 내용</h2>${owner && !route.staff ? `<div class="inline-actions">${!c.published ? link("수정", `/citizen/write?edit=${c.id}`) : ""}<button type="button" data-action="withdraw" data-id="${c.id}">민원 철회</button><button type="button" class="danger-link" data-action="delete-complaint" data-id="${c.id}">민원 삭제</button></div>` : ""}</div><div class="prose">${esc(c.body)}</div><div class="detail-note">${icon("shield", 16)} ${c.visibility === "private" ? "비공개로 등록된 민원입니다." : "개인정보 없는 공개 시연 민원입니다."}</div></section>${renderDetailAttachmentsPanel(c, { isOwner: owner, isStaff: route.staff, uploading: detailAttachmentUploading })}${route.staff ? staffReviewInfo(c) : nextStepBox(c)}<section class="panel answer-panel"><div class="section-title"><h2>${icon("chat", 20)} ${route.staff ? "현재 게시된 답변" : "답변 확인"}</h2>${c.published ? `<span class="origin-badge ${c.published.origin || ""}">${origin(c.published)}</span>` : ""}</div>${c.published ? `<div class="answer-person"><span class="avatar">${esc(answerAvatar)}</span><div><b>${esc(answerOfficer)} <span>민원 검토 담당자 · 시연</span></b><small>${date(c.published.date)} 게시</small></div></div>${route.staff ? `<div class="prose">${esc(c.published.text)}</div>` : foldAnswer(c.published.text)}${c.published.origin !== "staff" ? '<p class="answer-disclosure">AI가 작성한 초안을 담당자가 검토' + (c.published.origin === "ai_edited" ? "·수정" : "") + "한 답변입니다.</p>" : ""}` : `<div class="waiting-answer">${icon("clock", 30)}<h3>담당자가 민원을 살펴보고 있습니다</h3><p>검토를 마치면 이곳에서 답변을 확인할 수 있어요.<br>작성 중인 초안은 시민에게 공개되지 않습니다.</p></div>`}</section><section class="panel followup"><div class="section-title"><h2>추가 문의 <small>${c.messages.length}</small></h2></div>${c.messages.map((m) => `<div class="message"><b>${m.author === "staff" ? "김담당" : "시민님"}</b><span>${date(m.date)}</span><p>${esc(m.text)}</p></div>`).join("")}${owner && !route.staff && c.status !== "closed" ? `<form id="followup-form" data-id="${c.id}" data-version="${c.version}"><label class="sr-only" for="followup">추가 문의 내용</label><textarea id="followup" name="message" maxlength="500" required placeholder="답변을 보고 더 궁금한 점을 적어 주세요." rows="3"></textarea><p class="field-hint"><span id="followup-count">0/500</span></p><div class="form-footer">${c.published ? button("담당자 재검토 요청", "", 'type="button" data-action="review" data-id="' + c.id + '"') : ""}${button("추가 문의 등록", "primary", 'type="submit"')}</div></form>` : owner && !route.staff ? '<p class="muted">처리가 종료된 민원에는 추가 문의를 남길 수 없습니다.</p>' : '<p class="muted">민원 작성자의 추가 문의가 이곳에 표시됩니다.</p>'}</section></div><aside>${route.staff ? editor(c) : citizenProgress(c)}<details class="panel history-panel"><summary><h2>${route.staff ? "처리 이력" : "처리 이력 보기"}</h2></summary><ol class="timeline">${c.history
     .slice()
     .reverse()
     .map((h) => `<li><b>${esc(h.text)}</b><time>${date(h.date)}</time></li>`)
@@ -1159,6 +1169,12 @@ function render() {
   const oldProviderChoice = $("#staff-job-provider")?.value;
   route = currentRoute();
   data = read();
+  // 로그인하지 않은 방문자는 홈·작성·AI 도우미·안내는 보되 내 민원이 필요한 화면은 안내로 대신합니다.
+  const visitorGated =
+    !route.staff &&
+    !getActor() &&
+    (["/citizen/board", "/citizen/mine", "/citizen/updates", "/citizen/profile"].includes(route.path) ||
+      route.path.startsWith("/citizen/detail/"));
   let content;
   if (route.path === "/lab") {
     const form = $("#assist-form");
@@ -1173,7 +1189,8 @@ function render() {
           }
         : {},
     );
-  } else if (route.path === "/citizen") content = home();
+  } else if (visitorGated) content = citizenVisitorGate();
+  else if (route.path === "/citizen") content = home();
   else if (
     ["/citizen/board", "/citizen/mine", "/staff/complaints"].includes(
       route.path,
@@ -1263,8 +1280,15 @@ function updateFilter(changes) {
 async function sendChat(text) {
   const trimmed = String(text || "").trim();
   if (chatPending || !trimmed) return;
+  if (!getActor() && !route.staff) {
+    try {
+      await ensureGuestSession();
+    } catch {
+      /* 게스트 시작이 막히면 아래 스트림 오류 문구로 로그인·직접 작성을 안내합니다. */
+    }
+  }
   const actor = getActor();
-  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && !actor.demo);
+  const isLoggedInCitizen = Boolean(actor && actor.role === "citizen" && isRealAccount(actor));
   const priorHistory = isLoggedInCitizen ? [] : buildChatHistoryPayload(chatMessages);
   chatMessages.push({
     role: "me",
@@ -1998,6 +2022,7 @@ document.addEventListener("submit", async (event) => {
     form.dataset.key ||= crypto.randomUUID();
     const ok = await perform(
       async () => {
+        if (!getActor()) await ensureGuestSession();
         saved = await api(id ? "/complaints/" + id : "/complaints", {
           method: id ? "PUT" : "POST",
           body: id ? { ...body, version: Number(form.dataset.version) } : body,
@@ -2024,7 +2049,9 @@ document.addEventListener("submit", async (event) => {
       location.hash = "/citizen/detail/" + saved.id;
       const baseMsg = id
         ? "수정 내용을 서버에 저장했습니다."
-        : "시연 서버 DB에 민원을 등록했습니다. 공식 접수는 진행하지 않습니다.";
+        : getActor()?.guest
+          ? "게스트로 민원을 접수했어요. 이 브라우저에서 확인할 수 있고, 로그인하면 계정에 합쳐져요."
+          : "민원을 등록했습니다. 청주시 공식 접수는 진행하지 않습니다.";
       toast(
         uploadFailures
           ? `${baseMsg} (첨부 ${uploadFailures}건 업로드 실패 — 상세 화면에서 다시 첨부해 주세요.)`

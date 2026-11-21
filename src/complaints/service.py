@@ -8,6 +8,7 @@ from threading import Lock, Thread
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
+from src.complaints.auth import GUEST_COMPLAINT_LIMIT, GUEST_ID_RE
 from src.complaints.attachments import (
     MAX_ATTACHMENTS_PER_COMPLAINT,
     AttachmentStorage,
@@ -267,6 +268,7 @@ class ComplaintService:
         return (
             actor.role == "citizen"
             and not actor.demo
+            and not actor.guest
             and self.repository.get_user_by_id(actor.id) is not None
         )
 
@@ -705,6 +707,16 @@ class ComplaintService:
             raise AppError(
                 403, "citizen_required", "시민 계정에서 민원을 등록해 주세요."
             )
+        if actor.guest:
+            # 게스트 접수는 스팸이 공개 게시판에 노출되지 않도록 비공개로만 받고 개수를 제한합니다.
+            body = body.model_copy(update={"visibility": "private"})
+            owned = sum(1 for r in self.repository.all() if r.owner == actor.id)
+            if owned >= GUEST_COMPLAINT_LIMIT:
+                raise AppError(
+                    429,
+                    "guest_limit",
+                    f"게스트는 민원을 {GUEST_COMPLAINT_LIMIT}건까지 접수할 수 있습니다. 로그인하면 계속 접수할 수 있어요.",
+                )
         row = Complaint(
             id=f"DEMO-{utcnow().year}-{uuid4().hex[:12].upper()}",
             owner=actor.id,
@@ -733,6 +745,46 @@ class ComplaintService:
         if self.ai_connected and self.auto_start_ai:
             self._launch_ai_job(saved)
         return saved
+
+    def claim_guest_complaints(self, guest_id: str, account: Actor) -> int:
+        """게스트로 접수한 민원을 로그인·가입한 계정으로 옮깁니다.
+
+        같은 브라우저의 게스트 세션 소유 민원만 대상이며, 동시 수정으로 버전이 어긋난
+        민원은 건너뜁니다. 옮긴 민원은 비공개 상태를 유지합니다.
+
+        Args:
+            guest_id: 게스트 세션의 `guest-…` 식별자입니다.
+            account: 민원을 이어받을 민원인 `Actor`입니다.
+
+        Returns:
+            계정으로 옮긴 민원 수입니다.
+        """
+        if not GUEST_ID_RE.fullmatch(guest_id) or account.role != "citizen":
+            return 0
+        moved = 0
+        for row in [r for r in self.repository.all() if r.owner == guest_id]:
+
+            def reassign(locked: Complaint, new_owner: str = account.id) -> None:
+                """잠금 안에서 작성자를 새 계정으로 바꾸고 이력을 남깁니다.
+
+                Args:
+                    locked: 잠금으로 읽은 최신 민원입니다.
+                    new_owner: 새 작성자 계정 ID입니다.
+                """
+                if locked.owner != guest_id:
+                    raise AppError(
+                        409, "owner_changed", "이미 다른 계정에 연결된 민원입니다."
+                    )
+                locked.owner = new_owner
+                locked.history.append(History(text="게스트 민원을 계정에 연결"))
+
+            try:
+                saved = self.repository.change(row.id, row.version, reassign)
+            except AppError:
+                continue
+            self._publish_row_event("complaint.updated", saved)
+            moved += 1
+        return moved
 
     def change(
         self,

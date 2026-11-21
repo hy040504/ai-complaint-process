@@ -42,9 +42,13 @@ test("renderAuthBadge와 renderAuthModalHtml은 민원인·담당자 로그인 �
   assert.match(staffTab, /auth-staff-login-form/);
   assert.doesNotMatch(staffTab, /staff_seowon|citizen_01/, "기본 계정 안내를 노출하지 않는다");
   assert.doesNotMatch(staffTab, /data-tab="citizen-login"/, "담당자 사이트는 민원인 탭이 없다");
+  assert.doesNotMatch(staffTab, /role="tablist"/, "탭이 하나뿐이면 탭 막대를 그리지 않는다");
+  assert.match(staffTab, /type="submit" class="btn primary">로그인</, "제출 버튼은 단순히 로그인이다");
   const citizenOnly = renderAuthModalHtml({ tab: "staff-login", site: "citizen" });
   assert.match(citizenOnly, /auth-citizen-login-form/, "시민 사이트는 담당자 탭 요청도 민원인 화면이다");
   assert.doesNotMatch(citizenOnly, /auth-staff-login-form/);
+  assert.doesNotMatch(citizenOnly, /role="tablist"|민원인 로그인/, "시민 로그인에 버튼이 두 개 보이지 않는다");
+  assert.match(citizenOnly, /type="submit" class="btn primary">로그인</);
   assert.match(staffTab, /auth-logout/);
 });
 

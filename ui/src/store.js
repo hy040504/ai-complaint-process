@@ -100,7 +100,7 @@ export async function setRole(role) {
  * @param {string} role 진입하려는 화면 역할(`citizen` 또는 `staff`)입니다.
  * @returns {Promise<object>} 현재 활성 사용자 `Actor` 객체입니다.
  */
-export async function ensureRoleSession(role) {
+export async function ensureRoleSession(role, { allowVisitor = false } = {}) {
   if (currentActor && currentActor.role === role) {
     activeRole = role;
     return currentActor;
@@ -116,7 +116,45 @@ export async function ensureRoleSession(role) {
   } catch {
     /* 미인증 상태면 아래 시연 전환 또는 로그인 모달 경로로 진행합니다. */
   }
-  return setRole(role);
+  if (!allowVisitor) return setRole(role);
+  try {
+    return await setRole(role);
+  } catch (error) {
+    // 시연 로그인이 꺼진 서버에서 로그인하지 않은 방문자입니다. 홈 등 공개 화면만 보여 줍니다.
+    if ([401, 403].includes(error?.status)) {
+      cache = { revision: 0, complaints: [] };
+      activeRole = undefined;
+      currentActor = null;
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * 실계정(아이디·비밀번호 로그인)인지 판단합니다. 시연·게스트 세션과 방문자(null)는 제외합니다.
+ *
+ * @param {object|null} actor 현재 `Actor` 객체입니다.
+ * @returns {boolean} 로그인한 실계정이면 true입니다.
+ */
+export function isRealAccount(actor) {
+  return Boolean(actor && !actor.demo && !actor.guest);
+}
+
+/**
+ * 로그인 없이 민원을 접수·문의할 수 있는 게스트 세션을 서버에서 시작합니다.
+ *
+ * 이미 시민 세션이 있으면 새로 만들지 않고 현재 사용자를 돌려줍니다.
+ *
+ * @returns {Promise<object>} 게스트(또는 기존 시민) `Actor` 객체입니다.
+ */
+export async function ensureGuestSession() {
+  if (currentActor && currentActor.role === "citizen") return currentActor;
+  cache = { revision: 0, complaints: [] };
+  const actor = await api("/auth/guest", { method: "POST" });
+  currentActor = actor;
+  activeRole = actor.role;
+  return actor;
 }
 
 /**

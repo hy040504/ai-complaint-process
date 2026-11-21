@@ -2,6 +2,8 @@
 
 ## 2026-11-21
 
+- **비로그인 게스트 접수와 방문자 홈 ([CASE-119](docs/cases/사례-119-비로그인-게스트-접수와-방문자-홈-2026-11-21.md)):** 시민 사이트는 로그인하지 않아도 홈·민원 작성·AI 도우미·안내가 보이고, 접수하거나 AI 도우미를 쓰는 순간 서명 세션 기반 게스트(`POST /api/v1/auth/guest`, `Actor.guest`)가 자동으로 시작됩니다. 게스트 민원은 비공개로 강제하고 IP당 시간당 10회·게스트당 5건으로 제한하며, 로그인·가입하면 계정으로 옮겨집니다. 로그인 모달은 탭이 하나뿐이면 탭 막대를 없애고 제출 버튼을 단순히 "로그인"으로 바꿨습니다. `pytest` `208 passed`·`ui test` `39`.
+
 - **시연 민원 웹 무료 외부 공개 ([CASE-118](docs/cases/사례-118-무료-외부-공개-Cloudflare-Quick-Tunnel-2026-11-21.md)):** 서버 `navy2025`의 민원 웹(`:5000`)만 Cloudflare Quick Tunnel로 공개하고(응대 검사기·검색 API는 비공개), `cloudflared`는 SHA-256 다이제스트 검증 후 설치해 사용자 서비스 `cheongju-tunnel`로 등록했습니다. HTTPS 요청에 `Secure` 쿠키·HSTS, 전체 응답에 `X-Frame-Options`·`Referrer-Policy`를 추가하고, `CF-Ray` 헤더가 있는 프록시 경유 요청은 `/docs`·`/swagger`·`/openapi*`·`/design/*`를 `404`로 숨깁니다. `main`을 `origin/main`에 push했습니다. `pytest` `201 passed`. 주소는 재시작마다 바뀌고 IP 속도 제한은 없습니다.
 
 - **시민·담당자 사이트 분리와 원격 서버 배포 ([CASE-117](docs/cases/사례-117-시민·담당자-사이트-분리와-원격-서버-배포-2026-11-21.md)):** 시민 `/`와 담당자 `/staff/`를 별도 진입 화면·허용 경로·사이트별 세션 쿠키(`cj_citizen`·`cj_staff`)로 분리하고, 담당자 계정을 시민 사이트에서(또는 반대로) 로그인하면 `403`으로 거부합니다. 담당자 계정 추가·비밀번호 재설정·비활성화용 Flask CLI(`create-staff`·`reset-password`·`deactivate-user`·`activate-user`·`list-users`)를 추가했습니다. `main`을 `llm` 상태 우선으로 `origin/main`과 병합(로컬)하고, `scripts/ops/deploy-remote.ps1`로 서버 `navy2025`에 배포해 시연 로그인을 끄고 시드 계정 비밀번호를 교체했습니다. `pytest` `199 passed`·`ui test` `39`·mypy 0오류. 원격 push와 LLM 키 설정은 하지 않았습니다. [배포 안내](docs/harness/원격_서버_배포.md)

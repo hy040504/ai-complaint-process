@@ -11,7 +11,7 @@ from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
 from pydantic import BaseModel
 from src.complaints.auth import AuthService
-from src.complaints.http import actor, reply, set_session_actor
+from src.complaints.http import actor, current_guest_id, reply, set_session_actor
 from src.complaints.sites import explicit_site, wrong_site_message
 
 from src.complaints.errors import AppError
@@ -421,7 +421,10 @@ def create_api(
         """
         if explicit_site() == "staff":
             raise AppError(403, "wrong_site", wrong_site_message("staff"))
+        guest_id = current_guest_id()
         user = auth.register_citizen(body)
+        if guest_id:
+            service.claim_guest_complaints(guest_id, user)
         set_session_actor(user)
         return reply(user, 201)
 
@@ -439,7 +442,37 @@ def create_api(
         if site is not None and not body.expected_role:
             # 사이트가 명시된 요청은 해당 사이트의 계정 유형만 로그인할 수 있습니다.
             body = body.model_copy(update={"expected_role": site})
+        guest_id = current_guest_id()
         user = auth.login(body)
+        if guest_id and user.role == "citizen":
+            service.claim_guest_complaints(guest_id, user)
+        set_session_actor(user)
+        return reply(user)
+
+    @api.post("/auth/guest", tags=[auth_tag], responses={200: Actor})
+    def start_guest_session() -> Response:
+        """로그인 없이 민원을 접수·문의하는 게스트 세션을 시작합니다.
+
+        이미 시민 세션(게스트 포함)이 있으면 새로 만들지 않고 현재 사용자를 돌려줍니다.
+        게스트는 DB 계정 없이 서명 세션으로만 식별되며, 담당자 사이트에서는 거부합니다.
+        IP당 시간당 10회까지 발급합니다.
+
+        Returns:
+            게스트 `Actor`(`guest=true`) 또는 이미 로그인한 시민 `Actor`입니다.
+        """
+        if explicit_site() == "staff":
+            raise AppError(403, "wrong_site", wrong_site_message("staff"))
+        try:
+            current = actor()
+        except AppError:
+            current = None
+        if current is not None and current.role == "citizen":
+            return reply(current)
+        auth.guest_session_limiter.hit(
+            request.remote_addr or "unknown",
+            "게스트 시작 요청이 많습니다. 잠시 뒤 다시 시도하거나 로그인해 주세요.",
+        )
+        user = auth.create_guest()
         set_session_actor(user)
         return reply(user)
 
@@ -512,6 +545,11 @@ def create_api(
             작성자와 버전을 서버에서 부여한 민원입니다.
         """
         user = actor()
+        if user.guest:
+            auth.guest_complaint_limiter.hit(
+                request.remote_addr or "unknown",
+                "게스트 접수 요청이 많습니다. 잠시 뒤 다시 시도하거나 로그인해 주세요.",
+            )
         return reply(
             service.project(user, service.create(user, body, header.idempotency_key)),
             201,

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+import re
 from functools import lru_cache
 import os
 import secrets
@@ -292,8 +293,59 @@ class LoginRateLimiter:
             self._failures.pop(login_id.casefold(), None)
 
 
+GUEST_ID_RE = re.compile(r"^guest-[0-9a-f]{32}$")
+GUEST_COMPLAINT_LIMIT = 5
+
+
+class SlidingWindowLimiter:
+    """키(보통 클라이언트 IP)별 최근 시간 창의 이벤트 횟수를 제한하는 메모리 제한기입니다.
+
+    Args:
+        max_events: 시간 창 안에서 허용하는 최대 횟수입니다.
+        window_seconds: 시간 창 길이(초)입니다.
+    """
+
+    def __init__(self, max_events: int, window_seconds: float) -> None:
+        """제한 한도와 빈 이벤트 기록을 초기화합니다.
+
+        Args:
+            max_events: 시간 창 안에서 허용하는 최대 횟수입니다.
+            window_seconds: 시간 창 길이(초)입니다.
+        """
+        self._max = max_events
+        self._window = window_seconds
+        self._events: dict[str, list[float]] = {}
+        self._lock = Lock()
+
+    def hit(self, key: str, message: str) -> None:
+        """이벤트 1회를 기록하고 한도를 넘으면 429를 발생합니다.
+
+        Args:
+            key: 제한 단위(클라이언트 IP 등)입니다.
+            message: 한도 초과 시 사용자에게 보일 안내 문구입니다.
+
+        Raises:
+            AppError: 시간 창 안의 횟수가 한도에 도달해 있으면 429를 발생합니다.
+        """
+        now = time.monotonic()
+        with self._lock:
+            if len(self._events) >= 2048:
+                for k in [
+                    k
+                    for k, stamps in self._events.items()
+                    if not stamps or stamps[-1] <= now - self._window
+                ]:
+                    self._events.pop(k, None)
+            stamps = [s for s in self._events.get(key, []) if s > now - self._window]
+            if len(stamps) >= self._max:
+                self._events[key] = stamps
+                raise AppError(429, "rate_limited", message)
+            stamps.append(now)
+            self._events[key] = stamps
+
+
 class AuthService:
-    """민원인·담당자 아이디·비밀번호 로그인, 간단 가입, 세션 검증을 관리합니다.
+    """민원인·담당자 아이디·비밀번호 로그인, 간단 가입, 게스트·세션 검증을 관리합니다.
 
     Args:
         repository: `users` 영속 저장을 제공하는 업무 저장소입니다.
@@ -307,6 +359,26 @@ class AuthService:
         """
         self.repository = repository
         self.rate_limiter = LoginRateLimiter()
+        # 로그인 없는 게스트 세션 발급·접수의 IP 단위 남용 방지(시간당 10회)입니다.
+        self.guest_session_limiter = SlidingWindowLimiter(10, 3600.0)
+        self.guest_complaint_limiter = SlidingWindowLimiter(10, 3600.0)
+
+    def create_guest(self) -> Actor:
+        """로그인 없이 민원을 접수하는 게스트 `Actor`를 만듭니다. DB 계정은 만들지 않습니다.
+
+        Returns:
+            무작위 128비트 ID를 가진 민원인 역할의 게스트 `Actor`입니다.
+        """
+        return Actor(
+            id="guest-" + uuid4().hex,
+            login_id=None,
+            display_name="게스트",
+            role="citizen",
+            department=None,
+            auth_mode="guest",
+            demo=False,
+            guest=True,
+        )
 
     def register_citizen(self, body: RegisterInput) -> Actor:
         """아이디·비밀번호·이름으로 새 민원인 계정을 `users` 테이블에 생성합니다.
@@ -422,6 +494,21 @@ class AuthService:
         Raises:
             AppError: 세션이 없거나 계정이 비활성화되었으면 401을 발생합니다.
         """
+        if auth_mode == "guest":
+            if role != "citizen" or not user_id or not GUEST_ID_RE.fullmatch(user_id):
+                raise AppError(
+                    401, "session_invalid", "게스트 세션이 올바르지 않습니다."
+                )
+            return Actor(
+                id=user_id,
+                login_id=None,
+                display_name="게스트",
+                role="citizen",
+                department=None,
+                auth_mode="guest",
+                demo=False,
+                guest=True,
+            )
         if user_id:
             found = self.repository.get_user_by_id(user_id)
             if found is None or not found.active:

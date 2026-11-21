@@ -68,7 +68,7 @@ class Model(BaseModel):
     )
 
 
-AuthMode = Literal["demo", "password"]
+AuthMode = Literal["demo", "password", "guest"]
 
 
 class Actor(Model):
@@ -80,8 +80,9 @@ class Actor(Model):
         display_name: 화면·이력에 표시할 사용자 이름입니다.
         role: 민원인(`citizen`) 또는 담당자(`staff`) 역할입니다.
         department: 담당자 소속 부서명입니다. 총괄 담당자·민원인은 None입니다.
-        auth_mode: `demo`(시연 전환) 또는 `password`(아이디·비밀번호 로그인)입니다.
+        auth_mode: `demo`(시연 전환)·`password`(아이디·비밀번호 로그인)·`guest`(로그인 없는 게스트)입니다.
         demo: 로컬 시연 원클릭 계정이면 True, 실계정 로그인은 False입니다.
+        guest: 로그인 없이 민원을 접수하는 게스트 세션이면 True입니다(DB 계정 없음).
     """
 
     id: str
@@ -91,6 +92,7 @@ class Actor(Model):
     department: str | None = None
     auth_mode: AuthMode = "demo"
     demo: bool = True
+    guest: bool = False
 
 
 class SessionInput(Model):

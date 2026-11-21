@@ -367,7 +367,7 @@ export function renderChatSessionBar({
   pending = false,
 } = {}) {
   const isLoggedInCitizen = Boolean(
-    persisted || (actor && actor.role === "citizen" && !actor.demo),
+    persisted || (actor && actor.role === "citizen" && !actor.demo && !actor.guest),
   );
   if (!isLoggedInCitizen) {
     return `<div class="chat-session-bar anon"><div class="chat-session-notice">${icon("shield", 14)}<span><b>로그인하면 대화가 저장됩니다</b> · 지금은 이 탭에서만 이어지는 임시 다중 턴 대화예요.</span></div><button type="button" class="btn subtle chat-login-cta" data-action="open-auth" data-tab="citizen-login">${icon("user", 13)} 로그인</button></div>`;

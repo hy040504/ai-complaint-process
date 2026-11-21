@@ -25,6 +25,18 @@ def set_session_actor(user: Actor) -> None:
     session["auth_mode"] = user.auth_mode
 
 
+def current_guest_id() -> str | None:
+    """현재 요청 세션이 게스트이면 그 식별자를 반환합니다.
+
+    Returns:
+        `guest-…` 식별자 또는 게스트가 아니면 None입니다.
+    """
+    if session.get("auth_mode") != "guest":
+        return None
+    value = session.get("user_id")
+    return value if isinstance(value, str) and value.startswith("guest-") else None
+
+
 def actor() -> Actor:
     """세션에 저장된 사용자를 `users` 저장소와 대조해 반환하며 미인증 요청은 거부합니다.
 
@@ -128,6 +140,7 @@ def protect_api() -> None:
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
         "/api/v1/auth/register",
+        "/api/v1/auth/guest",
         "/api/v1/assist",
         "/api/v1/assist/fields",
         "/api/v1/assist/examples",
