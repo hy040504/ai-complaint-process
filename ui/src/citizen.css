@@ -184,7 +184,6 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-bottom: 26px;
 }
 .citizen-shell .page-heading h1 {
-  font-size: 27px;
   color: #16203a;
 }
 .citizen-shell .page-heading p {
@@ -194,8 +193,6 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .eyebrow {
   color: #667fa9;
-  font-size: 10px;
-  letter-spacing: 1.6px;
 }
 .citizen-shell .panel {
   border-color: #e3e8f0;
@@ -305,17 +302,12 @@ body[data-site="citizen"] .role-switch a.selected {
   margin-bottom: 12px;
 }
 .citizen-section-label h2 {
-  font-size: 14px;
-  font-weight: 750;
-  letter-spacing: -0.2px;
   color: #5d6c86;
   display: flex;
   align-items: center;
   gap: 9px;
 }
 .citizen-section-label h2 > span {
-  font-size: 9px;
-  font-weight: 500;
   color: #92a0b7;
   border: 1px solid #e1e7f1;
   border-radius: var(--r-chip);
@@ -2168,16 +2160,13 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 8px;
   }
   .citizen-section-label h2 {
-    font-size: 12px;
     color: #7a89a3;
-    font-weight: 700;
     gap: 7px;
-  }
+}
   .citizen-section-label h2 > span {
-    font-size: 8px;
     padding: 1px 4px;
     color: #9aa8be;
-  }
+}
   .citizen-section-label > a {
     font-size: 10px;
     font-weight: 600;
@@ -2388,10 +2377,6 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-shell .page-content {
     padding: 23px 18px 30px;
     min-height: calc(100dvh - 290px);
-  }
-  .citizen-shell .page-heading h1 {
-    font-size: 23px;
-    line-height: 1.6;
   }
   .citizen-shell .page-heading p {
     font-size: 12px;

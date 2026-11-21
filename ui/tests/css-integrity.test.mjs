@@ -64,3 +64,27 @@ test("다크 테마 색은 var(--d-*) 토큰을 거치고 tokens.css에 모두 �
   assert.ok(used.size >= 100, `다크 토큰 사용 수 ${used.size}`);
   for (const t of used) assert.match(tokens, new RegExp(`${t}:\\s*#[0-9a-fA-F]{6}`), `${t} 미정의`);
 });
+
+test("제목 3종의 글자 크기·굵기·자간은 design.css에서만 정의한다", () => {
+  const owned = [
+    ".page-heading h1", ".staff-page-title h1", ".section-title h2", ".citizen-section-label h2",
+    ".staff-section-rule > h2", ".staff-section-rule h2", ".eyebrow", ".staff-workspace .eyebrow", ".citizen-shell .eyebrow",
+  ];
+  for (const name of files) {
+    if (name === "design.css" || name === "tokens.css") continue;
+    const css = stripComments(readFileSync(new URL(name, dir), "utf8"));
+    for (const m of css.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)) {
+      const sel = m[1].trim().replace(/\s+/g, " ");
+      if (!owned.includes(sel)) continue;
+      assert.doesNotMatch(m[2], /font-size|font-weight|letter-spacing|line-height/, `${name}: ${sel}가 design.css 밖에서 글자 규격을 정의`);
+    }
+  }
+  const design = readFileSync(new URL("design.css", dir), "utf8");
+  for (const v of ["--ty-title", "--ty-section", "--ty-sub", "--ty-eyebrow"]) assert.match(design, new RegExp(`var\\(${v}\\)`), `${v} 미사용`);
+});
+
+test("타입 토큰은 라이트(:root)에서 정의된다", () => {
+  const tokens = readFileSync(new URL("tokens.css", dir), "utf8");
+  const root = tokens.slice(tokens.indexOf(":root"), tokens.indexOf("}", tokens.indexOf(":root")));
+  for (const v of ["--ty-title", "--ty-section", "--ty-sub", "--ty-eyebrow"]) assert.match(root, new RegExp(`${v}:`), `${v}가 :root 밖에 있음`);
+});

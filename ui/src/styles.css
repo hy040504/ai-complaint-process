@@ -369,9 +369,6 @@ small {
 }
 .eyebrow {
   color: var(--teal);
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 1.8px;
   margin-bottom: 9px;
 }
 .panel {
@@ -392,7 +389,6 @@ small {
   gap: 9px;
 }
 .section-title > span {
-  font-size: 11px;
   color: #849087;
 }
 .section-title small {
@@ -1946,9 +1942,6 @@ td:last-child {
 .workload {
   padding: 23px 24px;
 }
-.workload .section-title > span {
-  font-size: 9px;
-}
 .donut {
   width: 155px;
   height: 155px;
@@ -2496,9 +2489,6 @@ dialog::backdrop {
   .today {
     font-size: 9px;
   }
-  .dashboard-content .page-heading h1 {
-    font-size: 25px;
-  }
   .staff-alert {
     font-size: 9px;
   }
@@ -2597,9 +2587,6 @@ dialog::backdrop {
   .board-preview {
     padding-left: 18px;
     padding-right: 18px;
-  }
-  .section-title h2 {
-    font-size: 15px;
   }
   .section-title .mini-chip {
     display: none;
@@ -2850,9 +2837,6 @@ dialog::backdrop {
   .quick-section .section-title > span {
     display: none;
   }
-  .section-title h2 {
-    font-size: 15px;
-  }
   .quick-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 9px;
@@ -2980,15 +2964,6 @@ dialog::backdrop {
     margin-bottom: 23px;
     gap: 15px;
     align-items: flex-start;
-  }
-  .page-heading h1 {
-    font-size: 23px;
-    line-height: 1.5;
-    letter-spacing: -0.9px;
-  }
-  .page-heading .eyebrow {
-    font-size: 9px;
-    letter-spacing: 1.4px;
   }
   .page-heading p {
     font-size: 10px;
@@ -3158,9 +3133,6 @@ dialog::backdrop {
   .complaint-form > .section-title {
     padding-bottom: 17px;
     margin-bottom: 17px;
-  }
-  .complaint-form > .section-title > span {
-    font-size: 9px;
   }
   .complaint-form > label,
   .form-grid label {
@@ -3370,9 +3342,6 @@ dialog::backdrop {
   }
   .staff-shell .page-content {
     padding: 25px 18px 35px;
-  }
-  .staff-shell .page-heading h1 {
-    font-size: 23px;
   }
   .staff-shell footer {
     margin: 0 18px;

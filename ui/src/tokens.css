@@ -68,6 +68,12 @@
   --blue: var(--cj-blue);
   --amber: var(--st-wait-fg);
   --radius: var(--r-card);
+
+  /* 타입 스케일: 제목 3종(페이지·섹션·눈썹)은 모든 화면에서 이 값만 쓴다 */
+  --ty-title: 28px;
+  --ty-section: 15px;
+  --ty-sub: 12px;
+  --ty-eyebrow: 11px;
 }
 
 /* 다크 테마는 상태 칩과 강조 배경만 교체합니다(기존 themes.css의 면·글자색은 그대로) */
@@ -89,7 +95,6 @@ body[data-theme="dark"] {
   --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
   --e2: 0 6px 18px rgba(0, 0, 0, 0.32);
   --e3: 0 14px 34px rgba(0, 0, 0, 0.5);
-
   /* 다크 팔레트: themes.css의 모든 색을 역할별 대표색 190개로 묶음(허용 채널 오차 6/255) */
   --d-bg-01: #2c68dc; /* 7회·1색 */
   --d-bg-02: #253652; /* 47회·35색 */
@@ -281,4 +286,13 @@ body[data-theme="dark"] {
   --d-text-72: #93a7c8; /* 1회·1색 */
   --d-text-73: #f8fafc; /* 1회·1색 */
   --d-text-74: #fca5a5; /* 1회·1색 */
+}
+
+@media (max-width: 700px) {
+  :root {
+    --ty-title: 24px;
+    --ty-section: 14px;
+    --ty-sub: 11px;
+    --ty-eyebrow: 10px;
+  }
 }

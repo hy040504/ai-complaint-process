@@ -320,10 +320,6 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-page-title h1 {
   font-family: inherit;
-  font-size: 28px;
-  letter-spacing: -0.85px;
-  line-height: 1.5;
-  font-weight: 800;
   color: #16203a;
 }
 .staff-page-title > span {
@@ -491,16 +487,11 @@ body[data-site="staff"] .role-switch a.selected {
   flex: 1;
 }
 .staff-section-rule > h2 {
-  font-size: 14px;
-  font-weight: 650;
   color: #7186a8;
-  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 .staff-section-rule > span {
-  font-size: 12px;
   color: #a2afc5;
-  line-height: 1.7;
 }
 .staff-filter-chips {
   display: flex;
@@ -815,10 +806,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .page-heading h1 {
   font-family: inherit;
-  font-size: 29px;
   color: #16203a;
-  font-weight: 800;
-  letter-spacing: -0.8px;
 }
 .staff-workspace .page-heading p {
   font-size: 14px;
@@ -827,8 +815,6 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .eyebrow {
   color: #98a9c5;
-  font-size: 12px;
-  letter-spacing: 1.5px;
 }
 .staff-workspace .page-heading .connection {
   color: #5b7296;
@@ -1574,9 +1560,6 @@ body[data-site="staff"] #toast {
   .staff-page-title {
     gap: 10px;
   }
-  .staff-page-title h1 {
-    font-size: 26px;
-  }
   .staff-page-title > small {
     display: none;
   }
@@ -1847,11 +1830,6 @@ body[data-site="staff"] #toast {
     margin-bottom: 18px;
     align-items: center;
   }
-  .staff-page-title h1 {
-    font-size: 25px;
-    line-height: 1.6;
-    letter-spacing: -0.6px;
-  }
   .staff-page-title > span {
     font-size: 11px;
     padding: 2px 6px;
@@ -1909,9 +1887,6 @@ body[data-site="staff"] #toast {
   .staff-section-rule {
     margin: 22px 0 12px;
     gap: 10px;
-  }
-  .staff-section-rule h2 {
-    font-size: 13px;
   }
   .staff-filter-chips {
     gap: 6px;
@@ -2049,9 +2024,6 @@ body[data-site="staff"] #toast {
     font-size: 11px;
     margin-left: 5px;
   }
-  .staff-workspace .page-heading h1 {
-    font-size: 26px;
-  }
   .staff-workspace .page-heading p {
     font-size: 13px;
     line-height: 1.85;
@@ -2062,9 +2034,6 @@ body[data-site="staff"] #toast {
   .staff-workspace .page-heading > .connection {
     font-size: 11px;
     margin-top: 2px;
-  }
-  .staff-workspace .page-heading .eyebrow {
-    font-size: 11px;
   }
   .staff-workspace .info-banner {
     font-size: 12px;
@@ -2313,9 +2282,6 @@ body[data-site="staff"] #toast {
 @media (max-width: 360px) {
   .staff-workspace .page-content {
     padding-inline: 13px;
-  }
-  .staff-page-title h1 {
-    font-size: 23px;
   }
   .staff-inbox-banner {
     padding: 11px;

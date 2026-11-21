@@ -215,3 +215,51 @@
 @media (prefers-reduced-motion: reduce) {
   .staff-nav-link::before { transition: none; }
 }
+
+/* ── 블록 공통 규칙: 제목 3종 · 카드 그림자 · 행 호버 (사이트 공통 단일 출처) ── */
+.page-heading h1,
+.citizen-shell .page-heading h1,
+.staff-workspace .page-heading h1,
+.staff-page-title h1,
+.staff-shell .page-heading h1,
+.dashboard-content .page-heading h1 {
+  font-size: var(--ty-title);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.4;
+}
+.section-title h2,
+.citizen-section-label h2,
+.staff-section-rule > h2,
+.staff-section-rule h2 {
+  font-size: var(--ty-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+.section-title > span,
+.workload .section-title > span,
+.complaint-form > .section-title > span,
+.citizen-section-label h2 > span,
+.staff-section-rule > span {
+  font-size: var(--ty-sub);
+  font-weight: 500;
+  line-height: 1.6;
+}
+.eyebrow,
+.citizen-shell .eyebrow,
+.staff-workspace .eyebrow,
+.page-heading .eyebrow,
+.citizen-shell .page-heading .eyebrow,
+.staff-workspace .page-heading .eyebrow {
+  font-size: var(--ty-eyebrow);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.citizen-news-list,
+.citizen-status-card,
+.staff-api-stat { box-shadow: var(--e1); }
+.citizen-news-row:hover,
+.citizen-update-row:hover,
+.stats-bar-row:hover,
+.stats-bar-row:focus-visible { background: var(--cj-row-hover); }

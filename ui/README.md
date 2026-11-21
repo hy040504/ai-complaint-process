@@ -108,4 +108,5 @@ npm --prefix ui test
 - [`src/tokens.css`](src/tokens.css): 색·상태 5색·모서리 4단계·그림자 3단계·간격·모션(120/220/420ms) 토큰. 기존 `--teal` 등은 이 토큰에 연결돼 있다. 모든 글자·배경 조합의 대비는 `tests/tokens.test.mjs`가 검사한다.
 - [`src/design.css`](src/design.css): 상태 칩(`.badge.*`)과 출처 태그(`.origin-badge`)의 **유일한 색 정의**와 모션 규칙. 다른 CSS에 상태 칩 색을 다시 정의하지 않는다(테스트가 막는다).
 - [`src/motion.js`](src/motion.js): 숫자 카운트업(`data-countup`·`data-ck`), 경로 전환 시 진입 효과, 새 민원 행 플래시(`row-flash`). 화면이 실시간으로 통째로 다시 그려져도 반복 재생되지 않는다.
+- 제목 3종(페이지·섹션·눈썹)의 글자 규격은 `tokens.css`의 `--ty-*`와 `design.css`의 블록 공통 규칙에서만 정의한다. 다른 CSS에서 `font-size` 등을 다시 쓰면 테스트가 막는다.
 - 모든 움직임은 운영체제의 "동작 줄이기"를 켜면 꺼진다. 새 CSS를 고칠 때는 `tests/css-integrity.test.mjs`(괄호·선택자 무결성)를 통과해야 한다.
