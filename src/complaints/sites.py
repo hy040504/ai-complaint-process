@@ -73,6 +73,18 @@ class SiteSessionInterface(SecureCookieSessionInterface):
             return str(app.config["SESSION_COOKIE_NAME"])
         return COOKIE_NAMES[site]
 
+    def get_cookie_secure(self, app: Flask) -> bool:
+        """HTTPS 요청(프록시의 `X-Forwarded-Proto` 포함)이면 `Secure` 쿠키를 발급합니다.
+
+        Args:
+            app: 현재 Flask 애플리케이션입니다.
+
+        Returns:
+            요청이 HTTPS이거나 설정(`SESSION_COOKIE_SECURE`)이 켜져 있으면 True입니다.
+            로컬 HTTP(SSH 터널·개발)에서는 False라서 로그인이 막히지 않습니다.
+        """
+        return bool(request.is_secure) or bool(app.config["SESSION_COOKIE_SECURE"])
+
 
 def wrong_site_message(site: Site) -> str:
     """사이트와 계정 유형이 맞지 않을 때 안내 문구를 만듭니다.

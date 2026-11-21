@@ -201,7 +201,29 @@ def response_headers(response: Response) -> Response:
     else:
         response.headers["Cache-Control"] = "no-store"
     response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    if request.is_secure:
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
     return response
+
+
+_DEV_PAGE_PREFIXES = ("/docs", "/swagger", "/openapi", "/design/")
+
+
+def hide_dev_pages_from_proxy() -> None:
+    """Cloudflare 같은 외부 프록시를 거친 요청에는 개발자 문서·목업 화면을 숨깁니다.
+
+    프록시가 붙이는 `CF-Ray` 헤더는 외부 요청이 지울 수 없으므로 공개 주소에서는
+    Swagger·OpenAPI·디자인 목업이 404가 됩니다. SSH 터널·로컬 접속은 영향받지 않습니다.
+
+    Raises:
+        AppError: 프록시 경유 요청이 개발자 화면을 요청하면 404를 발생합니다.
+    """
+    if request.headers.get("CF-Ray") and request.path.startswith(_DEV_PAGE_PREFIXES):
+        raise AppError(404, "not_found", "파일을 찾을 수 없습니다.")
 
 
 def register_http(app: OpenAPI) -> None:
@@ -210,6 +232,7 @@ def register_http(app: OpenAPI) -> None:
     Args:
         app: 공통 처리를 연결할 애플리케이션입니다.
     """
+    app.before_request(hide_dev_pages_from_proxy)
     app.before_request(protect_api)
     app.after_request(response_headers)
     app.register_error_handler(AppError, handle_app_error)

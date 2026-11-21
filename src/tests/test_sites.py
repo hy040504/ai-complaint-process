@@ -129,6 +129,52 @@ def test_site_hint_fallbacks_for_requests_without_header() -> None:
     ), "쿠키가 하나뿐이면 그 사이트"
 
 
+def test_proxied_requests_hide_dev_pages_but_local_keeps_them() -> None:
+    """Cloudflare 경유(`CF-Ray`) 요청은 Swagger·OpenAPI·목업이 404, 로컬 접속은 그대로다."""
+    client = _app().test_client()
+    proxied = {"CF-Ray": "abc123-ICN"}
+    for path in (
+        "/docs",
+        "/swagger",
+        "/openapi.json",
+        "/openapi/openapi.json",
+        "/design/ui04",
+    ):
+        assert client.get(path, headers=proxied).status_code == 404, path
+    assert client.get("/", headers=proxied).status_code == 200
+    assert client.get("/staff/", headers=proxied).status_code == 200
+    assert client.get("/api/v1/health", headers=proxied).status_code == 200
+    assert client.get("/docs").status_code == 200, "로컬 접속은 문서를 볼 수 있다"
+
+
+def test_https_requests_get_secure_cookie_and_hsts() -> None:
+    """HTTPS(프록시의 X-Forwarded-Proto) 요청만 Secure 쿠키·HSTS를 받는다."""
+    app = _app()
+    https = app.test_client()
+    resp = https.post(
+        "/api/v1/auth/login",
+        json={"loginId": "staff_admin", "password": STAFF_PW},
+        headers={**STAFF, "X-Forwarded-Proto": "https"},
+    )
+    assert resp.status_code == 200
+    set_cookie = "; ".join(resp.headers.getlist("Set-Cookie"))
+    assert (
+        "cj_staff=" in set_cookie
+        and "Secure" in set_cookie
+        and "HttpOnly" in set_cookie
+    )
+    assert "SameSite=Strict" in set_cookie
+    assert "max-age=31536000" in resp.headers["Strict-Transport-Security"]
+
+    http = app.test_client()
+    plain = _login(http, STAFF, "staff_admin", STAFF_PW)
+    assert plain.status_code == 200
+    assert "Secure" not in "; ".join(plain.headers.getlist("Set-Cookie"))
+    assert "Strict-Transport-Security" not in plain.headers
+    assert plain.headers["X-Frame-Options"] == "SAMEORIGIN"
+    assert plain.headers["Referrer-Policy"] == "same-origin"
+
+
 def test_citizen_session_cannot_use_staff_api() -> None:
     """시민 세션으로는 담당자 API가 거부된다."""
     client = _app().test_client()
