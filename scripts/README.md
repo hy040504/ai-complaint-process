@@ -27,6 +27,8 @@ scripts/
 | [`restore-dump.sh`](ops/restore-dump.sh) | dump 복원 또는 스키마만 적용 | 우분투 |
 | [`serve-search.sh`](ops/serve-search.sh) | `python -m rag serve` | 우분투 `.venv` |
 | [`install-search-service.sh`](ops/install-search-service.sh) | systemd 사용자 서비스 설치 | 우분투 |
+| [`deploy-remote.ps1`](ops/deploy-remote.ps1) | `main`을 SSH 서버에 올리고 서비스 재시작·헬스 확인. 원격 bash는 [`remote/`](ops/remote/) | Windows PowerShell, 접속용 배치 파일 |
+| [`remote/harden-web.sh`](ops/remote/harden-web.sh) · [`remote/verify-sites.sh`](ops/remote/verify-sites.sh) | 서버 운영 설정(시연 로그인 끄기·계정 비밀번호 교체)과 사이트 분리 검증 | 서버에서 실행 |
 
 ## `run/` — 기동·CLI
 

@@ -222,3 +222,22 @@ npm --prefix ui test
 2026-10-31 Windows / Python 3.12에서 당시 서버 파일 10개 엄격한 타입 검사, API 회귀 18개, JS 문법 검사와 API 클라이언트 회귀 3개를 통과했다. OpenAPI 문서는 규격 검증도 수행했다. 실제 브라우저 검증과 한계는 [CASE-014](../docs/cases/사례-014-Flask-업무서버와-Swagger-구현-2026-10-31.md)에 기록한다.
 
 **미구현:** 외부 이동통신사 PASS/행정 SSO 연동, 다중 워커 이벤트 브로커(Redis/PG · 현 단계 제외), 멀티모달 이미지 AI 분석, 공식 행정 접수·외부 이관, 운영 배포. 민원 CRUD 백그라운드 AI 연결, 현장 사진·PDF 파일 첨부(EXIF 제거·권한 격리), 담당자 실시간 SSE 푸시, 시민 다중 턴 AI 챗봇(로그인 DB 영속 저장), 민원인·담당자 아이디/비밀번호 로그인(`scrypt`·부서 RBAC), PostgreSQL 7테이블 정규화, 담당자 통계 대시보드·안전 CSV 내보내기 및 검사기의 K-EXAONE 2.5 API·GPT-6 Luna API·Codex CLI 어댑터는 구현됐다. 초안 응대 평가셋 29건(개발 26/26, 보류 3/3) 및 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex 100건(`99.0%`) 실증을 기록했고, 400문항·openai_api `cached_tokens`와 운영 모델 선정은 후속이다. [CASE-114](../docs/cases/사례-114-시민-다중턴챗봇-PG영속저장과-담당자-통계대시보드-CSV내보내기-구현-2026-11-21.md) · [CASE-115](../docs/cases/사례-115-민원-파일첨부-업로드-EXIF제거-권한격리-구현-2026-11-21.md)
+
+## 시민·담당자 사이트와 계정 관리
+
+시민(`/`)과 담당자(`/staff/`)는 같은 프로세스에서 제공하지만 화면·로그인·세션이 분리된다([CASE-117](../docs/cases/사례-117-시민·담당자-사이트-분리와-원격-서버-배포-2026-11-21.md)).
+
+- **사이트 판별(`complaints/sites.py`):** 요청 헤더 `X-Cheongju-Site`(프론트의 모든 API 호출) → 경로 `/api/v1/staff/*` → 같은 호스트 `Referer`가 `/staff` 이하 → 사이트 쿠키가 하나뿐인 경우 순서다. 단서가 없는 요청(curl·테스트·Swagger 포털)은 기존 단일 쿠키 `session`을 그대로 쓴다.
+- **세션 쿠키:** 시민 `cj_citizen`, 담당자 `cj_staff`. 같은 브라우저에서 둘 다 로그인해도 서로 덮어쓰지 않고, 한쪽 로그아웃이 다른 쪽을 끊지 않는다.
+- **로그인 경계:** 담당자 계정을 시민 사이트에서, 민원인 계정을 담당자 사이트에서 로그인하면 `403`(`role_mismatch`·`wrong_site`)이다. 담당자 사이트의 민원인 가입은 계정을 만들기 전에 거부한다.
+- **화면 주소:** `GET /` → `ui/index.html`(시민), `GET /staff/` → `ui/staff.html`(담당자), `GET /staff` → `308 /staff/`.
+- **계정 관리 CLI:** 서버 안에서 실행하며 비밀번호는 인자가 아니라 환경변수(`COMPLAINT_NEW_PASSWORD`, `--password-env`로 변경) 또는 숨김 프롬프트로 받는다.
+
+```bash
+flask --app src:create_app create-staff --login-id staff_kim --name "김담당" --department "서원구 건설과"
+flask --app src:create_app reset-password --login-id staff_kim
+flask --app src:create_app deactivate-user --login-id staff_kim      # activate-user 로 복구
+flask --app src:create_app list-users                                # 시연 계정·해시는 출력하지 않음
+```
+
+운영 서버 설정과 배포는 [원격 서버 배포](../docs/harness/원격_서버_배포.md)를 따른다.

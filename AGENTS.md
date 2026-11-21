@@ -2,7 +2,9 @@
 
 이 프로젝트는 청주 민원의 1차 응대를 위한 AI 완충지대다. FAQ로 안내 근거를 찾고, 공개 사례로 담당 부서 후보를 찾으며, 근거가 부족하면 담당자 검토로 연결하는 것을 목표로 한다. 사용자와의 설명 및 프로젝트 문서는 한국어를 기본으로 한다.
 
-**브랜치 `llm`(2026-11-06):** GitHub 기본 브랜치다. 추출한 응대 검사기 웹은 [`src/lab_web/`](src/lab_web/README.md), 주소 `http://127.0.0.1:5010/`이다. `POST /api/v1/lab/complaints`는 제목·상세로 검색 API를 먼저 호출하고 `src.assist`가 판정한다. `search_complaint_rag`는 이 저장소가 만든 Codex MCP 도구이며 PostgreSQL 제품이 아니다. MCP stdio는 줄 단위 JSON-RPC다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
+**브랜치 `main`(2026-11-21):** 개발·서버 배포 기준 브랜치다. `llm` 상태를 1순위로 `origin/main`을 병합했고(로컬, 원격 push는 별도 승인), 서버는 `scripts/ops/deploy-remote.ps1`로 `main`을 올린다. 시민 `/`와 담당자 `/staff/`는 사이트별 세션 쿠키로 분리된다. [CASE-117](docs/cases/사례-117-시민·담당자-사이트-분리와-원격-서버-배포-2026-11-21.md) · [원격 서버 배포](docs/harness/원격_서버_배포.md)
+
+**브랜치 `llm`(2026-11-06):** 과거 GitHub 기본 브랜치였다. 추출한 응대 검사기 웹은 [`src/lab_web/`](src/lab_web/README.md), 주소 `http://127.0.0.1:5010/`이다. `POST /api/v1/lab/complaints`는 제목·상세로 검색 API를 먼저 호출하고 `src.assist`가 판정한다. `search_complaint_rag`는 이 저장소가 만든 Codex MCP 도구이며 PostgreSQL 제품이 아니다. MCP stdio는 줄 단위 JSON-RPC다. [CASE-057](docs/cases/사례-057-검사기웹-검색판정-연결-2026-11-06.md) · [CASE-058](docs/cases/사례-058-Codex-MCP-핸드셰이크-줄단위JSON-2026-11-06.md)
 
 ## 먼저 읽을 문서
 

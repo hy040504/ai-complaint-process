@@ -2,6 +2,8 @@
 
 ## 2026-11-21
 
+- **시민·담당자 사이트 분리와 원격 서버 배포 ([CASE-117](docs/cases/사례-117-시민·담당자-사이트-분리와-원격-서버-배포-2026-11-21.md)):** 시민 `/`와 담당자 `/staff/`를 별도 진입 화면·허용 경로·사이트별 세션 쿠키(`cj_citizen`·`cj_staff`)로 분리하고, 담당자 계정을 시민 사이트에서(또는 반대로) 로그인하면 `403`으로 거부합니다. 담당자 계정 추가·비밀번호 재설정·비활성화용 Flask CLI(`create-staff`·`reset-password`·`deactivate-user`·`activate-user`·`list-users`)를 추가했습니다. `main`을 `llm` 상태 우선으로 `origin/main`과 병합(로컬)하고, `scripts/ops/deploy-remote.ps1`로 서버 `navy2025`에 배포해 시연 로그인을 끄고 시드 계정 비밀번호를 교체했습니다. `pytest` `199 passed`·`ui test` `39`·mypy 0오류. 원격 push와 LLM 키 설정은 하지 않았습니다. [배포 안내](docs/harness/원격_서버_배포.md)
+
 - **프로젝트 폴더·파일 구조 정비 ([CASE-116](docs/cases/사례-116-프로젝트-폴더-파일-구조-정비-2026-11-21.md)):** `scripts/`를 `ops`·`run`·`eval`·`reports`로 분류하고 영문 이름 하나로 통합했으며, 루트 실행 파일을 `bin/`으로, `docs/report`·`docs/test`를 `docs/reports/{daily,analysis}`로, Swagger PDF를 `docs/api/`로, 초기 기획 자료를 `plan/archive/`로 옮겼습니다. `db/`는 `sql`·`samples`·`docs`로 정리하고 `rag/origin/`과 중복이던 JSON을 제거했으며, `src/rag`는 `src/search_client`로 이름을 바꾸고 `repository.py`·`service.py`·`place_tool.py`의 일부를 분리했습니다. 동작 변경 없음. `pytest` `189 passed`·`rag` `49 passed`·mypy 0오류·링크 검사 깨짐 0. Linux 셸 스크립트는 `bash`가 없어 검증하지 못했습니다.
 
 - **민원 파일 첨부 업로드 · 이미지 EXIF 자동 제거 · 비공개 권한 격리 구현 ([CASE-115](docs/cases/사례-115-민원-파일첨부-업로드-EXIF제거-권한격리-구현-2026-11-21.md)):**
