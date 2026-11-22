@@ -1838,6 +1838,15 @@ document.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "hide-complaint" || action === "restore-complaint") {
+    if (!c) return;
+    const hide = action === "hide-complaint";
+    openModal(
+      hide ? "게시판에서 내리시겠어요?" : "게시판에 다시 공개하시겠어요?",
+      `<form id="visibility-form" class="modal-content" data-id="${esc(c.id)}" data-version="${c.version}" data-visibility="${hide ? "private" : "public"}"><p>${hide ? "이 민원은 작성자와 담당자만 볼 수 있는 비공개로 바뀝니다. 작성자는 수정으로 다시 공개할 수 없습니다." : "담당자가 내렸던 민원을 다시 민원 게시판에 공개합니다."} 사유는 처리 이력에 남고 시민에게는 보이지 않습니다.</p><label for="visibility-reason">사유 <em>*</em></label><input id="visibility-reason" name="reason" required maxlength="200" placeholder="예: 개인정보가 포함되어 있어요"><div class="form-footer">${button("취소", "", 'type="button" data-action="close-modal"')}${button(hide ? "내리기" : "다시 공개", hide ? "danger" : "primary", 'type="submit"')}</div></form>`,
+    );
+    return;
+  }
   if (action === "delete-complaint") {
     if (!c) return;
     openModal(
@@ -2137,6 +2146,24 @@ document.addEventListener("submit", async (event) => {
       });
       await loadAnswerTemplates(true);
     }, `"${tplTitle}" 템플릿을 추가했습니다.`);
+    if (ok) modal.close();
+    return;
+  }
+  if (form.id === "visibility-form") {
+    if (!String(values.reason || "").trim()) return;
+    const toPrivate = form.dataset.visibility === "private";
+    const ok = await perform(
+      () =>
+        api("/complaints/" + form.dataset.id + "/visibility", {
+          method: "PUT",
+          body: {
+            version: Number(form.dataset.version),
+            visibility: form.dataset.visibility,
+            reason: values.reason,
+          },
+        }),
+      toPrivate ? "게시판에서 내렸습니다." : "게시판에 다시 공개했습니다.",
+    );
     if (ok) modal.close();
     return;
   }

@@ -53,6 +53,7 @@ from src.complaints.models import (
     PublicPage,
     PublicWorkspace,
     ReasonInput,
+    VisibilityInput,
     StaffExportQuery,
     StaffPage,
     StaffStatsResponse,
@@ -82,7 +83,31 @@ Operation = Literal[
     "retract",
     "retry",
     "cancel",
+    "visibility",
 ]
+
+# 담당자의 공개 범위 조정은 이력 문구로 기록한다(별도 DB 열 없이 마지막 조정을 판별).
+HIDE_HISTORY_PREFIX = "게시판에서 내림"
+RESTORE_HISTORY_PREFIX = "게시판에 다시 공개"
+
+
+def hidden_by_staff(row: Complaint) -> bool:
+    """담당자가 게시판에서 내린 상태인지 이력의 마지막 공개 범위 조정으로 판별합니다.
+
+    Args:
+        row: 확인할 민원입니다.
+
+    Returns:
+        마지막 조정이 "내림"이면 True입니다(조정 이력이 없으면 False).
+    """
+    hidden = False
+    for item in row.history:
+        if item.text.startswith(HIDE_HISTORY_PREFIX):
+            hidden = True
+        elif item.text.startswith(RESTORE_HISTORY_PREFIX):
+            hidden = False
+    return hidden
+
 
 _OUTCOME_STAGE_LABELS: dict[str, str] = {
     "faq_answer": "AI 분석 완료 (FAQ 안내) · 담당자 검토 대기",
@@ -1249,7 +1274,17 @@ class ComplaintService:
             row.body = body.body
             row.district = body.district
             row.category = body.category
-            row.visibility = body.visibility
+            if actor.guest:
+                # 게스트는 공개 범위를 바꿀 수 없다(접수 때 공개로 고정, 담당자가 내렸다면 그 상태 유지).
+                pass
+            elif body.visibility == "public" and hidden_by_staff(row):
+                raise AppError(
+                    409,
+                    "hidden_by_staff",
+                    "담당자가 게시판에서 내린 민원은 다시 공개로 바꿀 수 없습니다.",
+                )
+            else:
+                row.visibility = body.visibility
             self.invalidate(row)
             if row.ai_original:
                 row.versions.append(
@@ -1519,6 +1554,25 @@ class ComplaintService:
             elif operation == "cancel":
                 self._cancel_job(row)
                 text, public = "시연 작업 취소", False
+            elif operation == "visibility" and isinstance(body, VisibilityInput):
+                if body.visibility == "private":
+                    if row.visibility == "private":
+                        raise AppError(
+                            409, "already_private", "이미 비공개인 민원입니다."
+                        )
+                    row.visibility = "private"
+                    text = f"{HIDE_HISTORY_PREFIX}(비공개 전환): {body.reason}"
+                else:
+                    # 작성자가 직접 비공개로 정한 민원을 담당자가 공개로 돌리지 못하게 한다.
+                    if not hidden_by_staff(row):
+                        raise AppError(
+                            409,
+                            "not_hidden_by_staff",
+                            "담당자가 내린 민원만 다시 공개할 수 있습니다.",
+                        )
+                    row.visibility = "public"
+                    text = f"{RESTORE_HISTORY_PREFIX}: {body.reason}"
+                public = False
             else:
                 raise AppError(
                     400, "invalid_operation", "요청 모델과 작업이 일치하지 않습니다."

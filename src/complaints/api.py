@@ -57,6 +57,7 @@ from src.complaints.models import (
     PageResponse,
     ProviderStatus,
     ReasonInput,
+    VisibilityInput,
     RegisterInput,
     SessionInput,
     StaffEventsQuery,
@@ -764,6 +765,23 @@ def create_api(
             재검토 상태의 민원입니다.
         """
         return operate(path, body, "review")
+
+    @api.put(
+        "/complaints/<complaint_id>/visibility",
+        tags=[answers],
+        responses={200: ComplaintResponse},
+    )
+    def visibility(path: ComplaintPath, body: VisibilityInput) -> Response:
+        """담당자가 민원을 게시판에서 내리거나(비공개 전환) 내린 민원을 다시 공개합니다.
+
+        Args:
+            path: 민원 식별자입니다.
+            body: 기대 버전, 바꿀 공개 범위, 사유입니다.
+
+        Returns:
+            공개 범위가 바뀐 민원입니다.
+        """
+        return operate(path, body, "visibility")
 
     @api.put(
         "/complaints/<complaint_id>/assignment",

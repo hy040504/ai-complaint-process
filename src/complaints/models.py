@@ -328,6 +328,12 @@ class ReasonInput(VersionInput):
     reason: Reason
 
 
+class VisibilityInput(ReasonInput):
+    """담당자가 민원의 게시판 공개 범위를 조정할 때의 요청입니다(사유 필수)."""
+
+    visibility: Visibility
+
+
 class MessageInput(VersionInput):
     """본문을 임의로 자르지 않는 추가 문의 요청입니다."""
 

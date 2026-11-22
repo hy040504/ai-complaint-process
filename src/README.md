@@ -119,6 +119,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `POST /complaints/{complaint_id}/attachments`, `GET/DELETE /complaints/{complaint_id}/attachments/{attachment_id}` | 작성자 본인 현장 사진(JPG·PNG·WebP)·PDF 업로드(매직바이트 검증·EXIF 위치 자동 제거·최대 5개×5MB), 권한 격리 열람/다운로드(비공개 타 시민 `404`·CSP 샌드박스·`nosniff`), 게시 전 삭제(`204`) |
 | `POST /complaints/{complaint_id}/messages` | 본인 추가 문의·검토 재개 |
 | `POST /complaints/{complaint_id}/review` | 본인 재검토 요청 |
+| `PUT /complaints/{complaint_id}/visibility` | 담당자가 공개 민원을 게시판에서 내리거나(비공개 전환) 자신이 내린 민원을 다시 공개(`visibility`·`reason` 필수). 작성자가 직접 비공개로 정한 민원은 공개로 돌릴 수 없음 |
 | `PUT /complaints/{complaint_id}/assignment` | 담당자 본인 지정·해제 또는 청주시 127개 현행 부서 시연 배정(`department`·`reason`) |
 | `GET /departments` | 담당자 전용 청주시 현행 부서 디렉터리 목록(`automaticTransfer: false`) |
 | `GET /templates`, `POST /templates`, `DELETE /templates/{template_id}`, `POST /templates/reset` | 담당자 전용 답변 템플릿 조회·커스텀 추가·삭제·기본 5종 복원(`complaint_app.answer_templates`) |

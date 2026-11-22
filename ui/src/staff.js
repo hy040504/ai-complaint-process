@@ -450,6 +450,38 @@ function categoryOverview(rows) {
  * @param {object} c 서버에서 조회한 민원입니다.
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
+/**
+ * 담당자가 이 민원을 게시판에서 내린 상태인지 이력의 마지막 조정으로 판별합니다.
+ * 서버의 `hidden_by_staff`와 같은 규칙(이력 문구 접두)을 씁니다.
+ *
+ * @param {object} c 서버에서 조회한 민원입니다.
+ * @returns {boolean} 마지막 조정이 "내림"이면 true입니다.
+ */
+export function hiddenByStaff(c) {
+  let hidden = false;
+  for (const item of c.history || []) {
+    if (item.text.startsWith("게시판에서 내림")) hidden = true;
+    else if (item.text.startsWith("게시판에 다시 공개")) hidden = false;
+  }
+  return hidden;
+}
+
+/**
+ * 공개 민원은 "내리기", 담당자가 내린 민원은 "다시 공개" 버튼을 만듭니다.
+ * 작성자가 직접 비공개로 정한 민원에는 버튼을 두지 않습니다(담당자가 공개로 돌릴 수 없음).
+ *
+ * @param {object} c 서버에서 조회한 민원입니다.
+ * @returns {string} 버튼 HTML이거나 빈 문자열입니다.
+ */
+function visibilityControl(c) {
+  if (c.status === "withdrawn") return "";
+  if (c.visibility === "public")
+    return `<button type="button" class="btn subtle" data-action="hide-complaint" data-id="${e(c.id)}">${icon("shield", 15)} 게시판에서 내리기</button>`;
+  if (hiddenByStaff(c))
+    return `<button type="button" class="btn subtle" data-action="restore-complaint" data-id="${e(c.id)}">${icon("user", 15)} 게시판에 다시 공개</button>`;
+  return "";
+}
+
 export function staffProcess(c) {
   const hasAssignee = Boolean(c.assigned || c.department);
   const officerName = c.assigneeName || "김담당";
@@ -473,7 +505,7 @@ export function staffProcess(c) {
     ],
   ];
   const first = steps.findIndex((s) => !s[1]);
-  return `<section class="panel staff-process"><header><h2>처리 프로세스</h2><span>현재 업무 상태 <b>${statusNames[c.status]}</b>${c.messages.length ? ` · 추가 문의 ${c.messages.length}건` : ""}</span></header><ol>${steps.map(([title, done, sub], i) => `<li class="${done ? "done" : i === first ? "current" : "waiting"}"><span>${done ? icon("check", 16) : i + 1}</span><b>${title}</b><small>${sub}</small></li>`).join("")}</ol></section>`;
+  return `<section class="panel staff-process"><header><h2>처리 프로세스</h2><span>현재 업무 상태 <b>${statusNames[c.status]}</b>${c.messages.length ? ` · 추가 문의 ${c.messages.length}건` : ""} · ${c.visibility === "public" ? "게시판 공개" : "비공개"}</span>${visibilityControl(c)}</header><ol>${steps.map(([title, done, sub], i) => `<li class="${done ? "done" : i === first ? "current" : "waiting"}"><span>${done ? icon("check", 16) : i + 1}</span><b>${title}</b><small>${sub}</small></li>`).join("")}</ol></section>`;
 }
 
 /**
