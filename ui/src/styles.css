@@ -1387,7 +1387,7 @@ td:last-child {
   padding: 10px 0 12px;
   font-size: 13px;
   font-weight: 650;
-  color: #7b877c;
+  color: #67726b;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
@@ -3777,7 +3777,7 @@ dialog::backdrop {
 }
 .attachment-field-head small {
   font-weight: 500;
-  color: #6b7f9e;
+  color: #5f728f;
 }
 .attachment-policy-chip {
   display: inline-flex;

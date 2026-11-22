@@ -282,3 +282,30 @@
 ) {
   border: 1px solid var(--d-line-02);
 }
+
+/* ── 홈: 핵심 행동(질문·접수 입력창)을 첫 화면 위쪽으로 (마크업은 그대로, 보이는 순서만 변경) ── */
+.citizen-home-main { display: flex; flex-direction: column; }
+.citizen-home-main > * { order: 5; }
+.citizen-home-main > .citizen-welcome { order: 0; }
+.citizen-home-main > .citizen-ask-zone { order: 1; margin-top: 0; margin-bottom: 18px; }
+.citizen-home-main > .citizen-mobile-status { order: 2; }
+.citizen-home-main > .citizen-news-section { order: 3; }
+.citizen-home-main > .citizen-services-section { order: 4; }
+
+/* ── 작은 화면 헤더: 로그인 진입점을 다시 보이게 한다(기존 규칙이 모든 버튼을 숨겼음) ── */
+@media (max-width: 1100px) {
+  .citizen-header .citizen-header-actions .btn.auth-account-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+}
+@media (max-width: 600px) {
+  .citizen-header { padding-right: 150px; }
+  .citizen-header .citizen-header-actions { right: 14px; top: 20px; }
+  .citizen-header .citizen-header-actions .btn.auth-account-btn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+.citizen-home-main > .citizen-mobile-status { margin-bottom: 26px; }

@@ -39,7 +39,7 @@ body[data-site="staff"] .role-switch a.selected {
   --teal-dark: #245ccf;
   --teal-soft: #eaf1ff;
   --ink: #1b2233;
-  --muted: #7a8496;
+  --muted: #5f6b82;
   --line: #e0e6f0;
   --bg: #f4f6fa;
   margin-left: 236px;
@@ -94,7 +94,7 @@ body[data-site="staff"] .role-switch a.selected {
   gap: 5px;
 }
 .staff-nav-group {
-  color: #65799e;
+  color: #8da1c7;
   font-family: ui-monospace, Consolas, monospace;
   font-size: 11px;
   letter-spacing: 1.4px;
@@ -132,7 +132,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-nav-count {
   margin-left: auto;
-  background: #d65750;
+  background: #bf433c;
   color: #fff;
   border-radius: var(--r-control);
   font-family: ui-monospace, Consolas, monospace;
@@ -248,7 +248,7 @@ body[data-site="staff"] .role-switch a.selected {
   white-space: nowrap;
   font-size: 12px;
   font-weight: 650;
-  color: #2f9c6b;
+  color: #28805c;
 }
 .staff-connection > i {
   width: 6px;
@@ -258,13 +258,13 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-crumb {
   font-size: 12px;
-  color: #99a5ba;
+  color: #697386;
   letter-spacing: 0.2px;
   white-space: nowrap;
 }
 .staff-crumb > i {
   font-style: normal;
-  color: #c3cddb;
+  color: #6b7381;
   margin: 0 10px;
 }
 .staff-topbar-right {
@@ -278,7 +278,7 @@ body[data-site="staff"] .role-switch a.selected {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #a17b50;
+  color: #8c6c49;
   letter-spacing: 0.2px;
   white-space: nowrap;
 }
@@ -295,7 +295,7 @@ body[data-site="staff"] .role-switch a.selected {
   place-items: center;
   border: 1px solid #d9e1f0;
   border-radius: 50%;
-  color: #7b8da8;
+  color: #5e6d85;
   background: #f5f7fc;
   font-size: 11px;
 }
@@ -324,7 +324,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-page-title > span {
   font-size: 12px;
-  color: #9eabc0;
+  color: #636e80;
   border: 1px solid #e0e6f0;
   border-radius: var(--r-chip);
   padding: 3px 8px;
@@ -332,7 +332,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-page-title > small {
   font-size: 12px;
-  color: #8c9ab0;
+  color: #606c7f;
   white-space: nowrap;
 }
 .staff-scope {
@@ -348,7 +348,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 13px;
   padding: 7px 12px;
   border-radius: var(--r-chip);
-  color: #8b9ab1;
+  color: #5d697d;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -367,7 +367,7 @@ body[data-site="staff"] .role-switch a.selected {
   padding: 13px 16px;
   margin-bottom: 15px;
   font-size: 13px;
-  color: #8b9ec2;
+  color: #5a6984;
 }
 .staff-banner-dot {
   height: 6px;
@@ -436,7 +436,7 @@ body[data-site="staff"] .role-switch a.selected {
   box-shadow: 0 3px 10px #17213905;
 }
 .staff-kpi-label {
-  color: #7b8ba8;
+  color: #65738d;
   font-size: 13px;
   font-weight: 500;
 }
@@ -451,7 +451,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-kpi > strong > small {
   font-family: inherit;
   font-size: 13px;
-  color: #a6b1c3;
+  color: #687182;
   margin-left: 6px;
 }
 .staff-kpi-sub {
@@ -460,16 +460,16 @@ body[data-site="staff"] .role-switch a.selected {
   line-height: 1.65;
 }
 .staff-kpi-sub.red {
-  color: #c98d85;
+  color: #906867;
 }
 .staff-kpi-sub.blue {
-  color: #7e9ccc;
+  color: #5c7398;
 }
 .staff-kpi-sub.gold {
-  color: #bd9c56;
+  color: #847045;
 }
 .staff-kpi-sub.green {
-  color: #80af98;
+  color: #587a6f;
 }
 .staff-section-rule {
   display: flex;
@@ -485,11 +485,11 @@ body[data-site="staff"] .role-switch a.selected {
   flex: 1;
 }
 .staff-section-rule > h2 {
-  color: #7186a8;
+  color: #5b6c8a;
   white-space: nowrap;
 }
 .staff-section-rule > span {
-  color: #a2afc5;
+  color: #636d80;
 }
 .staff-filter-chips {
   display: flex;
@@ -516,7 +516,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-filter-chip > span {
   font-size: 12px;
-  color: #94a7c7;
+  color: #63718b;
   min-width: 7px;
 }
 .staff-filter-chip:hover {
@@ -588,10 +588,10 @@ body[data-site="staff"] .role-switch a.selected {
   padding: 12px 17px;
   border-bottom: 1px solid #edf1f7;
   font-size: 12px;
-  color: #a1afc3;
+  color: #687385;
 }
 .staff-list-caption b {
-  color: #677fa9;
+  color: #5c7299;
   font-weight: 650;
   margin: 0 2px;
 }
@@ -623,7 +623,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-size: 12px;
   font-family: ui-monospace, Consolas, monospace;
   font-weight: 550;
-  color: #8c9bb3;
+  color: #657287;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -653,12 +653,12 @@ body[data-site="staff"] .role-switch a.selected {
   align-items: center;
   gap: 3px;
   font-size: 12px;
-  color: #a6b2c4;
+  color: #687282;
   font-weight: 400;
   white-space: nowrap;
 }
 .staff-row-excerpt {
-  color: #7a879e;
+  color: #667287;
   font-size: 13px;
   margin-top: 5px;
   line-height: 1.65;
@@ -674,7 +674,7 @@ body[data-site="staff"] .role-switch a.selected {
   margin-top: 7px;
   line-height: 1.75;
   font-size: 12px;
-  color: #98a8c1;
+  color: #657287;
 }
 .staff-row-meta > span {
   display: inline-flex;
@@ -701,15 +701,15 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-tag.amber {
   background: #fff1dd;
-  color: #bf914c;
+  color: #82663d;
 }
 .staff-tag.gold {
   background: #fcf4df;
-  color: #b3933d;
+  color: #7d6a34;
 }
 .staff-tag.blue {
   background: #e9f1ff;
-  color: #648bd0;
+  color: #4b699f;
 }
 .staff-tag.red {
   background: #fdeceb;
@@ -717,11 +717,11 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-tag.gray {
   background: #f0f3f7;
-  color: #7d8da7;
+  color: #5d6b81;
 }
 .staff-published-mark {
   font-size: 12px;
-  color: #75a98d;
+  color: #53796a;
 }
 .staff-row-state {
   display: flex;
@@ -732,7 +732,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-row-state > time {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 12px;
-  color: #9eacc1;
+  color: #667184;
   white-space: nowrap;
 }
 .staff-row-open {
@@ -750,7 +750,7 @@ body[data-site="staff"] .role-switch a.selected {
 
 .staff-workspace .pagination {
   padding: 17px;
-  color: #9daec4;
+  color: #5b6b86;
   font-size: 12px;
 }
 .staff-workspace .pagination .btn {
@@ -760,7 +760,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-workspace .pagination .btn.active {
   background: #edf3ff;
-  color: #4c7dcf;
+  color: #406ab0;
   border-color: #d5e3fb;
 }
 .staff-category-panel {
@@ -785,7 +785,7 @@ body[data-site="staff"] .role-switch a.selected {
 .staff-category-panel span {
   font-size: 13px;
   font-weight: 600;
-  color: #7188ac;
+  color: #5d7090;
 }
 .staff-category-panel b {
   font-family: inherit;
@@ -798,7 +798,7 @@ body[data-site="staff"] .role-switch a.selected {
   font-family: inherit;
   font-size: 12px;
   font-weight: 400;
-  color: #a7b3c8;
+  color: #656f81;
   margin-left: 6px;
 }
 .staff-workspace .page-heading h1 {
@@ -811,7 +811,7 @@ body[data-site="staff"] .role-switch a.selected {
   line-height: 1.85;
 }
 .staff-workspace .eyebrow {
-  color: #98a9c5;
+  color: #606d83;
 }
 .staff-workspace .page-heading .connection {
   color: #5b7296;
@@ -842,7 +842,7 @@ body[data-site="staff"] .role-switch a.selected {
   background: #94a3b8;
 }
 .staff-workspace .info-banner {
-  color: #7891b7;
+  color: #576b8a;
   background: #eef4ff;
   border-color: #d7e4ff;
   font-size: 13px;
@@ -1363,16 +1363,16 @@ body[data-site="staff"] .role-switch a.selected {
   margin: 0 27px;
   padding: 20px 0;
   border-top: 1px solid #e0e7f2;
-  color: #b3bfd3;
+  color: #626c7d;
   font-size: 12px;
 }
 .staff-footer > span:first-child {
   font-size: 14px !important;
-  color: #7188ad !important;
+  color: #566a8c !important;
   font-weight: 700;
 }
 .staff-footer b {
-  color: #a7b6cd;
+  color: #626e81;
   font-weight: 400;
   font-size: 12px;
   margin-left: 12px;
@@ -1807,7 +1807,7 @@ body[data-site="staff"] #toast {
     font-size: 12px;
     white-space: nowrap;
     padding: 13px 8px 12px;
-    color: #8d9fbc;
+    color: #63728a;
     border-bottom: 2px solid transparent;
     flex: 1;
     text-align: center;
@@ -2977,7 +2977,7 @@ body[data-site="staff"] #toast {
 }
 .stats-chart-card > header > span {
   font-size: 12px;
-  color: #6b7f9e;
+  color: #5f728f;
 }
 .stats-bar-list {
   display: flex;
@@ -3038,7 +3038,7 @@ body[data-site="staff"] #toast {
 }
 .stats-bar-val small {
   font-size: 11px;
-  color: #6b7f9e;
+  color: #5f728f;
 }
 .stats-db-card {
   padding: 20px;

@@ -2354,3 +2354,20 @@ body[data-theme="dark"] .attachment-doc-box {
   background: var(--d-bg-07);
   color: var(--d-text-09);
 }
+
+/* 라이트 글자 대비 보정(CASE-121) 후에도 다크에서 읽히도록 밝은 글자색을 다시 지정 */
+body[data-theme="dark"] .citizen-counts strong small {
+  color: #89919e;
+}
+body[data-theme="dark"] .attachment-field-head > label {
+  color: #8793a5;
+}
+body[data-theme="dark"] .attachment-field-head small {
+  color: #8291a8;
+}
+body[data-theme="dark"] .staff-connection {
+  color: #5c9e83;
+}
+body[data-theme="dark"] .staff-page-title > small {
+  color: #7d8696;
+}

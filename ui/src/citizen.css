@@ -8,7 +8,7 @@ body[data-site="citizen"] {
   --teal-dark: #2258c6;
   --teal-soft: #edf3ff;
   --ink: #1b2233;
-  --muted: #738097;
+  --muted: #5f6b82;
   --line: #e3e8f0;
   --bg: #f7f9fc;
   max-width: none;
@@ -68,7 +68,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 10px;
   font-weight: 450;
   letter-spacing: 0.4px;
-  color: #8691a4;
+  color: #687384;
   margin-top: 8px;
 }
 .citizen-city-logo {
@@ -187,12 +187,12 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #16203a;
 }
 .citizen-shell .page-heading p {
-  color: #77849a;
+  color: #667286;
   font-size: 13px;
   line-height: 1.8;
 }
 .citizen-shell .eyebrow {
-  color: #667fa9;
+  color: #5b7299;
 }
 .citizen-shell .panel {
   border-color: #e3e8f0;
@@ -219,7 +219,7 @@ body[data-site="citizen"] .role-switch a.selected {
   font-size: 12px;
 }
 .citizen-shell .field-hint {
-  color: #7f8ba0;
+  color: #687386;
   font-size: 11px;
 }
 .citizen-shell .back-link {
@@ -308,7 +308,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 9px;
 }
 .citizen-section-label h2 > span {
-  color: #92a0b7;
+  color: #677387;
   border: 1px solid #e1e7f1;
   border-radius: var(--r-chip);
   padding: 2px 5px;
@@ -316,7 +316,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-section-label > a {
   font-size: 11px;
-  color: #2f6fed;
+  color: #2d69e1;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -374,7 +374,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-news-icon.blue {
   background: #edf3ff;
   border-color: #d7e5ff;
-  color: #2f6fed;
+  color: #2b64d4;
 }
 .citizen-news-icon.green {
   background: #eaf7f1;
@@ -407,7 +407,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-news-copy em {
   font-size: 10px;
   font-style: normal;
-  color: #7587a6;
+  color: #5c6b86;
   padding: 1px 6px;
   border-radius: var(--r-chip);
   background: #f0f4fa;
@@ -415,12 +415,12 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-news-copy small {
   font-size: 10px;
-  color: #8e9cb4;
+  color: #647085;
 }
 .citizen-news-copy i {
   font-size: 9px;
   font-style: normal;
-  color: #2f6fed;
+  color: #2d69e1;
   border-radius: var(--r-chip);
   font-weight: 650;
 }
@@ -559,7 +559,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-ask-copy > span {
   display: block;
-  color: #8a98ae;
+  color: #667286;
   font-size: 12px;
   overflow: hidden;
   white-space: nowrap;
@@ -624,14 +624,14 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-counts strong small {
   font-size: 10px;
   margin-left: 3px;
-  color: #a1adc0;
+  color: #687283;
   font-weight: 400;
 }
 .citizen-counts > a:nth-child(2) strong {
   color: #2f6fed;
 }
 .citizen-counts > a > span {
-  color: #8390a7;
+  color: #667287;
   font-size: 10px;
 }
 .citizen-recent {
@@ -670,7 +670,7 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-recent small {
   display: block;
   font-size: 10px;
-  color: #8f9ab0;
+  color: #677185;
   margin-top: 5px;
 }
 .citizen-recent > svg {
@@ -693,7 +693,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-how-step > span {
   font-size: 10px;
-  color: #6e91ca;
+  color: #506b97;
   width: 27px;
   height: 27px;
   display: grid;
@@ -709,7 +709,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-how-step p {
   font-size: 11px;
-  color: #7e8ba2;
+  color: #677388;
   line-height: 1.9;
   margin-top: 5px;
 }
@@ -765,7 +765,7 @@ body[data-site="citizen"] .role-switch a.selected {
   gap: 4px;
   font-size: 10px;
   font-weight: 550;
-  color: #95a3ba;
+  color: #667286;
   min-width: 0;
   border-radius: var(--r-control);
   transition:
@@ -807,17 +807,17 @@ body[data-site="citizen"] .role-switch a.selected {
   margin: 0 auto;
   padding: 23px 0 30px;
   border-color: #e2e7f0;
-  color: #9aa5b8;
+  color: #677081;
 }
 .citizen-shell > footer > span:first-child {
   color: #637593;
 }
 .citizen-shell > footer b {
-  color: #8f9bb0;
+  color: #656f82;
 }
 .citizen-shell .table-meta,
 .citizen-shell .pagination {
-  color: #8693a9;
+  color: #667185;
   font-size: 11px;
 }
 .citizen-shell .row-title {
@@ -827,10 +827,10 @@ body[data-site="citizen"] .role-switch a.selected {
 .citizen-shell .row-sub,
 .citizen-shell .date-cell,
 .citizen-shell .id-cell {
-  color: #8a97ab;
+  color: #667284;
 }
 .citizen-shell .list-tabs button {
-  color: #8794a9;
+  color: #677285;
   font-size: 12px;
 }
 .citizen-shell .list-tabs button.active {
@@ -839,11 +839,11 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell table th {
   background: #f5f7fc;
-  color: #8090ac;
+  color: #5f6d85;
   border-color: #eaf0f8;
 }
 .citizen-shell td {
-  color: #6b7e9a;
+  color: #61738e;
   border-color: #edf1f7;
 }
 .citizen-shell .filters select {
@@ -1024,17 +1024,18 @@ body[data-site="citizen"] .role-switch a.selected {
   box-shadow: 0 6px 24px #2f6fed08;
 }
 .citizen-shell .form-steps .active {
-  color: #2f6fed;
+  color: #2d69e1;
 }
 .citizen-shell .form-steps .active b {
   background: #2f6fed;
+  color: #fff;
 }
 .citizen-shell .form-steps > span {
-  color: #97a4ba;
+  color: #656f83;
 }
 .citizen-shell .form-steps b {
   background: #edf1f8;
-  color: #8191ac;
+  color: #5e6b82;
 }
 .citizen-shell .radio-cards > label {
   border-color: #e0e6f0;
@@ -1044,10 +1045,10 @@ body[data-site="citizen"] .role-switch a.selected {
   background: #f3f7ff;
 }
 .citizen-shell .radio-cards small {
-  color: #7d8ba4;
+  color: #626e84;
 }
 .citizen-shell .consent label {
-  color: #7b89a1;
+  color: #67748a;
 }
 .citizen-shell .complaint-form > label,
 .citizen-shell .form-grid label {
@@ -1055,7 +1056,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-shell .guide-step p,
 .citizen-shell .faq-panel details p {
-  color: #7788a4;
+  color: #64738c;
   font-size: 12px;
 }
 .citizen-shell .guide-step .quick-icon {
@@ -1611,7 +1612,7 @@ body[data-site="citizen"] .role-switch a.selected {
 }
 .citizen-profile-card p {
   font-size: 12px;
-  color: #95a4bc;
+  color: #667287;
   margin-top: 4px;
 }
 .citizen-profile-menu {
@@ -2148,12 +2149,12 @@ body[data-site="citizen"] .modal-content .compare-box {
     gap: 8px;
   }
   .citizen-section-label h2 {
-    color: #7a89a3;
+    color: #647189;
     gap: 7px;
 }
   .citizen-section-label h2 > span {
     padding: 1px 4px;
-    color: #9aa8be;
+    color: #677285;
 }
   .citizen-section-label > a {
     font-size: 10px;
@@ -2417,7 +2418,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   }
   .citizen-shell .list-panel .row-sub {
     font-size: 10px;
-    color: #8a9bb6;
+    color: #647289;
   }
   .citizen-shell .list-panel .badge {
     font-size: 9px;
@@ -2432,7 +2433,7 @@ body[data-site="citizen"] .modal-content .compare-box {
   .citizen-shell .list-panel td:nth-child(3),
   .citizen-shell .list-panel td:nth-child(5) {
     font-size: 10px;
-    color: #8b9bb2;
+    color: #657286;
   }
   .citizen-shell .detail-heading {
     padding: 20px 18px 53px;
