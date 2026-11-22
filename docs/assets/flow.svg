@@ -1,13 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
   <title id="t">민원이 흘러가는 순서</title>
-  <desc id="d">시민은 게스트로 시작해 로그인하면 계정으로 합쳐지고, 접수된 민원은 AI 분석과 담당자 검토를 거쳐 답변이 게시됩니다.</desc>
+  <desc id="d">시민은 게스트로 시작해 로그인하면 계정으로 합쳐집니다. 접수된 민원은 장소 확인, 검색, AI 판정을 거치며, 청주 밖이면 곧바로 담당자 검토로, 아니면 FAQ 안내 또는 부서 연결·담당자 검토 갈래로 나뉘어 담당자 초안이 됩니다. 담당자가 확인해 게시한 답변만 시민에게 보입니다.</desc>
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker>
   </defs>
-  <rect width="1200" height="640" fill="#f6f8fc"/>
+  <rect width="1200" height="1040" fill="#f6f8fc"/>
   <text x="40" y="56" font-size="14" font-weight="700" letter-spacing="2" fill="#2f6fed">이용 흐름</text>
   <text x="40" y="100" font-size="32" font-weight="800" fill="#16203a">민원은 이렇게 흘러가요</text>
 
+  <!-- ───────── 시민 쪽 ───────── -->
   <text x="40" y="150" font-size="18" font-weight="800" fill="#16203a">시민 쪽 — 게스트로 시작해서 로그인까지</text>
   <g stroke="#d6deec" fill="#ffffff">
     <rect x="40" y="168" width="259" height="150" rx="14"/>
@@ -28,28 +29,86 @@
     <text x="921" y="234">지금까지 낸 민원이</text><text x="921" y="256">내 계정으로</text><text x="921" y="278">옮겨져요.</text>
   </g>
 
+  <!-- ───────── 처리 쪽 ───────── -->
   <text x="40" y="372" font-size="18" font-weight="800" fill="#16203a">처리 쪽 — 접수부터 답변까지</text>
+
+  <!-- 1행: 접수 → 장소 확인 → 검색 → AI 판정 -->
   <g stroke="#d6deec" fill="#ffffff">
-    <rect x="40" y="390" width="204" height="150" rx="14"/>
-    <rect x="268" y="390" width="204" height="150" rx="14"/>
-    <rect x="496" y="390" width="204" height="150" rx="14"/>
-    <rect x="724" y="390" width="204" height="150" rx="14"/>
-    <rect x="952" y="390" width="208" height="150" rx="14"/>
+    <rect x="40" y="390" width="259" height="150" rx="14"/>
+    <rect x="327" y="390" width="259" height="150" rx="14"/>
+    <rect x="614" y="390" width="259" height="150" rx="14"/>
+    <rect x="901" y="390" width="259" height="150" rx="14"/>
   </g>
   <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
-    <path d="M246 465h20"/><path d="M474 465h20"/><path d="M702 465h20"/><path d="M930 465h20"/>
+    <path d="M301 465h24"/><path d="M588 465h24"/><path d="M875 465h24"/>
   </g>
-  <g fill="#16203a"><circle cx="64" cy="416" r="13"/><circle cx="292" cy="416" r="13"/><circle cx="520" cy="416" r="13"/><circle cx="748" cy="416" r="13"/><circle cx="976" cy="416" r="13"/></g>
-  <g font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle"><text x="64" y="421">1</text><text x="292" y="421">2</text><text x="520" y="421">3</text><text x="748" y="421">4</text><text x="976" y="421">5</text></g>
-  <g font-size="17" font-weight="800" fill="#16203a"><text x="86" y="422">접수</text><text x="314" y="422">AI 분석</text><text x="542" y="422">담당자 검토</text><text x="770" y="422">답변 게시</text><text x="998" y="422">시민 확인</text></g>
+  <g fill="#16203a"><circle cx="64" cy="416" r="13"/><circle cx="351" cy="416" r="13"/><circle cx="638" cy="416" r="13"/><circle cx="925" cy="416" r="13"/></g>
+  <g font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle"><text x="64" y="421">1</text><text x="351" y="421">2</text><text x="638" y="421">3</text><text x="925" y="421">4</text></g>
+  <g font-size="17" font-weight="800" fill="#16203a"><text x="86" y="422">접수</text><text x="373" y="422">장소 확인</text><text x="660" y="422">검색</text><text x="947" y="422">AI 판정</text></g>
   <g font-size="14" fill="#3d4860">
-    <text x="60" y="456">민원이 저장되고</text><text x="60" y="478">담당자 목록에</text><text x="60" y="500">올라와요.</text>
-    <text x="288" y="456">자주 묻는 질문과</text><text x="288" y="478">비슷한 사례에서</text><text x="288" y="500">근거와 부서 후보를</text><text x="288" y="522">찾아요.</text>
-    <text x="516" y="456">초안을 고치거나</text><text x="516" y="478">직접 답을 써요.</text>
-    <text x="744" y="456">검토한 답변만</text><text x="744" y="478">시민에게 보여요.</text>
-    <text x="972" y="456">답변을 보고</text><text x="972" y="478">추가 문의나</text><text x="972" y="500">재검토를 요청해요.</text>
+    <text x="60" y="456">민원이 저장되고</text><text x="60" y="478">AI 분석이</text><text x="60" y="500">자동으로 시작돼요.</text>
+    <text x="347" y="456">지명으로 관할 구를</text><text x="347" y="478">확인해요. 청주 밖</text><text x="347" y="500">주소면 여기서 바로</text><text x="347" y="522">담당자 검토로 보내요.</text>
+    <text x="634" y="456">민원 내용으로 자주</text><text x="634" y="478">묻는 질문과 비슷한</text><text x="634" y="500">사례를 따로 찾아</text><text x="634" y="522">순위를 매겨요.</text>
+    <text x="921" y="456">검색 결과를 보고</text><text x="921" y="478">안내할 수 있는지,</text><text x="921" y="500">부서 연결이 필요한지</text><text x="921" y="522">정해요. (코드가 재확인)</text>
   </g>
 
-  <rect x="40" y="572" width="1120" height="44" rx="10" fill="#e8f0ff"/>
-  <text x="60" y="600" font-size="15" fill="#1e4fc7">AI는 답을 정해 주지 않고 초안과 근거만 만들어요. 담당자가 검토해 게시하기 전의 초안은 시민에게 보이지 않아요.</text>
+  <!-- 갈래 화살표 -->
+  <g stroke="#5b6f95" stroke-width="2" fill="none">
+    <path d="M1030 540V566H610" />
+  </g>
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M610 566V588"/>
+    <path d="M1030 566V588"/>
+  </g>
+  <g stroke="#b45309" stroke-width="2" fill="none" stroke-dasharray="6 5" marker-end="url(#ar)">
+    <path d="M456 540V566H220V588"/>
+  </g>
+  <text x="470" y="560" font-size="13" font-weight="700" fill="#8a4a07">청주 밖</text>
+  <text x="1042" y="561" font-size="13" font-weight="700" fill="#3d4860">부서 연결·검토 필요</text>
+  <text x="624" y="583" font-size="13" font-weight="700" fill="#3d4860">안내 가능</text>
+
+  <!-- 2행: 세 갈래 -->
+  <rect x="40" y="590" width="360" height="170" rx="14" fill="#fff8e6" stroke="#e8cf8f"/>
+  <rect x="440" y="590" width="340" height="170" rx="14" fill="#ffffff" stroke="#d6deec"/>
+  <rect x="820" y="590" width="340" height="170" rx="14" fill="#ffffff" stroke="#d6deec"/>
+  <g font-size="17" font-weight="800" fill="#16203a">
+    <text x="60" y="624">청주 밖이면 바로 담당자에게</text>
+    <text x="460" y="624">FAQ로 안내할 수 있어요</text>
+    <text x="840" y="624">부서 연결·담당자 검토</text>
+  </g>
+  <g font-size="14" fill="#3d4860">
+    <text x="60" y="654">검색·AI 호출 없이</text><text x="60" y="676">고정 안내 문구와 함께</text><text x="60" y="698">담당자 검토로 올려요.</text>
+    <text x="460" y="654">공식 안내 내용으로 안내문을</text><text x="460" y="676">만들어요. 접수한 민원이면</text><text x="460" y="698">담당자 초안으로 저장하고,</text><text x="460" y="720">챗봇이면 시민에게 바로 보여요.</text>
+    <text x="840" y="654">담당자용 초안과 부서 후보를</text><text x="840" y="676">정리해요. 욕설·감정 표현이</text><text x="840" y="698">있으면 순화 요약도 같이</text><text x="840" y="720">만들어요.</text>
+  </g>
+
+  <!-- 3행으로 모이는 화살표 -->
+  <g stroke="#5b6f95" stroke-width="2" fill="none">
+    <path d="M610 760V786H220"/><path d="M990 760V786H220"/>
+  </g>
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M220 760V808"/>
+  </g>
+
+  <!-- 3행: 담당자 검토 → 답변 게시 → 시민 확인 -->
+  <g stroke="#d6deec" fill="#ffffff">
+    <rect x="40" y="810" width="360" height="112" rx="14"/>
+    <rect x="440" y="810" width="340" height="112" rx="14"/>
+    <rect x="820" y="810" width="340" height="112" rx="14"/>
+  </g>
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M402 866h36"/><path d="M782 866h36"/>
+  </g>
+  <g fill="#16203a"><circle cx="64" cy="836" r="13"/><circle cx="464" cy="836" r="13"/><circle cx="844" cy="836" r="13"/></g>
+  <g font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle"><text x="64" y="841">5</text><text x="464" y="841">6</text><text x="844" y="841">7</text></g>
+  <g font-size="17" font-weight="800" fill="#16203a"><text x="86" y="842">담당자 검토</text><text x="486" y="842">답변 게시</text><text x="866" y="842">시민 확인</text></g>
+  <g font-size="14" fill="#3d4860">
+    <text x="60" y="872">AI 결과는 모두 담당자 초안으로</text><text x="60" y="894">저장돼요. 담당자가 고치거나</text><text x="60" y="914">직접 답을 써요.</text>
+    <text x="460" y="872">담당자가 확인해 게시한</text><text x="460" y="894">답변만 시민에게 보여요.</text>
+    <text x="840" y="872">답변을 보고 추가 문의나</text><text x="840" y="894">재검토를 요청해요.</text>
+  </g>
+
+  <rect x="40" y="948" width="1120" height="70" rx="10" fill="#e8f0ff"/>
+  <text x="60" y="976" font-size="15" fill="#1e4fc7">AI는 답을 정해 주지 않고 초안과 근거만 만들어요. 담당자가 게시하기 전의 초안은 시민에게 보이지 않아요.</text>
+  <text x="60" y="1002" font-size="14" fill="#1e4fc7">예외: AI 챗봇에서는 FAQ 안내가 시민에게 바로 보여요. 접수한 민원에는 이 예외가 적용되지 않아요.</text>
 </svg>
