@@ -234,7 +234,7 @@ npm --prefix ui test
 - **계정 관리 CLI:** 서버 안에서 실행하며 비밀번호는 인자가 아니라 환경변수(`COMPLAINT_NEW_PASSWORD`, `--password-env`로 변경) 또는 숨김 프롬프트로 받는다.
 
 ```bash
-flask --app src:create_app seed-demo-accounts   # 시연 공통 로그인 abcd / (시연 비밀번호)(민원인 abcd·담당자 abcd@staff), 약한 비밀번호 주의
+COMPLAINT_DEMO_ACCOUNT_PASSWORD=<비밀번호> flask --app src:create_app seed-demo-accounts   # 시연 공통 로그인 abcd(민원인 abcd·담당자 abcd@staff). 비밀번호는 환경변수로만 받고 코드·문서에 적지 않음
 flask --app src:create_app create-staff --login-id staff_kim --name "김담당" --department "서원구 건설과"
 flask --app src:create_app reset-password --login-id staff_kim
 flask --app src:create_app deactivate-user --login-id staff_kim      # activate-user 로 복구

@@ -134,8 +134,12 @@ def create_app(
 
     @app.cli.command("seed-demo-accounts")
     def seed_demo_accounts_command() -> None:
-        """두 사이트 공통 시연 로그인(abcd / (시연 비밀번호))을 만들거나 되돌립니다(약한 비밀번호 주의)."""
-        for login_id, outcome in ensure_demo_accounts(repository):
+        """두 사이트 공통 시연 로그인(abcd)을 만들거나 되돌립니다. 비밀번호는 환경변수로만 받습니다."""
+        try:
+            results = ensure_demo_accounts(repository)
+        except AppError as error:
+            raise click.ClickException(error.message) from error
+        for login_id, outcome in results:
             click.echo(f"시연 계정 {outcome}: {login_id}")
 
     def read_new_password(env_name: str) -> str:

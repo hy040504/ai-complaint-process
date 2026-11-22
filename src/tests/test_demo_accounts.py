@@ -1,8 +1,10 @@
-"""두 사이트 공통 시연 로그인(abcd / (시연 비밀번호)) 테스트입니다."""
+"""두 사이트 공통 시연 로그인(abcd) 테스트입니다. 비밀번호는 테스트 전용 값을 환경변수로 넣습니다."""
 
 from __future__ import annotations
 
 from typing import Any
+
+import pytest
 
 from src.app import create_app
 from src.complaints.config import Settings
@@ -10,6 +12,13 @@ from src.complaints.sites import SITE_HEADER
 
 CITIZEN = {SITE_HEADER: "citizen"}
 STAFF = {SITE_HEADER: "staff"}
+TEST_PASSWORD = "test-demo-pw-01"
+
+
+@pytest.fixture(autouse=True)
+def _demo_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    """모든 테스트에서 시연 비밀번호 환경변수를 테스트 전용 값으로 둔다."""
+    monkeypatch.setenv("COMPLAINT_DEMO_ACCOUNT_PASSWORD", TEST_PASSWORD)
 
 
 def _app() -> Any:
@@ -20,7 +29,9 @@ def _app() -> Any:
     )
 
 
-def _login(client: Any, site: dict[str, str], role: str, password: str = "demo-pass-1") -> Any:
+def _login(
+    client: Any, site: dict[str, str], role: str, password: str = TEST_PASSWORD
+) -> Any:
     """사이트가 보내는 형식(expected_role 포함)으로 abcd 로그인을 시도합니다."""
     return client.post(
         "/api/v1/auth/login",
@@ -34,7 +45,7 @@ def test_seed_then_both_sites_accept_abcd() -> None:
     app = _app()
     result = app.test_cli_runner().invoke(args=["seed-demo-accounts"])
     assert result.exit_code == 0, result.output
-    assert "abcd" in result.output and "demo-pass-1" not in result.output
+    assert "abcd" in result.output and TEST_PASSWORD not in result.output
 
     citizen = app.test_client()
     assert _login(citizen, CITIZEN, "citizen").status_code == 200
@@ -90,3 +101,13 @@ def test_citizen_cannot_use_staff_site_with_plain_citizen_id() -> None:
     blocked = _login(client, STAFF, "staff")
     assert blocked.status_code in (401, 403)
     assert _login(app.test_client(), CITIZEN, "citizen").status_code == 200
+
+
+def test_seed_refuses_without_password_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """비밀번호 환경변수가 없으면 계정을 만들지 않고 안내와 함께 실패한다(코드에 기본값 없음)."""
+    monkeypatch.delenv("COMPLAINT_DEMO_ACCOUNT_PASSWORD", raising=False)
+    app = _app()
+    result = app.test_cli_runner().invoke(args=["seed-demo-accounts"])
+    assert result.exit_code != 0
+    assert "COMPLAINT_DEMO_ACCOUNT_PASSWORD" in result.output
+    assert _login(app.test_client(), STAFF, "staff").status_code == 401
