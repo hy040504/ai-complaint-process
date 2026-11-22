@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+  <title id="t">민원이 흘러가는 순서</title>
+  <desc id="d">시민은 게스트로 시작해 로그인하면 계정으로 합쳐지고, 접수된 민원은 AI 분석과 담당자 검토를 거쳐 답변이 게시됩니다.</desc>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker>
+  </defs>
+  <rect width="1200" height="640" fill="#f6f8fc"/>
+  <text x="40" y="56" font-size="14" font-weight="700" letter-spacing="2" fill="#2f6fed">이용 흐름</text>
+  <text x="40" y="100" font-size="32" font-weight="800" fill="#16203a">민원은 이렇게 흘러가요</text>
+
+  <text x="40" y="150" font-size="18" font-weight="800" fill="#16203a">시민 쪽 — 게스트로 시작해서 로그인까지</text>
+  <g stroke="#d6deec" fill="#ffffff">
+    <rect x="40" y="168" width="259" height="150" rx="14"/>
+    <rect x="327" y="168" width="259" height="150" rx="14"/>
+    <rect x="614" y="168" width="259" height="150" rx="14"/>
+    <rect x="901" y="168" width="259" height="150" rx="14"/>
+  </g>
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M301 243h24"/><path d="M588 243h24"/><path d="M875 243h24"/>
+  </g>
+  <g fill="#2f6fed"><circle cx="64" cy="194" r="13"/><circle cx="351" cy="194" r="13"/><circle cx="638" cy="194" r="13"/><circle cx="925" cy="194" r="13"/></g>
+  <g font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle"><text x="64" y="199">1</text><text x="351" y="199">2</text><text x="638" y="199">3</text><text x="925" y="199">4</text></g>
+  <g font-size="17" font-weight="800" fill="#16203a"><text x="86" y="200">처음 방문</text><text x="373" y="200">민원 남기기</text><text x="660" y="200">게시판에 공개</text><text x="947" y="200">로그인하면 합쳐져요</text></g>
+  <g font-size="14" fill="#3d4860">
+    <text x="60" y="234">로그인 없이</text><text x="60" y="256">홈과 이용 안내를</text><text x="60" y="278">볼 수 있어요.</text>
+    <text x="347" y="234">글을 쓰거나</text><text x="347" y="256">도우미를 쓰면</text><text x="347" y="278">게스트로 시작돼요.</text>
+    <text x="634" y="234">게스트 민원은</text><text x="634" y="256">게시판에 공개돼요.</text><text x="634" y="278">개인정보는 빼 주세요.</text>
+    <text x="921" y="234">지금까지 낸 민원이</text><text x="921" y="256">내 계정으로</text><text x="921" y="278">옮겨져요.</text>
+  </g>
+
+  <text x="40" y="372" font-size="18" font-weight="800" fill="#16203a">처리 쪽 — 접수부터 답변까지</text>
+  <g stroke="#d6deec" fill="#ffffff">
+    <rect x="40" y="390" width="204" height="150" rx="14"/>
+    <rect x="268" y="390" width="204" height="150" rx="14"/>
+    <rect x="496" y="390" width="204" height="150" rx="14"/>
+    <rect x="724" y="390" width="204" height="150" rx="14"/>
+    <rect x="952" y="390" width="208" height="150" rx="14"/>
+  </g>
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M246 465h20"/><path d="M474 465h20"/><path d="M702 465h20"/><path d="M930 465h20"/>
+  </g>
+  <g fill="#16203a"><circle cx="64" cy="416" r="13"/><circle cx="292" cy="416" r="13"/><circle cx="520" cy="416" r="13"/><circle cx="748" cy="416" r="13"/><circle cx="976" cy="416" r="13"/></g>
+  <g font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle"><text x="64" y="421">1</text><text x="292" y="421">2</text><text x="520" y="421">3</text><text x="748" y="421">4</text><text x="976" y="421">5</text></g>
+  <g font-size="17" font-weight="800" fill="#16203a"><text x="86" y="422">접수</text><text x="314" y="422">AI 분석</text><text x="542" y="422">담당자 검토</text><text x="770" y="422">답변 게시</text><text x="998" y="422">시민 확인</text></g>
+  <g font-size="14" fill="#3d4860">
+    <text x="60" y="456">민원이 저장되고</text><text x="60" y="478">담당자 목록에</text><text x="60" y="500">올라와요.</text>
+    <text x="288" y="456">자주 묻는 질문과</text><text x="288" y="478">비슷한 사례에서</text><text x="288" y="500">근거와 부서 후보를</text><text x="288" y="522">찾아요.</text>
+    <text x="516" y="456">초안을 고치거나</text><text x="516" y="478">직접 답을 써요.</text>
+    <text x="744" y="456">검토한 답변만</text><text x="744" y="478">시민에게 보여요.</text>
+    <text x="972" y="456">답변을 보고</text><text x="972" y="478">추가 문의나</text><text x="972" y="500">재검토를 요청해요.</text>
+  </g>
+
+  <rect x="40" y="572" width="1120" height="44" rx="10" fill="#e8f0ff"/>
+  <text x="60" y="600" font-size="15" fill="#1e4fc7">AI는 답을 정해 주지 않고 초안과 근거만 만들어요. 담당자가 검토해 게시하기 전의 초안은 시민에게 보이지 않아요.</text>
+</svg>

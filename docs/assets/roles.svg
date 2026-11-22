@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+  <title id="t">게스트, 민원인, 담당자가 할 수 있는 일</title>
+  <desc id="d">게스트는 로그인 없이 민원을 5건까지 공개로 남길 수 있고, 민원인은 로그인해 제한 없이 공개·비공개를 골라 남길 수 있으며, 담당자는 별도 사이트에서 모든 민원을 검토하고 답변합니다.</desc>
+  <defs>
+    <symbol id="ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#e3f5ea"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#0f5a2c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="no" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#eceff4"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#3d4860" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="okd" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2f4a3c"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#9be7b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="nod" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#34415f"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#c9d3ea" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  </defs>
+  <rect width="1200" height="660" fill="#f6f8fc"/>
+  <text x="48" y="58" font-size="14" font-weight="700" letter-spacing="2" fill="#2f6fed">청주톡톡 민원웹</text>
+  <text x="48" y="104" font-size="34" font-weight="800" fill="#16203a">누가, 무엇을 할 수 있나요?</text>
+
+  <!-- 게스트 -->
+  <rect x="48" y="136" width="352" height="440" rx="16" fill="#ffffff" stroke="#d6deec"/>
+  <rect x="72" y="160" width="92" height="28" rx="14" fill="#fff1d6"/>
+  <text x="118" y="180" font-size="14" font-weight="700" fill="#5a4400" text-anchor="middle">게스트</text>
+  <text x="72" y="226" font-size="22" font-weight="800" fill="#16203a">로그인 없이 바로</text>
+  <g font-size="16" fill="#16203a">
+    <use href="#ok" x="72" y="258" width="24" height="24"/><text x="106" y="277">민원 남기기 (5건까지)</text>
+    <use href="#ok" x="72" y="296" width="24" height="24"/><text x="106" y="315">사진·PDF 첨부</text>
+    <use href="#ok" x="72" y="334" width="24" height="24"/><text x="106" y="353">AI 도우미에게 질문</text>
+    <use href="#ok" x="72" y="372" width="24" height="24"/><text x="106" y="391">공개된 민원 보기</text>
+    <use href="#no" x="72" y="410" width="24" height="24"/><text x="106" y="429" fill="#3d4860">비공개 접수 (자동 공개)</text>
+    <use href="#no" x="72" y="448" width="24" height="24"/><text x="106" y="467" fill="#3d4860">다른 기기에서 보기</text>
+  </g>
+  <rect x="72" y="494" width="304" height="62" rx="10" fill="#fff8e6"/>
+  <text font-size="13.5" fill="#5a4400"><tspan x="86" y="518">브라우저를 닫으면 다시 열 수 없어요.</tspan><tspan x="86" y="538">로그인하면 내 계정으로 합쳐져요.</tspan></text>
+
+  <!-- 민원인 -->
+  <rect x="424" y="136" width="352" height="440" rx="16" fill="#ffffff" stroke="#2f6fed" stroke-width="2.5"/>
+  <rect x="448" y="160" width="92" height="28" rx="14" fill="#2f6fed"/>
+  <text x="494" y="180" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">민원인</text>
+  <text x="448" y="226" font-size="22" font-weight="800" fill="#16203a">로그인하면 더 편해요</text>
+  <g font-size="16" fill="#16203a">
+    <use href="#ok" x="448" y="258" width="24" height="24"/><text x="482" y="277">민원 남기기 (제한 없음)</text>
+    <use href="#ok" x="448" y="296" width="24" height="24"/><text x="482" y="315">공개·비공개 고르기</text>
+    <use href="#ok" x="448" y="334" width="24" height="24"/><text x="482" y="353">도우미 대화 저장·이어가기</text>
+    <use href="#ok" x="448" y="372" width="24" height="24"/><text x="482" y="391">어느 기기에서나 확인</text>
+    <use href="#ok" x="448" y="410" width="24" height="24"/><text x="482" y="429">답변 보기·추가 문의</text>
+    <use href="#no" x="448" y="448" width="24" height="24"/><text x="482" y="467" fill="#3d4860">남의 비공개 민원 보기</text>
+  </g>
+  <rect x="448" y="494" width="304" height="62" rx="10" fill="#e8f0ff"/>
+  <text font-size="13.5" fill="#1e4fc7"><tspan x="462" y="518">내 민원은 내 계정에 남아서</tspan><tspan x="462" y="538">다시 로그인해도 그대로 있어요.</tspan></text>
+
+  <!-- 담당자 -->
+  <rect x="800" y="136" width="352" height="440" rx="16" fill="#16203a"/>
+  <rect x="824" y="160" width="92" height="28" rx="14" fill="#dfe8fb"/>
+  <text x="870" y="180" font-size="14" font-weight="700" fill="#16203a" text-anchor="middle">담당자</text>
+  <text x="824" y="226" font-size="22" font-weight="800" fill="#ffffff">민원을 살펴보고 답해요</text>
+  <g font-size="16" fill="#f3f6fc">
+    <use href="#okd" x="824" y="258" width="24" height="24"/><text x="858" y="277">모든 민원 보기 (비공개 포함)</text>
+    <use href="#okd" x="824" y="296" width="24" height="24"/><text x="858" y="315">AI 분석 실행·초안 고치기</text>
+    <use href="#okd" x="824" y="334" width="24" height="24"/><text x="858" y="353">답변 게시·담당 지정</text>
+    <use href="#okd" x="824" y="372" width="24" height="24"/><text x="858" y="391">통계 보기·CSV 내려받기</text>
+    <use href="#okd" x="824" y="410" width="24" height="24"/><text x="858" y="429">새 민원 실시간 알림</text>
+    <use href="#nod" x="824" y="448" width="24" height="24"/><text x="858" y="467" fill="#c9d3ea">시민 대신 민원 접수</text>
+  </g>
+  <rect x="824" y="494" width="304" height="62" rx="10" fill="#243556"/>
+  <text font-size="13.5" fill="#dfe8fb"><tspan x="838" y="518">별도 사이트(/staff/)에서 로그인해요.</tspan><tspan x="838" y="538">부서 담당자는 자기 부서만 봐요.</tspan></text>
+
+  <text x="48" y="620" font-size="14" fill="#3d4860">초록 동그라미는 할 수 있는 일, 회색 동그라미는 할 수 없는 일이에요. 색만이 아니라 표시 모양(체크·엑스)도 달라요.</text>
+</svg>

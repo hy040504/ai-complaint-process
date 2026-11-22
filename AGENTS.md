@@ -8,7 +8,7 @@
 
 ## 먼저 읽을 문서
 
-1. [README](README.md): 목적, 확정 사항, 현재 구현 범위.
+1. [README](README.md): 쉬운 소개와 역할별 권한. 확정 사항·현재 구현 범위·검증 수치는 [기술 개요](docs/기술_개요.md)(이전 README 전체).
 2. [하네스 안내](docs/harness/README.md): 작업 종류별로 읽을 문서. 응대 LLM은 [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md)와 [`prompts/`](docs/harness/prompts/README.md)를 먼저 본다.
 3. [프로젝트 사례](docs/cases/README.md): 관련 버그·조치·설계 결정과 미해결 과제.
 4. 수정하는 코드와 해당 테스트. 문서와 코드가 다르면 차이를 확인하고 함께 수정한다.

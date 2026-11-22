@@ -10,7 +10,7 @@
 
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [업무보고서 모음 (`docs/reports/daily/`, 11/04~11/19)](reports/daily/README.md), [테스트 분석 (`docs/reports/analysis/`, 200건·112건)](reports/analysis/README.md), [2026-11-05 진행 보고](reports/진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [기술 개요(이전 README 전체)](기술_개요.md), [업무보고서 모음 (`docs/reports/daily/`, 11/04~11/19)](reports/daily/README.md), [테스트 분석 (`docs/reports/analysis/`, 200건·112건)](reports/analysis/README.md), [2026-11-05 진행 보고](reports/진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test-search.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md) |
@@ -58,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-121](cases/사례-121-글자대비-보정과-홈·모바일-개선-및-README-쉬운-개편-2026-11-22.md) | 2026-11-22 | 글자 대비 보정(미달 270→0)·홈 입력창 위로·모바일 로그인 복구, README 쉬운 개편과 역할 그림 | 완료 |
 | [CASE-120](cases/사례-120-디자인-토큰과-공통-상태칩-모션-적용-2026-11-21.md) | 2026-11-21 | 디자인 토큰·공통 상태 칩·동적 효과(카운트업·진입·새 행 플래시), 다크 회귀 수정과 CSS 무결성 테스트 | 일부 완료 |
 | [CASE-119](cases/사례-119-비로그인-게스트-접수와-방문자-홈-2026-11-21.md) | 2026-11-21 | 비로그인 게스트 접수·방문자 홈, 로그인 모달 단순화 | 완료 |
 | [CASE-118](cases/사례-118-무료-외부-공개-Cloudflare-Quick-Tunnel-2026-11-21.md) | 2026-11-21 | 민원 웹 무료 외부 공개(Cloudflare Quick Tunnel), HTTPS 쿠키·보안 헤더, 프록시 경유 시 문서 숨김 | 완료 |
