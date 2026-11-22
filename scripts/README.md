@@ -9,7 +9,7 @@ scripts/
 ├─ ops/       환경 준비·DB·덤프·서비스 설치 (운영)
 ├─ run/       서버·CLI 기동 (사용자 실행)
 ├─ eval/      응대 평가·실증·회귀 검증
-└─ reports/   업무보고·분석보고서 PDF 생성
+└─ reports/   업무보고·분석보고서·사용 가이드(그림·PDF) 생성
 ```
 
 처음이라면 [`setup.cmd`](../setup.cmd)(Windows) 또는 [`setup.sh`](../setup.sh)(Linux)로 환경을 준비하고, 서버는 [`bin/`](../bin/README.md)의 실행 파일로 켭니다. 아래 파일은 그 실행 파일이 호출하는 본체입니다.
@@ -58,6 +58,7 @@ scripts/
 | --- | --- | --- |
 | [`report_common.py`](reports/report_common.py) | 브라우저 탐색·PDF 인쇄·UI 캡처·카드 조립 공용 모듈 | `.venv-web` + pypdf |
 | [`daily_report_base.py`](reports/daily_report_base.py) · `daily_report_YYYYMMDD.py`(`20261110`·`20261111`·`20261116`·`20261117`·`20261118`·`20261119`) | 일자별 업무보고 PDF 생성·병합. 산출물은 [`docs/reports/daily/`](../docs/reports/README.md) | `.venv-web` + Chrome/Edge |
+| [`guide/`](reports/guide/README.md) (`capture.mjs`·`screens.json`·`build_guide_pdf.py`) | [사용 가이드](../docs/guides/README.md)의 번호가 붙은 화면 그림 캡처와 PDF 생성 | Node.js + Chrome/Edge + 시연 로그인을 끈 `:5000`대 서버 |
 | [`analysis_report_100_codex.py`](reports/analysis_report_100_codex.py) · [`analysis_report_200.py`](reports/analysis_report_200.py) · [`analysis_report_112.py`](reports/analysis_report_112.py) | 실증 원자료 기반 SVG 차트·MD/PDF 분석 보고서. 산출물은 [`docs/reports/analysis/`](../docs/reports/README.md) | `.venv-web` + Chrome/Edge |
 
 ## 참고

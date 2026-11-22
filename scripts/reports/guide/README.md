@@ -1,0 +1,49 @@
+# 사용 가이드 그림·PDF 만들기 (`scripts/reports/guide/`)
+
+[스크립트 안내](../../README.md) · [사용 가이드](../../../docs/guides/README.md)
+
+[사용 가이드](../../../docs/guides/README.md)에 들어가는 **번호가 붙은 화면 그림**과 **PDF**를 다시 만드는 도구입니다. 화면이 바뀌어 그림이 실제와 달라졌을 때 씁니다.
+
+| 파일 | 하는 일 |
+| --- | --- |
+| [`capture.mjs`](capture.mjs) | 브라우저로 화면을 열고 기능 영역에 **번호 배지와 빨간 테두리**를 그려 PNG로 저장합니다. |
+| [`screens.json`](screens.json) | 어떤 주소를 열고, 무엇을 누르고, 어디에 몇 번을 붙일지 적은 **화면 목록**입니다. |
+| [`build_guide_pdf.py`](build_guide_pdf.py) | 가이드 마크다운(`docs/guides/*.md`)을 인쇄용 PDF로 바꿉니다. |
+
+## 그림 다시 찍기
+
+필요한 것: Node.js, Edge 또는 Chrome, 그리고 **시연 로그인을 끈** 민원 웹 서버(`COMPLAINT_DEMO_LOGIN=0`) 한 대.
+
+1. 서버를 시연 로그인을 끈 채로 띄웁니다. 예: `COMPLAINT_DEMO_LOGIN=0 COMPLAINT_PORT=5001 python -m src`
+   (`screens.json`의 `base`가 `http://127.0.0.1:5001`입니다. 다르면 고치세요.)
+2. 브라우저를 원격 디버깅 모드로 띄웁니다.
+   `msedge --headless --remote-debugging-port=9395 --remote-allow-origins=* --user-data-dir=<빈 폴더> about:blank`
+3. 담당자 계정 정보를 **환경변수**로 넘기고 실행합니다. (비밀번호를 파일에 쓰지 않아요.)
+
+```bash
+GUIDE_STAFF_ID=담당자아이디 GUIDE_STAFF_PW=비밀번호 \
+node scripts/reports/guide/capture.mjs 9395 scripts/reports/guide/screens.json docs/assets/guide
+```
+
+- 한 장만 다시 찍으려면 `screens.json` 맨 위에 `"only": ["s02-home"]`처럼 이름을 적습니다.
+- 어떤 요소를 짚을 수 있는지 보려면 마지막 인자에 `dump`를 붙입니다. 화면별 버튼·입력 칸 이름과 위치가 출력돼요.
+
+### 번호를 붙이는 방법 (`notes`)
+
+| 적는 방식 | 뜻 |
+| --- | --- |
+| `css:#title` | CSS 선택자로 요소를 찾습니다. |
+| `text:민원 등록하기` | 화면에 보이는 글자가 들어 있는 가장 작은 요소를 찾습니다. |
+| `panel:처리 프로세스` | 그 글자가 들어 있는 **패널 전체**를 감쌉니다. |
+| `xy:x,y,너비,높이` | 위치를 직접 지정합니다. (문서 좌표, 1280px 폭 기준) |
+| `"badge": "right"` | 번호를 오른쪽 위에 둡니다. (글자를 가릴 때 씁니다.) |
+
+> 이 도구는 **시험 민원을 실제로 접수**합니다(게스트로 작성). 다시 찍은 뒤에는 DB에서 시험 민원을 지워 주세요.
+
+## PDF 만들기
+
+```bash
+python scripts/reports/guide/build_guide_pdf.py
+```
+
+`docs/guides/`의 두 가이드를 읽어 같은 폴더에 `.pdf`로 저장합니다. 가이드에서 쓰는 마크다운 문법(제목·표·목록·인용·그림·굵게·링크)만 해석하는 작은 변환기입니다.
