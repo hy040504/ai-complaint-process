@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
+  <title id="t">민원 웹이 인터넷에 공개되는 길</title>
+  <desc id="d">방문자가 도메인 주소로 접속하면 Cloudflare를 거쳐 터널로 서버의 민원 웹에 연결됩니다. 시민 사이트와 담당자 사이트만 열리고 API 문서, 응대 검사기, 데이터베이스는 열리지 않습니다.</desc>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker>
+  </defs>
+  <rect width="1200" height="640" fill="#f6f8fc"/>
+  <text x="40" y="56" font-size="14" font-weight="700" letter-spacing="2" fill="#2f6fed">인터넷 공개 구성</text>
+  <text x="40" y="100" font-size="32" font-weight="800" fill="#16203a">주소를 입력하면 이렇게 연결돼요</text>
+
+  <!-- 1 방문자 -->
+  <rect x="40" y="136" width="255" height="230" rx="14" fill="#ffffff" stroke="#d6deec"/>
+  <circle cx="64" cy="162" r="13" fill="#2f6fed"/><text x="64" y="167" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="86" y="168" font-size="17" font-weight="800" fill="#16203a">방문자</text>
+  <g font-size="14" fill="#3d4860">
+    <text x="60" y="204">시민과 담당자가</text>
+    <text x="60" y="226">인터넷 브라우저에</text>
+    <text x="60" y="248">주소를 입력해요.</text>
+  </g>
+  <rect x="58" y="290" width="219" height="40" rx="8" fill="#e8f0ff"/>
+  <text x="68" y="315" font-size="12.5" fill="#1e4fc7" font-weight="700">cheongju.mib.dpdns.org</text>
+
+  <!-- 2 도메인 -->
+  <rect x="327" y="136" width="255" height="230" rx="14" fill="#ffffff" stroke="#d6deec"/>
+  <circle cx="351" cy="162" r="13" fill="#2f6fed"/><text x="351" y="167" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="373" y="168" font-size="17" font-weight="800" fill="#16203a">도메인 이름</text>
+  <g font-size="14" fill="#3d4860">
+    <text x="347" y="204">DigitalPlat에서 받은</text>
+    <text x="347" y="226">무료 도메인</text>
+    <text x="347" y="248"><tspan font-weight="800" fill="#16203a">mib.dpdns.org</tspan>를 쓰고,</text>
+    <text x="347" y="270">그 아래에 <tspan font-weight="800" fill="#16203a">cheongju</tspan> 이름을</text>
+    <text x="347" y="292">민원 웹에 붙였어요.</text>
+  </g>
+  <rect x="345" y="314" width="219" height="36" rx="8" fill="#fff8e6"/>
+  <text x="355" y="337" font-size="12.5" fill="#5a4400">무료 도메인은 갱신이 필요해요</text>
+
+  <!-- 3 Cloudflare -->
+  <rect x="614" y="136" width="255" height="230" rx="14" fill="#ffffff" stroke="#d6deec"/>
+  <circle cx="638" cy="162" r="13" fill="#2f6fed"/><text x="638" y="167" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="660" y="168" font-size="17" font-weight="800" fill="#16203a">Cloudflare</text>
+  <g font-size="14" fill="#3d4860">
+    <text x="634" y="204">도메인 이름을 관리하고</text>
+    <text x="634" y="226">서버와 <tspan font-weight="800" fill="#16203a">터널</tspan>로</text>
+    <text x="634" y="248">이어 줘요.</text>
+    <text x="634" y="278">HTTPS(자물쇠) 암호화도</text>
+    <text x="634" y="300">여기서 맡아요.</text>
+  </g>
+
+  <!-- 4 서버 -->
+  <rect x="901" y="136" width="259" height="230" rx="14" fill="#16203a"/>
+  <circle cx="925" cy="162" r="13" fill="#dfe8fb"/><text x="925" y="167" font-size="14" font-weight="800" fill="#16203a" text-anchor="middle">4</text>
+  <text x="947" y="168" font-size="17" font-weight="800" fill="#ffffff">우리 서버</text>
+  <g font-size="14" fill="#dfe8fb">
+    <text x="921" y="204">서버가 Cloudflare로</text>
+    <text x="921" y="226">먼저 연결해 둬요.</text>
+    <text x="921" y="248">그래서 서버의 문을</text>
+    <text x="921" y="270">열어 둘 필요가 없어요.</text>
+    <text x="921" y="300">민원 웹·검색·AI가</text>
+    <text x="921" y="322">여기서 돌아가요.</text>
+  </g>
+
+  <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#ar)">
+    <path d="M297 251h28"/><path d="M584 251h28"/><path d="M871 251h28"/>
+  </g>
+
+  <!-- 열리는 것 / 안 열리는 것 -->
+  <text x="40" y="414" font-size="18" font-weight="800" fill="#16203a">인터넷에서 열리는 것과 안 열리는 것</text>
+  <rect x="40" y="432" width="552" height="170" rx="14" fill="#e3f5ea" stroke="#9bd3b0"/>
+  <text x="62" y="464" font-size="17" font-weight="800" fill="#0f5a2c">열려 있어요</text>
+  <g font-size="15" fill="#16203a">
+    <text x="62" y="498">· 시민 사이트 (주소 끝에 아무것도 없는 첫 주소)</text>
+    <text x="62" y="526">· 담당자 사이트 (주소 끝에 /staff/ — 로그인해야 쓸 수 있어요)</text>
+    <text x="62" y="554">· 접속 상태 확인 주소 (정상인지만 알려 줘요)</text>
+  </g>
+  <rect x="608" y="432" width="552" height="170" rx="14" fill="#eceff4" stroke="#c7cfdd"/>
+  <text x="630" y="464" font-size="17" font-weight="800" fill="#3d4860">열리지 않아요</text>
+  <g font-size="15" fill="#16203a">
+    <text x="630" y="498">· API 문서(Swagger) — 밖에서 열면 &quot;없음&quot;으로 나와요</text>
+    <text x="630" y="526">· 응대 검사기(AI 시험 화면)</text>
+    <text x="630" y="554">· 데이터베이스와 검색 서비스</text>
+    <text x="630" y="582">· 서버의 다른 프로그램</text>
+  </g>
+</svg>
