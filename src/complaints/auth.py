@@ -427,7 +427,16 @@ class AuthService:
             AppError: 잠금·계정 없음·비활성·비밀번호 불일치·역할 불일치 시 발생합니다.
         """
         self.rate_limiter.check_allowed(body.login_id)
-        user = self.repository.get_user_by_login(body.login_id)
+        # 같은 아이디를 두 사이트에서 쓰는 시연 계정은 `<아이디>@<역할>` 내부 아이디로 먼저 찾는다.
+        # 가입·담당자 생성은 `@`를 막으므로 일반 사용자가 이 이름을 선점할 수 없다.
+        candidates = [body.login_id]
+        if body.expected_role:
+            candidates.insert(0, f"{body.login_id}@{body.expected_role}")
+        user = None
+        for candidate in candidates:
+            user = self.repository.get_user_by_login(candidate)
+            if user is not None:
+                break
         if (
             user is None
             or not user.active

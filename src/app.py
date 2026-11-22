@@ -29,6 +29,7 @@ from src.complaints.pages import web
 from src.complaints.repository import MemoryRepository, PostgresRepository
 from src.complaints.seed import seed_demo
 from src.complaints.sites import SiteSessionInterface
+from src.complaints.demo_accounts import ensure_demo_accounts
 from src.complaints.user_admin import create_staff, reset_password, set_active
 from src.complaints.service import AssistIterFn, ComplaintService
 
@@ -130,6 +131,12 @@ def create_app(
         click.echo(
             f"공개 데이터 기반 시연 민원 {seed_public_demo(repository, ROOT / 'rag' / 'origin')}건 생성"
         )
+
+    @app.cli.command("seed-demo-accounts")
+    def seed_demo_accounts_command() -> None:
+        """두 사이트 공통 시연 로그인(abcd / (시연 비밀번호))을 만들거나 되돌립니다(약한 비밀번호 주의)."""
+        for login_id, outcome in ensure_demo_accounts(repository):
+            click.echo(f"시연 계정 {outcome}: {login_id}")
 
     def read_new_password(env_name: str) -> str:
         """환경변수 또는 숨김 프롬프트에서 새 비밀번호를 받습니다.
