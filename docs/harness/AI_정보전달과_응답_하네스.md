@@ -3,7 +3,7 @@
 [하네스 안내](README.md) · [판정 정책](decision-policy.md) · [시스템 프롬프트·프리픽스 캐싱](시스템_프롬프트와_프리픽스_캐싱_지침.md) · [AI 안전·보안 가드레일](AI_안전_보안_가드레일.md)
 
 **기준: 2026-11-19 UTC · 상태: 로컬 응대 계층(`src/assist`) + 시연 웹 비동기 CRUD AI(`CASE-093`) 구현 + 기획서 통합 지침.**
-이 문서는 현재 프로젝트 구현([`src/assist`](../../src/README.md), [`src/search_client`](../../src/README.md), [`src/llm`](../../src/README.md))과 두 기획서 분석 자료([`민원AI_계획서_상세분석.md`](../../plan/archive/민원AI_계획서_상세분석.md), [`VoteLab_AI민원_상세기획안_상세분석.md`](../../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md)), 그리고 웹 MVP 상세설계([`민원_웹_MVP_상세설계와_분야별_작업계획.md`](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md))를 종합하여 **AI(LLM)에게 어떤 정보를 어떻게 보내고(Input), AI로부터 어떤 응답을 받아 어떻게 검증·제공할지(Output)** 정의한다.
+이 문서는 현재 프로젝트 구현([`src/assist`](../../src/README.md), [`src/search_client`](../../src/README.md), [`src/llm`](../../src/README.md))과 두 기획서 분석 자료([`민원AI_계획서_상세분석.md`](../plans/archive/민원AI_계획서_상세분석.md), [`VoteLab_AI민원_상세기획안_상세분석.md`](../plans/archive/VoteLab_AI민원_상세기획안_상세분석.md)), 그리고 웹 MVP 상세설계([`민원_웹_MVP_상세설계와_분야별_작업계획.md`](../plans/민원_웹_MVP_상세설계와_분야별_작업계획.md))를 종합하여 **AI(LLM)에게 어떤 정보를 어떻게 보내고(Input), AI로부터 어떤 응답을 받아 어떻게 검증·제공할지(Output)** 정의한다.
 
 > [!IMPORTANT]
 > **구현 범위와 기획안의 구분:** 현재 코드로 구현된 AI 경로는 사전 관할·장소 추적(`resolve_district_and_place`, 순수 타지역 `early_external_reject`), 검색(`POST /search`) 뒤 1차 판정 JSON(`PREFIX-01`), 코드 정책 검사(`validate_decision`), 조건부 FAQ 안내(`PREFIX-02`), 담당자 초안(`PREFIX-03`, `out_of_scope` 시 LLM 생략)·특이민원 순화(`PREFIX-04`, 필요 시 `PREFIX-03`과 병렬 실행)이며, 민원 게시판 CRUD(`complaint_app`)에는 비동기 백그라운드 워커 + 1.5초 폴링(`CASE-093`)까지 연결했습니다. 담당자 실시간 SSE 푸시, 개인정보 자동 마스킹 필터, 공식 행정 이관은 **후속 구현 범위**이며 완료된 기능으로 표시하지 않는다.
@@ -14,7 +14,7 @@
 
 두 기획서가 제시한 **AI 완충지대(Buffer Zone)** 철학을 현재 저장소의 데이터·코드 경계에 맞춰 다음과 같이 적용한다.
 
-| 영역 | 기획서 핵심 내용 ([민원AI 계획서](../../plan/archive/민원AI_계획서_상세분석.md) · [VoteLab 기획안](../../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md)) | 현재 프로젝트 적용 지침 ([`AGENTS.md`](../../AGENTS.md) · [`src/assist`](../../src/assist/pipeline.py)) | 구현 상태 |
+| 영역 | 기획서 핵심 내용 ([민원AI 계획서](../plans/archive/민원AI_계획서_상세분석.md) · [VoteLab 기획안](../plans/archive/VoteLab_AI민원_상세기획안_상세분석.md)) | 현재 프로젝트 적용 지침 ([`AGENTS.md`](../../AGENTS.md) · [`src/assist`](../../src/assist/pipeline.py)) | 구현 상태 |
 | --- | --- | --- | --- |
 | **완충지대 역할** | 단순·반복 문의는 공식 근거로 즉시 안내하고, 복합·처분·불확실 사안은 사람에게 연결해 공무원 업무 부담과 시민 대기 시간을 줄임 | FAQ(`faq_knowledge`)로 안내 근거를 찾고, 공개 사례(`routing_cases`)로 담당 부서 후보를 찾으며, 불확실하면 담당자 검토(`human_handoff`)로 연결 | 로컬 응대 계층 구현 |
 | **판정·라우팅 주체** | VoteLab 원안은 `TAXO` 규칙 점수(`conf >= 0.70`) 중심 배정 + LLM 보조; 초기 계획은 Jev 게이트 포함 | **초기 MVP는 Jev·TAXO 없는 범용 LLM + RAG + 코드 정책 검증**으로 구현. 검색 점수·LLM 자기 보고 `confidence`를 자동 처리 확률로 쓰지 않음 | 로컬 구현 · Jev는 후속 비교 |
@@ -147,7 +147,7 @@ AI에게 정보를 보낼 때는 **시스템 프롬프트(Static Prefix)**와 **
 
 ## 5. 채널·역할별 응답 경계
 
-[VoteLab 상세 기획안](../../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md)의 공개 범위 통제(`cz` vs `int`)와 [웹 MVP 상세설계](../../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md)의 권한·버전 규칙에 따라 동일 AI 결과라도 수신 대상에 따라 반환 필드를 분리한다.
+[VoteLab 상세 기획안](../plans/archive/VoteLab_AI민원_상세기획안_상세분석.md)의 공개 범위 통제(`cz` vs `int`)와 [웹 MVP 상세설계](../plans/민원_웹_MVP_상세설계와_분야별_작업계획.md)의 권한·버전 규칙에 따라 동일 AI 결과라도 수신 대상에 따라 반환 필드를 분리한다.
 
 | 수신 대상 | 제공할 응답 정보 | 절대 노출하지 않을 정보 |
 | --- | --- | --- |

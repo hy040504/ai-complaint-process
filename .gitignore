@@ -14,10 +14,10 @@ __pycache__/
 .venv/
 .venv-web/
 .web-data/
-db/app/*.sqlite3
-db/app/*.sqlite3-*
-db/dumps/*.dump
-db/dumps/*.list
+rag/db/app/*.sqlite3
+rag/db/app/*.sqlite3-*
+rag/db/dumps/*.dump
+rag/db/dumps/*.list
 rag/origin/dumps/*.dump
 rag/origin/dumps/*.list
 rag/corpus/dumps/*.dump

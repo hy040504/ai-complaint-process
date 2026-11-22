@@ -144,7 +144,7 @@ flask --app src:create_app create-staff --login-id staff_kim --name "김담당"
 | AI의 판단 규칙과 프롬프트 | [완충지대 하네스](docs/harness/LLM_완충지대_하네스.md) · [프롬프트](docs/harness/prompts/README.md) |
 | 서버에 올리는 방법 | [원격 서버 배포](docs/harness/원격_서버_배포.md) |
 | 어떤 문제를 겪고 어떻게 고쳤나 | [프로젝트 사례](docs/cases/README.md) · [변경 이력](CHANGELOG.md) |
-| 앞으로의 계획 | [구현 계획](plan/README.md) |
+| 앞으로의 계획 | [구현 계획](docs/plans/README.md) |
 
 ## 지금 상태와 한계
 

@@ -24,13 +24,13 @@
 | 코드 수정·검증·운영 | [작업 지침](../AGENTS.md), [하네스 안내](harness/README.md) |
 | 한국어 주석·Google/NumPy 형식·커밋 규칙 확인 | [코드 작성·주석 규칙](harness/코드_작성과_주석_규칙.md) |
 | 버그·개선·결정의 경위와 미해결 과제 확인·기록 | [프로젝트 사례 색인](cases/README.md), [사례 작성 양식](cases/사례_작성_양식.md) |
-| Jev 없는 LLM + RAG 연결 준비 | [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md), [판정 정책 초안](harness/decision-policy.md) |
+| Jev 없는 LLM + RAG 연결 준비 | [우선 구현계획](plans/언어모델과_검색증강생성_우선_구현계획.md), [판정 정책 초안](harness/decision-policy.md) |
 | AI 완충지대에서 LLM이 지킬 사항·RAG·응답·서버 | [LLM 완충지대 하네스](harness/LLM_완충지대_하네스.md), [실제 프리픽스](harness/prompts/README.md) |
 | AI 입출력 계약·프리픽스 캐싱 규칙·안전 가드레일 | [입출력 하네스](harness/AI_정보전달과_응답_하네스.md), [캐싱 지침](harness/시스템_프롬프트와_프리픽스_캐싱_지침.md), [안전 가드레일](harness/AI_안전_보안_가드레일.md) |
-| 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) |
-| CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
+| 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](plans/시연_웹_게시판과_민원_서버_구현계획.md) |
+| CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](plans/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](plans/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
 | Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](api/청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](../scripts/reports/export_swagger_pdf.py) |
-| LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) |
+| LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](plans/모델_선정과_미세조정_제안.md) |
 
 ## 현재 구현과 데이터 위치
 
@@ -43,7 +43,7 @@
 | --- | --- | --- |
 | FAQ·사례 원문 | `rag/origin/자주_묻는_민원.json`, `rag/origin/공개_민원_사례.json` | Git에 포함. 94건·5,015건 |
 | 검색 테이블 정의 | `rag/origin/schema/complaint_rag.sql` | Git에 포함. `rag/store.py`가 읽음 |
-| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `db/sql/02_complaint_app.sql` | Git에 포함. **7개 핵심 정규화 테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) + 보조 3테이블(`idempotency`·`answer_templates`·`app_meta`)**, 생성 칼럼 5개·CHECK 27종·`complaint_rag` 교차 FK. [실행 설계](harness/업무DB_실행설계.md) |
+| 게시판 PostgreSQL 스키마 | `src/complaints/schema/complaint_app.sql`, `rag/db/sql/02_complaint_app.sql` | Git에 포함. **7개 핵심 정규화 테이블(`users`·`complaints`·`messages`·`message_versions`·`ai_jobs`·`ai_results`·`job_events`) + 보조 3테이블(`idempotency`·`answer_templates`·`app_meta`)**, 생성 칼럼 5개·CHECK 27종·`complaint_rag` 교차 FK. [실행 설계](harness/업무DB_실행설계.md) |
 | 검색 실데이터(벡터 포함) | 우분투 PostgreSQL DB 이름 `complaints_native`, 스키마 `complaint_rag` | 클러스터 경로 `/var/lib/postgresql/18/main`. 프로젝트 파일이 아님 |
 | 검색 DB 복사본 | `rag/origin/dumps/complaint_rag.dump` | Git 제외. 우분투에서 `scripts/ops/export-dump.sh` |
 | 시연 웹 민원·답변 | PostgreSQL 스키마 `complaint_app` | Flask 기본. 검색 `complaint_rag`와 분리 |
@@ -58,6 +58,7 @@ SQL만으로는 검색 행이 없습니다. 다른 컴퓨터에서 검색까지 
 
 | 사례 | 기준일 | 변경 내용 | 상태 |
 | --- | --- | --- | --- |
+| [CASE-122](cases/사례-122-plan을-docs-plans로-db를-rag-db로-재배치-2026-11-22.md) | 2026-11-22 | `plan/`→`docs/plans/`, `db/`→`rag/db/` 재배치와 링크 183개 보정 | 완료 |
 | [CASE-121](cases/사례-121-글자대비-보정과-홈·모바일-개선-및-README-쉬운-개편-2026-11-22.md) | 2026-11-22 | 글자 대비 보정(미달 270→0)·홈 입력창 위로·모바일 로그인 복구, README 쉬운 개편과 역할 그림 | 완료 |
 | [CASE-120](cases/사례-120-디자인-토큰과-공통-상태칩-모션-적용-2026-11-21.md) | 2026-11-21 | 디자인 토큰·공통 상태 칩·동적 효과(카운트업·진입·새 행 플래시), 다크 회귀 수정과 CSS 무결성 테스트 | 일부 완료 |
 | [CASE-119](cases/사례-119-비로그인-게스트-접수와-방문자-홈-2026-11-21.md) | 2026-11-21 | 비로그인 게스트 접수·방문자 홈, 로그인 모달 단순화 | 완료 |
@@ -191,12 +192,12 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 | [운영 절차](harness/runbook.md) | 상태 확인, 백업, 갱신, 복구 | 현행 명령. dump는 `rag/origin/dumps/` |
 | [네이티브 설치·운영](harness/네이티브_운영.md) | PostgreSQL 18·Python 설치, 적재, 서비스, dump 내보내기·복원 | 검색 운영 기준 |
 | [프로젝트 사례](cases/README.md) | 번호별 버그·조치·설계·검증 기록과 미해결 데이터 과제 | 사례별 작업·구현·검증 상태 구분 |
-| [MVP 실행 계획](../plan/harness-roadmap.md) | 우선순위, 완료 조건, 결정 기록 | 다음 작업 계획. 로컬 웹은 일부 구현됨 |
-| [LLM + RAG 우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md) | 사용자 변경 요구, 이전 계획과 차이, 초기 흐름, Jev 후속 확장 | 2026-10-25 결정과 구현 제안 구분 |
-| [시연 웹·민원 서버 구현계획](../plan/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·작성·상세·민원 교환 서버, 데이터·API 제안·완료 조건 | 범위 문서. 로컬 Flask·UI는 구현, 공식 이관·실제 AI는 미구현 |
+| [MVP 실행 계획](plans/harness-roadmap.md) | 우선순위, 완료 조건, 결정 기록 | 다음 작업 계획. 로컬 웹은 일부 구현됨 |
+| [LLM + RAG 우선 구현계획](plans/언어모델과_검색증강생성_우선_구현계획.md) | 사용자 변경 요구, 이전 계획과 차이, 초기 흐름, Jev 후속 확장 | 2026-10-25 결정과 구현 제안 구분 |
+| [시연 웹·민원 서버 구현계획](plans/시연_웹_게시판과_민원_서버_구현계획.md) | 게시판·작성·상세·민원 교환 서버, 데이터·API 제안·완료 조건 | 범위 문서. 로컬 Flask·UI는 구현, 공식 이관·실제 AI는 미구현 |
 | [청주톡톡 민원 업무 API Swagger PDF](api/청주톡톡_민원_업무_API_Swagger.pdf) | Flask `/docs`·`#/staff/api`와 같은 OpenAPI 3.1 경로·모델 인쇄본. 검색 `:8007/docs`는 제외 | 2026-11-17 재생성 (`22` 경로·`28` 오퍼레이션). API 변경 시 스크립트 재실행 |
-| [웹 상세설계·분야별 작업계획](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [PDF](../plan/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) | UI·백엔드·AI·DB 그림·전체 38개 작업표, 도판 7개·CRUD·SSE·DB/API·인수 시나리오 16개 | 2026-10-27 요구 반영 설계. SSE·실제 AI 등은 미구현 |
-| [모델 선정과 미세조정 제안](../plan/모델_선정과_미세조정_제안.md) | LLM 후보·실행 조건·평가·LoRA·후속 Jev 후보 | 조사·제안; 모델 미선정·실측 전 |
+| [웹 상세설계·분야별 작업계획](plans/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [PDF](plans/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) | UI·백엔드·AI·DB 그림·전체 38개 작업표, 도판 7개·CRUD·SSE·DB/API·인수 시나리오 16개 | 2026-10-27 요구 반영 설계. SSE·실제 AI 등은 미구현 |
+| [모델 선정과 미세조정 제안](plans/모델_선정과_미세조정_제안.md) | LLM 후보·실행 조건·평가·LoRA·후속 Jev 후보 | 조사·제안; 모델 미선정·실측 전 |
 
 현재 PostgreSQL `complaints_native`에는 관계형 데이터와 5,109개 임베딩이 함께 적재되어 있습니다. 이 호스트의 벡터는 2026-11-06 `dragonkue/multilingual-e5-small-ko` 384차원 적재입니다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 dump는 `bge-m3`입니다. 부서 디렉터리도 존재하지만 공식 업무분장·관할 보완은 남아 있습니다. **초기에는 LLM + RAG를 연결하고 Jev는 추후 추가**합니다. 시연 웹의 청주시 공식 접수·외부 이관 연계는 별도 범위입니다.
 
@@ -204,13 +205,13 @@ CASE-001은 2026-10-24 구축을 뒤늦게 정리한 기록입니다. CASE-003·
 
 | 자료 | 읽을 때 구분할 점 |
 | --- | --- |
-| [AI 민원 프로세스 분석](../plan/archive/민원AI_계획서_상세분석.md) · [원본 PDF](../plan/archive/civil_complaint_plan_enhanced_redacted.pdf) | 전체 사업·시민/담당자 서비스 구상 |
-| [VoteLab 상세 기획안 분석](../plan/archive/VoteLab_AI민원_상세기획안_상세분석.md) · [원본 PDF](<../plan/archive/보트랩 VoteLab _ AI 민원 상세 기획안 - 산학공동.pdf>) | 장기 화면·API·TAXO·인수 조건의 설계 자료 |
+| [AI 민원 프로세스 분석](plans/archive/민원AI_계획서_상세분석.md) · [원본 PDF](plans/archive/civil_complaint_plan_enhanced_redacted.pdf) | 전체 사업·시민/담당자 서비스 구상 |
+| [VoteLab 상세 기획안 분석](plans/archive/VoteLab_AI민원_상세기획안_상세분석.md) · [원본 PDF](<plans/archive/보트랩 VoteLab _ AI 민원 상세 기획안 - 산학공동.pdf>) | 장기 화면·API·TAXO·인수 조건의 설계 자료 |
 | [수집·정규화 코드](../PACKET/) | 현재 원본 수집 방식의 구현 근거 |
 | [기존 검증 보고서](../rag/reports/) | 실행 당시의 결과; 새 변경의 통과를 자동 보장하지 않음 |
-| [2026-10-30 DB 설계 복사본](../plan/archive/db%20설계%201차/2026-10-30/README.md) | 당시 SQL 설명. 실행용 검색 DDL은 `rag/origin/schema/`, 업무 DDL은 `src/complaints/schema/` |
+| [2026-10-30 DB 설계 복사본](plans/archive/db%20%EC%84%A4%EA%B3%84%201%EC%B0%A8/2026-10-30/README.md) | 당시 SQL 설명. 실행용 검색 DDL은 `rag/origin/schema/`, 업무 DDL은 `src/complaints/schema/` |
 
-계획서의 일정·기술 스택·목표 수치·화면과 API 개수는 현재 구현 실적이 아닙니다. 초기 MVP의 최신 방향은 [LLM + RAG 우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)을 따릅니다. 원래 상세 기획안의 TAXO 자동 배정·전체 행정 연계는 첫 CLI의 필수 범위가 아닙니다. 현재 구현은 루트 README, 코드, 해당 검증 결과를 함께 확인합니다.
+계획서의 일정·기술 스택·목표 수치·화면과 API 개수는 현재 구현 실적이 아닙니다. 초기 MVP의 최신 방향은 [LLM + RAG 우선 구현계획](plans/언어모델과_검색증강생성_우선_구현계획.md)을 따릅니다. 원래 상세 기획안의 TAXO 자동 배정·전체 행정 연계는 첫 CLI의 필수 범위가 아닙니다. 현재 구현은 루트 README, 코드, 해당 검증 결과를 함께 확인합니다.
 
 ## 문서 관리
 

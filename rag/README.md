@@ -4,7 +4,7 @@
 
 두 원본 JSON에서 **FAQ 답변 근거**와 **부서 추천 근거**를 분리해 검색합니다. PostgreSQL 18 + pgvector 0.8.1, 기본 `dragonkue/multilingual-e5-small-ko` 벡터, Kiwi 형태소 기반 BM25, RRF, 선택적 BGE 재정렬을 사용합니다. 모델은 로컬 CPU에서 실행합니다. 이전 intfloat 색인은 `RAG_EMBEDDING_PROFILE=e5-small`, BGE-M3 1024차원 색인은 `RAG_EMBEDDING_PROFILE=bge-m3`로 유지합니다.
 
-이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../plan/언어모델과_검색증강생성_우선_구현계획.md)
+이 모듈은 검색 계층입니다. 다음 단계는 **Jev 없는 LLM + RAG 기반 판정·FAQ 답변**이며 Jev는 추후 확장입니다. 검색 결과만으로 자동 답변·이관을 확정하지 않습니다. 현재 `retrieval_only=true`, `decision="requires_gate"`는 후속 판단이 필요하다는 계약이며 Jev 설치를 요구하지 않습니다. [우선 구현계획](../docs/plans/언어모델과_검색증강생성_우선_구현계획.md)
 
 `python -m rag assist`는 실행 중인 검색 API 위에 판정 JSON과 코드 정책 검사를 올립니다. 구현은 `src/assist`(연결), `src/search_client`(검색 클라이언트), `src/llm`(공급자)에 있고 `rag/assist.py`는 CLI 호환 진입점입니다. 검색 응답의 `retrieval_only=true` / `decision=requires_gate`는 그대로 둡니다. LLM 공급자가 없으면 검색 근거만 남기고 담당자 검토로 연결합니다. 시연 웹의 민원 CRUD는 이 검색 색인에 적재하지 않습니다. `llm` 브랜치 검사기 화면은 `src/lab_web` `:5010`입니다. 기존 Flask 해시는 `/#/lab`입니다. [CASE-022](../docs/cases/사례-022-RAG-LLM-응대검사기-2026-11-01.md) · [CASE-026](../docs/cases/사례-026-백엔드-민원웹-RAG-LLM-분리-2026-11-05.md)
 
@@ -12,6 +12,16 @@
 OpenAI Responses API의 `gpt-6-luna`·`medium` 설정을 사용합니다. `codex_cli`를 선택하면
 로그인된 Codex CLI를 읽기 전용 임시 작업공간에서 실행합니다. 선택과 키 예시는 루트
 `.env.example` 및 [서버 안내](../src/README.md)를 따릅니다. 실제 API 키는 Git에 넣지 않습니다.
+
+## 폴더 구성
+
+| 위치 | 내용 |
+| --- | --- |
+| `*.py` · `__main__.py` | 검색 엔진·색인·CLI·평가 코드(`python -m rag`) |
+| [`origin/`](origin/README.md) | FAQ·공개 사례 원본 JSON, 검색 스키마(`schema/`), 덤프(`dumps/`, Git 제외). 원본의 **유일한 위치** |
+| [`db/`](db/README.md) | 업무 DB(`complaint_app`) 설계 참고본·샘플 JSON·적재 스크립트(검색 색인과는 별개) |
+| `reports/` · `result/` | 검증·평가 결과 JSON |
+| `tests/` | 검색 단위·통합 테스트 |
 
 ## 실행
 
