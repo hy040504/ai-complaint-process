@@ -88,3 +88,24 @@ test("타입 토큰은 라이트(:root)에서 정의된다", () => {
   const root = tokens.slice(tokens.indexOf(":root"), tokens.indexOf("}", tokens.indexOf(":root")));
   for (const v of ["--ty-title", "--ty-section", "--ty-sub", "--ty-eyebrow"]) assert.match(root, new RegExp(`${v}:`), `${v}가 :root 밖에 있음`);
 });
+
+test("카드류의 흰 배경·1px 테두리는 design.css 공통 규칙에서만 정의한다", () => {
+  const cards = [
+    "panel", "quick-card", "attachment-card", "citizen-service", "citizen-status-card",
+    "citizen-how-card", "citizen-profile-card", "citizen-news-list", "citizen-update-row", "staff-kpi", "staff-api-stat",
+  ];
+  const owned = new Set(cards.flatMap((c) => [".", ".citizen-shell .", ".staff-workspace .", ".staff-shell ."].map((p) => (p.endsWith(".") ? `${p}${c}` : p))));
+  for (const name of files) {
+    if (["design.css", "tokens.css", "themes.css"].includes(name)) continue;
+    const css = stripComments(readFileSync(new URL(name, dir), "utf8"));
+    for (const m of css.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)) {
+      const sel = m[1].trim().replace(/\s+/g, " ");
+      if (!owned.has(sel)) continue;
+      assert.doesNotMatch(m[2], /(^|;|\s)background(-color)?\s*:\s*(#fff(fff)?|white)\b/i, `${name}: ${sel} 흰 배경 중복`);
+      assert.doesNotMatch(m[2], /(^|;|\s)border\s*:\s*1px\s+solid\s+#/i, `${name}: ${sel} 테두리 색 하드코딩`);
+    }
+  }
+  const design = readFileSync(new URL("design.css", dir), "utf8");
+  assert.match(design, /:where\(body:not\(\[data-theme="dark"\]\)\) :is\(/, "라이트 공통 규칙");
+  assert.match(design, /:where\(body\[data-theme="dark"\]\) :is\(/, "다크 공통 규칙");
+});

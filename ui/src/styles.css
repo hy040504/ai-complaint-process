@@ -372,8 +372,6 @@ small {
   margin-bottom: 9px;
 }
 .panel {
-  border: 1px solid var(--line);
-  background: #fff;
   border-radius: var(--radius);
 }
 .section-title {
@@ -504,8 +502,6 @@ small {
   gap: 12px;
 }
 .quick-card {
-  background: #fff;
-  border: 1px solid var(--line);
   border-radius: var(--r-control);
   padding: 19px 10px 16px;
   text-align: center;
@@ -3923,9 +3919,7 @@ dialog::backdrop {
   gap: 12px;
 }
 .attachment-card {
-  border: 1px solid #dce5f4;
   border-radius: var(--r-control);
-  background: #ffffff;
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -422,8 +422,6 @@ body[data-site="staff"] .role-switch a.selected {
   margin-bottom: 25px;
 }
 .staff-kpi {
-  border: 1px solid #dfe6f1;
-  background: #fff;
   border-radius: var(--r-control);
   padding: 18px 18px 16px;
   display: flex;
@@ -535,7 +533,6 @@ body[data-site="staff"] .role-switch a.selected {
   color: #b0c4e5;
 }
 .staff-workspace .panel {
-  background: #fff;
   border-color: #dfe6f1;
   border-radius: var(--r-control);
   box-shadow: none;
@@ -2668,8 +2665,6 @@ body[data-site="staff"] #toast {
   gap: 5px;
   padding: 14px 16px;
   border-radius: var(--r-card);
-  background: #ffffff;
-  border: 1px solid #dbe4f2;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 .staff-api-stat-label {

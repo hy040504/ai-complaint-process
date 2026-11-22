@@ -321,9 +321,7 @@ body[data-site="citizen"] .role-switch a.selected {
   white-space: nowrap;
 }
 .citizen-news-list {
-  border: 1px solid #e0e6f0;
   border-radius: var(--r-card);
-  background: #fff;
   overflow: hidden;
   box-shadow:
     0 2px 3px #16203a05,
@@ -452,8 +450,6 @@ body[data-site="citizen"] .role-switch a.selected {
   width: 88px;
   min-height: 89px;
   flex-shrink: 0;
-  border: 1px solid #e0e6f0;
-  background: #fff;
   border-radius: var(--r-card);
   padding: 13px 6px;
   scroll-snap-align: start;
@@ -600,9 +596,7 @@ body[data-site="citizen"] .role-switch a.selected {
   min-width: 0;
 }
 .citizen-status-card {
-  border: 1px solid #e0e6f0;
   border-radius: var(--r-card);
-  background: #fff;
   padding: 20px;
   box-shadow: 0 2px 4px #16203a03;
 }
@@ -683,8 +677,6 @@ body[data-site="citizen"] .role-switch a.selected {
   color: #aebdd5;
 }
 .citizen-how-card {
-  border: 1px solid #e0e6f0;
-  background: #fff;
   border-radius: var(--r-card);
   padding: 21px;
 }
@@ -1553,8 +1545,6 @@ body[data-site="citizen"] .role-switch a.selected {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: white;
-  border: 1px solid #e1e7f1;
   border-radius: var(--r-card);
   padding: 19px;
   margin-bottom: 12px;
@@ -1593,9 +1583,7 @@ body[data-site="citizen"] .role-switch a.selected {
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid #dce5f6;
   border-radius: var(--r-card);
-  background: #fff;
   padding: 23px;
 }
 .citizen-profile-card > span {

@@ -263,3 +263,22 @@
 .citizen-update-row:hover,
 .stats-bar-row:hover,
 .stats-bar-row:focus-visible { background: var(--cj-row-hover); }
+
+/* 카드류 공통 면(라이트): 흰 배경 + 표준 테두리. 우선순위 0이라 상태·다크 규칙이 그대로 이긴다 */
+:where(body:not([data-theme="dark"])) :is(
+  .panel, .quick-card, .attachment-card, .citizen-service, .citizen-status-card,
+  .citizen-how-card, .citizen-profile-card, .citizen-news-list, .citizen-update-row,
+  .staff-kpi, .staff-api-stat
+) {
+  background: var(--cj-surface);
+  border: 1px solid var(--cj-line);
+}
+
+/* 카드류 공통 테두리(다크): 두께·형식은 여기서, 색은 themes.css의 개별 규칙이 우선하고 없으면 표준 다크 선색 */
+:where(body[data-theme="dark"]) :is(
+  .panel, .quick-card, .attachment-card, .citizen-service, .citizen-status-card,
+  .citizen-how-card, .citizen-profile-card, .citizen-news-list, .citizen-update-row,
+  .staff-kpi, .staff-api-stat
+) {
+  border: 1px solid var(--d-line-02);
+}
