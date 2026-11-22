@@ -708,8 +708,8 @@ class ComplaintService:
                 403, "citizen_required", "시민 계정에서 민원을 등록해 주세요."
             )
         if actor.guest:
-            # 게스트 접수는 스팸이 공개 게시판에 노출되지 않도록 비공개로만 받고 개수를 제한합니다.
-            body = body.model_copy(update={"visibility": "private"})
+            # 게스트 접수는 민원 게시판에 공개로만 받습니다(2026-11-22 정책). 남용은 개수·IP 제한으로 막습니다.
+            body = body.model_copy(update={"visibility": "public"})
             owned = sum(1 for r in self.repository.all() if r.owner == actor.id)
             if owned >= GUEST_COMPLAINT_LIMIT:
                 raise AppError(

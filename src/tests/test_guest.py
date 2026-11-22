@@ -67,21 +67,35 @@ def test_guest_session_start_is_idempotent_and_citizen_only() -> None:
     assert staff_side.get_cookie("cj_staff") is None
 
 
-def test_guest_complaint_is_private_visible_to_staff_and_isolated() -> None:
-    """게스트 민원은 공개를 요청해도 비공개로 저장되고 다른 방문자에게는 보이지 않는다."""
+def test_guest_complaint_is_public_and_only_owner_can_change() -> None:
+    """게스트 민원은 비공개를 요청해도 공개로 저장되어 게시판에 보이지만 작성자만 고칠 수 있다."""
     app = _app()
     guest = app.test_client()
     _start(guest)
-    created = _submit(guest)
+    created = _submit(guest, visibility="private")
     assert created.status_code == 201
     body = created.get_json()
-    assert body["visibility"] == "private", "게스트 접수는 비공개로 강제"
+    assert body["visibility"] == "public", "게스트 접수는 공개로 강제"
     cid = body["id"]
     assert guest.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 200
 
     other = app.test_client()
     _start(other)
-    assert other.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 404
+    assert other.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 200
+    listed = other.get("/api/v1/complaints", headers=CITIZEN).get_json()
+    rows = (
+        listed
+        if isinstance(listed, list)
+        else listed.get("items", listed.get("complaints", []))
+    )
+    assert cid in [row["id"] for row in rows], "다른 방문자의 공개 목록에 나온다"
+    denied = other.post(
+        f"/api/v1/complaints/{cid}/delete",
+        json={"version": body["version"]},
+        headers=CITIZEN,
+    )
+    assert denied.status_code in (403, 404), "작성자가 아니면 삭제할 수 없다"
+    assert guest.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 200
 
     staff = app.test_client()
     login = staff.post(
@@ -91,7 +105,7 @@ def test_guest_complaint_is_private_visible_to_staff_and_isolated() -> None:
     )
     assert login.status_code == 200
     seen = staff.get(f"/api/v1/complaints/{cid}", headers=STAFF)
-    assert seen.status_code == 200 and seen.get_json()["visibility"] == "private"
+    assert seen.status_code == 200 and seen.get_json()["visibility"] == "public"
 
 
 def test_guest_without_session_cannot_submit_and_cannot_use_staff_api() -> None:
@@ -167,10 +181,16 @@ def test_guest_complaints_move_to_account_on_register_and_login() -> None:
         == login.get_json()["id"]
     )
 
-    # 옮겨진 뒤 새 게스트는 접근할 수 없다
+    # 옮겨진 뒤에도 공개 민원이라 새 게스트가 볼 수는 있지만 소유자가 아니므로 고칠 수 없다
     stranger = app.test_client()
     _start(stranger)
-    assert stranger.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 404
+    assert stranger.get(f"/api/v1/complaints/{cid}", headers=CITIZEN).status_code == 200
+    denied = stranger.post(
+        f"/api/v1/complaints/{cid}/delete",
+        json={"version": mine.get_json()["version"]},
+        headers=CITIZEN,
+    )
+    assert denied.status_code in (403, 404)
 
 
 def test_guest_session_creation_is_rate_limited_per_ip() -> None:

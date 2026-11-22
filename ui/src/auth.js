@@ -64,7 +64,7 @@ export function renderAuthModalHtml({
   let bodyHtml = "";
   if (tab === "citizen-login") {
     bodyHtml = `<form id="auth-citizen-login-form" class="auth-form">
-      <p class="auth-desc">아이디와 비밀번호로 로그인하면 내 민원을 안전하게 조회·관리할 수 있어요.${actor?.guest ? " 게스트로 접수한 민원은 로그인하면 계정에 합쳐집니다." : " 로그인하지 않아도 민원을 남길 수 있어요."}</p>
+      <p class="auth-desc">아이디와 비밀번호로 로그인하면 내 민원을 안전하게 조회·관리할 수 있어요.${actor?.guest ? " 게스트로 접수한 민원은 게시판에 공개되며, 로그인하면 계정에 합쳐집니다." : " 로그인하지 않아도 민원을 남길 수 있어요."}</p>
       <label for="auth-cit-id">아이디</label>
       <input id="auth-cit-id" name="loginId" required minlength="3" maxlength="32" autocomplete="username" placeholder="아이디 입력">
       <label for="auth-cit-pw">비밀번호</label>

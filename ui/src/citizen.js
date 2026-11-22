@@ -149,7 +149,7 @@ export function citizenShell(content, path, actor = null) {
  */
 function summary(data, actor) {
   if (!actor) {
-    return `<section class="citizen-status-card"><div class="citizen-section-label"><h2>로그인 없이 시작해요</h2></div><p class="citizen-empty-note">로그인하지 않아도 민원을 남길 수 있어요. 게스트로 접수한 민원은 이 브라우저에서 확인하고, 로그인하면 내 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></section>`;
+    return `<section class="citizen-status-card"><div class="citizen-section-label"><h2>로그인 없이 시작해요</h2></div><p class="citizen-empty-note">로그인하지 않아도 민원을 남길 수 있어요. 게스트로 접수한 민원은 민원 게시판에 공개되고, 로그인하면 내 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></section>`;
   }
   const mine = visible(data, true);
   const recent =
@@ -317,5 +317,5 @@ export function showCitizenIntro() {
  * @returns {string} 로그인 또는 게스트 접수를 안내하는 화면 HTML입니다.
  */
 export function citizenVisitorGate() {
-  return `<div class="page-content narrow"><div class="empty panel">${icon("file", 40)}<h1>로그인하면 내 민원을 모아볼 수 있어요</h1><p>민원 작성과 AI 민원 도우미는 로그인 없이 게스트로 바로 이용할 수 있어요.<br>게스트로 접수한 민원은 이 브라우저에서 확인하고, 로그인하면 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></div></div>`;
+  return `<div class="page-content narrow"><div class="empty panel">${icon("file", 40)}<h1>로그인하면 내 민원을 모아볼 수 있어요</h1><p>민원 작성과 AI 민원 도우미는 로그인 없이 게스트로 바로 이용할 수 있어요.<br>게스트로 접수한 민원은 민원 게시판에 공개되고, 로그인하면 계정에 합쳐져요.</p><div class="citizen-guest-actions">${a(`${icon("plus", 16)} 민원 남기기`, "/citizen/write", "btn primary")}<button type="button" class="btn" data-action="open-auth" data-tab="citizen-login">로그인</button></div></div></div>`;
 }
