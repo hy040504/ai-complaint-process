@@ -12,16 +12,15 @@ export const SITE_HEADER = "X-Cheongju-Site";
 /**
  * 현재 페이지가 선언한 사이트를 읽습니다. 선언이 없거나 브라우저가 아니면 시민입니다.
  *
- * @returns {"citizen"|"staff"} 현재 사이트입니다.
+ * @returns {"citizen"|"staff"|"lab"} 현재 사이트입니다. `lab`은 응대 검사기 단독 페이지(`/lab/`)입니다.
  */
 function readSite() {
   if (typeof document === "undefined") return "citizen";
-  return document.documentElement?.dataset?.site === "staff"
-    ? "staff"
-    : "citizen";
+  const declared = document.documentElement?.dataset?.site;
+  return declared === "staff" || declared === "lab" ? declared : "citizen";
 }
 
-/** 현재 사이트(`citizen` 또는 `staff`)입니다. */
+/** 현재 사이트(`citizen`·`staff`·`lab`)입니다. */
 export const SITE = readSite();
 
 /**
@@ -37,27 +36,29 @@ export function siteHeaders(extra = {}) {
 /**
  * 사이트의 기본 화면 경로를 반환합니다.
  *
- * @param {"citizen"|"staff"} [site] 대상 사이트입니다. 기본은 현재 사이트입니다.
- * @returns {string} 해시 경로(`/citizen` 또는 `/staff`)입니다.
+ * @param {"citizen"|"staff"|"lab"} [site] 대상 사이트입니다. 기본은 현재 사이트입니다.
+ * @returns {string} 해시 경로(`/citizen`·`/staff`·`/lab`)입니다.
  */
 export function homePath(site = SITE) {
+  if (site === "lab") return "/lab";
   return site === "staff" ? "/staff" : "/citizen";
 }
 
 /**
  * 해시 경로를 현재 사이트에서 허용하는 경로로 바로잡습니다.
  *
- * 시민 사이트는 `/citizen*`만, 담당자 사이트는 `/staff*`와 응대 검사기 `/lab`만 허용합니다.
+ * 시민 사이트는 `/citizen*`만, 담당자 사이트는 `/staff*`만, 응대 검사기 페이지는 `/lab`만 허용합니다.
  * 허용하지 않는 경로는 사이트 홈으로 돌립니다.
  *
  * @param {string} path `#` 뒤 경로(쿼리 제외)입니다.
- * @param {"citizen"|"staff"} [site] 대상 사이트입니다. 기본은 현재 사이트입니다.
+ * @param {"citizen"|"staff"|"lab"} [site] 대상 사이트입니다. 기본은 현재 사이트입니다.
  * @returns {string} 허용된 경로입니다.
  */
 export function normalizePath(path, site = SITE) {
   const value = path || "";
+  if (site === "lab") return "/lab";
   if (site === "staff") {
-    return value === "/lab" || value.startsWith("/staff") ? value : "/staff";
+    return value.startsWith("/staff") ? value : "/staff";
   }
   return value.startsWith("/citizen") ? value : "/citizen";
 }

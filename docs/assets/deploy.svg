@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif">
   <title id="t">민원 웹이 인터넷에 공개되는 길</title>
-  <desc id="d">방문자가 도메인 주소로 접속하면 Cloudflare를 거쳐 터널로 서버의 민원 웹에 연결됩니다. 시민 사이트와 담당자 사이트만 열리고, API 문서는 담당자 로그인 후에만 열리며, 응대 검사기와 데이터베이스는 열리지 않습니다.</desc>
+  <desc id="d">방문자가 도메인 주소로 접속하면 Cloudflare를 거쳐 터널로 서버의 민원 웹에 연결됩니다. 시민 사이트와 담당자 사이트가 열리고, 응대 검사기는 /lab/ 주소로만 들어가며, API 문서는 담당자 로그인 후에만 열립니다. 데이터베이스는 열리지 않습니다.</desc>
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker>
   </defs>
@@ -71,12 +71,13 @@
     <text x="62" y="498">· 시민 사이트 (주소 끝에 아무것도 없는 첫 주소)</text>
     <text x="62" y="526">· 담당자 사이트 (주소 끝에 /staff/ — 로그인해야 쓸 수 있어요)</text>
     <text x="62" y="554">· 접속 상태 확인 주소 (정상인지만 알려 줘요)</text>
+    <text x="62" y="582">· 응대 검사기 (/lab/ 주소로만 들어가요)</text>
   </g>
   <rect x="608" y="432" width="552" height="170" rx="14" fill="#eceff4" stroke="#c7cfdd"/>
   <text x="630" y="464" font-size="17" font-weight="800" fill="#3d4860">열리지 않아요</text>
   <g font-size="15" fill="#16203a">
     <text x="630" y="498">· API 문서(Swagger) — 담당자 로그인 후에만 보여요</text>
-    <text x="630" y="526">· 응대 검사기(AI 시험 화면)</text>
+    <text x="630" y="526">· 디자인 시안 화면</text>
     <text x="630" y="554">· 데이터베이스와 검색 서비스</text>
     <text x="630" y="582">· 서버의 다른 프로그램</text>
   </g>

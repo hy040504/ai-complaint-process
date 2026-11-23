@@ -13,27 +13,6 @@ body[data-site="staff"] {
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
-body[data-site="staff"] .demo-bar {
-  background: #10192b;
-  color: #96a6c3;
-  border-color: #26334d;
-  height: 36px;
-  padding-inline: 21px;
-  position: sticky;
-  top: 0;
-  z-index: 110;
-}
-body[data-site="staff"] .demo-label {
-  color: #e4c877;
-  border-color: #877437;
-}
-body[data-site="staff"] .role-switch a {
-  color: #9eacc5;
-}
-body[data-site="staff"] .role-switch a.selected {
-  background: #ffffff12;
-  color: white;
-}
 .staff-workspace {
   --teal: #2f6fed;
   --teal-dark: #245ccf;
@@ -44,13 +23,13 @@ body[data-site="staff"] .role-switch a.selected {
   --bg: #f4f6fa;
   margin-left: 236px;
   background: #f4f6fa;
-  min-height: calc(100dvh - 36px);
+  min-height: 100dvh;
   color: #28344d;
   font-size: 14px;
 }
 .staff-sidebar {
   position: fixed;
-  top: 36px;
+  top: 0;
   bottom: 0;
   left: 0;
   width: 236px;
@@ -230,7 +209,7 @@ body[data-site="staff"] .role-switch a.selected {
 }
 .staff-topbar {
   position: sticky;
-  top: 36px;
+  top: 0;
   z-index: 30;
   height: 50px;
   display: flex;
@@ -309,7 +288,7 @@ body[data-site="staff"] .role-switch a.selected {
   max-width: 1540px;
   margin: 0 auto;
   padding: 27px 27px 35px;
-  min-height: calc(100dvh - 155px);
+  min-height: calc(100dvh - 119px);
 }
 .staff-page-title {
   display: flex;
@@ -1657,27 +1636,12 @@ body[data-site="staff"] #toast {
   }
 }
 @media (max-width: 740px) {
-  body[data-site="staff"] .demo-bar {
-    height: 34px;
-    padding-inline: 15px;
-  }
-  body[data-site="staff"] .demo-bar > div:first-child > span:last-child {
-    font-size: 0;
-  }
-  body[data-site="staff"] .demo-bar > div:first-child > span:last-child:before {
-    content: "민원과 업무 시연";
-    font-size: 11px;
-    color: #aebbd3;
-  }
-  body[data-site="staff"] .demo-bar .demo-label {
-    font-size: 10px;
-  }
   .staff-workspace {
     margin-left: 0;
-    min-height: calc(100dvh - 34px);
+    min-height: 100dvh;
   }
   .staff-sidebar {
-    top: 34px;
+    top: 0;
     bottom: 0;
     width: 245px;
     transform: translateX(-100%);
@@ -1736,7 +1700,7 @@ body[data-site="staff"] #toast {
   }
   .staff-menu-backdrop {
     position: fixed;
-    inset: 34px 0 0;
+    inset: 0;
     background: #0f1d3666;
     backdrop-filter: blur(2px);
     z-index: 85;
@@ -1751,7 +1715,7 @@ body[data-site="staff"] #toast {
   }
   .staff-topbar {
     height: 49px;
-    top: 34px;
+    top: 0;
     padding: 0 14px;
     gap: 10px;
   }
@@ -1794,7 +1758,7 @@ body[data-site="staff"] #toast {
   .staff-compact-nav {
     display: flex;
     position: sticky;
-    top: 83px;
+    top: 49px;
     z-index: 25;
     background: #fff;
     border-bottom: 1px solid #e0e6f0;
@@ -1820,7 +1784,7 @@ body[data-site="staff"] #toast {
   }
   .staff-workspace .page-content {
     padding: 23px 16px 30px;
-    min-height: calc(100dvh - 216px);
+    min-height: calc(100dvh - 182px);
   }
   .staff-page-title {
     gap: 9px;

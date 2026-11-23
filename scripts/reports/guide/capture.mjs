@@ -105,7 +105,11 @@ const OVERLAY = (items) => `(() => {
     b.style.cssText = 'position:absolute;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:#d92d20;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff, 0 2px 6px rgba(0,0,0,.35);left:' + bx + 'px;top:' + by + 'px';
     wrap.appendChild(b);
   }
-  document.body.appendChild(wrap);
+  // 열린 모달(<dialog>)은 브라우저의 최상위 층에 그려져 body 위의 표시를 덮는다.
+  // 모달이 열려 있으면 그 안에 viewport 기준(fixed)으로 넣어 번호가 보이게 한다.
+  const modal = document.querySelector('dialog[open]');
+  if (modal) { wrap.style.position = 'fixed'; modal.appendChild(wrap); }
+  else document.body.appendChild(wrap);
   return JSON.stringify(miss);
 })()`;
 

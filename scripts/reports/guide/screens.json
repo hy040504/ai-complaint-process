@@ -1,733 +1,733 @@
 {
-    "base":  "http://127.0.0.1:5001",
-    "shots":  [
-                  {
-                      "name":  "c01-home",
-                      "steps":  [
-                                    {
-                                        "go":  "/"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:.citizen-header .auth-account-btn"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:.citizen-desktop-nav"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:68,424,790,81"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "text:직접 작성"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:1058,70,34,34"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "css:.citizen-header .theme-toggle"
-                                    },
-                                    {
-                                        "n":  7,
-                                        "sel":  "xy:889,181,310,200"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c02-login",
-                      "steps":  [
-                                    {
-                                        "go":  "/"
-                                    },
-                                    {
-                                        "click":  "css:.auth-account-btn"
-                                    },
-                                    {
-                                        "wait":  500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:389,419,488,43"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:389,500,488,43"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:813,553,63,19"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:807,606,70,43"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:389,606,58,43"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c03-write",
-                      "height":  "full",
-                      "steps":  [
-                                    {
-                                        "go":  "/#/citizen/write"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:#title",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:#category",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:#district",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "css:#body",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "text:현장 사진",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "text:로그인하지 않고 접수하면",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  7,
-                                        "sel":  "css:.consent label",
-                                        "badge":  "right"
-                                    },
-                                    {
-                                        "n":  8,
-                                        "sel":  "text:임시 저장"
-                                    },
-                                    {
-                                        "n":  9,
-                                        "sel":  "text:민원 등록하기"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c04-assistant",
-                      "steps":  [
-                                    {
-                                        "go":  "/#/citizen/assistant"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:258,725,655,33"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:290,795,72,43"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:255,870,703,44"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:967,870,44,44"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "text:직접 작성하기"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "text:작성 요령"
-                                    }
-                                ],
-                      "height":  1000
-                  },
-                  {
-                      "name":  "c09-mobile",
-                      "width":  390,
-                      "height":  844,
-                      "steps":  [
-                                    {
-                                        "go":  "/"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:.auth-account-btn",
-                                        "pad":  2
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:.citizen-ask-zone",
-                                        "pad":  2
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:.citizen-bottom-nav",
-                                        "pad":  2
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "css:.citizen-fab",
-                                        "pad":  2
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c05-submit",
-                      "height":  "full",
-                      "steps":  [
-                                    {
-                                        "go":  "/#/citizen/write"
-                                    },
-                                    {
-                                        "type":  {
-                                                     "sel":  "css:#title",
-                                                     "value":  "사창동 사거리 가로등이 꺼져 있어요"
-                                                 }
-                                    },
-                                    {
-                                        "type":  {
-                                                     "sel":  "css:#category",
-                                                     "value":  "도로·교통"
-                                                 }
-                                    },
-                                    {
-                                        "type":  {
-                                                     "sel":  "css:#district",
-                                                     "value":  "서원구"
-                                                 }
-                                    },
-                                    {
-                                        "type":  {
-                                                     "sel":  "css:#body",
-                                                     "value":  "서원구 사창동 사거리의 가로등이 며칠째 꺼져 있어 밤에 지나가기 위험합니다. 확인하고 고쳐 주시면 좋겠습니다."
-                                                 }
-                                    },
-                                    {
-                                        "click":  "css:input[name=consent]"
-                                    },
-                                    {
-                                        "click":  "text:민원 등록하기",
-                                        "after":  3500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:.info-banner"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:.citizen-receipt"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:.detail-heading"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:661,599,198,28"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "css:.answer-panel"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "css:.followup"
-                                    },
-                                    {
-                                        "n":  7,
-                                        "sel":  "css:aside"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c06-mine",
-                      "steps":  [
-                                    {
-                                        "go":  "/#/citizen/mine"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:67,297,120,45"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:94,430,320,59"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:93,516,714,40"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:816,514,243,40"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:68,650,1130,90"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "xy:1042,679,42,26"
-                                    },
-                                    {
-                                        "n":  7,
-                                        "sel":  "xy:1081,200,118,44"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "c07-board",
-                      "steps":  [
-                                    {
-                                        "go":  "/#/citizen/board"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:67,297,120,45"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:94,430,320,59"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:93,516,714,40"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:68,650,1130,90"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:1081,200,118,44"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s01-login",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/"
-                                    },
-                                    {
-                                        "wait":  600
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:356,419,568,43"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:356,500,568,43"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:843,577,81,42"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s02-home",
-                      "steps":  [
-                                    {
-                                        "login":  {
-                                                      "site":  "staff",
-                                                      "id":  "$ENV:GUIDE_STAFF_ID",
-                                                      "pw":  "$ENV:GUIDE_STAFF_PW",
-                                                      "role":  "staff"
-                                                  }
-                                    },
-                                    {
-                                        "go":  "/staff/"
-                                    },
-                                    {
-                                        "wait":  2500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:.staff-sidebar"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:263,255,975,136"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:263,450,800,36"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:280,517,945,40"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:264,663,973,118"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "xy:1051,705,170,34"
-                                    },
-                                    {
-                                        "n":  7,
-                                        "sel":  "text:CSV 내보내기"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s03-list",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/complaints"
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:263,212,800,36"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:280,280,218,40"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:506,280,662,40"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:1176,280,60,40"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:280,328,30,36"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "xy:264,426,988,118"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s04a-detail-top",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
-                                    },
-                                    {
-                                        "wait":  2200
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:263,114,96,21"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:263,150,200,22"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:h1"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "css:.staff-process"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "css:.detail-body"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s04b-editor",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
-                                    },
-                                    {
-                                        "wait":  2200
-                                    },
-                                    {
-                                        "eval":  "window.scrollTo(0, 520)"
-                                    },
-                                    {
-                                        "wait":  400
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:1036,636,180,32"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:794,735,422,108"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:#answer"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "css:input[name=reason]"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:793,1407,207,41"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "css:[data-action=preview-answer]"
-                                    }
-                                ],
-                      "height":  1050
-                  },
-                  {
-                      "name":  "s04c-ai",
-                      "steps":  [
-                                    {
-                                        "login":  {
-                                                      "site":  "staff",
-                                                      "id":  "$ENV:GUIDE_STAFF_ID",
-                                                      "pw":  "$ENV:GUIDE_STAFF_PW",
-                                                      "role":  "staff"
-                                                  }
-                                    },
-                                    {
-                                        "go":  "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
-                                    },
-                                    {
-                                        "wait":  2200
-                                    },
-                                    {
-                                        "eval":  "window.scrollTo(0, 1000)"
-                                    },
-                                    {
-                                        "wait":  400
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "panel:현재 게시된 답변"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:#staff-job-provider"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "css:[data-action=retry]"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "css:[data-action=compare]"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:263,1715,490,108"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "xy:771,1777,467,62"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s05-assign",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/complaints"
-                                    },
-                                    {
-                                        "click":  "css:[data-action=open-assign-dept]",
-                                        "after":  1200
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:349,391,568,43"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:349,485,568,43"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:349,579,568,43"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:789,648,127,42"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:349,648,68,42"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s06-preview",
-                      "steps":  [
-                                    {
-                                        "login":  {
-                                                      "site":  "staff",
-                                                      "id":  "$ENV:GUIDE_STAFF_ID",
-                                                      "pw":  "$ENV:GUIDE_STAFF_PW",
-                                                      "role":  "staff"
-                                                  }
-                                    },
-                                    {
-                                        "go":  "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
-                                    },
-                                    {
-                                        "wait":  2200
-                                    },
-                                    {
-                                        "type":  {
-                                                     "sel":  "css:input[name=reason]",
-                                                     "value":  "현장 확인 후 안내문을 정리함"
-                                                 }
-                                    },
-                                    {
-                                        "click":  "css:[data-action=preview-answer]",
-                                        "after":  1500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:349,363,568,155"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:349,612,93,42"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:760,612,157,42"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s07a-hide",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/complaints"
-                                    },
-                                    {
-                                        "click":  "text:사창동 사거리 가로등이 꺼져 있어요",
-                                        "after":  2500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "css:[data-action=hide-complaint]"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "css:.staff-process header span"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s07b-hide-modal",
-                      "steps":  [
-                                    {
-                                        "click":  "css:[data-action=hide-complaint]",
-                                        "after":  1200
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:349,485,568,43"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "xy:349,554,68,42"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "xy:836,554,81,42"
-                                    }
-                                ]
-                  },
-                  {
-                      "name":  "s08-stats",
-                      "steps":  [
-                                    {
-                                        "go":  "/staff/#/staff/stats"
-                                    },
-                                    {
-                                        "wait":  2500
-                                    }
-                                ],
-                      "notes":  [
-                                    {
-                                        "n":  1,
-                                        "sel":  "xy:263,294,975,286"
-                                    },
-                                    {
-                                        "n":  2,
-                                        "sel":  "panel:처리 상태별 분포"
-                                    },
-                                    {
-                                        "n":  3,
-                                        "sel":  "panel:AI 판정별 분포"
-                                    },
-                                    {
-                                        "n":  4,
-                                        "sel":  "xy:827,138,142,41"
-                                    },
-                                    {
-                                        "n":  5,
-                                        "sel":  "xy:976,138,112,41"
-                                    },
-                                    {
-                                        "n":  6,
-                                        "sel":  "xy:1096,138,142,41"
-                                    }
-                                ]
-                  }
-              ]
+  "base": "http://127.0.0.1:5001",
+  "shots": [
+    {
+      "name": "c01-home",
+      "steps": [
+        {
+          "go": "/"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.citizen-header .auth-account-btn"
+        },
+        {
+          "n": 2,
+          "sel": "css:.citizen-desktop-nav"
+        },
+        {
+          "n": 3,
+          "sel": "xy:68,424,790,81"
+        },
+        {
+          "n": 4,
+          "sel": "text:직접 작성"
+        },
+        {
+          "n": 5,
+          "sel": "xy:1058,70,34,34"
+        },
+        {
+          "n": 6,
+          "sel": "css:.citizen-header .theme-toggle"
+        },
+        {
+          "n": 7,
+          "sel": "xy:889,181,310,200"
+        }
+      ]
+    },
+    {
+      "name": "c02-login",
+      "steps": [
+        {
+          "go": "/"
+        },
+        {
+          "click": "css:.auth-account-btn"
+        },
+        {
+          "wait": 500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:389,419,488,43"
+        },
+        {
+          "n": 2,
+          "sel": "xy:389,500,488,43"
+        },
+        {
+          "n": 3,
+          "sel": "xy:813,553,63,19"
+        },
+        {
+          "n": 4,
+          "sel": "xy:807,606,70,43"
+        },
+        {
+          "n": 5,
+          "sel": "xy:389,606,58,43"
+        }
+      ]
+    },
+    {
+      "name": "c03-write",
+      "height": "full",
+      "steps": [
+        {
+          "go": "/#/citizen/write"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:#title",
+          "badge": "right"
+        },
+        {
+          "n": 2,
+          "sel": "css:#category",
+          "badge": "right"
+        },
+        {
+          "n": 3,
+          "sel": "css:#district",
+          "badge": "right"
+        },
+        {
+          "n": 4,
+          "sel": "css:#body",
+          "badge": "right"
+        },
+        {
+          "n": 5,
+          "sel": "text:현장 사진",
+          "badge": "right"
+        },
+        {
+          "n": 6,
+          "sel": "text:로그인하지 않고 접수하면",
+          "badge": "right"
+        },
+        {
+          "n": 7,
+          "sel": "css:.consent label",
+          "badge": "right"
+        },
+        {
+          "n": 8,
+          "sel": "text:임시 저장"
+        },
+        {
+          "n": 9,
+          "sel": "text:민원 등록하기"
+        }
+      ]
+    },
+    {
+      "name": "c04-assistant",
+      "steps": [
+        {
+          "go": "/#/citizen/assistant"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:258,725,655,33"
+        },
+        {
+          "n": 2,
+          "sel": "xy:290,795,72,43"
+        },
+        {
+          "n": 3,
+          "sel": "xy:255,870,703,44"
+        },
+        {
+          "n": 4,
+          "sel": "xy:967,870,44,44"
+        },
+        {
+          "n": 5,
+          "sel": "text:직접 작성하기"
+        },
+        {
+          "n": 6,
+          "sel": "text:작성 요령"
+        }
+      ],
+      "height": 1000
+    },
+    {
+      "name": "c09-mobile",
+      "width": 390,
+      "height": 844,
+      "steps": [
+        {
+          "go": "/"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.auth-account-btn",
+          "pad": 2
+        },
+        {
+          "n": 2,
+          "sel": "css:.citizen-ask-zone",
+          "pad": 2
+        },
+        {
+          "n": 3,
+          "sel": "css:.citizen-bottom-nav",
+          "pad": 2
+        },
+        {
+          "n": 4,
+          "sel": "css:.citizen-fab",
+          "pad": 2
+        }
+      ]
+    },
+    {
+      "name": "c05-submit",
+      "height": "full",
+      "steps": [
+        {
+          "go": "/#/citizen/write"
+        },
+        {
+          "type": {
+            "sel": "css:#title",
+            "value": "사창동 사거리 가로등이 꺼져 있어요"
+          }
+        },
+        {
+          "type": {
+            "sel": "css:#category",
+            "value": "도로·교통"
+          }
+        },
+        {
+          "type": {
+            "sel": "css:#district",
+            "value": "서원구"
+          }
+        },
+        {
+          "type": {
+            "sel": "css:#body",
+            "value": "서원구 사창동 사거리의 가로등이 며칠째 꺼져 있어 밤에 지나가기 위험합니다. 확인하고 고쳐 주시면 좋겠습니다."
+          }
+        },
+        {
+          "click": "css:input[name=consent]"
+        },
+        {
+          "click": "text:민원 등록하기",
+          "after": 3500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.info-banner"
+        },
+        {
+          "n": 2,
+          "sel": "css:.citizen-receipt"
+        },
+        {
+          "n": 3,
+          "sel": "css:.detail-heading"
+        },
+        {
+          "n": 4,
+          "sel": "xy:661,599,198,28"
+        },
+        {
+          "n": 5,
+          "sel": "css:.answer-panel"
+        },
+        {
+          "n": 6,
+          "sel": "css:.followup"
+        },
+        {
+          "n": 7,
+          "sel": "css:aside"
+        }
+      ]
+    },
+    {
+      "name": "c06-mine",
+      "steps": [
+        {
+          "go": "/#/citizen/mine"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:67,297,120,45"
+        },
+        {
+          "n": 2,
+          "sel": "xy:94,430,320,59"
+        },
+        {
+          "n": 3,
+          "sel": "xy:93,516,714,40"
+        },
+        {
+          "n": 4,
+          "sel": "xy:816,514,243,40"
+        },
+        {
+          "n": 5,
+          "sel": "xy:68,650,1130,90"
+        },
+        {
+          "n": 6,
+          "sel": "xy:1042,679,42,26"
+        },
+        {
+          "n": 7,
+          "sel": "xy:1081,200,118,44"
+        }
+      ]
+    },
+    {
+      "name": "c07-board",
+      "steps": [
+        {
+          "go": "/#/citizen/board"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:67,297,120,45"
+        },
+        {
+          "n": 2,
+          "sel": "xy:94,430,320,59"
+        },
+        {
+          "n": 3,
+          "sel": "xy:93,516,714,40"
+        },
+        {
+          "n": 4,
+          "sel": "xy:68,650,1130,90"
+        },
+        {
+          "n": 5,
+          "sel": "xy:1081,200,118,44"
+        }
+      ]
+    },
+    {
+      "name": "s01-login",
+      "steps": [
+        {
+          "go": "/staff/"
+        },
+        {
+          "wait": 600
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:356,419,568,43"
+        },
+        {
+          "n": 2,
+          "sel": "xy:356,500,568,43"
+        },
+        {
+          "n": 3,
+          "sel": "xy:843,577,81,42"
+        }
+      ]
+    },
+    {
+      "name": "s02-home",
+      "steps": [
+        {
+          "login": {
+            "site": "staff",
+            "id": "$ENV:GUIDE_STAFF_ID",
+            "pw": "$ENV:GUIDE_STAFF_PW",
+            "role": "staff"
+          }
+        },
+        {
+          "go": "/staff/"
+        },
+        {
+          "wait": 2500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.staff-sidebar"
+        },
+        {
+          "n": 2,
+          "sel": "xy:263,219,975,136"
+        },
+        {
+          "n": 3,
+          "sel": "xy:263,414,800,36"
+        },
+        {
+          "n": 4,
+          "sel": "xy:280,481,945,40"
+        },
+        {
+          "n": 5,
+          "sel": "xy:264,627,973,118"
+        },
+        {
+          "n": 6,
+          "sel": "xy:1051,669,170,34"
+        },
+        {
+          "n": 7,
+          "sel": "text:CSV 내보내기"
+        }
+      ]
+    },
+    {
+      "name": "s03-list",
+      "steps": [
+        {
+          "go": "/staff/#/staff/complaints"
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:263,176,800,36"
+        },
+        {
+          "n": 2,
+          "sel": "xy:280,244,218,40"
+        },
+        {
+          "n": 3,
+          "sel": "xy:506,244,662,40"
+        },
+        {
+          "n": 4,
+          "sel": "xy:1176,244,60,40"
+        },
+        {
+          "n": 5,
+          "sel": "xy:280,292,30,36"
+        },
+        {
+          "n": 6,
+          "sel": "xy:264,390,988,118"
+        }
+      ]
+    },
+    {
+      "name": "s04a-detail-top",
+      "steps": [
+        {
+          "go": "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
+        },
+        {
+          "wait": 2200
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:263,78,96,21"
+        },
+        {
+          "n": 2,
+          "sel": "xy:263,114,200,22"
+        },
+        {
+          "n": 3,
+          "sel": "css:h1"
+        },
+        {
+          "n": 4,
+          "sel": "css:.staff-process"
+        },
+        {
+          "n": 5,
+          "sel": "css:.detail-body"
+        }
+      ]
+    },
+    {
+      "name": "s04b-editor",
+      "steps": [
+        {
+          "go": "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
+        },
+        {
+          "wait": 2200
+        },
+        {
+          "eval": "window.scrollTo(0, 520)"
+        },
+        {
+          "wait": 400
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:1036,600,180,32"
+        },
+        {
+          "n": 2,
+          "sel": "xy:794,699,422,108"
+        },
+        {
+          "n": 3,
+          "sel": "css:#answer"
+        },
+        {
+          "n": 4,
+          "sel": "css:input[name=reason]"
+        },
+        {
+          "n": 5,
+          "sel": "xy:793,1371,207,41"
+        },
+        {
+          "n": 6,
+          "sel": "css:[data-action=preview-answer]"
+        }
+      ],
+      "height": 1050
+    },
+    {
+      "name": "s04c-ai",
+      "steps": [
+        {
+          "login": {
+            "site": "staff",
+            "id": "$ENV:GUIDE_STAFF_ID",
+            "pw": "$ENV:GUIDE_STAFF_PW",
+            "role": "staff"
+          }
+        },
+        {
+          "go": "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
+        },
+        {
+          "wait": 2200
+        },
+        {
+          "eval": "window.scrollTo(0, 1000)"
+        },
+        {
+          "wait": 400
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "panel:현재 게시된 답변"
+        },
+        {
+          "n": 2,
+          "sel": "css:#staff-job-provider"
+        },
+        {
+          "n": 3,
+          "sel": "css:[data-action=retry]"
+        },
+        {
+          "n": 4,
+          "sel": "css:[data-action=compare]"
+        },
+        {
+          "n": 5,
+          "sel": "xy:263,1679,490,108"
+        },
+        {
+          "n": 6,
+          "sel": "xy:771,1741,467,62"
+        }
+      ]
+    },
+    {
+      "name": "s05-assign",
+      "steps": [
+        {
+          "go": "/staff/#/staff/complaints"
+        },
+        {
+          "click": "css:[data-action=open-assign-dept]",
+          "after": 1200
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:356,429,568,43"
+        },
+        {
+          "n": 2,
+          "sel": "xy:356,523,568,43"
+        },
+        {
+          "n": 3,
+          "sel": "xy:356,617,568,43"
+        },
+        {
+          "n": 4,
+          "sel": "xy:796,686,128,43"
+        },
+        {
+          "n": 5,
+          "sel": "xy:356,686,68,43"
+        }
+      ]
+    },
+    {
+      "name": "s06-preview",
+      "steps": [
+        {
+          "login": {
+            "site": "staff",
+            "id": "$ENV:GUIDE_STAFF_ID",
+            "pw": "$ENV:GUIDE_STAFF_PW",
+            "role": "staff"
+          }
+        },
+        {
+          "go": "/staff/#/staff/detail/DEMO-2026-B117C480EDC6"
+        },
+        {
+          "wait": 2200
+        },
+        {
+          "type": {
+            "sel": "css:input[name=reason]",
+            "value": "현장 확인 후 안내문을 정리함"
+          }
+        },
+        {
+          "click": "css:[data-action=preview-answer]",
+          "after": 1500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:349,363,568,155"
+        },
+        {
+          "n": 2,
+          "sel": "xy:349,612,93,42"
+        },
+        {
+          "n": 3,
+          "sel": "xy:760,612,157,42"
+        }
+      ]
+    },
+    {
+      "name": "s07a-hide",
+      "steps": [
+        {
+          "go": "/staff/#/staff/complaints"
+        },
+        {
+          "click": "text:사창동 사거리 가로등이 꺼져 있어요",
+          "after": 2500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:[data-action=hide-complaint]"
+        },
+        {
+          "n": 2,
+          "sel": "css:.staff-process header span"
+        }
+      ]
+    },
+    {
+      "name": "s07b-hide-modal",
+      "steps": [
+        {
+          "click": "css:[data-action=hide-complaint]",
+          "after": 1200
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:349,485,568,43"
+        },
+        {
+          "n": 2,
+          "sel": "xy:349,554,68,42"
+        },
+        {
+          "n": 3,
+          "sel": "xy:836,554,81,42"
+        }
+      ]
+    },
+    {
+      "name": "s08-stats",
+      "steps": [
+        {
+          "go": "/staff/#/staff/stats"
+        },
+        {
+          "wait": 2500
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:263,258,975,286"
+        },
+        {
+          "n": 2,
+          "sel": "panel:처리 상태별 분포"
+        },
+        {
+          "n": 3,
+          "sel": "panel:AI 판정별 분포"
+        },
+        {
+          "n": 4,
+          "sel": "xy:827,102,142,41"
+        },
+        {
+          "n": 5,
+          "sel": "xy:976,102,112,41"
+        },
+        {
+          "n": 6,
+          "sel": "xy:1096,102,142,41"
+        }
+      ]
+    }
+  ]
 }

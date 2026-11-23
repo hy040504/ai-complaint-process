@@ -31,7 +31,7 @@ py -3.12 -m venv .venv-web
 | http://127.0.0.1:5010/api/v1/lab/complaints | `POST` 제목·상세로 검색 후 판정. 기록은 `.rag-cache/lab-runs` |
 | http://127.0.0.1:5010/api/v1/lab/complaints/stream | `POST` 같은 처리의 진행 안내 NDJSON 뒤 `done` 결과 스트리밍 |
 | http://127.0.0.1:5010/api/v1/lab/runs | `GET` 기록 목록 · `DELETE` 모두 삭제 |
-| http://127.0.0.1:5000/#/citizen | 시민·담당자 민원 웹 기본 화면 (`#/staff`, `#/staff/api`, `#/lab` 전환 지원) |
+| http://127.0.0.1:5000/#/citizen | 시민·담당자 민원 웹 기본 화면 (`#/staff`, `#/staff/api` 전환 지원). 응대 검사기는 단독 페이지 `/lab/` |
 | http://127.0.0.1:5000/design/ui04 | `ui/minwon-toktok-ui04.html` 목업 + `ui04-adapter.js` 연동 |
 | http://127.0.0.1:5000/#/staff/api | 담당자 콘솔 내 백엔드 API · Swagger UI 콘솔(헬스 요약·태그/키워드 색인·임베드 Swagger UI) |
 | http://127.0.0.1:5000/#/lab | 기존 시연 Flask의 검사기 화면 |

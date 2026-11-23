@@ -118,5 +118,6 @@ test("담당자 사이드바 셸이 /staff/api 경로를 활성 메뉴로 표시
   assert.match(html, /API 문서 · Swagger/);
   assert.match(html, /class="staff-nav-link active" href="#\/staff\/api"/);
   assert.match(html, /백엔드 API · Swagger/);
-  assert.match(html, /href="\/swagger"/);
+  // 담당자 화면은 단독 사이트다: 상단 데모 띠·역할 전환·응대 검사기 링크가 없다.
+  assert.doesNotMatch(html, /role-switch|demo-bar|응대 검사기|href="#\/lab"/);
 });

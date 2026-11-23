@@ -169,6 +169,20 @@ def test_proxied_api_docs_open_only_for_logged_in_staff() -> None:
     assert forged.get("/openapi/openapi.json", headers=proxied).status_code == 404
 
 
+def test_lab_is_a_standalone_page_separate_from_the_staff_site() -> None:
+    """응대 검사기는 `/lab/` 단독 페이지이고, 담당자 화면에는 검사기·역할 전환 띠가 없다."""
+    client = _app().test_client()
+    redirect = client.get("/lab")
+    assert redirect.status_code == 308 and redirect.headers["Location"] == "/lab/"
+    lab_html = client.get("/lab/").get_data(as_text=True)
+    assert 'data-site="lab"' in lab_html and "/src/lab.css" in lab_html
+    staff_html = client.get("/staff/").get_data(as_text=True)
+    assert 'data-site="staff"' in staff_html and "/src/lab.css" not in staff_html
+    assert client.get("/lab/", headers={"CF-Ray": "abc123-ICN"}).status_code == 200
+    # 검사기 API는 로그인 없이 쓰는 기존 규칙을 유지한다.
+    assert client.get("/api/v1/assist/examples").status_code == 200
+
+
 def test_https_requests_get_secure_cookie_and_hsts() -> None:
     """HTTPS(프록시의 X-Forwarded-Proto) 요청만 Secure 쿠키·HSTS를 받는다."""
     app = _app()

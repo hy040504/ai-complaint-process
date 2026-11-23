@@ -39,6 +39,29 @@ def ui_staff_index() -> Response:
     return send_from_directory(ROOT / "ui", "staff.html")
 
 
+@web.route("/lab")
+def ui_lab_redirect() -> Response:
+    """끝 슬래시 없는 응대 검사기 주소를 `/lab/`로 보냅니다.
+
+    Returns:
+        `/lab/`로 가는 308 응답입니다.
+    """
+    return Response(status=308, headers={"Location": "/lab/"})
+
+
+@web.route("/lab/")
+def ui_lab_index() -> Response:
+    """응대 검사기 단독 페이지를 제공합니다.
+
+    시민·담당자 사이트에서는 연결하지 않으며 주소로만 들어갑니다. 검사기 API
+    (`/api/v1/assist*`)는 기존과 같이 로그인 없이 쓰고 민원은 저장하지 않습니다.
+
+    Returns:
+        `ui/lab.html`(검사기 전용 화면)입니다.
+    """
+    return send_from_directory(ROOT / "ui", "lab.html")
+
+
 @web.route("/src/<path:filename>")
 def ui_source(filename: str) -> Response:
     """서버 소스 대신 UI 정적 자산만 제공합니다.
