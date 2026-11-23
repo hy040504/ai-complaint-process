@@ -18,10 +18,11 @@
    (`screens.json`의 `base`가 `http://127.0.0.1:5001`입니다. 다르면 고치세요.)
 2. 브라우저를 원격 디버깅 모드로 띄웁니다.
    `msedge --headless --remote-debugging-port=9395 --remote-allow-origins=* --user-data-dir=<빈 폴더> about:blank`
-3. 담당자 계정 정보를 **환경변수**로 넘기고 실행합니다. (비밀번호를 파일에 쓰지 않아요.)
+3. 담당자·민원인 계정 정보를 **환경변수**로 넘기고 실행합니다. (비밀번호를 파일에 쓰지 않아요.) 민원인 계정(`GUIDE_CITIZEN_ID`·`GUIDE_CITIZEN_PW`)은 로그인한 민원인 화면(`c10-member`)에만 씁니다.
 
 ```bash
 GUIDE_STAFF_ID=담당자아이디 GUIDE_STAFF_PW=비밀번호 \
+GUIDE_CITIZEN_ID=민원인아이디 GUIDE_CITIZEN_PW=비밀번호 \
 node scripts/reports/guide/capture.mjs 9395 scripts/reports/guide/screens.json docs/assets/guide
 ```
 
@@ -41,6 +42,8 @@ node scripts/reports/guide/capture.mjs 9395 scripts/reports/guide/screens.json d
 > 열린 모달(팝업)에서는 번호 표시를 모달 안에 그려 넣습니다(브라우저가 모달을 최상위 층에 그려 일반 표시를 가리기 때문).
 
 > 이 도구는 **시험 민원을 실제로 접수**합니다(게스트로 작성). 다시 찍은 뒤에는 DB에서 시험 민원을 지워 주세요.
+>
+> `c10-member`(로그인한 민원인의 내 민원)와 `s09-followup`(추가 문의 목록)은 그 계정의 민원과 추가 문의가 **미리 있어야** 의미 있는 화면이 나옵니다. 찍기 전에 민원인으로 비공개 민원을 하나 쓰고, 담당자가 "내가 담당"을 누른 뒤, 민원인이 추가 문의를 보내 두세요(찍은 뒤 삭제).
 
 ## PDF 만들기
 
@@ -49,3 +52,5 @@ python scripts/reports/guide/build_guide_pdf.py
 ```
 
 `docs/guides/`의 두 가이드를 읽어 같은 폴더에 `.pdf`로 저장합니다. 가이드에서 쓰는 마크다운 문법(제목·표·목록·인용·그림·굵게·링크)만 해석하는 작은 변환기입니다.
+
+그림과 표는 쪽 가운데서 잘리지 않고 통째로 다음 쪽으로 넘어갑니다. 그래서 **제목·소개·첫 그림**, **굵은 소제목·바로 뒤 표나 목록**은 한 묶음으로 처리해, 제목만 쪽 끝에 홀로 남지 않게 합니다.

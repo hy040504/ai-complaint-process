@@ -84,7 +84,10 @@ def database(monkeypatch):
         초기 적재를 마친 DB 연결과 합성 문서 목록의 튜플입니다.
     """
     name = "complaint_rag_test_" + uuid.uuid4().hex[:12]
-    with psycopg.connect(autocommit=True) as admin:
+    # 임시 DB를 만드는 관리 연결은 PGDATABASE와 무관한 유지보수 DB(postgres)에 붙습니다.
+    # 셸에 남은 PGDATABASE가 이미 지운 DB를 가리키면 3건이 모두 접속 오류가 났습니다(CASE-130).
+    admin_db = os.getenv("RAG_TEST_ADMIN_DB", "postgres")
+    with psycopg.connect(dbname=admin_db, autocommit=True) as admin:
         template = os.getenv("RAG_TEST_TEMPLATE", "complaint_rag_test_template")
         admin.execute(
             sql.SQL("CREATE DATABASE {} TEMPLATE {}").format(
