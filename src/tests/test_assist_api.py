@@ -84,7 +84,9 @@ def test_assist_schema_accepts_pipeline_result() -> None:
     AssistResponse.model_validate(_payload())
 
 
-def test_assist_requires_staff_login(app: OpenAPI, monkeypatch: object) -> None:
+def test_assist_requires_staff_login(
+    app: OpenAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """검사기 API는 비로그인·시민에게 막히고 담당자에게만 열립니다(CASE-129)."""
     monkeypatch.setattr(
         "src.complaints.api.run_web_assist", lambda *args: _payload(args[0])
@@ -110,14 +112,16 @@ def test_assist_requires_staff_login(app: OpenAPI, monkeypatch: object) -> None:
         "/api/v1/assist", json={"query": "대형폐기물 배출 방법을 알고 싶어요."}
     )
     assert response.status_code == 200
-    body = response.json
+    body = response.json  # type: ignore[assignment]
     assert body["outcome"] == "human_handoff"
-    assert body["automaticTransfer"] is False
+    assert body["automaticTransfer"] is False  # type: ignore[comparison-overlap]
     assert body["retrieval"]["retrievalOnly"] is True
     assert body["retrieval"]["decision"] == "requires_gate"
 
 
-def test_assist_examples_and_health_flags(app: OpenAPI, monkeypatch: object) -> None:
+def test_assist_examples_and_health_flags(
+    app: OpenAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """예시 목록과 검색·LLM 설정 플래그를 반환합니다."""
     monkeypatch.setattr("src.complaints.api.search_available", lambda: True)
     monkeypatch.setattr("src.complaints.api.llm_configured", lambda: False)
@@ -141,7 +145,7 @@ def test_assist_examples_and_health_flags(app: OpenAPI, monkeypatch: object) -> 
 
 
 def test_assist_stream_sends_progress_then_result(
-    app: OpenAPI, monkeypatch: object
+    app: OpenAPI, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """흐름 응답은 짧은 진행 안내 뒤에 최종 결과를 붙입니다."""
 
@@ -174,7 +178,7 @@ def test_assist_stream_sends_progress_then_result(
 
 
 def test_assist_runs_are_rate_limited_per_staff_account(
-    app: OpenAPI, monkeypatch: object
+    app: OpenAPI, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """같은 담당자 계정은 10분에 20회까지만 검사기를 실행하고 초과분은 429입니다."""
     monkeypatch.setattr(

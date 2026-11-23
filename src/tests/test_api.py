@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from typing import Any
 
 from flask.testing import FlaskClient
 from flask_openapi3.openapi import OpenAPI
@@ -16,7 +17,7 @@ from src.complaints.repository import MemoryRepository
 from src.complaints.seed import seed_demo
 from src.complaints.service import ComplaintService
 
-BODY = {
+BODY: dict[str, Any] = {
     "title": "합성 보행로 점검 요청",
     "body": "[테스트] 보행로에 파손된 시설이 있어 안전 점검과 검토 결과 안내를 요청합니다.",
     "category": "도로·교통",
@@ -133,7 +134,7 @@ def test_draft_publish_followup_and_retraction(
     )
     assert published.status_code == 200
     assert published.json["published"]["origin"] == "staff"
-    public = citizen.get(url).json
+    public = citizen.get(url).json  # type: ignore[assignment]
     assert (
         public["status"] == "answered"
         and public["published"]["text"] == "시민에게 안내할 검토 완료 답변"
@@ -238,7 +239,7 @@ def test_ai_origin_and_no_late_overwrite(
         stored["draft"] == "담당자가 보완한 원문"
         and stored["aiOriginal"] == row["aiOriginal"]
     )
-    assert "aiOriginal" not in citizen.get(url).json
+    assert "aiOriginal" not in citizen.get(url).json  # type: ignore[operator]
 
 
 def test_job_completion_and_cancellation(
@@ -320,7 +321,7 @@ def test_openapi_swagger_and_static_boundary(app: OpenAPI) -> None:
     """자동 문서의 스키마·오류 형식·Swagger 자산과 서버 소스 비노출을 확인합니다."""
     client = app.test_client()
     spec = client.get("/openapi/openapi.json").json
-    validate(spec)
+    validate(spec)  # type: ignore[arg-type]
     assert "/api/v1/complaints/{complaint_id}/publish" in spec["paths"]
     assert spec["paths"]["/api/v1/complaints"]["post"]["responses"]["422"]["content"][
         "application/json"
@@ -431,7 +432,7 @@ def test_staff_department_assignment_and_directory(
     )
 
     public_view = citizen.get(url).json
-    assert "department" not in public_view
+    assert "department" not in public_view  # type: ignore[operator]
     assert staff.get("/api/v1/complaints?assign=mine").json["total"] == 1
 
     cleared = staff.put(url + "/assignment", json={"version": 2, "department": ""})
@@ -516,6 +517,6 @@ def test_korean_swagger_portal_and_embed_mode(app: OpenAPI) -> None:
     assert client.get("/src/complaints/swagger_page.py").status_code == 404
 
     spec = client.get("/openapi/openapi.json").json
-    validate(spec)
+    validate(spec)  # type: ignore[arg-type]
     tag_names = {item["name"] for item in spec.get("tags", [])}
     assert {"민원", "담당자 답변", "AI 작업 · 단계 시연", "응대 검사기"} <= tag_names

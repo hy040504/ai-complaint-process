@@ -130,7 +130,7 @@ def test_backfill_marks_only_public_demo_rows() -> None:
         PostgresRepository(schema=schema)
         PostgresRepository(schema=schema)
         with psycopg.connect(connect_timeout=10) as conn:
-            rows = dict(
+            rows = dict(  # type: ignore[var-annotated]
                 conn.execute(
                     sql.SQL("SELECT id, is_synthetic FROM {}.complaints").format(
                         sql.Identifier(schema)

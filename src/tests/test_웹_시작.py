@@ -53,7 +53,7 @@ def test_main_checks_backend_services(
     monkeypatch.setattr(
         start_web,
         "ensure_backend_services",
-        lambda wait_seconds=60.0: backend_checked.append(True) or True,
+        lambda wait_seconds=60.0: backend_checked.append(True) or True,  # type: ignore[func-returns-value]
     )
     monkeypatch.setattr(
         start_web.webbrowser, "open", lambda url: browser_opened.append(url)

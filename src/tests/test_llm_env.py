@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 import src.llm.settings as settings
 
 
-def test_env_file_selects_openai_api(tmp_path: Path, monkeypatch: object) -> None:
+def test_env_file_selects_openai_api(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """`.env`의 openai_api와 OPENAI_API_KEY를 프로세스 환경에 넣습니다."""
     env_file = tmp_path / ".env"
     env_file.write_text(
@@ -25,7 +29,9 @@ def test_env_file_selects_openai_api(tmp_path: Path, monkeypatch: object) -> Non
     assert settings.llm_configured() is True
 
 
-def test_env_file_selects_exaone_api(tmp_path: Path, monkeypatch: object) -> None:
+def test_env_file_selects_exaone_api(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """`.env`의 exaone_api와 EXAONE_API_KEY를 읽어 K-EXAONE-2.5로 구성합니다."""
     env_file = tmp_path / ".env"
     env_file.write_text(
@@ -47,7 +53,9 @@ def test_env_file_selects_exaone_api(tmp_path: Path, monkeypatch: object) -> Non
     assert settings.llm_configured() is True
 
 
-def test_env_file_selects_codex_cli(tmp_path: Path, monkeypatch: object) -> None:
+def test_env_file_selects_codex_cli(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """`.env`의 codex_cli와 실행 파일 이름을 읽습니다."""
     env_file = tmp_path / ".env"
     env_file.write_text(
@@ -58,7 +66,7 @@ def test_env_file_selects_codex_cli(tmp_path: Path, monkeypatch: object) -> None
     settings._LLM_ENV_LOADED = False
     monkeypatch.delenv("COMPLAINT_LLM_PROVIDER", raising=False)
     monkeypatch.delenv("COMPLAINT_CODEX_COMMAND", raising=False)
-    monkeypatch.setattr(settings.shutil, "which", lambda command: command)
+    monkeypatch.setattr(settings.shutil, "which", lambda command: command)  # type: ignore[attr-defined]
 
     loaded = settings.llm_settings()
     assert loaded["provider"] == "codex_cli"
@@ -66,7 +74,9 @@ def test_env_file_selects_codex_cli(tmp_path: Path, monkeypatch: object) -> None
     assert settings.llm_configured() is True
 
 
-def test_env_file_reads_legacy_token(tmp_path: Path, monkeypatch: object) -> None:
+def test_env_file_reads_legacy_token(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """`.env`의 기존 호환 토큰도 읽습니다."""
     env_file = tmp_path / ".env"
     env_file.write_text(
@@ -87,7 +97,7 @@ def test_env_file_reads_legacy_token(tmp_path: Path, monkeypatch: object) -> Non
 
 
 def test_use_provider_overrides_process_env_only(
-    tmp_path: Path, monkeypatch: object
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """공급자 전환은 프로세스 환경만 바꾸고 `.env` 파일은 쓰지 않습니다."""
     env_file = tmp_path / ".env"
@@ -97,7 +107,7 @@ def test_use_provider_overrides_process_env_only(
     settings._LLM_ENV_LOADED = False
     monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "codex_cli")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-compare-only")
-    monkeypatch.setattr(settings.shutil, "which", lambda command: command)
+    monkeypatch.setattr(settings.shutil, "which", lambda command: command)  # type: ignore[attr-defined]
 
     loaded = settings.use_provider("openai_api")
     assert loaded["provider"] == "openai_api"
@@ -105,7 +115,7 @@ def test_use_provider_overrides_process_env_only(
     assert env_file.read_text(encoding="utf-8") == original
 
 
-def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
+def test_complete_exaone_result_with_mock(monkeypatch: pytest.MonkeyPatch) -> None:
     """EXAONE Chat Completions 모의 응답과 토큰 사용량을 파싱합니다."""
     import src.llm.complete as complete
 
@@ -149,7 +159,7 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
         "temperature": "0.7",
         "top_p": "0.95",
     }
-    result = complete.complete_result("시스템지시", "사용자입력", settings=exaone_cfg)
+    result = complete.complete_result("시스템지시", "사용자입력", settings=exaone_cfg)  # type: ignore[arg-type]
     assert result.text == '{"scope":"in_scope","outcome":"department_suggestion"}'
     assert result.usage is not None
     assert result.usage["input_tokens"] == 120
@@ -166,12 +176,12 @@ def test_complete_exaone_result_with_mock(monkeypatch: object) -> None:
     }
 
 
-def test_provider_availability_map(monkeypatch: object) -> None:
+def test_provider_availability_map(monkeypatch: pytest.MonkeyPatch) -> None:
     """공급자별 API 키 유무와 `.env` 기본 공급자 해석 결과를 매핑합니다."""
     monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "exaone_api")
     monkeypatch.setenv("EXAONE_API_KEY", "test-key")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setattr(settings.shutil, "which", lambda cmd: None)
+    monkeypatch.setattr(settings.shutil, "which", lambda cmd: None)  # type: ignore[attr-defined]
 
     avail = settings.provider_availability_map()
     assert avail[""]["available"] is True
@@ -185,7 +195,9 @@ def test_provider_availability_map(monkeypatch: object) -> None:
     assert "Codex CLI" in avail["codex_cli"]["reason"]
 
 
-def test_pipeline_records_resolved_llm_provider_and_model(monkeypatch: object) -> None:
+def test_pipeline_records_resolved_llm_provider_and_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """파이프라인 결과에 실제 선택·해석된 LLM 공급자와 모델 이름을 기록합니다."""
     from src.assist import pipeline
 
@@ -220,7 +232,9 @@ def test_pipeline_records_resolved_llm_provider_and_model(monkeypatch: object) -
     assert result["llm_model"] == "k-exaone_v2.5"
 
 
-def test_pipeline_resolve_chat_with_exaone_provider(monkeypatch: object) -> None:
+def test_pipeline_resolve_chat_with_exaone_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """`exaone_api` 공급자 키 유무에 따라 파이프라인 활성 여부와 chat 선택이 동작합니다."""
     from src.assist import pipeline
 
@@ -251,7 +265,7 @@ def test_strip_code_fence_handles_json_and_plain_text() -> None:
 
 
 def test_exaone_url_and_model_ignore_unrelated_complaint_url(
-    tmp_path: Path, monkeypatch: object
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """EXAONE_URL·EXAONE_MODEL이 COMPLAINT_LLM_URL에 덮이지 않고 우선 적용됩니다."""
     env_file = tmp_path / ".env"
@@ -285,12 +299,12 @@ def test_exaone_url_and_model_ignore_unrelated_complaint_url(
 
 
 def test_pipeline_unavailable_provider_reason_and_api_429_skip_followup(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """키 누락 사유를 안내하고, 판정 API 실패 시 후속 초안 호출을 연달아 보내지 않습니다."""
     from src.assist import pipeline
 
-    fake_search = {
+    fake_search = {  # type: ignore[var-annotated]
         "query": "가로수 쓰러짐",
         "district": None,
         "retrieval_only": True,
@@ -331,7 +345,7 @@ def test_pipeline_unavailable_provider_reason_and_api_429_skip_followup(
 
 
 def test_http_json_retries_429_respects_retry_after_and_day_quota(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """http_json은 일시 429 시 retry-after-ms를 존중해 재시도하고 일일 소진 시 즉시 중단합니다."""
     import io
@@ -340,7 +354,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
     from src.search_client import http as rag_http
 
     sleeps: list[float] = []
-    monkeypatch.setattr(rag_http.time, "sleep", lambda sec: sleeps.append(sec))
+    monkeypatch.setattr(rag_http.time, "sleep", lambda sec: sleeps.append(sec))  # type: ignore[attr-defined]
 
     attempts = {"count": 0}
 
@@ -375,7 +389,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
             )
         return FakeOkResponse()
 
-    monkeypatch.setattr(rag_http.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", fake_urlopen)  # type: ignore[attr-defined]
     assert rag_http.http_json(
         "https://api.exaone.ai/v1/chat/completions", {"a": 1}
     ) == {"ok": True}
@@ -400,7 +414,7 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
             io.BytesIO(b"daily quota exceeded"),
         )
 
-    monkeypatch.setattr(rag_http.urllib.request, "urlopen", day_exhausted)
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", day_exhausted)  # type: ignore[attr-defined]
     try:
         rag_http.http_json("https://api.exaone.ai/v1/chat/completions", {"a": 1})
         raise AssertionError("429 예외가 발생해야 합니다.")
@@ -410,7 +424,9 @@ def test_http_json_retries_429_respects_retry_after_and_day_quota(
     assert sleeps == []
 
 
-def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
+def test_http_json_timeout_and_exaone_429_guidance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """TimeoutError는 한국어 메시지로 변환하고 EXAONE 429는 대응 안내를 덧붙입니다."""
     import src.llm.complete as complete
     from src.search_client import http as rag_http
@@ -419,7 +435,7 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
         """소켓 읽기 시간 초과(TimeoutError)를 재현하는 모의 urlopen입니다."""
         raise TimeoutError("The read operation timed out")
 
-    monkeypatch.setattr(rag_http.urllib.request, "urlopen", timeout_urlopen)
+    monkeypatch.setattr(rag_http.urllib.request, "urlopen", timeout_urlopen)  # type: ignore[attr-defined]
     try:
         rag_http.http_json(
             "https://api.exaone.ai/v1/chat/completions", {"a": 1}, timeout=12
@@ -446,7 +462,7 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
         "top_p": "0.95",
     }
     try:
-        complete.complete_result("시스템", "사용자", settings=exaone_cfg)
+        complete.complete_result("시스템", "사용자", settings=exaone_cfg)  # type: ignore[arg-type]
         raise AssertionError("EXAONE 429 예외가 발생해야 합니다.")
     except ValueError as exc:
         text = str(exc)
@@ -455,7 +471,7 @@ def test_http_json_timeout_and_exaone_429_guidance(monkeypatch: object) -> None:
 
 
 def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """역할별 EXAONE 추론 차등화, Codex 비도구 MCP 생략, 실패 시 직전 usage 격리를 확인합니다."""
     from types import SimpleNamespace
@@ -473,9 +489,9 @@ def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
         "reasoning_effort": "max",
         "max_tokens": "16384",
     }
-    dec_cfg = settings.settings_for_role(exaone_base, "decision")
-    fast_cfg = settings.settings_for_role(exaone_base, "sanitize")
-    draft_cfg = settings.settings_for_role(exaone_base, "staff_draft")
+    dec_cfg = settings.settings_for_role(exaone_base, "decision")  # type: ignore[arg-type]
+    fast_cfg = settings.settings_for_role(exaone_base, "sanitize")  # type: ignore[arg-type]
+    draft_cfg = settings.settings_for_role(exaone_base, "staff_draft")  # type: ignore[arg-type]
     assert dec_cfg is not None and dec_cfg["reasoning_effort"] == "high"
     assert fast_cfg is not None and fast_cfg["reasoning_effort"] == "low"
     assert fast_cfg["max_tokens"] == "4096"
@@ -494,7 +510,7 @@ def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
         captured["input"] = kwargs.get("input")
         return SimpleNamespace(returncode=0, stdout='{"ok": true}', stderr="")
 
-    monkeypatch.setattr(complete.subprocess, "run", fake_run)
+    monkeypatch.setattr(complete.subprocess, "run", fake_run)  # type: ignore[attr-defined]
     codex_cfg = settings.settings_for_role(
         {
             "provider": "codex_cli",
@@ -554,7 +570,7 @@ def test_settings_for_role_tiering_codex_mcp_skip_and_usage_isolation(
 
 
 def test_json_repair_codex_error_trim_exaone_timeout_low_retry_and_fallback(
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """N32 JSON 복구·A15 오류 요약·N18 EXAONE low 재시도·자동 폴백·staff_draft MCP 생략을 검증합니다."""
     from src.assist import pipeline

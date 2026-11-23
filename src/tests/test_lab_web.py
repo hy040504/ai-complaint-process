@@ -153,10 +153,10 @@ def test_fields(client: FlaskClient) -> None:
     assert response.status_code == 200
     assert "환경·청소" in response.json["categories"]
     assert "흥덕구" in response.json["districts"]
-    assert "districtAreas" in response.json
+    assert "districtAreas" in response.json  # type: ignore[operator]
     assert "오송읍" in response.json["districtAreas"]["흥덕구"]
     assert "사창동" in response.json["districtAreas"]["서원구"]
-    assert "providers" in response.json
+    assert "providers" in response.json  # type: ignore[operator]
     assert "exaone_api" in response.json["providers"]
     assert "openai_api" in response.json["providers"]
 

@@ -84,7 +84,7 @@ def test_ensure_backend_services_starts_missing(
     monkeypatch.setattr(
         start_search,
         "wait_for_port",
-        lambda host, port, timeout: waited.append(port) or True,
+        lambda host, port, timeout: waited.append(port) or True,  # type: ignore[func-returns-value]
     )
 
     assert start_search.ensure_backend_services(wait_seconds=5.0) is True

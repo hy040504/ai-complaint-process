@@ -1,5 +1,7 @@
 """민원 웹·RAG·LLM 패키지와 연결 계층이 분리돼 동작하는지 확인합니다."""
 
+import pytest
+
 from src.assist import run_assist
 from src.complaints.config import APP_SCHEMA_SQL
 from src.llm import llm_configured, llm_settings
@@ -110,7 +112,7 @@ def test_search_contract_helper_rejects_answers() -> None:
         raise AssertionError("검색 계약을 통과시키면 안 됩니다.")
 
 
-def test_llm_settings_are_separate_from_search(monkeypatch: object) -> None:
+def test_llm_settings_are_separate_from_search(monkeypatch: pytest.MonkeyPatch) -> None:
     """LLM 설정은 검색 API 주소와 별도로 읽습니다."""
     monkeypatch.setenv("COMPLAINT_LLM_PROVIDER", "openai_api")
     monkeypatch.setenv("OPENAI_API_KEY", "")
