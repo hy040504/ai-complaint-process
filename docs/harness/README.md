@@ -57,7 +57,7 @@ CLI 이후 시연 웹은 민원 게시판·작성 페이지와 민원을 주고�
 | 데이터 검증 | 입력 검증, 원자적 색인 갱신, 원본/DB 대조 구현 | FAQ 현행성·부서 업무분장 검증 기록 |
 | 테스트 | 백엔드·DB 통합 189개, RAG 49개(Windows 3 skipped), UI 36개, 112건·5,015건 규칙 회귀, `:5010` 200건(`95.0%`)·혼합 100건(`98.0%`)·Codex CLI 전용 신규 100건(`99.0%` + 표적 `5/5`) 실증, 초안 평가셋 29건(개발 26/26·보류 3/3) | 400문항 검수, 운영 임계값 |
 | 판정·응답 계약 | LLM 완충지대 하네스, `prompts/` PREFIX-00~04 조립(`early_external_reject`·병렬 `03∥04`·`PREFIX-02/03/04` `_disable_mcp`·JSON 복구/1회 재시도·EXAONE `high<=8192`/`low<=4096`+타임아웃 `low` 재시도), 코드 정책 검사(`validate_decision` 예외 보류), `regression_112_rules.py`·`live_eval_100_codex.py` | openai_api `cached_tokens` 실측·FAQ 현행성 허용 목록 |
-| 시연 웹·업무 서버 | Flask·Swagger(**36경로 · 44오퍼레이션**)·PostgreSQL `complaint_app` **7테이블 정규화 + `chat_sessions`/`attachments`**·시민/담당자 UI·**민원인/담당자 아이디·비밀번호 로그인(`CASE-111`)**·**현장 사진·PDF 파일 첨부(EXIF 제거·격리, `CASE-115`)**·비동기 CRUD AI 워커(`CASE-093`)·담당자 실시간 SSE 푸시(`BE07`/`UI08`)·**시민 다중 턴 AI 챗봇 및 담당자 RBAC 통계 대시보드(`#/staff/stats`)·안전 CSV 내보내기(`CASE-114`)** | 외부 PASS/SSO·다중 인스턴스 브로커(현 단계 제외)·멀티모달 이미지 분석·공식 이관 |
+| 시연 웹·업무 서버 | Flask·Swagger(**39경로 · 47오퍼레이션**)·PostgreSQL `complaint_app` **7테이블 정규화 + `chat_sessions`/`attachments`**·시민/담당자 UI·**민원인/담당자 아이디·비밀번호 로그인(`CASE-111`)**·**현장 사진·PDF 파일 첨부(EXIF 제거·격리, `CASE-115`)**·비동기 CRUD AI 워커(`CASE-093`)·담당자 실시간 SSE 푸시(`BE07`/`UI08`)·**시민 다중 턴 AI 챗봇 및 담당자 RBAC 통계 대시보드(`#/staff/stats`)·안전 CSV 내보내기(`CASE-114`)** | 외부 PASS/SSO·다중 인스턴스 브로커(현 단계 제외)·멀티모달 이미지 분석·공식 이관 |
 | 실행 기록 | 적재 메타데이터, 검색 시간, 기존 보고서 | 요청 단위 추적, 설정·정책 버전, 민감정보 제외 |
 | 사례 기록 | 번호별 색인·양식, 구축·설계 이력과 미해결 데이터 사례 | 변경마다 사례 상태·근거와 현재 기준 문서 갱신 |
 | 자동화 | 수동 실행 명령 존재 | 가벼운 CI와 별도 모델 평가 작업 |
