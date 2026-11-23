@@ -244,10 +244,12 @@ def build_staff_analytics(rows: list[Complaint], *, now: datetime) -> StaffAnaly
     for unit, span in TREND_SPANS:
         received = [0] * span
         resolved = [0] * span
+        by_category = {str(cat): [0] * span for cat in CATEGORIES}
         for row in rows:
             back = _period_index(unit, _to_kst(row.date), today)
             if 0 <= back < span:
                 received[span - 1 - back] += 1
+                by_category[row.category][span - 1 - back] += 1
             if row.published is not None:
                 back = _period_index(unit, _to_kst(row.published.date), today)
                 if 0 <= back < span:
@@ -258,6 +260,7 @@ def build_staff_analytics(rows: list[Complaint], *, now: datetime) -> StaffAnaly
                 labels=[_period_label(unit, span - 1 - i, today) for i in range(span)],
                 received=received,
                 resolved=resolved,
+                category_received=by_category,
             )
         )
 

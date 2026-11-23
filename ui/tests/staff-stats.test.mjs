@@ -136,19 +136,45 @@ test("matchesStaffSearch와 staffQueue는 본문·ID·부서 통합 검색과 AI
   assert.match(html, /추가 문의 많은순/);
 });
 
-test("staffStatsPage는 분석 탭을 렌더링하고 집계 단위·탭 전환 값을 검증한다", async () => {
+test("staffStatsPage는 통계 분석·민원 분류 구역과 탭·지역·집계 단위 전환을 렌더링한다", async () => {
   const { setStatsView } = await import("../src/staff-stats.js");
+  const cats = ["도로·교통", "환경·청소"];
   const analytics = {
     trends: [
-      { unit: "day", labels: ["11/21", "11/22", "11/23"], received: [4, 2, 3], resolved: [1, 1, 0] },
-      { unit: "week", labels: ["11/16주", "11/23주"], received: [5, 3], resolved: [4, 1] },
+      {
+        unit: "day",
+        labels: ["11/21", "11/22", "11/23"],
+        received: [4, 2, 3],
+        resolved: [1, 1, 0],
+        categoryReceived: { "도로·교통": [3, 1, 2], "환경·청소": [1, 1, 1] },
+      },
+      {
+        unit: "week",
+        labels: ["11/9주", "11/16주", "11/23주"],
+        received: [5, 7, 3],
+        resolved: [4, 5, 1],
+        categoryReceived: { "도로·교통": [3, 4, 1], "환경·청소": [2, 3, 2] },
+      },
+      {
+        unit: "month",
+        labels: ["26.09", "26.10", "26.11"],
+        received: [2, 6, 9],
+        resolved: [1, 4, 3],
+        categoryReceived: { "도로·교통": [1, 4, 5], "환경·청소": [1, 2, 4] },
+      },
     ],
-    monthLabels: ["26.10", "26.11"],
-    categoryTrends: [{ category: "도로·교통", counts: [1, 4], total: 5, changePct: 300 }],
-    categories: ["도로·교통", "기타"],
-    districtCategory: [{ district: "모름", counts: [1, 0], total: 1 }],
-    hourWeekday: Array.from({ length: 7 }, () => Array(24).fill(0)),
-    resolutionByCategory: [{ category: "도로·교통", resolved: 2, avgDays: 1.5 }],
+    monthLabels: ["26.09", "26.10", "26.11"],
+    categoryTrends: [{ category: "도로·교통", counts: [1, 4, 5], total: 10, changePct: 300 }],
+    categories: cats,
+    districtCategory: [
+      { district: "상당구", counts: [5, 1], total: 6 },
+      { district: "모름", counts: [2, 4], total: 6 },
+    ],
+    hourWeekday: Array.from({ length: 7 }, (_, d) => Array.from({ length: 24 }, (_, h) => (h === 9 ? d + 1 : 0))),
+    resolutionByCategory: [
+      { category: "도로·교통", resolved: 2, avgDays: 1.5 },
+      { category: "환경·청소", resolved: 0, avgDays: null },
+    ],
     resolutionBuckets: [{ key: "within1", label: "1일 이내", count: 2 }],
     aiFirstResponseRate: 40,
     resolveRate: 50,
@@ -162,27 +188,42 @@ test("staffStatsPage는 분석 탭을 렌더링하고 집계 단위·탭 전환 
     analytics,
   };
   const render = () => staffStatsPage(stats, {});
-  assert.match(render(), /접수·처리 추이/);
-  assert.match(render(), /data-action="stats-tab" data-id="region"/);
-  assert.match(render(), /기간 접수<\/span><b>9건/);
-  assert.match(render(), /지난 일 접수<\/span><b>2건/);
-  assert.match(render(), /▼ 50% 그 전 일 대비 · 이번 일 3건\(진행 중\)/);
+
+  let html = render();
+  assert.match(html, /통계 분석/);
+  assert.match(html, /민원 분류/);
+  assert.match(html, /data-action="stats-tab" data-id="region"/);
+  assert.match(html, /지난 일 접수<\/span><strong>2건/);
+  assert.match(html, /▼ 50% 그 전 일 대비 · 이번 일 3건\(진행 중\)/);
+  assert.match(html, /class="catrow"/);
+  assert.match(html, /야간·주말 접수가/);
+  assert.match(html, /분야별 12개월 접수 추이/);
+  assert.match(html, /<svg class="stats-svg radar"/);
 
   setStatsView("period", "week");
-  assert.match(render(), /11\/16주/);
+  assert.match(render(), /최근 8주 접수/);
   setStatsView("period", "bogus");
-  assert.match(render(), /11\/16주/);
+  assert.match(render(), /최근 8주 접수/);
 
-  setStatsView("tab", "category");
-  assert.match(render(), /도로·교통/);
-  assert.match(render(), /▲ 300%/);
   setStatsView("tab", "region");
-  assert.match(render(), /위치 미지정/);
+  html = render();
+  assert.match(html, /지역 × 분야/);
+  assert.match(html, /위치 미지정/);
+  setStatsView("region", 1);
+  assert.match(render(), /위치 미지정 — 분야 레이더/);
+  setStatsView("region", 99);
+  assert.match(render(), /위치 미지정 — 분야 레이더/);
+
   setStatsView("tab", "time");
-  assert.match(render(), /시간대별 접수/);
+  assert.match(render(), /요일 × 시간대/);
   setStatsView("tab", "period");
-  assert.match(render(), /평균 처리일/);
-  assert.match(render(), /1\.5일/);
-  setStatsView("tab", "trend");
+  html = render();
+  assert.match(html, /분야별 평균 처리일/);
+  assert.match(html, /1\.5일/);
+  setStatsView("tab", "bogus");
+  assert.match(render(), /분야별 평균 처리일/);
+
+  setStatsView("tab", "overview");
   setStatsView("period", "day");
+  setStatsView("region", 0);
 });

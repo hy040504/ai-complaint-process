@@ -1575,8 +1575,11 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
-  if (action === "stats-tab" || action === "stats-period") {
-    setStatsView(action === "stats-tab" ? "tab" : "period", id);
+  if (action === "stats-tab" || action === "stats-period" || action === "stats-region") {
+    setStatsView(
+      action === "stats-tab" ? "tab" : action === "stats-region" ? "region" : "period",
+      id,
+    );
     render();
     return;
   }

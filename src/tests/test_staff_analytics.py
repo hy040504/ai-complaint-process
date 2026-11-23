@@ -50,6 +50,8 @@ def test_trends_bucket_received_and_resolved_by_kst_day() -> None:
     assert sum(day.received) == 2
     assert day.resolved[-1] == 1 and sum(day.resolved) == 1
     assert day.labels[-1] == "11/23"
+    assert day.category_received["도로·교통"] == day.received
+    assert sum(sum(v) for v in day.category_received.values()) == sum(day.received)
     month = next(t for t in result.trends if t.unit == "month")
     assert month.labels[-1] == "26.11" and month.received[-1] == 3
 

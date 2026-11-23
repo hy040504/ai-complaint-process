@@ -758,12 +758,15 @@ class StaffTrendSeries(Model):
         labels: 오래된 순서의 구간 표시 문구입니다.
         received: 구간별 접수 건수입니다.
         resolved: 구간별 답변 게시(처리 완료) 건수입니다.
+        category_received: 분야별 구간 접수 건수입니다. 키는 분야 이름이고 값은 `received`와
+            같은 길이의 목록입니다.
     """
 
     unit: Literal["day", "week", "month"]
     labels: list[str] = Field(default_factory=list)
     received: list[int] = Field(default_factory=list)
     resolved: list[int] = Field(default_factory=list)
+    category_received: dict[str, list[int]] = Field(default_factory=dict)
 
 
 class StaffCategoryTrend(Model):

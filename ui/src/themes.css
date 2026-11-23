@@ -2372,82 +2372,113 @@ body[data-theme="dark"] .staff-page-title > small {
   color: #7d8696;
 }
 
-/* 통계 분석·민원 분류 탭 다크 테마 */
-body[data-theme="dark"][data-site="staff"] .stats-analytics {
+/* 통계 분석·민원 분류 다크 테마: --st-* 변수와 차트 색을 한 번에 바꾼다 */
+body[data-theme="dark"][data-site="staff"] .staff-stats-page {
+  --st-ink: var(--d-text-04);
+  --st-ink2: var(--d-text-11);
+  --st-muted: var(--d-text-06);
+  --st-line: var(--d-line-02);
+  --st-line2: var(--d-line-11);
+  --st-soft: var(--d-bg-02);
+  --st-surface: var(--d-bg-03);
+  --st-blue: #6a95f0;
+}
+body[data-theme="dark"][data-site="staff"] .stats-panel {
   background: var(--d-bg-03);
   border-color: var(--d-line-02);
 }
-body[data-theme="dark"][data-site="staff"] .stats-analytics > header h2,
-body[data-theme="dark"][data-site="staff"] .trend-kpis b,
-body[data-theme="dark"][data-site="staff"] .stats-sub {
-  color: var(--d-text-04);
-}
-body[data-theme="dark"][data-site="staff"] .trend-kpis span,
-body[data-theme="dark"][data-site="staff"] .trend-kpis small,
-body[data-theme="dark"][data-site="staff"] .chart-note,
-body[data-theme="dark"][data-site="staff"] .stats-tab,
-body[data-theme="dark"][data-site="staff"] .stats-heat th,
-body[data-theme="dark"][data-site="staff"] .hour-axis {
-  color: var(--d-text-06);
-}
-body[data-theme="dark"][data-site="staff"] .stats-tab[aria-selected="true"] {
-  color: var(--d-text-04);
-  border-bottom-color: #5b8def;
-}
-body[data-theme="dark"][data-site="staff"] .stats-tabs {
-  border-bottom-color: var(--d-line-02);
-}
-body[data-theme="dark"][data-site="staff"] .trend-kpis > div,
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap .stats-cross tbody td.total {
-  background: var(--d-bg-02);
-}
-body[data-theme="dark"][data-site="staff"] .scope-switch,
-body[data-theme="dark"][data-site="staff"] .legend-chip {
-  border-color: var(--d-line-02);
-}
-body[data-theme="dark"][data-site="staff"] .scope-switch button {
-  background: var(--d-bg-02);
-  color: var(--d-text-11);
-}
-body[data-theme="dark"][data-site="staff"] .scope-switch button[aria-pressed="true"] {
+body[data-theme="dark"][data-site="staff"] .scope button[aria-pressed="true"] {
   background: #2f6fed;
   color: #ffffff;
 }
-body[data-theme="dark"][data-site="staff"] .chart-legend {
+body[data-theme="dark"][data-site="staff"] .tbars b.d {
+  background: #3a4f78;
+}
+body[data-theme="dark"][data-site="staff"] .lg-item i.sw-done {
+  background: #3a4f78;
+}
+body[data-theme="dark"][data-site="staff"] .hourbar b {
+  background: #34445f;
+}
+body[data-theme="dark"][data-site="staff"] .hourbar b.pk {
+  background: #6a95f0;
+}
+body[data-theme="dark"][data-site="staff"] .up {
+  color: #fb923c;
+}
+body[data-theme="dark"][data-site="staff"] .down {
+  color: #5eead4;
+}
+body[data-theme="dark"][data-site="staff"] .stats-note.blue {
+  background: #1b2c4d;
+  color: #9bbcff;
+}
+body[data-theme="dark"][data-site="staff"] .stats-note.gold {
+  background: #3a3017;
+  color: #f3d98a;
+}
+body[data-theme="dark"][data-site="staff"] .tag.red {
+  background: #4a1f1f;
+  color: #fca5a5;
+}
+body[data-theme="dark"][data-site="staff"] .tag.amber {
+  background: #4a3515;
+  color: #fcd34d;
+}
+body[data-theme="dark"][data-site="staff"] .tag.green {
+  background: #15402b;
+  color: #86efac;
+}
+body[data-theme="dark"][data-site="staff"] .tag.gray {
+  background: var(--d-bg-02);
+  color: var(--d-text-06);
+}
+body[data-theme="dark"][data-site="staff"] .hl0 {
+  background: var(--d-bg-02);
+  color: var(--d-text-06);
+}
+body[data-theme="dark"][data-site="staff"] .hl1 {
+  background: #1f3560;
+  color: var(--d-text-04);
+}
+body[data-theme="dark"][data-site="staff"] .hl2 {
+  background: #284d94;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .hl3 {
+  background: #3e72dd;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .hl4 {
+  background: #6a95f0;
+  color: #0b1530;
+}
+body[data-theme="dark"][data-site="staff"] .hl-total {
+  background: var(--d-bg-26);
   color: var(--d-text-11);
 }
 body[data-theme="dark"][data-site="staff"] .chart-grid {
   stroke: var(--d-line-02);
 }
+body[data-theme="dark"][data-site="staff"] .chart-base {
+  stroke: var(--d-line-02);
+}
 body[data-theme="dark"][data-site="staff"] .chart-axis {
   fill: var(--d-text-06);
 }
-body[data-theme="dark"][data-site="staff"] .stats-cross tbody th,
-body[data-theme="dark"][data-site="staff"] .stats-cross th {
-  border-color: var(--d-line-11);
-  background: var(--d-bg-26);
-  color: var(--d-text-11);
+body[data-theme="dark"][data-site="staff"] .chart-axis.cur {
+  fill: #9bbcff;
 }
-body[data-theme="dark"][data-site="staff"] .stats-cross th a {
-  color: var(--d-text-11);
+body[data-theme="dark"][data-site="staff"] .chart-label {
+  fill: var(--d-text-04);
 }
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h0 {
-  background: var(--d-bg-02);
-  color: var(--d-text-06);
+body[data-theme="dark"][data-site="staff"] .chart-ring {
+  fill: var(--d-bg-02);
+  stroke: var(--d-line-02);
 }
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h1 {
-  background: #1f3560;
-  color: var(--d-text-04);
+body[data-theme="dark"][data-site="staff"] .chart-ring.alt {
+  fill: var(--d-bg-03);
 }
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h2 {
-  background: #284d94;
-  color: #ffffff;
-}
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h3 {
-  background: #3e72dd;
-  color: #ffffff;
-}
-body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h4 {
-  background: #6a95f0;
-  color: #0b1530;
+body[data-theme="dark"][data-site="staff"] .chart-dot {
+  stroke: var(--d-bg-03);
 }
