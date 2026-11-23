@@ -9,6 +9,7 @@
 | [`capture.mjs`](capture.mjs) | 브라우저로 화면을 열고 기능 영역에 **번호 배지와 빨간 테두리**를 그려 PNG로 저장합니다. |
 | [`screens.json`](screens.json) | 어떤 주소를 열고, 무엇을 누르고, 어디에 몇 번을 붙일지 적은 **화면 목록**입니다. |
 | [`build_guide_pdf.py`](build_guide_pdf.py) | 가이드 마크다운(`docs/guides/*.md`)을 인쇄용 PDF로 바꿉니다. |
+| [`render_csv_preview.py`](render_csv_preview.py) | 담당자가 내려받은 CSV를 "표 계산 프로그램으로 연 모습"의 HTML로 그립니다(`s13-csv` 그림용). |
 
 ## 그림 다시 찍기
 
@@ -43,7 +44,16 @@ node scripts/reports/guide/capture.mjs 9395 scripts/reports/guide/screens.json d
 
 > 이 도구는 **시험 민원을 실제로 접수**합니다(게스트로 작성). 다시 찍은 뒤에는 DB에서 시험 민원을 지워 주세요.
 >
-> `c10-member`(로그인한 민원인의 내 민원)와 `s09-followup`(추가 문의 목록)은 그 계정의 민원과 추가 문의가 **미리 있어야** 의미 있는 화면이 나옵니다. 찍기 전에 민원인으로 비공개 민원을 하나 쓰고, 담당자가 "내가 담당"을 누른 뒤, 민원인이 추가 문의를 보내 두세요(찍은 뒤 삭제).
+> `c10-member`(로그인한 민원인의 내 민원)와 `s09-followup`(추가 문의 목록)은 그 계정의 민원과 추가 문의가 **미리 있어야** 의미 있는 화면이 나옵니다. 찍기 전에 민원인으로 비공개 민원을 하나 쓰고, 담당자가 "내가 담당"을 누른 뒤, 민원인이 추가 문의를 보내 두세요(찍은 뒤 삭제). `s05b-unassign`(배정 해제 창)은 목록 첫 민원에 **부서가 배정되어 있어야** "배정 해제" 버튼이 보입니다.
+
+### CSV 그림 (`s13-csv`)
+
+CSV 내보내기는 화면이 바뀌지 않으므로, 실제로 내려받은 파일을 표로 그려 찍습니다.
+
+```bash
+python scripts/reports/guide/render_csv_preview.py 내려받은.csv preview.html
+msedge --headless --screenshot=docs/assets/guide/s13-csv.png --window-size=990,405 preview.html
+```
 
 ## PDF 만들기
 

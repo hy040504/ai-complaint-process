@@ -237,7 +237,7 @@ def keep_heading_with_image(blocks: list[str]) -> list[str]:
     """제목 뒤에 짧은 문단과 그림이 이어지면 한 덩어리로 묶어 같은 쪽에 인쇄되게 합니다.
 
     그림은 쪽 가운데에서 잘리지 않도록 통째로 다음 쪽으로 넘어가는데, 그러면 제목과 소개
-    문단만 앞 쪽 맨 아래에 홀로 남아 큰 빈칸이 생겼습니다. 제목·문단·소제목(합쳐 최대 4개)·그림을
+    문단만 앞 쪽 맨 아래에 홀로 남아 큰 빈칸이 생겼습니다. 제목·문단·소제목(합쳐 최대 4개)·첫 그림이나 표를
     `div.keep`으로 감싸 함께 넘어가게 합니다. 굵은 글자만 있는 짧은 소제목과 바로 뒤 표·목록도
     같은 이유로 묶습니다.
 
@@ -257,7 +257,7 @@ def keep_heading_with_image(blocks: list[str]) -> list[str]:
                 j < len(blocks) and j <= i + 4 and blocks[j].startswith(("<p>", "<h3"))
             ):
                 j += 1
-            if j < len(blocks) and blocks[j].startswith("<img"):
+            if j < len(blocks) and blocks[j].startswith(("<img", "<table")):
                 result.append(
                     '<div class="keep">' + "".join(blocks[i : j + 1]) + "</div>"
                 )

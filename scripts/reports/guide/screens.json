@@ -922,6 +922,44 @@
           "sel": "xy:823,541,94,42"
         }
       ]
+    },
+    {
+      "name": "s05b-unassign",
+      "steps": [
+        {
+          "login": {
+            "site": "staff",
+            "id": "$ENV:GUIDE_STAFF_ID",
+            "pw": "$ENV:GUIDE_STAFF_PW",
+            "role": "staff"
+          }
+        },
+        {
+          "go": "/staff/#/staff/complaints"
+        },
+        {
+          "wait": 2500
+        },
+        {
+          "click": "css:[data-action=open-assign-dept]",
+          "after": 1200
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "xy:349,485,568,43"
+        },
+        {
+          "n": 2,
+          "sel": "xy:683,648,98,42"
+        },
+        {
+          "n": 3,
+          "sel": "xy:789,648,127,42",
+          "badge": "right"
+        }
+      ]
     }
   ]
 }
