@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 담당자 통계 대시보드(`#/staff/stats`)와 CSV 내보내기 URL 구성을 담당합니다.
  *
  * 서버 `/api/v1/staff/stats`에서 담당자 부서 RBAC 소관 범위로 집계한
@@ -197,7 +197,7 @@ function categoryLines(analytics) {
       return `<a href="#/staff/complaints?category=${encodeURIComponent(item.category)}" class="legend-chip"><i style="background:${SERIES_COLORS[idx]}"></i>${esc(item.category)} <b>${n(item.total)}</b>${delta}</a>`;
     })
     .join("");
-  return `<svg class="stats-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="분야별 월별 접수 추이">${grid}${lines}${axis}</svg><div class="chart-legend wrap">${legend}</div><p class="chart-note">최근 6개월 접수 건수이며 증감은 지난달 대비입니다. 이름을 누르면 해당 분야 목록으로 이동합니다.</p>`;
+  return `<svg class="stats-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="분야별 월별 접수 추이">${grid}${lines}${axis}</svg><div class="chart-legend wrap">${legend}</div><p class="chart-note">최근 6개월 접수 건수이며 증감은 진행 중인 이번 달을 빼고 지난달을 지지난달과 비교한 값입니다. 이름을 누르면 해당 분야 목록으로 이동합니다.</p>`;
 }
 
 /** 값에 비례해 진해지는 히트맵 셀 클래스를 고릅니다. */
@@ -269,13 +269,15 @@ function analyticsSection(analytics, includeSynthetic) {
     const done = series.resolved.map(n);
     const sum = recv.reduce((a, b) => a + b, 0);
     const doneSum = done.reduce((a, b) => a + b, 0);
-    const last = recv.at(-1) ?? 0;
-    const prev = recv.at(-2) ?? 0;
+    // 이번 구간은 진행 중이므로 비교에서 빼고, 끝난 직전 두 구간을 비교합니다.
+    const current = recv.at(-1) ?? 0;
+    const last = recv.at(-2) ?? 0;
+    const prev = recv.at(-3) ?? 0;
     const chg = prev ? Math.round(((last - prev) / prev) * 1000) / 10 : null;
     const unit = { day: "일", week: "주", month: "월" }[series.unit];
     title = "접수·처리 추이";
     extra = `<div class="scope-switch" role="group" aria-label="집계 단위">${PERIODS.map(([key, label]) => `<button type="button" data-action="stats-period" data-id="${key}" aria-pressed="${view.period === key}">${label}</button>`).join("")}</div>`;
-    panel = `<div class="trend-kpis"><div><span>기간 접수</span><b>${sum}건</b></div><div><span>기간 처리</span><b>${doneSum}건</b></div><div><span>이번 ${unit} 접수</span><b>${last}건</b><small class="${chg > 0 ? "up" : chg < 0 ? "down" : ""}">${chg == null ? "비교 대상 없음" : `${chg > 0 ? "▲" : chg < 0 ? "▼" : "–"} ${Math.abs(chg)}% 지난 ${unit} 대비`}</small></div><div><span>전체 처리율</span><b>${n(analytics.resolveRate)}%</b></div><div><span>AI 안내 완료율</span><b>${n(analytics.aiFirstResponseRate)}%</b><small>AI 결과가 FAQ 안내로 끝난 비율</small></div></div>${trendChart(series)}`;
+    panel = `<div class="trend-kpis"><div><span>기간 접수</span><b>${sum}건</b></div><div><span>기간 처리</span><b>${doneSum}건</b></div><div><span>지난 ${unit} 접수</span><b>${last}건</b><small class="${chg > 0 ? "up" : chg < 0 ? "down" : ""}">${chg == null ? "비교 대상 없음" : `${chg > 0 ? "▲" : chg < 0 ? "▼" : "–"} ${Math.abs(chg)}% 그 전 ${unit} 대비`} · 이번 ${unit} ${current}건(진행 중)</small></div><div><span>전체 처리율</span><b>${n(analytics.resolveRate)}%</b></div><div><span>AI 안내 완료율</span><b>${n(analytics.aiFirstResponseRate)}%</b><small>AI 결과가 FAQ 안내로 끝난 비율</small></div></div>${trendChart(series)}`;
   } else if (view.tab === "category") {
     title = "분야별 추이";
     panel = categoryLines(analytics);

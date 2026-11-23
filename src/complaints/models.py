@@ -767,7 +767,10 @@ class StaffTrendSeries(Model):
 
 
 class StaffCategoryTrend(Model):
-    """민원 분야 한 개의 최근 월별 접수 건수와 전월 대비 증감입니다."""
+    """민원 분야 한 개의 최근 월별 접수 건수와 증감입니다.
+
+    `change_pct`는 진행 중인 이번 달을 빼고 지난달을 지지난달과 비교한 증감률(%)입니다.
+    """
 
     category: str
     counts: list[int] = Field(default_factory=list)

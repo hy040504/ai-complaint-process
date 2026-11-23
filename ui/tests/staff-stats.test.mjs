@@ -1,4 +1,4 @@
-/** 담당자 통계 대시보드·드릴다운 링크·큐 통합 검색·CSV 내보내기 URL을 검증합니다. */
+﻿/** 담당자 통계 대시보드·드릴다운 링크·큐 통합 검색·CSV 내보내기 URL을 검증합니다. */
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -140,7 +140,7 @@ test("staffStatsPage는 분석 탭을 렌더링하고 집계 단위·탭 전환 
   const { setStatsView } = await import("../src/staff-stats.js");
   const analytics = {
     trends: [
-      { unit: "day", labels: ["11/22", "11/23"], received: [2, 3], resolved: [1, 1] },
+      { unit: "day", labels: ["11/21", "11/22", "11/23"], received: [4, 2, 3], resolved: [1, 1, 0] },
       { unit: "week", labels: ["11/16주", "11/23주"], received: [5, 3], resolved: [4, 1] },
     ],
     monthLabels: ["26.10", "26.11"],
@@ -164,7 +164,9 @@ test("staffStatsPage는 분석 탭을 렌더링하고 집계 단위·탭 전환 
   const render = () => staffStatsPage(stats, {});
   assert.match(render(), /접수·처리 추이/);
   assert.match(render(), /data-action="stats-tab" data-id="region"/);
-  assert.match(render(), /기간 접수<\/span><b>5건/);
+  assert.match(render(), /기간 접수<\/span><b>9건/);
+  assert.match(render(), /지난 일 접수<\/span><b>2건/);
+  assert.match(render(), /▼ 50% 그 전 일 대비 · 이번 일 3건\(진행 중\)/);
 
   setStatsView("period", "week");
   assert.match(render(), /11\/16주/);

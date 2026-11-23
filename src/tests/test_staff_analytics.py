@@ -90,3 +90,19 @@ def test_empty_rows_produce_zero_filled_analytics() -> None:
     assert [len(t.received) for t in result.trends] == [14, 8, 12]
     assert len(result.hour_weekday) == 7 and len(result.hour_weekday[0]) == 24
     assert result.resolve_rate == 0.0
+
+
+def test_category_change_compares_completed_months_only() -> None:
+    """분야 증감률은 진행 중인 이번 달을 빼고 지난달을 지지난달과 비교한다."""
+    rows = [
+        _row("A", datetime(2026, 9, 10, 10, tzinfo=KST)),
+        _row("B", datetime(2026, 9, 11, 10, tzinfo=KST)),
+        _row("C", datetime(2026, 10, 10, 10, tzinfo=KST)),
+        _row("D", datetime(2026, 11, 3, 10, tzinfo=KST)),
+        _row("E", datetime(2026, 11, 4, 10, tzinfo=KST)),
+        _row("F", datetime(2026, 11, 5, 10, tzinfo=KST)),
+    ]
+    result = build_staff_analytics(rows, now=NOW)
+    trend = next(t for t in result.category_trends if t.category == "도로·교통")
+    assert trend.counts[-3:] == [2, 1, 3]
+    assert trend.change_pct == -50.0

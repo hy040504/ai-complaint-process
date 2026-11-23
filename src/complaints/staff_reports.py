@@ -291,7 +291,8 @@ def build_staff_analytics(rows: list[Complaint], *, now: datetime) -> StaffAnaly
     category_trends = []
     for cat in categories:
         counts = cat_series[cat]
-        prev, last = counts[-2], counts[-1]
+        # 이번 달은 진행 중이라 비교에서 빼고, 끝난 직전 두 달(지난달·지지난달)만 비교한다.
+        prev, last = counts[-3], counts[-2]
         category_trends.append(
             StaffCategoryTrend(
                 category=cat,
