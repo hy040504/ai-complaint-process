@@ -1,13 +1,17 @@
 """공통 JSON 응답·세션 인증·오류·응답 헤더를 처리합니다."""
 
+from typing import cast
+
 from flask import Response, current_app, jsonify, request, session
 from flask_openapi3.openapi import OpenAPI
 from pydantic import BaseModel, ValidationError
+from flask.sessions import SecureCookieSessionInterface
+from itsdangerous import BadSignature
 from werkzeug.exceptions import HTTPException
 
 from src.complaints.errors import AppError
 from src.complaints.models import Actor, ErrorResponse
-from src.complaints.sites import explicit_site, wrong_site_message
+from src.complaints.sites import COOKIE_NAMES, explicit_site, wrong_site_message
 
 
 def set_session_actor(user: Actor) -> None:
@@ -224,19 +228,53 @@ def response_headers(response: Response) -> Response:
     return response
 
 
-_DEV_PAGE_PREFIXES = ("/docs", "/swagger", "/openapi", "/design/")
+_API_DOC_PREFIXES = ("/docs", "/swagger", "/openapi")
+_MOCKUP_PREFIXES = ("/design/",)
+
+
+def _has_staff_session() -> bool:
+    """요청의 담당자 사이트 쿠키(`cj_staff`)가 서명된 담당자 세션인지 확인합니다.
+
+    세션 쿠키 이름은 요청 단서(헤더·Referer)로 정해지는데, 주소창으로 직접 연 문서 화면에는
+    단서가 없을 수 있어 담당자 쿠키를 직접 열어 확인합니다. 서명이 틀리거나 만료됐으면 False입니다.
+
+    Returns:
+        담당자 로그인 세션이 있으면 True입니다.
+    """
+    raw = request.cookies.get(COOKIE_NAMES["staff"])
+    interface = cast(SecureCookieSessionInterface, current_app.session_interface)
+    serializer = interface.get_signing_serializer(current_app)
+    if not raw or serializer is None:
+        return False
+    try:
+        data = serializer.loads(
+            raw, max_age=int(current_app.permanent_session_lifetime.total_seconds())
+        )
+    except BadSignature:
+        return False
+    return (
+        isinstance(data, dict)
+        and data.get("role") == "staff"
+        and bool(data.get("user_id"))
+    )
 
 
 def hide_dev_pages_from_proxy() -> None:
-    """Cloudflare 같은 외부 프록시를 거친 요청에는 개발자 문서·목업 화면을 숨깁니다.
+    """Cloudflare 같은 외부 프록시를 거친 요청에서 개발자 화면을 제한합니다.
 
-    프록시가 붙이는 `CF-Ray` 헤더는 외부 요청이 지울 수 없으므로 공개 주소에서는
-    Swagger·OpenAPI·디자인 목업이 404가 됩니다. SSH 터널·로컬 접속은 영향받지 않습니다.
+    프록시가 붙이는 `CF-Ray` 헤더는 외부 요청이 지울 수 없어 공개 주소를 구분하는 데 씁니다.
+    디자인 목업은 공개 주소에서 항상 404이고, Swagger·OpenAPI는 **담당자로 로그인한 경우에만**
+    열립니다(담당자 콘솔의 API 화면이 같은 경로를 씁니다). SSH 터널·로컬 접속은 영향받지 않습니다.
 
     Raises:
-        AppError: 프록시 경유 요청이 개발자 화면을 요청하면 404를 발생합니다.
+        AppError: 목업이거나 담당자가 아닌 사용자가 API 문서를 요청하면 404를 발생합니다.
     """
-    if request.headers.get("CF-Ray") and request.path.startswith(_DEV_PAGE_PREFIXES):
+    if not request.headers.get("CF-Ray"):
+        return
+    path = request.path
+    if path.startswith(_MOCKUP_PREFIXES) or (
+        path.startswith(_API_DOC_PREFIXES) and not _has_staff_session()
+    ):
         raise AppError(404, "not_found", "파일을 찾을 수 없습니다.")
 
 

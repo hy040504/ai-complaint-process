@@ -130,7 +130,7 @@ def test_site_hint_fallbacks_for_requests_without_header() -> None:
 
 
 def test_proxied_requests_hide_dev_pages_but_local_keeps_them() -> None:
-    """Cloudflare 경유(`CF-Ray`) 요청은 Swagger·OpenAPI·목업이 404, 로컬 접속은 그대로다."""
+    """Cloudflare 경유(`CF-Ray`) 요청은 비로그인에게 Swagger·OpenAPI·목업이 404, 로컬은 그대로다."""
     client = _app().test_client()
     proxied = {"CF-Ray": "abc123-ICN"}
     for path in (
@@ -145,6 +145,28 @@ def test_proxied_requests_hide_dev_pages_but_local_keeps_them() -> None:
     assert client.get("/staff/", headers=proxied).status_code == 200
     assert client.get("/api/v1/health", headers=proxied).status_code == 200
     assert client.get("/docs").status_code == 200, "로컬 접속은 문서를 볼 수 있다"
+
+
+def test_proxied_api_docs_open_only_for_logged_in_staff() -> None:
+    """공개 주소에서도 담당자 로그인 후에는 Swagger·OpenAPI가 열리고, 시민·목업은 계속 막힌다."""
+    proxied = {"CF-Ray": "abc123-ICN"}
+    staff = _app().test_client()
+    assert _login(staff, STAFF, "staff_admin", STAFF_PW).status_code == 200
+    for path in ("/swagger", "/openapi/openapi.json", "/docs"):
+        assert staff.get(path, headers=proxied).status_code == 200, path
+    assert (
+        staff.get("/design/ui04", headers=proxied).status_code == 404
+    ), "목업은 계속 숨김"
+
+    citizen = _app().test_client()
+    assert _login(citizen, CITIZEN, "citizen_01", CITIZEN_PW).status_code == 200
+    assert (
+        citizen.get("/swagger", headers=proxied).status_code == 404
+    ), "시민은 열 수 없다"
+
+    forged = _app().test_client()
+    forged.set_cookie("cj_staff", "forged.value.sig")
+    assert forged.get("/openapi/openapi.json", headers=proxied).status_code == 404
 
 
 def test_https_requests_get_secure_cookie_and_hsts() -> None:
