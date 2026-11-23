@@ -1,8 +1,11 @@
 """검색 근거와 어긋난 판정은 담당자 검토로 떨어지는지 검증합니다."""
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 from rag.assist import (
     complete_chat,
@@ -364,6 +367,7 @@ def test_codex_tool_instruction_lists_only_developer_tools() -> None:
     assert "그 밖의 도구" in text
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows 경로(WindowsPath)를 쓰는 검증이라 Windows에서만 실행")
 def test_windows_codex_cmd_wrapper_runs_node_entry(
     tmp_path: Path, monkeypatch: object
 ) -> None:
