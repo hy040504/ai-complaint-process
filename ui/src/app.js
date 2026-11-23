@@ -677,6 +677,7 @@ async function loadScreen() {
       }
       render();
       if (!route.staff) showCitizenIntro();
+      if (!session && isPublicCitizenRoute(route.path)) startVisitorBoardPolling();
       if (route.path === "/citizen/assistant" && citizenPrompt) {
         const prompt = citizenPrompt;
         citizenPrompt = null;
@@ -693,6 +694,43 @@ async function loadScreen() {
     }
   }
 }
+/** 방문자 게시판을 다시 확인하는 간격(밀리초)입니다. */
+const VISITOR_POLL_MS = 30000;
+let visitorPollTimer = null;
+
+/**
+ * 로그인하지 않은 방문자가 공개 게시판을 보는 동안 주기적으로 새 글을 확인합니다(CASE-133).
+ *
+ * 방문자에게는 담당자용 SSE가 없으므로 공개 스냅샷의 `revision`이 바뀐 때만 화면을 다시 그립니다.
+ * 탭이 숨겨졌거나, 경로가 바뀌었거나, 로그인했거나, 입력 중이면 건너뛰고 타이머를 정리합니다.
+ */
+function startVisitorBoardPolling() {
+  stopVisitorBoardPolling();
+  visitorPollTimer = setInterval(async () => {
+    if (getActor() || !isPublicCitizenRoute(currentRoute().path)) {
+      stopVisitorBoardPolling();
+      return;
+    }
+    if (document.hidden) return;
+    const before = read()?.revision;
+    try {
+      await loadPublicWorkspace();
+    } catch {
+      return; /* 일시적 오류는 다음 주기에 다시 시도합니다. */
+    }
+    const typing = document.activeElement?.matches?.("input, textarea, select");
+    if (read()?.revision !== before && !typing && !document.querySelector("dialog[open]")) {
+      render();
+    }
+  }, VISITOR_POLL_MS);
+}
+
+/** 방문자 게시판 새로고침 타이머를 멈춥니다. */
+function stopVisitorBoardPolling() {
+  if (visitorPollTimer) clearInterval(visitorPollTimer);
+  visitorPollTimer = null;
+}
+
 /**
  * 로그인하지 않은 방문자도 공개 민원으로 볼 수 있는 시민 화면 경로인지 판단합니다.
  *
