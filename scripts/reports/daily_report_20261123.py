@@ -1,12 +1,12 @@
-﻿"""11월 20일(금)~23일(월) 종합 업무보고 PDF 생성 스크립트입니다.
+"""11월 20일(금)~23일(월) 종합 업무보고 PDF 생성 스크립트입니다.
 
 기존 `업무보고_20261119.pdf`와 같은 틀(1쪽 메인 표 + 별첨)을 따라 한국어로 쉽게 풀어 씁니다.
 
 1페이지: 11/20~11/23 업무보고 메인 표
 2페이지: [별첨 1] 핵심 수치와 날짜별 작업 요약
 3페이지: [별첨 1] 서비스 구성도·역할별 권한 그림
-4~5페이지: [별첨 2] 담당자 통계 대시보드 확장 화면 (분석 탭 4종, 쪽당 2장)
-6페이지: [별첨 2] 시민 게시판·담당자 목록·민원 작성 화면
+4~6페이지: [별첨 2] 담당자 통계 대시보드 재구성 화면 (통계 분석·민원 분류, 쪽당 2장)
+7페이지: [별첨 2] 시민 게시판·담당자 목록·민원 작성 화면
 """
 
 from __future__ import annotations
@@ -119,7 +119,7 @@ def _build_page1_main_report_html() -> str:
       <div class="bullet-item">- <span class="highlight-tag">사용 가이드 PDF 2종</span> : 번호를 붙인 화면 그림으로 민원인 가이드(18쪽)와 담당자 가이드(24쪽)를 만들고, 배정 해제·CSV 내려받기 설명을 더함</div>
       <div class="bullet-item">- <span class="highlight-tag">담당자 사이트 단독화와 검사기 보호</span> : 응대 검사기를 별도 주소(/lab/)로 떼어 담당자 로그인 때만 열리게 하고, 계정당 10분 20회로 실행 횟수를 제한함. 공개 주소에서도 담당자가 로그인하면 API 문서 화면을 보게 복구함</div>
       <div class="bullet-item">- <span class="highlight-tag">이름 '청주톡톡' 통일과 비로그인 게시판 열람</span> : 서비스 이름을 통일하고, 로그인하지 않은 방문자도 공개된 민원 게시판을 볼 수 있게 함(초안·AI 결과·첨부는 제외). 방문자 게시판은 30초마다 자동 새로고침. 담당자가 게시판에서 민원을 내리는 기능도 추가함</div>
-      <div class="bullet-item">- <span class="highlight-tag">담당자 통계 대시보드 확장</span> : 일·주·월 접수·처리 추이, 분야별 추이, 지역×분야 표, 요일×시간대 표, 처리기간 분석 5개 탭을 추가함 ([별첨 2] 화면 수록)</div>
+      <div class="bullet-item">- <span class="highlight-tag">담당자 통계 대시보드 확장</span> : 설계 시안의 통계 분석·민원 분류 구성에 맞춰 화면을 재구성함. 접수·처리 막대, 분야 순위표, 분야별 곡선·레이더, 지역×분야·요일×시간 히트맵, 처리기간 분포를 추가함 ([별첨 2] 화면 수록)</div>
     </td>
   </tr>
   <tr>
@@ -139,7 +139,7 @@ def _build_page1_main_report_html() -> str:
   <tr>
     <td class="label-cell">참고 사항</td>
     <td colspan="3" class="full-val">
-      <div class="bullet-item">- 구성 : <strong>[별첨 1: 2~3쪽]</strong> 핵심 수치·날짜별 작업 표·서비스 구성도, <strong>[별첨 2: 4~6쪽]</strong> 통계 확장 화면(로컬 시험 데이터 160건, 실제 수치 아님)·주요 화면. 계정·서버 접속 정보는 보안상 넣지 않음</div>
+      <div class="bullet-item">- 구성 : <strong>[별첨 1: 2~3쪽]</strong> 핵심 수치·날짜별 작업 표·서비스 구성도, <strong>[별첨 2: 4~7쪽]</strong> 통계 확장 화면(로컬 시험 데이터 160건, 실제 수치 아님)·주요 화면. 계정·서버 접속 정보는 보안상 넣지 않음</div>
     </td>
   </tr>
 </table>
@@ -209,44 +209,44 @@ def _build_att1_page2_html() -> str:
       <tr>
         <td class="col-center"><strong>11/23 (월)</strong></td>
         <td><strong>가이드 · 사이트 정리 · 게시판 · 통계 확장</strong></td>
-        <td>민원인·담당자 사용 가이드 PDF 2종. 담당자 사이트 단독화와 검사기 로그인 전용·횟수 제한. 이름 '청주톡톡' 통일, 비로그인 방문자 게시판 열람과 자동 새로고침. 통계 대시보드에 분석 탭 5개 추가</td>
+        <td>민원인·담당자 사용 가이드 PDF 2종. 담당자 사이트 단독화와 검사기 로그인 전용·횟수 제한. 이름 '청주톡톡' 통일, 비로그인 방문자 게시판 열람과 자동 새로고침. 통계 대시보드를 통계 분석·민원 분류 구성으로 재구성</td>
       </tr>
     </tbody>
   </table>
 
-  <div class="att-sec-title">2. 통계 대시보드 확장 (11/23) 요약</div>
+  <div class="att-sec-title">2. 통계 대시보드 재구성 (11/23) 요약</div>
   <table class="diff-table">
     <thead>
       <tr>
-        <th style="width: 22%;">탭</th>
-        <th style="width: 40%;">보여주는 것</th>
-        <th style="width: 38%;">활용</th>
+        <th style="width: 22%;">구역</th>
+        <th style="width: 44%;">보여주는 것</th>
+        <th style="width: 34%;">활용</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>접수·처리 추이</strong></td>
-        <td>일(14일)·주(8주)·월(12개월)별 접수와 답변 게시 건수, 처리율, AI 안내 완료율</td>
+        <td><strong>통계 분석</strong></td>
+        <td>일·주·월 전환, 접수·처리 막대(값 표시), 분야 순위표(비중·평균 처리일·전기 대비), 시간대·요일별 접수, 기간 비교 표</td>
         <td>업무량 변화와 처리 속도 파악</td>
       </tr>
       <tr>
-        <td><strong>분야별 추이</strong></td>
-        <td>최근 6개월 분야별 접수 선 그래프와 지난달 증감(진행 중인 달 제외)</td>
+        <td><strong>민원 분류 · 종합</strong></td>
+        <td>분야별 12개월 곡선, 이번 달과 지난달 비교 레이더 (전기 대비는 진행 중인 달 제외)</td>
         <td>늘고 있는 민원 분야 확인</td>
       </tr>
       <tr>
-        <td><strong>지역×분야</strong></td>
-        <td>구별·분야별 접수 건수를 색 진하기로 표시</td>
+        <td><strong>민원 분류 · 지역별</strong></td>
+        <td>구×분야 히트맵, 행을 누르면 해당 지역과 평균을 비교하는 레이더·상위 분야</td>
         <td>지역별로 많은 민원 유형 파악</td>
       </tr>
       <tr>
-        <td><strong>시간대·요일</strong></td>
-        <td>요일×24시간 접수 분포(한국 시간)와 시간대별 막대</td>
+        <td><strong>민원 분류 · 시간대·요일</strong></td>
+        <td>요일×24시간 히트맵(한국 시간), 시간대 막대, 요일 레이더</td>
         <td>접수가 몰리는 시간 파악</td>
       </tr>
       <tr>
-        <td><strong>처리기간</strong></td>
-        <td>접수부터 답변 게시까지 1일 이내·1~3일·3~7일·7일 초과 분포와 분야별 평균</td>
+        <td><strong>민원 분류 · 처리기간</strong></td>
+        <td>1일 이내·1~3일·3~7일·7일 초과 분포와 분야별 평균</td>
         <td>처리 지연 분야 확인</td>
       </tr>
     </tbody>
@@ -294,10 +294,12 @@ def _build_att2_page4_html() -> str:
         4페이지 HTML 문자열입니다.
     """
     items = (
-        ("통계탭_접수처리추이.png", "① 접수·처리 추이 (월별)", "접수(옅은 막대)와 처리(진한 막대)를 나란히 보여 주고 처리율·AI 안내 완료율을 위에 표시합니다."),
-        ("통계탭_분야별추이.png", "② 분야별 추이", "최근 6개월 분야별 접수를 선으로 비교하고 지난달 증감을 이름 옆에 표시합니다."),
-        ("통계탭_지역분야.png", "③ 지역×분야", "구별·분야별 접수 건수를 색 진하기로 표시하며 지역 이름을 누르면 해당 목록으로 이동합니다."),
-        ("통계탭_시간대요일.png", "④ 시간대·요일", "요일×24시간 접수 분포와 시간대별 막대로 접수가 몰리는 때를 보여 줍니다."),
+        ("통계_분석_추이.png", "① 통계 분석 · 접수·처리 추이", "일·주·월 전환, 핵심 지표 4개, 값 라벨이 붙은 접수·처리 막대를 보여 줍니다."),
+        ("통계_분석_분야시간.png", "② 통계 분석 · 분야 순위와 시간·요일", "분야별 비중·평균 처리일·전기 대비 표와 시간대별·요일별 접수 분포입니다."),
+        ("통계_분류_종합.png", "③ 민원 분류 · 종합", "분야별 12개월 곡선과 이번 달·지난달 레이더로 분야 흐름을 비교합니다."),
+        ("통계_분류_지역.png", "④ 민원 분류 · 지역별", "구×분야 히트맵이며 행을 누르면 그 지역과 평균을 레이더로 비교합니다."),
+        ("통계_분류_시간요일.png", "⑤ 민원 분류 · 시간대·요일", "요일×24시간 히트맵과 시간대 막대, 요일 레이더로 접수가 몰리는 때를 보여 줍니다."),
+        ("통계_분류_처리기간.png", "⑥ 민원 분류 · 처리기간", "접수부터 답변 게시까지 기간 구간 분포와 분야별 평균 처리일입니다."),
     )
 
     def card(name: str, caption: str, desc: str) -> str:
@@ -305,19 +307,19 @@ def _build_att2_page4_html() -> str:
     <div class="visual-cap">{caption}</div>
     <p class="visual-sub">{desc}</p>
     <div class="visual-img-box" style="border: 1px solid #cbd5e1; border-radius: 3px; padding: 3px;">
-      <img src="{encode_file(SOURCE / name)}" alt="{caption}" style="max-height: 112mm; width: auto; max-width: 100%;">
+      <img src="{encode_file(SOURCE / name)}" alt="{caption}" style="max-height: 108mm; width: auto; max-width: 100%;">
     </div>
   </div>"""
 
     pages = []
-    for index, group in enumerate((items[:2], items[2:])):
+    for index, group in enumerate((items[:2], items[2:4], items[4:])):
         cards = "\n".join(card(*item) for item in group)
         suffix = "" if index == 0 else " (계속)"
         pages.append(
             f"""<div class="page-break">
   <div class="att-header">
-    <h2>[별첨 2] 담당자 통계 대시보드 확장 화면 (분석 탭){suffix}</h2>
-    <p class="att-meta">로컬 시험 데이터(민원 160건)로 촬영, 실제 민원 수치 아님 · 증감률 표시는 방식 변경 전 캡처 · 처리기간 탭은 표 형태</p>
+    <h2>[별첨 2] 담당자 통계 대시보드 재구성 화면{suffix}</h2>
+    <p class="att-meta">로컬 시험 데이터(민원 160건)로 촬영, 실제 민원 수치 아님 · 재구성 후 화면(2026-11-24 촬영)</p>
   </div>
 {cards}
 </div>"""
