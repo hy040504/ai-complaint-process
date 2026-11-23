@@ -225,6 +225,19 @@ export async function refresh() {
 }
 
 /**
+ * 로그인하지 않은 방문자를 위해 공개 민원만 담은 스냅샷을 불러옵니다(CASE-132).
+ *
+ * 세션을 만들지 않습니다. 이후 로그인·게스트 세션이 생기면 `refresh()`가 이 캐시를 대신합니다.
+ *
+ * @returns {Promise<object>} 공개 민원 스냅샷입니다.
+ */
+export async function loadPublicWorkspace() {
+  const value = await api("/public/workspace");
+  if (!currentActor) cache = value;
+  return cache;
+}
+
+/**
  * 렌더링 전용 메모리 스냅샷을 반환합니다. 저장은 API로만 수행합니다.
  *
  * @returns {object} 화면 렌더링용 메모리 스냅샷입니다.
@@ -241,7 +254,8 @@ export function read() {
  * @returns {Array<object>} 화면에 사용할 민원 배열입니다.
  */
 export function visible(data, mine = false) {
-  const ownerId = currentActor?.id || "citizen-demo";
+  // 로그인하지 않은 방문자(null)는 어떤 민원의 작성자도 아닙니다.
+  const ownerId = currentActor?.id ?? null;
   return data.complaints.filter(
     (c) => c.status !== "withdrawn" && (!mine || c.owner === ownerId),
   );

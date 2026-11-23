@@ -33,6 +33,7 @@ import {
   getActor,
   ensureRoleSession,
   ensureGuestSession,
+  loadPublicWorkspace,
   isRealAccount,
   loginAccount,
   logoutAccount,
@@ -649,7 +650,11 @@ async function loadScreen() {
       allowVisitor: !route.staff,
     });
     await Promise.all([
-      session ? refresh() : Promise.resolve(read()),
+      session
+        ? refresh()
+        : isPublicCitizenRoute(route.path)
+          ? loadPublicWorkspace()
+          : Promise.resolve(read()),
       route.staff
         ? Promise.all([
             loadLabFields().catch(() => null),
@@ -687,6 +692,15 @@ async function loadScreen() {
       if (needsLogin) openAuthModal();
     }
   }
+}
+/**
+ * 로그인하지 않은 방문자도 공개 민원으로 볼 수 있는 시민 화면 경로인지 판단합니다.
+ *
+ * @param {string} path 현재 해시 경로입니다.
+ * @returns {boolean} 민원 게시판이나 민원 상세면 true입니다.
+ */
+function isPublicCitizenRoute(path) {
+  return path === "/citizen/board" || path.startsWith("/citizen/detail/");
 }
 /**
  * shell 화면 동작을 구성합니다.
@@ -737,7 +751,7 @@ function home() {
  * @returns {string} 화면에 사용할 HTML 문자열입니다.
  */
 function listRows(rows, staff = false, mine = false) {
-  const myId = getActor()?.id || "citizen-demo";
+  const myId = getActor()?.id ?? null;
   return rows
     .map(
       (c) =>
@@ -810,7 +824,7 @@ function board(staff = false) {
  */
 function writeForm() {
   const editId = route.params.get("edit");
-  const myId = getActor()?.id || "citizen-demo";
+  const myId = getActor()?.id ?? null;
   const item = editId
     ? data.complaints.find(
         (c) =>
@@ -846,7 +860,7 @@ function missing() {
  */
 function detail() {
   const id = route.path.split("/").at(-1);
-  const myId = getActor()?.id || "citizen-demo";
+  const myId = getActor()?.id ?? null;
   const c = data.complaints.find(
     (c) =>
       c.id === id &&
@@ -1172,12 +1186,12 @@ function render() {
   const oldProviderChoice = $("#staff-job-provider")?.value;
   route = currentRoute();
   data = read();
-  // 로그인하지 않은 방문자는 홈·작성·AI 도우미·안내는 보되 내 민원이 필요한 화면은 안내로 대신합니다.
+  // 로그인하지 않은 방문자는 홈·작성·AI 도우미·안내·민원 게시판(공개 민원 읽기)은 보되,
+  // 내 민원이 필요한 화면(내 민원·알림·내 정보)은 안내로 대신합니다.
   const visitorGated =
     !route.staff &&
     !getActor() &&
-    (["/citizen/board", "/citizen/mine", "/citizen/updates", "/citizen/profile"].includes(route.path) ||
-      route.path.startsWith("/citizen/detail/"));
+    ["/citizen/mine", "/citizen/updates", "/citizen/profile"].includes(route.path);
   let content;
   if (route.path === "/lab") {
     const form = $("#assist-form");

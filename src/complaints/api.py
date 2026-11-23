@@ -56,6 +56,7 @@ from src.complaints.models import (
     NormalizedDbSummary,
     PageResponse,
     ProviderStatus,
+    PublicWorkspace,
     ReasonInput,
     VisibilityInput,
     RegisterInput,
@@ -525,6 +526,18 @@ def create_api(
     def workspace() -> Response:
         """로컬 UI용 전체 스냅샷을 역할에 맞춰 반환합니다."""
         return reply(service.workspace(actor()))
+
+    @api.get("/public/workspace", tags=[complaints], responses={200: PublicWorkspace})
+    def public_workspace() -> Response:
+        """로그인 없이 민원 게시판의 공개 민원을 읽기 전용으로 반환합니다.
+
+        공개로 정해진 민원만 담고 초안·AI 원문·내부 이력·첨부 목록은 제외합니다.
+        세션을 만들지 않으며 쓰기 동작은 제공하지 않습니다.
+
+        Returns:
+            공개 민원 스냅샷입니다.
+        """
+        return reply(service.public_workspace())
 
     @api.get("/complaints", tags=[complaints], responses={200: PageResponse})
     def list_complaints(query: ListQuery) -> Response:

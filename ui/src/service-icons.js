@@ -1,5 +1,5 @@
 /**
- * 민원톡톡의 12개 서비스에 맞춰 직접 그린 SVG 아이콘입니다.
+ * 청주톡톡의 12개 서비스에 맞춰 직접 그린 SVG 아이콘입니다.
  */
 const artwork = {
   parking: `<rect x="11" y="13" width="21" height="25" rx="5" fill="#2f6fed" stroke="none"/>

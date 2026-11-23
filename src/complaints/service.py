@@ -659,6 +659,36 @@ class ComplaintService:
             complaints=[self.project(actor, row) for row in rows], revision=revision
         )
 
+    def public_workspace(self) -> PublicWorkspace:
+        """로그인하지 않은 방문자에게 보여 줄 공개 민원 스냅샷을 반환합니다.
+
+        민원 게시판은 공개 게시판인데, 세션이 없으면 목록을 볼 수 없어 처음 온 방문자가
+        안내만 보던 문제를 고칩니다(CASE-132). 공개(`public`)이고 철회되지 않은 민원만 담고,
+        시민 응답과 같은 투영(`project`)을 거쳐 초안·AI 원문·내부 이력을 뺍니다. 어떤 민원의
+        작성자와도 같지 않은 방문자로 투영하므로 첨부파일 목록도 항상 비웁니다. 담당자가
+        게시판에서 내린 민원은 비공개로 바뀌어 있어 포함되지 않습니다.
+
+        Returns:
+            공개 민원만 담은 시민용 스냅샷입니다.
+        """
+        visitor = Actor(
+            id="public-visitor",
+            role="citizen",
+            display_name="방문자",
+            auth_mode="guest",
+            demo=False,
+            guest=True,
+        )
+        rows = [
+            row
+            for row in self.repository.all()
+            if row.status != "withdrawn" and row.visibility == "public"
+        ]
+        return PublicWorkspace(
+            complaints=[self.project(visitor, row) for row in rows],
+            revision=sum(row.version for row in rows),
+        )
+
     def page(self, actor: Actor, query: ListQuery) -> PublicPage | StaffPage:
         """서버에서 통합 검색·필터·페이지 제한을 적용한 목록을 반환합니다.
 

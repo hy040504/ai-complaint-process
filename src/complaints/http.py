@@ -146,6 +146,7 @@ def protect_api() -> None:
         "/api/v1/auth/logout",
         "/api/v1/auth/register",
         "/api/v1/auth/guest",
+        "/api/v1/public/workspace",
     ):
         who = actor()
         if request.path.startswith("/api/v1/assist") and who.role != "staff":

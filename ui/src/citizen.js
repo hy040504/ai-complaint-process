@@ -92,12 +92,12 @@ const date = (value) =>
   });
 
 /**
- * 왼쪽 청주시 CI와 민원톡톡 이름을 결합한 시민 헤더를 구성합니다.
+ * 왼쪽 청주시 CI와 청주톡톡 이름을 결합한 시민 헤더를 구성합니다.
  *
  * @returns {string} 화면에 사용할 HTML 또는 변환 결과입니다.
  */
 export function citizenIdentity() {
-  return `<span class="citizen-city-logo" role="img" aria-label="청주시 로고"></span><span class="citizen-slogan">민원<span>톡톡</span><small>시민의 목소리에 더 가까이</small></span>`;
+  return `<span class="citizen-city-logo" role="img" aria-label="청주시 로고"></span><span class="citizen-slogan">청주<span>톡톡</span><small>시민의 목소리에 더 가까이</small></span>`;
 }
 
 /**
@@ -120,14 +120,16 @@ export function citizenShell(content, path, actor = null) {
     path === target ||
     (target === "/citizen" &&
       ["/citizen/news", "/citizen/services"].includes(path)) ||
-    (target.endsWith("/mine") && path.includes("/detail/")) ||
+    // 민원 상세는 내 민원이 있는 사람에게는 "나의 민원", 게시판에서 들어온 방문자에게는 "민원 게시판"입니다.
+    (target.endsWith("/mine") && path.includes("/detail/") && Boolean(actor)) ||
+    (target.endsWith("/board") && path.includes("/detail/") && !actor) ||
     (target.endsWith("/assistant") && path.endsWith("/write")) ||
     (target.endsWith("/profile") && path.endsWith("/guide"));
   const accountLabel = isRealAccount(actor)
     ? `${e(actor.displayName || actor.loginId || "내 계정")}`
     : "로그인";
   const showDemo = Boolean(actor?.demo);
-  return `<div class="demo-bar citizen-demo-bar"><div>${showDemo ? '<span class="demo-label">DEMO</span>' : ""}<span>청주톡톡 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 서비스입니다.</span></span></div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="민원톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
+  return `<div class="demo-bar citizen-demo-bar"><div>${showDemo ? '<span class="demo-label">DEMO</span>' : ""}<span>청주톡톡 <span class="demo-extra">· 청주시 공식 접수와 연결되지 않는 서비스입니다.</span></span></div></div><div class="citizen-shell citizen-reference"><header class="citizen-header"><a class="citizen-identity" href="#/citizen" aria-label="청주톡톡 홈">${citizenIdentity()}</a><nav class="citizen-desktop-nav" aria-label="시민 주요 메뉴">${[
     ["홈", "/citizen"],
     ["나의 민원", "/citizen/mine"],
     ["민원 게시판", "/citizen/board"],

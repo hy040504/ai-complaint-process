@@ -110,6 +110,7 @@ JSON 필드는 기본적으로 camelCase다. 경로 이름 `complaint_id`와 쿼
 | `GET /citizen/chat/sessions`, `GET/DELETE /citizen/chat/sessions/{session_id}` | 로그인 민원인 본인의 챗봇 대화 세션 목록·상세 복원·영구 삭제(타 민원인 `404`·담당자 `403` 격리, 비로그인 시연 목록 조회는 빈 배열+`persisted=false`) |
 | `POST /session`, `GET /session`, `DELETE /session` | 시연 계정 선택·조회·종료 |
 | `GET /workspace` | 역할별 로컬 UI 전체 스냅샷(담당자는 `eventCursor` 포함) |
+| `GET /public/workspace` | **로그인 없이** 민원 게시판의 공개 민원만 읽기 전용으로 반환(초안·AI 결과·내부 이력·첨부 제외, 세션 미생성, CASE-132) |
 | `GET /complaints` | 공개 범위 적용 후 검색·페이지 목록 |
 | `POST /complaints` | 시민 등록, `Idempotency-Key` 지원 |
 | `GET /complaints/{complaint_id}` | 허용된 상세만 조회 |

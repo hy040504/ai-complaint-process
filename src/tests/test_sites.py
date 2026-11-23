@@ -194,6 +194,48 @@ def test_lab_is_a_standalone_page_separate_from_the_staff_site() -> None:
     assert staff.get("/api/v1/assist/examples", headers=STAFF).status_code == 200
 
 
+def test_public_board_is_readable_without_login_and_hides_private_data() -> None:
+    """비로그인 방문자는 공개 민원만 읽고, 비공개·철회·첨부·초안·내부 이력은 받지 않는다(CASE-132)."""
+    app = _app()
+    citizen = app.test_client()
+    assert _login(citizen, CITIZEN, "citizen_01", CITIZEN_PW).status_code == 200
+
+    def create(title: str, visibility: str) -> str:
+        """시민으로 민원을 등록하고 ID를 돌려줍니다."""
+        res = citizen.post(
+            "/api/v1/complaints",
+            json={
+                "title": title,
+                "body": "공개 게시판 열람 시험을 위한 민원 본문입니다.",
+                "district": "흥덕구",
+                "category": "도로·교통",
+                "visibility": visibility,
+            },
+            headers=CITIZEN,
+        )
+        assert res.status_code == 201, res.get_json()
+        body = res.get_json()
+        return str((body.get("complaint") or body)["id"])
+
+    public_id = create("공개 시험 민원", "public")
+    private_id = create("비공개 시험 민원", "private")
+
+    anon = app.test_client()
+    res = anon.get("/api/v1/public/workspace", headers={"CF-Ray": "abc123-ICN"})
+    assert res.status_code == 200
+    rows = {row["id"]: row for row in res.get_json()["complaints"]}
+    assert public_id in rows and private_id not in rows
+    assert all(row["visibility"] == "public" for row in rows.values())
+    row = rows[public_id]
+    assert row["attachments"] == []
+    for hidden in ("draft", "aiOriginal", "staffDraft", "aiAssist", "job"):
+        assert hidden not in row, hidden
+    assert all(entry.get("public", True) for entry in row.get("history", []))
+    # 세션을 만들지 않으며, 같은 방문자가 쓰기 API를 부르면 여전히 막힌다.
+    assert anon.get_cookie("cj_citizen") is None
+    assert anon.get("/api/v1/workspace", headers=CITIZEN).status_code == 401
+
+
 def test_https_requests_get_secure_cookie_and_hsts() -> None:
     """HTTPS(프록시의 X-Forwarded-Proto) 요청만 Secure 쿠키·HSTS를 받는다."""
     app = _app()
