@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import tempfile
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -299,7 +300,7 @@ def render_html(spec: dict[str, Any]) -> str:
         "<p class='kicker'>청주 민원 AI 완충지대 · Flask /docs 스냅샷 · 검색 API :8007 제외</p>",
         f"<h1>{escape(title)}</h1>",
         f"<p class='meta'>OpenAPI {escape(version)} · 로컬 시연 · "
-        "http://127.0.0.1:5000/docs · 2026-11-05</p>",
+        f"http://127.0.0.1:5000/docs · {date.today().isoformat()}</p>",
         f"<p class='lead'>{escape(description)}</p>",
         "<ul class='notes'>",
         "<li>이 PDF는 실행 중인 Swagger UI와 같은 OpenAPI 3.1 모델에서 만들었습니다. "

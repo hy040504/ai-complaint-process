@@ -6,7 +6,7 @@ import os
 from urllib.parse import quote
 
 from flask import Response, current_app, request, session, stream_with_context
-from flask_openapi3 import FileStorage
+from flask_openapi3.models.file import FileStorage
 from flask_openapi3.blueprint import APIBlueprint
 from flask_openapi3.models.tag import Tag
 from pydantic import BaseModel

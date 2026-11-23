@@ -53,11 +53,12 @@ def actor() -> Actor:
         raise AppError(401, "authentication_required", wrong_site_message(site))
     auth_service = current_app.extensions.get("auth_service")
     if auth_service is not None:
-        return auth_service.resolve_session_actor(
+        resolved: Actor = auth_service.resolve_session_actor(
             user_id=session.get("user_id"),
             role=session.get("role"),
             auth_mode=session.get("auth_mode"),
         )
+        return resolved
     role = session.get("role")
     if role not in ("citizen", "staff"):
         raise AppError(

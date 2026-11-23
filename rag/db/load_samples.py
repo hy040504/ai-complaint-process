@@ -21,8 +21,8 @@ import os
 import re
 import sys
 
-import psycopg2
-from psycopg2.extras import Json
+import psycopg
+from psycopg.types.json import Jsonb
 
 SCHEMA = "complaint_app"
 
@@ -105,7 +105,7 @@ def insert_rows(cur, table, rows, deferred):
             if c in deferred:
                 v = None                      # 나중에 채울 칸
             elif c in jsonb_cols and v is not None:
-                v = Json(v, dumps=lambda o: json.dumps(o, ensure_ascii=False))
+                v = Jsonb(v, dumps=lambda o: json.dumps(o, ensure_ascii=False))
             vals.append(v)
         cur.execute(sql, vals)
 
@@ -188,8 +188,7 @@ def main():
     if not args.dsn:
         sys.exit("접속 정보가 없습니다. --dsn 또는 DATABASE_URL 을 주세요.")
 
-    conn = psycopg2.connect(args.dsn)
-    conn.autocommit = False
+    conn = psycopg.connect(args.dsn, autocommit=False)
     cur = conn.cursor()
     try:
         if args.create:
