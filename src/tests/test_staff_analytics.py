@@ -108,3 +108,13 @@ def test_category_change_compares_completed_months_only() -> None:
     trend = next(t for t in result.category_trends if t.category == "도로·교통")
     assert trend.counts[-3:] == [2, 1, 3]
     assert trend.change_pct == -50.0
+
+
+def test_unknown_category_does_not_break_trends() -> None:
+    """분야 목록에 없는 값이 있어도 접수 건수만 세고 분야별 집계는 건너뛴다."""
+    row = _row("A", NOW - timedelta(hours=1))
+    object.__setattr__(row, "category", "목록밖분야")
+    result = build_staff_analytics([row], now=NOW)
+    day = next(t for t in result.trends if t.unit == "day")
+    assert day.received[-1] == 1
+    assert "목록밖분야" not in day.category_received

@@ -249,7 +249,8 @@ def build_staff_analytics(rows: list[Complaint], *, now: datetime) -> StaffAnaly
             back = _period_index(unit, _to_kst(row.date), today)
             if 0 <= back < span:
                 received[span - 1 - back] += 1
-                by_category[row.category][span - 1 - back] += 1
+                if row.category in by_category:
+                    by_category[row.category][span - 1 - back] += 1
             if row.published is not None:
                 back = _period_index(unit, _to_kst(row.published.date), today)
                 if 0 <= back < span:

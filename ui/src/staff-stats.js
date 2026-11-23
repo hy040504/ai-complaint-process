@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 담당자 통계 대시보드(`#/staff/stats`)와 CSV 내보내기 URL 구성을 담당합니다.
  *
  * 서버 `/api/v1/staff/stats`에서 담당자 부서 RBAC 소관 범위로 집계한
@@ -245,7 +245,7 @@ function periodCompare(analytics) {
       return `<tr class="clickable${on ? " on" : ""}" data-action="stats-period" data-id="${t.unit}"><td><b>${esc(meta.label)}</b></td><td class="num">${fmt(r)}</td><td class="num">${fmt(d)}</td><td class="num">${r ? Math.round((d / r) * 100) : 0}%</td><td class="num">${(r / meta.days).toFixed(1)}</td><td>${on ? "현재 보는 기간" : "누르면 위 차트가 바뀝니다"}</td></tr>`;
     })
     .join("");
-  return `<div class="stats-db-table-wrap"><table><thead><tr><th scope="col">구분</th><th scope="col" class="num">접수</th><th scope="col" class="num">처리 완료</th><th scope="col" class="num">처리율</th><th scope="col" class="num">일평균</th><th scope="col">비고</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="stats-db-table-wrap"><table><thead><tr><th scope="col">구분</th><th scope="col" class="num">접수</th><th scope="col" class="num">답변 게시</th><th scope="col" class="num">접수 대비</th><th scope="col" class="num">일평균</th><th scope="col">비고</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 /**
@@ -270,7 +270,7 @@ function statsAnalysis(analytics, includeSynthetic) {
   const switcher = `<div class="scope" role="group" aria-label="집계 단위">${PERIODS.map(([key, label]) => `<button type="button" data-action="stats-period" data-id="${key}" aria-pressed="${view.period === key}">${label}</button>`).join("")}</div>`;
   const cards = [
     metricCard(`${meta.label} 접수`, `${fmt(total)}건`, `일평균 ${(total / meta.days).toFixed(1)}건`, "blue"),
-    metricCard(`${meta.label} 처리 완료`, `${fmt(doneTotal)}건`, `처리율 ${rate}%`, rate >= 90 ? "green" : "gold"),
+    metricCard(`${meta.label} 답변 게시`, `${fmt(doneTotal)}건`, `접수 대비 ${rate}% · 접수일과 답변일이 달라 100%를 넘을 수 있음`, "blue"),
     metricCard(
       `지난 ${meta.unit} 접수`,
       `${fmt(last)}건`,
