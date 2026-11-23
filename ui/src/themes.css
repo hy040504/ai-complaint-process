@@ -1,4 +1,4 @@
-/* 두 사이트가 공유하는 저장형 다크 테마입니다. */
+﻿/* 두 사이트가 공유하는 저장형 다크 테마입니다. */
 /* 조회 대기·오류 카드도 선택한 테마를 따릅니다. */
 body[data-theme="dark"] .staff-workspace .panel {
   background: var(--d-bg-03);
@@ -2370,4 +2370,84 @@ body[data-theme="dark"] .staff-connection {
 }
 body[data-theme="dark"] .staff-page-title > small {
   color: #7d8696;
+}
+
+/* 통계 분석·민원 분류 탭 다크 테마 */
+body[data-theme="dark"][data-site="staff"] .stats-analytics {
+  background: var(--d-bg-03);
+  border-color: var(--d-line-02);
+}
+body[data-theme="dark"][data-site="staff"] .stats-analytics > header h2,
+body[data-theme="dark"][data-site="staff"] .trend-kpis b,
+body[data-theme="dark"][data-site="staff"] .stats-sub {
+  color: var(--d-text-04);
+}
+body[data-theme="dark"][data-site="staff"] .trend-kpis span,
+body[data-theme="dark"][data-site="staff"] .trend-kpis small,
+body[data-theme="dark"][data-site="staff"] .chart-note,
+body[data-theme="dark"][data-site="staff"] .stats-tab,
+body[data-theme="dark"][data-site="staff"] .stats-heat th,
+body[data-theme="dark"][data-site="staff"] .hour-axis {
+  color: var(--d-text-06);
+}
+body[data-theme="dark"][data-site="staff"] .stats-tab[aria-selected="true"] {
+  color: var(--d-text-04);
+  border-bottom-color: #5b8def;
+}
+body[data-theme="dark"][data-site="staff"] .stats-tabs {
+  border-bottom-color: var(--d-line-02);
+}
+body[data-theme="dark"][data-site="staff"] .trend-kpis > div,
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap .stats-cross tbody td.total {
+  background: var(--d-bg-02);
+}
+body[data-theme="dark"][data-site="staff"] .scope-switch,
+body[data-theme="dark"][data-site="staff"] .legend-chip {
+  border-color: var(--d-line-02);
+}
+body[data-theme="dark"][data-site="staff"] .scope-switch button {
+  background: var(--d-bg-02);
+  color: var(--d-text-11);
+}
+body[data-theme="dark"][data-site="staff"] .scope-switch button[aria-pressed="true"] {
+  background: #2f6fed;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .chart-legend {
+  color: var(--d-text-11);
+}
+body[data-theme="dark"][data-site="staff"] .chart-grid {
+  stroke: var(--d-line-02);
+}
+body[data-theme="dark"][data-site="staff"] .chart-axis {
+  fill: var(--d-text-06);
+}
+body[data-theme="dark"][data-site="staff"] .stats-cross tbody th,
+body[data-theme="dark"][data-site="staff"] .stats-cross th {
+  border-color: var(--d-line-11);
+  background: var(--d-bg-26);
+  color: var(--d-text-11);
+}
+body[data-theme="dark"][data-site="staff"] .stats-cross th a {
+  color: var(--d-text-11);
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h0 {
+  background: var(--d-bg-02);
+  color: var(--d-text-06);
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h1 {
+  background: #1f3560;
+  color: var(--d-text-04);
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h2 {
+  background: #284d94;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h3 {
+  background: #3e72dd;
+  color: #ffffff;
+}
+body[data-theme="dark"][data-site="staff"] .stats-db-table-wrap tbody td.heat.h4 {
+  background: #6a95f0;
+  color: #0b1530;
 }

@@ -237,7 +237,7 @@ function timeHeatmap(analytics) {
   const bars = hourTotals
     .map((v, h) => `<i style="height:${Math.max(v ? 6 : 0, Math.round((v / hourPeak) * 100))}%" title="${h}시 ${v}건"></i>`)
     .join("");
-  return `<div class="stats-heat-wrap"><table class="stats-heat"><thead>${head}</thead><tbody>${body}</tbody></table></div><h3 class="stats-sub">시간대별 접수</h3><div class="hour-bars" role="img" aria-label="시간대별 접수 건수">${bars}</div><div class="hour-axis"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>23시</span></div><p class="chart-note">시각은 한국 표준시 기준입니다. 진할수록 접수가 몰리는 시간입니다.</p>`;
+  return `<div class="stats-heat-wrap"><table class="stats-heat"><thead>${head}</thead><tbody>${body}</tbody></table></div><h3 class="stats-sub">시간대별 접수</h3><div class="hour-bars" role="img" aria-label="시간대별 접수 건수">${bars}</div><div class="hour-axis" aria-hidden="true">${Array.from({ length: 24 }, (_, h) => `<span>${h % 6 === 0 ? `${h}시` : ""}</span>`).join("")}</div><p class="chart-note">시각은 한국 표준시 기준입니다. 진할수록 접수가 몰리는 시간입니다.</p>`;
 }
 
 /** 처리기간 구간 분포와 분야별 평균 처리일을 그립니다. */
