@@ -188,7 +188,7 @@ export function renderWriteAttachmentField({
     )
     .join("");
 
-  return `<div class="attachment-field"><div class="attachment-field-head"><label for="attachments-input">${icon("paperclip", 15)} 현장 사진 · 증빙 첨부 <small>(선택 · ${totalCount}/${MAX_ATTACHMENTS})</small></label><span class="attachment-policy-chip">EXIF 위치 자동 제거</span></div><label class="attachment-dropzone ${full ? "disabled" : ""}" id="attachment-dropzone" for="attachments-input">${icon("paperclip", 20)}<span><b>${full ? `최대 ${MAX_ATTACHMENTS}개를 모두 선택했습니다` : "클릭하거나 파일을 끌어다 놓아 첨부하세요"}</b><small>JPG · PNG · WebP 이미지 또는 PDF · 파일당 최대 5MB</small></span><input id="attachments-input" type="file" accept="${esc(ALLOWED_ATTACHMENT_ACCEPT)}" multiple ${full ? "disabled" : ""}></label>${existingHtml || pendingHtml ? `<ul class="attachment-pending-list">${existingHtml}${pendingHtml}</ul>` : ""}</div>`;
+  return `<div class="attachment-field"><div class="attachment-field-head"><label for="attachments-input">${icon("paperclip", 15)} 현장 사진 · 증빙 첨부 <small>(선택 · ${totalCount}/${MAX_ATTACHMENTS})</small></label><span class="attachment-policy-chip">사진 속 위치 정보 자동 삭제</span></div><label class="attachment-dropzone ${full ? "disabled" : ""}" id="attachment-dropzone" for="attachments-input">${icon("paperclip", 20)}<span><b>${full ? `최대 ${MAX_ATTACHMENTS}개를 모두 선택했습니다` : "클릭하거나 파일을 끌어다 놓아 첨부하세요"}</b><small>JPG · PNG · WebP 이미지 또는 PDF · 파일당 최대 5MB</small></span><input id="attachments-input" type="file" accept="${esc(ALLOWED_ATTACHMENT_ACCEPT)}" multiple ${full ? "disabled" : ""}></label>${existingHtml || pendingHtml ? `<ul class="attachment-pending-list">${existingHtml}${pendingHtml}</ul>` : ""}</div>`;
 }
 
 /**

@@ -295,7 +295,6 @@ export function backendSwaggerPage({
   return `<div class="page-content staff-api-page">
     <div class="staff-page-title staff-api-title">
       <h1>백엔드 API · Swagger</h1>
-      <span>M-05</span>
       <div class="staff-api-head-actions">
         <button class="btn" type="button" data-action="api-docs-refresh" ${loading ? "disabled" : ""}>${icon("refresh", 15)} 명세 새로고침</button>
         <a class="btn primary" href="/swagger" target="_blank" rel="noopener">${icon("external", 15)} 새 탭에서 Swagger 열기</a>

@@ -878,19 +878,20 @@
         },
         {
           "n": 2,
-          "sel": "xy:263,306,517,37"
+          "sel": "css:.monitor-toolbar"
         },
         {
           "n": 3,
-          "sel": "xy:496,386,68,25"
+          "sel": "css:.job-card-top .badge",
+          "badge": "right"
         },
         {
           "n": 4,
-          "sel": "xy:283,601,280,24"
+          "sel": "css:.job-card .stage-steps"
         },
         {
           "n": 5,
-          "sel": "xy:283,679,280,38"
+          "sel": "css:.job-card .job-actions"
         }
       ]
     },
@@ -941,7 +942,7 @@
           "wait": 2500
         },
         {
-          "click": "css:[data-action=open-assign-dept]",
+          "click": "text:부서 변경",
           "after": 1200
         }
       ],

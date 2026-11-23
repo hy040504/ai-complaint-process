@@ -125,8 +125,8 @@ test("EventSource가 없으면 즉시 폴링 대체 상태로 전환하고 배�
 
   const liveHtml = renderSseStatusBadge("connected", "2026-11-20T01:00:00Z");
   assert.match(liveHtml, /sse-live/);
-  assert.match(liveHtml, /실시간 SSE 연결됨/);
+  assert.match(liveHtml, /실시간 연결됨/);
   const fallbackHtml = renderSseStatusBadge("fallback");
   assert.match(fallbackHtml, /sse-fallback/);
-  assert.match(fallbackHtml, /폴링 대체 연결 \(3초\)/);
+  assert.match(fallbackHtml, /3초마다 확인 중/);
 });

@@ -757,6 +757,12 @@ body[data-site="citizen"] .role-switch a.selected {
   border-radius: var(--r-card);
   box-shadow: 0 8px 35px #172a4e16;
 }
+/* 위쪽 메뉴가 보이는 넓은 화면(1101px 이상)에서는 같은 메뉴를 아래에 한 번 더 두지 않습니다. */
+@media (min-width: 1101px) {
+  .citizen-bottom-nav {
+    display: none;
+  }
+}
 .citizen-bottom-nav > a {
   display: flex;
   align-items: center;

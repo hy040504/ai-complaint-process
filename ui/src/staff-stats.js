@@ -118,7 +118,7 @@ export function staffStatsPage(
   const scopeLabel = stats?.scopeLabel || "소관 범위 확인 중";
   const scopeTone = stats?.isAdminScope ? "admin" : "dept";
 
-  const headerBar = `<div class="staff-page-title stats-page-head"><div><div class="eyebrow">STAFF ANALYTICS</div><h1>업무 통계 대시보드</h1></div><div class="stats-head-actions"><span class="stats-scope-badge ${scopeTone}">${icon("shield", 14)} ${esc(scopeLabel)}</span><button type="button" class="btn ${includeSynthetic ? "" : "primary subtle"}" data-action="toggle-stats-synthetic" aria-pressed="${includeSynthetic ? "true" : "false"}">${includeSynthetic ? "공개 시연 포함 중" : "실제 민원만 보는 중"}</button><button type="button" class="btn" data-action="refresh-stats">${icon("refresh", 15)} 새로고침</button><a class="btn primary" href="${esc(exportHref)}" download>${icon("download", 15)} CSV 내보내기</a></div></div>`;
+  const headerBar = `<div class="staff-page-title stats-page-head"><div><div class="eyebrow">업무 현황</div><h1>업무 통계 대시보드</h1></div><div class="stats-head-actions"><span class="stats-scope-badge ${scopeTone}">${icon("shield", 14)} ${esc(scopeLabel)}</span><button type="button" class="btn ${includeSynthetic ? "" : "primary subtle"}" data-action="toggle-stats-synthetic" aria-pressed="${includeSynthetic ? "true" : "false"}">${includeSynthetic ? "공개 시연 포함 중" : "실제 민원만 보는 중"}</button><button type="button" class="btn" data-action="refresh-stats">${icon("refresh", 15)} 새로고침</button><a class="btn primary" href="${esc(exportHref)}" download>${icon("download", 15)} CSV 내보내기</a></div></div>`;
 
   if (loading && !stats) {
     return `<div class="page-content staff-stats-page">${headerBar}<div class="panel empty" role="status">소관 범위 민원 통계를 집계하고 있습니다…</div></div>`;
@@ -227,5 +227,5 @@ export function staffStatsPage(
     .join("");
   const dbSection = `<section class="panel stats-db-card"><header><div><h2>정규화 7테이블 저장소 요약</h2><p>RAG 검색 색인(<code>complaint_rag</code>)과 분리된 업무 데이터베이스(<code>${esc(db.schemaName || "complaint_app")}</code> · ${esc(db.storage || "postgresql")}) 현황입니다.</p></div><span class="staff-api-count-pill">민원인 ${db.userRoles?.citizen ?? 0} · 담당자 ${db.userRoles?.staff ?? 0}</span></header><div class="stats-db-table-wrap"><table><thead><tr><th scope="col">테이블</th><th scope="col">역할</th><th scope="col" class="num">저장 행 수</th></tr></thead><tbody>${tableRows}</tbody></table></div></section>`;
 
-  return `<div class="page-content staff-stats-page">${headerBar}<div class="info-banner">${icon("spark", 18)}<span>부서 RBAC 소관 범위가 서버에서 강제 적용됩니다. 막대나 지표를 클릭하면 해당 조건의 민원 목록으로 바로 이동하며, CSV 내보내기에는 미게시 AI 초안과 순화 본문이 제외됩니다.</span></div>${kpiHtml}${chartsHtml}${dbSection}</div>`;
+  return `<div class="page-content staff-stats-page">${headerBar}<div class="info-banner">${icon("spark", 18)}<span>부서 담당자에게는 자기 부서 민원만 집계됩니다. 막대나 지표를 누르면 해당 조건의 민원 목록으로 바로 이동하며, CSV 내보내기에는 미게시 AI 초안과 순화 본문이 제외됩니다.</span></div>${kpiHtml}${chartsHtml}${dbSection}</div>`;
 }

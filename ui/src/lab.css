@@ -84,6 +84,7 @@ body[data-site="lab"] .lab-hero p {
 }
 body[data-site="lab"] .lab-examples-panel {
   margin-bottom: 18px;
+  padding: 18px 20px 20px;
 }
 body[data-site="lab"] .lab-examples {
   display: grid;

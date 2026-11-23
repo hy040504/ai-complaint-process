@@ -46,7 +46,7 @@ test("renderWriteAttachmentField와 renderDetailAttachmentsPanel은 EXIF 배지�
     complaintId: "DEMO-2026-1",
   });
   assert.match(writeHtml, /2\/5/);
-  assert.match(writeHtml, /EXIF 위치 자동 제거/);
+  assert.match(writeHtml, /사진 속 위치 정보 자동 삭제/);
   assert.match(writeHtml, /road\.jpg/);
   assert.match(writeHtml, /기존\.pdf/);
 

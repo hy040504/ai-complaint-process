@@ -55,9 +55,8 @@ body[data-site="staff"] {
 .staff-console-brand > a > span {
   display: block;
   color: #fff;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 16px;
-  letter-spacing: 1.4px;
+  font-size: 17px;
+  letter-spacing: -0.01em;
   font-weight: 750;
 }
 .staff-console-brand small {
@@ -74,9 +73,9 @@ body[data-site="staff"] {
 }
 .staff-nav-group {
   color: #8da1c7;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 1.4px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
   padding: 16px 9px 7px;
 }
 .staff-nav-link {
@@ -1766,6 +1765,10 @@ body[data-site="staff"] #toast {
     gap: 9px;
     overflow-x: auto;
     scrollbar-width: none;
+  }
+  /* 가로 스크롤은 되지만 막대는 숨깁니다(Chromium 계열 대비). */
+  .staff-compact-nav::-webkit-scrollbar {
+    display: none;
   }
   .staff-compact-nav > a {
     font-size: 12px;

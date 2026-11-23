@@ -21,10 +21,10 @@ export const STAFF_SSE_EVENT_TYPES = [
 /** SSE 연결 상태별 화면 표기와 시각 톤 매핑입니다. */
 export const SSE_STATE_META = {
   idle: { label: "연결 대기", tone: "idle" },
-  connecting: { label: "실시간 SSE 연결 중…", tone: "warn" },
-  connected: { label: "실시간 SSE 연결됨", tone: "live" },
-  reconnecting: { label: "SSE 재연결 중…", tone: "warn" },
-  fallback: { label: "폴링 대체 연결 (3초)", tone: "fallback" },
+  connecting: { label: "실시간 연결 중…", tone: "warn" },
+  connected: { label: "실시간 연결됨", tone: "live" },
+  reconnecting: { label: "다시 연결 중…", tone: "warn" },
+  fallback: { label: "3초마다 확인 중", tone: "fallback" },
 };
 
 /**
