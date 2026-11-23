@@ -3,6 +3,7 @@
  */
 import { citizenIdentity, escapeHTML as esc } from "./citizen.js";
 import { icon } from "./icons.js";
+import { siteHeaders } from "./site.js";
 import { themeButton } from "./theme.js";
 import { api, categories, districts } from "./store.js";
 import {
@@ -162,7 +163,7 @@ async function streamLabAssist(body, paint) {
   const response = await fetch("/api/v1/assist/stream", {
     method: "POST",
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
+    headers: siteHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!response.ok || !response.body) {

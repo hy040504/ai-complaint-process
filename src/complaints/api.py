@@ -73,6 +73,8 @@ from src.complaints.models import (
 from src.complaints.service import ComplaintService, Operation
 from src.llm.settings import provider_availability_map
 
+ASSIST_LIMIT_MESSAGE = "검사기 실행이 너무 잦습니다. 10분에 20회까지 쓸 수 있으니 잠시 뒤 다시 시도해 주세요."
+
 
 class AttachmentUploadForm(BaseModel):
     """민원 현장 사진·PDF 멀티파트 파일 업로드 폼 계약입니다."""
@@ -249,6 +251,7 @@ def create_api(
         Returns:
             검증된 안내·부서 후보·담당자 검토 결과입니다.
         """
+        auth.assist_limiter.hit(actor().id, ASSIST_LIMIT_MESSAGE)
         raw = (
             run_web_assist(
                 body.query,
@@ -272,6 +275,7 @@ def create_api(
         Returns:
             줄 단위 JSON 사건 흐름입니다. 민원 저장·공식 이관이 아닙니다.
         """
+        auth.assist_limiter.hit(actor().id, ASSIST_LIMIT_MESSAGE)
 
         def generate() -> Iterator[str]:
             """진행 단계와 최종 응대 결과를 줄 단위 JSON 문자열로 생성합니다."""

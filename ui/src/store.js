@@ -1,7 +1,7 @@
 /**
  * Flask API와 통신하며 업무 데이터는 브라우저 저장소에 보관하지 않습니다.
  */
-import { SITE_HEADER, SITE } from "./site.js";
+import { siteHeaders } from "./site.js";
 
 export const districts = ["상당구", "서원구", "흥덕구", "청원구", "모름"];
 export const categories = [
@@ -50,7 +50,7 @@ export async function api(path, { method = "GET", body, headers = {} } = {}) {
       credentials: "same-origin",
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
-        [SITE_HEADER]: SITE,
+        ...siteHeaders(),
         ...headers,
       },
       ...(body ? { body: JSON.stringify(body) } : {}),

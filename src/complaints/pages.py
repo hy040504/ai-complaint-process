@@ -4,6 +4,7 @@ from pathlib import Path
 from flask import Blueprint, Response, request, send_from_directory
 from src.complaints.config import ROOT
 from src.complaints.errors import AppError
+from src.complaints.http import has_staff_session
 from src.complaints.swagger_page import render_swagger_html
 
 web = Blueprint("web", __name__)
@@ -53,12 +54,15 @@ def ui_lab_redirect() -> Response:
 def ui_lab_index() -> Response:
     """응대 검사기 단독 페이지를 제공합니다.
 
-    시민·담당자 사이트에서는 연결하지 않으며 주소로만 들어갑니다. 검사기 API
-    (`/api/v1/assist*`)는 기존과 같이 로그인 없이 쓰고 민원은 저장하지 않습니다.
+    시민·담당자 사이트에서는 연결하지 않으며 주소로만 들어갑니다. 담당자로 로그인하지
+    않았으면 담당자 로그인 화면(`/staff/`)으로 보냅니다. 검사기 API(`/api/v1/assist*`)도
+    담당자 세션이 필요하며 계정별 실행 횟수가 제한됩니다. 민원은 저장하지 않습니다.
 
     Returns:
-        `ui/lab.html`(검사기 전용 화면)입니다.
+        `ui/lab.html`(검사기 전용 화면) 또는 `/staff/`로 가는 302 응답입니다.
     """
+    if not has_staff_session():
+        return Response(status=302, headers={"Location": "/staff/"})
     return send_from_directory(ROOT / "ui", "lab.html")
 
 

@@ -26,11 +26,13 @@ export const SITE = readSite();
 /**
  * 모든 API 요청에 붙일 사이트 헤더를 반환합니다.
  *
+ * 응대 검사기 페이지(`lab`)는 담당자 로그인 세션을 쓰므로 헤더는 `staff`로 보냅니다.
+ *
  * @param {Object<string,string>} [extra] 함께 보낼 추가 헤더입니다.
  * @returns {Object<string,string>} 사이트 헤더가 포함된 헤더 객체입니다.
  */
 export function siteHeaders(extra = {}) {
-  return { [SITE_HEADER]: SITE, ...extra };
+  return { [SITE_HEADER]: SITE === "lab" ? "staff" : SITE, ...extra };
 }
 
 /**

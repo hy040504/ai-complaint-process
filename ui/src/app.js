@@ -631,7 +631,9 @@ async function loadScreen() {
     } catch (error) {
       if (sequence === loadSequence)
         app.innerHTML = labShell(
-          `<div class="panel empty"><h1>검사기를 열지 못했습니다</h1><p>${esc(error.message)}</p>${button("다시 시도", "primary", 'data-action="reload"')}</div>`,
+          error?.status === 401 || error?.status === 403
+            ? `<div class="panel empty"><h1>담당자 로그인이 필요합니다</h1><p>응대 검사기는 담당자만 사용할 수 있습니다. 담당자 사이트에서 로그인한 뒤 다시 열어 주세요.</p><a class="btn primary" href="/staff/">담당자 사이트로 가기</a></div>`
+            : `<div class="panel empty"><h1>검사기를 열지 못했습니다</h1><p>${esc(error.message)}</p>${button("다시 시도", "primary", 'data-action="reload"')}</div>`,
         );
     }
     return;

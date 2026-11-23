@@ -362,6 +362,8 @@ class AuthService:
         # 로그인 없는 게스트 세션 발급·접수의 IP 단위 남용 방지(시간당 10회)입니다.
         self.guest_session_limiter = SlidingWindowLimiter(10, 3600.0)
         self.guest_complaint_limiter = SlidingWindowLimiter(10, 3600.0)
+        # 응대 검사기(외부 LLM 호출)의 담당자 계정별 실행 횟수 제한(10분당 20회)입니다.
+        self.assist_limiter = SlidingWindowLimiter(20, 600.0)
 
     def create_guest(self) -> Actor:
         """로그인 없이 민원을 접수하는 게스트 `Actor`를 만듭니다. DB 계정은 만들지 않습니다.

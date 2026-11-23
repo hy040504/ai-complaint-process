@@ -1,6 +1,7 @@
-"""응대 검사기 API가 세션 없이 동작하고 민원 CRUD와 분리되는지 확인합니다."""
+"""응대 검사기 API가 담당자 로그인으로만 동작하고 민원 CRUD와 분리되는지 확인합니다."""
 
 import json
+import os
 from collections.abc import Iterator
 
 from flask_openapi3.openapi import OpenAPI
@@ -22,6 +23,26 @@ def app() -> OpenAPI:
             testing=True,
         )
     )
+
+
+STAFF_PW = os.environ.get("COMPLAINT_STAFF_INIT_PASSWORD", "cheongju-staff-2026!")
+CITIZEN_PW = os.environ.get("COMPLAINT_CITIZEN_INIT_PASSWORD", "cheongju-citizen-2026!")
+
+
+def _login(client: FlaskClient, site: str, login_id: str, password: str) -> FlaskClient:
+    """지정 사이트 헤더로 로그인한 클라이언트를 돌려줍니다."""
+    res = client.post(
+        "/api/v1/auth/login",
+        json={"loginId": login_id, "password": password},
+        headers={"X-Cheongju-Site": site},
+    )
+    assert res.status_code == 200
+    return client
+
+
+def _staff(app: OpenAPI) -> FlaskClient:
+    """담당자로 로그인한 테스트 클라이언트입니다."""
+    return _login(app.test_client(), "staff", "staff_admin", STAFF_PW)
 
 
 def _payload(query: str = "대형폐기물 배출 방법을 알고 싶어요.") -> dict:
@@ -63,12 +84,28 @@ def test_assist_schema_accepts_pipeline_result() -> None:
     AssistResponse.model_validate(_payload())
 
 
-def test_assist_does_not_need_session(app: OpenAPI, monkeypatch: object) -> None:
-    """검사기는 시연 세션 없이 호출할 수 있습니다."""
+def test_assist_requires_staff_login(app: OpenAPI, monkeypatch: object) -> None:
+    """검사기 API는 비로그인·시민에게 막히고 담당자에게만 열립니다(CASE-129)."""
     monkeypatch.setattr(
         "src.complaints.api.run_web_assist", lambda *args: _payload(args[0])
     )
-    client = app.test_client()
+    body = {"query": "대형폐기물 배출 방법을 알고 싶어요."}
+    anon = app.test_client()
+    for method, path in (
+        ("get", "/api/v1/assist/fields"),
+        ("get", "/api/v1/assist/examples"),
+        ("post", "/api/v1/assist"),
+        ("post", "/api/v1/assist/stream"),
+    ):
+        res = getattr(anon, method)(
+            path, **({"json": body} if method == "post" else {})
+        )
+        assert res.status_code == 401, path
+    citizen = _login(app.test_client(), "citizen", "citizen_01", CITIZEN_PW)
+    assert citizen.post("/api/v1/assist", json=body).status_code == 403
+    assert citizen.get("/api/v1/assist/examples").status_code == 403
+
+    client = _staff(app)
     response = client.post(
         "/api/v1/assist", json={"query": "대형폐기물 배출 방법을 알고 싶어요."}
     )
@@ -84,7 +121,7 @@ def test_assist_examples_and_health_flags(app: OpenAPI, monkeypatch: object) -> 
     """예시 목록과 검색·LLM 설정 플래그를 반환합니다."""
     monkeypatch.setattr("src.complaints.api.search_available", lambda: True)
     monkeypatch.setattr("src.complaints.api.llm_configured", lambda: False)
-    client: FlaskClient = app.test_client()
+    client: FlaskClient = _staff(app)
     health = client.get("/api/v1/health").json
     assert health["storage"] == "memory"
     assert health["aiConnected"] is False
@@ -120,7 +157,7 @@ def test_assist_stream_sends_progress_then_result(
         yield {"type": "done", "result": _payload(query)}
 
     monkeypatch.setattr("src.complaints.api.iter_web_assist", fake_iter)
-    client: FlaskClient = app.test_client()
+    client: FlaskClient = _staff(app)
     response = client.post(
         "/api/v1/assist/stream",
         json={"query": "대형폐기물 배출 방법을 알고 싶어요."},
@@ -134,3 +171,22 @@ def test_assist_stream_sends_progress_then_result(
     assert last["type"] == "done"
     assert last["result"]["automaticTransfer"] is False
     assert last["result"]["retrieval"]["decision"] == "requires_gate"
+
+
+def test_assist_runs_are_rate_limited_per_staff_account(
+    app: OpenAPI, monkeypatch: object
+) -> None:
+    """같은 담당자 계정은 10분에 20회까지만 검사기를 실행하고 초과분은 429입니다."""
+    monkeypatch.setattr(
+        "src.complaints.api.run_web_assist", lambda *args: _payload(args[0])
+    )
+    client = _staff(app)
+    body = {"query": "대형폐기물 배출 방법을 알고 싶어요."}
+    for _ in range(20):
+        assert client.post("/api/v1/assist", json=body).status_code == 200
+    blocked = client.post("/api/v1/assist", json=body)
+    assert blocked.status_code == 429
+    assert blocked.json["code"] == "rate_limited"
+    assert client.post("/api/v1/assist/stream", json=body).status_code == 429
+    # 조회용 엔드포인트는 횟수에 포함하지 않는다.
+    assert client.get("/api/v1/assist/examples").status_code == 200

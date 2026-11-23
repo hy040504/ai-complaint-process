@@ -174,13 +174,24 @@ def test_lab_is_a_standalone_page_separate_from_the_staff_site() -> None:
     client = _app().test_client()
     redirect = client.get("/lab")
     assert redirect.status_code == 308 and redirect.headers["Location"] == "/lab/"
-    lab_html = client.get("/lab/").get_data(as_text=True)
-    assert 'data-site="lab"' in lab_html and "/src/lab.css" in lab_html
     staff_html = client.get("/staff/").get_data(as_text=True)
     assert 'data-site="staff"' in staff_html and "/src/lab.css" not in staff_html
-    assert client.get("/lab/", headers={"CF-Ray": "abc123-ICN"}).status_code == 200
-    # 검사기 API는 로그인 없이 쓰는 기존 규칙을 유지한다.
-    assert client.get("/api/v1/assist/examples").status_code == 200
+    # 검사기는 담당자 전용이다: 비로그인은 담당자 로그인 화면으로, 시민은 막힌다.
+    anon = client.get("/lab/")
+    assert anon.status_code == 302 and anon.headers["Location"] == "/staff/"
+    assert client.get("/api/v1/assist/examples").status_code == 401
+    citizen = _app().test_client()
+    assert _login(citizen, CITIZEN, "citizen_01", CITIZEN_PW).status_code == 200
+    assert citizen.get("/lab/").status_code == 302
+    assert citizen.get("/api/v1/assist/examples").status_code == 403
+    staff = _app().test_client()
+    assert _login(staff, STAFF, "staff_admin", STAFF_PW).status_code == 200
+    lab_page = staff.get("/lab/")
+    assert lab_page.status_code == 200
+    lab_html = lab_page.get_data(as_text=True)
+    assert 'data-site="lab"' in lab_html and "/src/lab.css" in lab_html
+    assert staff.get("/lab/", headers={"CF-Ray": "abc123-ICN"}).status_code == 200
+    assert staff.get("/api/v1/assist/examples", headers=STAFF).status_code == 200
 
 
 def test_https_requests_get_secure_cookie_and_hsts() -> None:

@@ -220,7 +220,7 @@ def _make_fake_iter(
 def test_assist_fields_endpoint_and_district_validation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """`/api/v1/assist/fields` 익명 조회·읍면동 검증·공급자 전달을 확인합니다."""
+    """`/api/v1/assist/fields` 담당자 조회·읍면동 검증·공급자 전달을 확인합니다."""
     calls: list[dict[str, Any]] = []
     fake_iter = _make_fake_iter(calls)
 
@@ -248,6 +248,18 @@ def test_assist_fields_endpoint_and_district_validation(
         auto_start_ai=False,
     )
     anon = app.test_client()
+    assert (
+        anon.get("/api/v1/assist/fields").status_code == 401
+    ), "검사기 API는 담당자 전용"
+    staff_pw = os.environ.get("COMPLAINT_STAFF_INIT_PASSWORD", "cheongju-staff-2026!")
+    assert (
+        anon.post(
+            "/api/v1/auth/login",
+            json={"loginId": "staff_admin", "password": staff_pw},
+            headers={"X-Cheongju-Site": "staff"},
+        ).status_code
+        == 200
+    )
 
     fields_res = anon.get("/api/v1/assist/fields")
     assert fields_res.status_code == 200

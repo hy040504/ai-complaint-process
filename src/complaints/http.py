@@ -146,12 +146,13 @@ def protect_api() -> None:
         "/api/v1/auth/logout",
         "/api/v1/auth/register",
         "/api/v1/auth/guest",
-        "/api/v1/assist",
-        "/api/v1/assist/fields",
-        "/api/v1/assist/examples",
-        "/api/v1/assist/stream",
     ):
-        actor()
+        who = actor()
+        if request.path.startswith("/api/v1/assist") and who.role != "staff":
+            # 검사기는 외부 LLM 호출 비용이 드는 담당자 도구입니다(CASE-129).
+            raise AppError(
+                403, "forbidden", "응대 검사기는 담당자만 사용할 수 있습니다."
+            )
     if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.is_json:
         request.get_json()
 
@@ -232,7 +233,7 @@ _API_DOC_PREFIXES = ("/docs", "/swagger", "/openapi")
 _MOCKUP_PREFIXES = ("/design/",)
 
 
-def _has_staff_session() -> bool:
+def has_staff_session() -> bool:
     """요청의 담당자 사이트 쿠키(`cj_staff`)가 서명된 담당자 세션인지 확인합니다.
 
     세션 쿠키 이름은 요청 단서(헤더·Referer)로 정해지는데, 주소창으로 직접 연 문서 화면에는
@@ -273,7 +274,7 @@ def hide_dev_pages_from_proxy() -> None:
         return
     path = request.path
     if path.startswith(_MOCKUP_PREFIXES) or (
-        path.startswith(_API_DOC_PREFIXES) and not _has_staff_session()
+        path.startswith(_API_DOC_PREFIXES) and not has_staff_session()
     ):
         raise AppError(404, "not_found", "파일을 찾을 수 없습니다.")
 
