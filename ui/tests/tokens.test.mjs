@@ -111,7 +111,8 @@ test("옛 상태 배지 정의는 design.css 한 곳에만 있다", () => {
 });
 
 test("design.css의 움직임은 동작 줄이기 미설정 조건 안에만 있다", () => {
-  const design = readFileSync(new URL("../src/design.css", import.meta.url), "utf8");
+  // Windows(autocrlf)에서는 줄 끝이 CRLF라 아래 정규식의 \n과 맞도록 LF로 통일한다.
+  const design = readFileSync(new URL("../src/design.css", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   const outside = design.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}\n(?=\n@keyframes)/, "");
   assert.ok(!/animation:\s*cj-/.test(outside), "미디어 조건 밖에 animation이 있다");
 });
