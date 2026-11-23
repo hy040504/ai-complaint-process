@@ -135,3 +135,52 @@ test("matchesStaffSearch와 staffQueue는 본문·ID·부서 통합 검색과 AI
   assert.match(html, /CSV 내보내기/);
   assert.match(html, /추가 문의 많은순/);
 });
+
+test("staffStatsPage는 분석 탭을 렌더링하고 집계 단위·탭 전환 값을 검증한다", async () => {
+  const { setStatsView } = await import("../src/staff-stats.js");
+  const analytics = {
+    trends: [
+      { unit: "day", labels: ["11/22", "11/23"], received: [2, 3], resolved: [1, 1] },
+      { unit: "week", labels: ["11/16주", "11/23주"], received: [5, 3], resolved: [4, 1] },
+    ],
+    monthLabels: ["26.10", "26.11"],
+    categoryTrends: [{ category: "도로·교통", counts: [1, 4], total: 5, changePct: 300 }],
+    categories: ["도로·교통", "기타"],
+    districtCategory: [{ district: "모름", counts: [1, 0], total: 1 }],
+    hourWeekday: Array.from({ length: 7 }, () => Array(24).fill(0)),
+    resolutionByCategory: [{ category: "도로·교통", resolved: 2, avgDays: 1.5 }],
+    resolutionBuckets: [{ key: "within1", label: "1일 이내", count: 2 }],
+    aiFirstResponseRate: 40,
+    resolveRate: 50,
+  };
+  const stats = {
+    scopeLabel: "청주시 전체 민원 (총괄)",
+    isAdminScope: true,
+    totalComplaints: 3,
+    operational: {},
+    dbSummary: { normalizedTables: {} },
+    analytics,
+  };
+  const render = () => staffStatsPage(stats, {});
+  assert.match(render(), /접수·처리 추이/);
+  assert.match(render(), /data-action="stats-tab" data-id="region"/);
+  assert.match(render(), /기간 접수<\/span><b>5건/);
+
+  setStatsView("period", "week");
+  assert.match(render(), /11\/16주/);
+  setStatsView("period", "bogus");
+  assert.match(render(), /11\/16주/);
+
+  setStatsView("tab", "category");
+  assert.match(render(), /도로·교통/);
+  assert.match(render(), /▲ 300%/);
+  setStatsView("tab", "region");
+  assert.match(render(), /위치 미지정/);
+  setStatsView("tab", "time");
+  assert.match(render(), /시간대별 접수/);
+  setStatsView("tab", "period");
+  assert.match(render(), /평균 처리일/);
+  assert.match(render(), /1\.5일/);
+  setStatsView("tab", "trend");
+  setStatsView("period", "day");
+});

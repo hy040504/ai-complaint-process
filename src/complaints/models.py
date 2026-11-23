@@ -750,6 +750,77 @@ class StaffOperationalMetrics(Model):
     avg_open_days: float = 0.0
 
 
+class StaffTrendSeries(Model):
+    """한 집계 단위(일·주·월)의 접수·처리 건수 시계열입니다.
+
+    Attributes:
+        unit: 집계 단위 이름입니다(`day`·`week`·`month`).
+        labels: 오래된 순서의 구간 표시 문구입니다.
+        received: 구간별 접수 건수입니다.
+        resolved: 구간별 답변 게시(처리 완료) 건수입니다.
+    """
+
+    unit: Literal["day", "week", "month"]
+    labels: list[str] = Field(default_factory=list)
+    received: list[int] = Field(default_factory=list)
+    resolved: list[int] = Field(default_factory=list)
+
+
+class StaffCategoryTrend(Model):
+    """민원 분야 한 개의 최근 월별 접수 건수와 전월 대비 증감입니다."""
+
+    category: str
+    counts: list[int] = Field(default_factory=list)
+    total: int = 0
+    change_pct: float | None = None
+
+
+class StaffCrossRow(Model):
+    """지역 한 개의 분야별 접수 건수 행입니다."""
+
+    district: str
+    counts: list[int] = Field(default_factory=list)
+    total: int = 0
+
+
+class StaffResolutionRow(Model):
+    """분야 한 개의 처리기간(접수부터 답변 게시까지) 요약입니다."""
+
+    category: str
+    resolved: int = 0
+    avg_days: float | None = None
+
+
+class StaffAnalytics(Model):
+    """통계 분석·민원 분류 탭이 쓰는 시계열·교차·분포 집계입니다.
+
+    모든 집계는 담당자 소관 범위 민원만 대상으로 하며 시각은 한국 표준시(KST) 기준입니다.
+
+    Attributes:
+        trends: 일(최근 14일)·주(8주)·월(12개월) 접수·처리 시계열입니다.
+        month_labels: 분야 추이에 쓰는 최근 6개월 표시 문구입니다.
+        category_trends: 분야별 최근 6개월 접수 추이입니다.
+        categories: 교차표 열 순서의 분야 이름 목록입니다.
+        district_category: 지역×분야 교차표입니다.
+        hour_weekday: 요일(월~일)×시(0~23) 접수 건수 7행 24열 행렬입니다.
+        resolution_by_category: 분야별 평균 처리일과 처리 건수입니다.
+        resolution_buckets: 처리기간 구간(1일 이내·1~3일·3~7일·7일 초과) 분포입니다.
+        ai_first_response_rate: AI 분석 결과가 있는 민원 중 FAQ 안내로 끝난 비율(%)입니다.
+        resolve_rate: 소관 범위 전체 민원 중 답변 게시 비율(%)입니다.
+    """
+
+    trends: list[StaffTrendSeries] = Field(default_factory=list)
+    month_labels: list[str] = Field(default_factory=list)
+    category_trends: list[StaffCategoryTrend] = Field(default_factory=list)
+    categories: list[str] = Field(default_factory=list)
+    district_category: list[StaffCrossRow] = Field(default_factory=list)
+    hour_weekday: list[list[int]] = Field(default_factory=list)
+    resolution_by_category: list[StaffResolutionRow] = Field(default_factory=list)
+    resolution_buckets: list[StaffStatsBucket] = Field(default_factory=list)
+    ai_first_response_rate: float = 0.0
+    resolve_rate: float = 0.0
+
+
 class StaffStatsResponse(Model):
     """담당자 RBAC 소관 범위 기준 통계 대시보드 응답입니다."""
 
@@ -765,6 +836,7 @@ class StaffStatsResponse(Model):
     by_category: list[StaffStatsBucket] = Field(default_factory=list)
     by_ai_outcome: list[StaffStatsBucket] = Field(default_factory=list)
     by_department: list[StaffStatsBucket] = Field(default_factory=list)
+    analytics: StaffAnalytics = Field(default_factory=StaffAnalytics)
     db_summary: NormalizedDbSummary
 
 

@@ -14,7 +14,7 @@ import {
   staffReviewInfo,
   daysSince,
 } from "./staff.js";
-import { staffStatsPage } from "./staff-stats.js";
+import { setStatsView, staffStatsPage } from "./staff-stats.js";
 import {
   citizenShell,
   citizenHome,
@@ -1572,6 +1572,11 @@ document.addEventListener("click", async (event) => {
   if (action === "toggle-stats-synthetic") {
     staffIncludeSynthetic = !staffIncludeSynthetic;
     await loadStaffStats(true);
+    render();
+    return;
+  }
+  if (action === "stats-tab" || action === "stats-period") {
+    setStatsView(action === "stats-tab" ? "tab" : "period", id);
     render();
     return;
   }

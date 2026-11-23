@@ -7,6 +7,7 @@
 
 import csv
 import io
+from datetime import date, datetime, timedelta, timezone
 
 from src.complaints.models import (
     CATEGORIES,
@@ -14,10 +15,15 @@ from src.complaints.models import (
     Complaint,
     NormalizedDbSummary,
     PublicComplaint,
+    StaffAnalytics,
+    StaffCategoryTrend,
+    StaffCrossRow,
     StaffExportQuery,
     StaffOperationalMetrics,
+    StaffResolutionRow,
     StaffStatsBucket,
     StaffStatsResponse,
+    StaffTrendSeries,
     utcnow,
 )
 
@@ -177,6 +183,165 @@ def filter_and_sort_staff_rows(
     return filtered
 
 
+KST = timezone(timedelta(hours=9))
+TREND_SPANS: tuple[tuple[str, int], ...] = (("day", 14), ("week", 8), ("month", 12))
+CATEGORY_TREND_MONTHS = 6
+RESOLUTION_BUCKETS: tuple[tuple[str, str, float], ...] = (
+    ("within1", "1일 이내", 1.0),
+    ("within3", "1~3일", 3.0),
+    ("within7", "3~7일", 7.0),
+    ("over7", "7일 초과", float("inf")),
+)
+
+
+def _to_kst(value: datetime) -> datetime:
+    """시각을 한국 표준시로 바꿉니다. 시간대 정보가 없으면 UTC로 간주합니다."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(KST)
+
+
+def _month_index(value: datetime) -> int:
+    """KST 기준 연·월을 단조 증가하는 정수(연*12+월-1)로 바꿉니다."""
+    return value.year * 12 + value.month - 1
+
+
+def _period_index(unit: str, value: datetime, today: date) -> int:
+    """KST 시각이 오늘 기준 몇 번째 이전 구간인지 구합니다. 0이 현재 구간입니다."""
+    if unit == "day":
+        return (today - value.date()).days
+    if unit == "week":
+        monday = today - timedelta(days=today.weekday())
+        value_monday = value.date() - timedelta(days=value.weekday())
+        return (monday - value_monday).days // 7
+    return _month_index(datetime(today.year, today.month, 1)) - _month_index(value)
+
+
+def _period_label(unit: str, back: int, today: date) -> str:
+    """오늘 기준 `back` 구간 이전의 표시 문구를 만듭니다."""
+    if unit == "day":
+        target = today - timedelta(days=back)
+        return f"{target.month}/{target.day}"
+    if unit == "week":
+        monday = today - timedelta(days=today.weekday()) - timedelta(weeks=back)
+        return f"{monday.month}/{monday.day}주"
+    month = today.year * 12 + today.month - 1 - back
+    return f"{month // 12 % 100:02d}.{month % 12 + 1:02d}"
+
+
+def build_staff_analytics(rows: list[Complaint], *, now: datetime) -> StaffAnalytics:
+    """소관 범위 민원으로 시계열·교차·시간대·처리기간 분석 집계를 만듭니다.
+
+    Args:
+        rows: 시연 포함 여부 필터를 마친 소관 범위 민원 목록입니다.
+        now: 구간 기준이 되는 현재 시각입니다.
+
+    Returns:
+        통계 분석·민원 분류 탭용 `StaffAnalytics`입니다. 날짜는 KST 기준입니다.
+    """
+    today = _to_kst(now).date()
+    trends: list[StaffTrendSeries] = []
+    for unit, span in TREND_SPANS:
+        received = [0] * span
+        resolved = [0] * span
+        for row in rows:
+            back = _period_index(unit, _to_kst(row.date), today)
+            if 0 <= back < span:
+                received[span - 1 - back] += 1
+            if row.published is not None:
+                back = _period_index(unit, _to_kst(row.published.date), today)
+                if 0 <= back < span:
+                    resolved[span - 1 - back] += 1
+        trends.append(
+            StaffTrendSeries(
+                unit=unit,  # type: ignore[arg-type]
+                labels=[_period_label(unit, span - 1 - i, today) for i in range(span)],
+                received=received,
+                resolved=resolved,
+            )
+        )
+
+    months = CATEGORY_TREND_MONTHS
+    categories: list[str] = [str(cat) for cat in CATEGORIES]
+    cat_series = {cat: [0] * months for cat in categories}
+    district_names = list(STATS_DISTRICTS)
+    cross = {d: [0] * len(categories) for d in district_names}
+    hours = [[0] * 24 for _ in range(7)]
+    durations: dict[str, list[float]] = {cat: [] for cat in categories}
+    bucket_counts = {key: 0 for key, _, _ in RESOLUTION_BUCKETS}
+
+    for row in rows:
+        created = _to_kst(row.date)
+        back = _period_index("month", created, today)
+        if row.category in cat_series and 0 <= back < months:
+            cat_series[row.category][months - 1 - back] += 1
+        if row.district in cross and row.category in categories:
+            cross[row.district][categories.index(row.category)] += 1
+        hours[created.weekday()][created.hour] += 1
+        if row.published is not None:
+            elapsed = _to_kst(row.published.date) - created
+            days = max(0.0, elapsed.total_seconds() / 86400.0)
+            if row.category in durations:
+                durations[row.category].append(days)
+            for key, _, limit in RESOLUTION_BUCKETS:
+                if days <= limit:
+                    bucket_counts[key] += 1
+                    break
+
+    category_trends = []
+    for cat in categories:
+        counts = cat_series[cat]
+        prev, last = counts[-2], counts[-1]
+        category_trends.append(
+            StaffCategoryTrend(
+                category=cat,
+                counts=counts,
+                total=sum(counts),
+                change_pct=round((last - prev) / prev * 100.0, 1) if prev else None,
+            )
+        )
+    category_trends.sort(key=lambda item: (-item.total, item.category))
+
+    with_ai = [row for row in rows if row.ai_assist is not None]
+    faq_done = sum(
+        1 for row in with_ai if row.ai_assist and row.ai_assist.outcome == "faq_answer"
+    )
+    published = sum(1 for row in rows if row.published is not None)
+    return StaffAnalytics(
+        trends=trends,
+        month_labels=[
+            _period_label("month", months - 1 - i, today) for i in range(months)
+        ],
+        category_trends=category_trends,
+        categories=categories,
+        district_category=[
+            StaffCrossRow(district=d, counts=cross[d], total=sum(cross[d]))
+            for d in district_names
+        ],
+        hour_weekday=hours,
+        resolution_by_category=[
+            StaffResolutionRow(
+                category=cat,
+                resolved=len(durations[cat]),
+                avg_days=(
+                    round(sum(durations[cat]) / len(durations[cat]), 1)
+                    if durations[cat]
+                    else None
+                ),
+            )
+            for cat in categories
+        ],
+        resolution_buckets=[
+            StaffStatsBucket(key=key, label=label, count=bucket_counts[key])
+            for key, label, _ in RESOLUTION_BUCKETS
+        ],
+        ai_first_response_rate=(
+            round(faq_done / len(with_ai) * 100.0, 1) if with_ai else 0.0
+        ),
+        resolve_rate=round(published / len(rows) * 100.0, 1) if rows else 0.0,
+    )
+
+
 def build_staff_stats(
     actor: Actor,
     scoped_all: list[Complaint],
@@ -328,6 +493,7 @@ def build_staff_stats(
         by_category=by_category,
         by_ai_outcome=by_ai_outcome,
         by_department=by_department,
+        analytics=build_staff_analytics(rows, now=now),
         db_summary=db_summary,
     )
 
