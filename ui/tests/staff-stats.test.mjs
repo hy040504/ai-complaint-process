@@ -1,4 +1,4 @@
-﻿/** 담당자 통계 대시보드·드릴다운 링크·큐 통합 검색·CSV 내보내기 URL을 검증합니다. */
+/** 담당자 통계 대시보드·드릴다운 링크·큐 통합 검색·CSV 내보내기 URL을 검증합니다. */
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -197,6 +197,12 @@ test("staffStatsPage는 통계 분석·민원 분류 구역과 탭·지역·집�
   assert.match(html, /▼ 50% 그 전 일 대비 · 이번 일 3건\(진행 중\)/);
   assert.match(html, /class="catrow"/);
   assert.match(html, /야간·주말 접수가/);
+  // 일평균은 진행 중인 마지막 구간을 빼고 계산한다(받은 값 [?, ?, 3]의 앞 구간만 사용).
+  assert.match(html, /일평균 [\d.]+건 · 진행 중 일 제외/);
+  // 직전 구간 접수가 5건 미만이면 분야별 전기 대비는 표시하지 않는다.
+  assert.doesNotMatch(html, /class="tag (red|amber|green)">[+\-]?\d/);
+  // 0건 막대는 높이 0으로 그려 1건과 구별한다.
+  assert.match(html, /style="height:0px" title="(접수|처리) 0건"/);
   assert.match(html, /분야별 12개월 접수 추이/);
   assert.match(html, /<svg class="stats-svg radar"/);
 

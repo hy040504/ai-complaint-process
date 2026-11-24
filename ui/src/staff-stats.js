@@ -111,10 +111,11 @@ const PERIODS = [
   ["week", "주간별"],
   ["month", "월별"],
 ];
+/** `days`는 구간 하나의 평균 일수입니다. 일평균은 진행 중인 마지막 구간을 빼고 계산합니다. */
 const PERIOD_META = {
-  day: { label: "최근 14일", unit: "일", days: 14 },
-  week: { label: "최근 8주", unit: "주", days: 56 },
-  month: { label: "최근 12개월", unit: "월", days: 365 },
+  day: { label: "최근 14일", unit: "일", days: 1 },
+  week: { label: "최근 8주", unit: "주", days: 7 },
+  month: { label: "최근 12개월", unit: "월", days: 30.4 },
 };
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -130,7 +131,7 @@ const view = { tab: "overview", period: "day", region: 0 };
 export function setStatsView(kind, value) {
   if (kind === "region") {
     const index = Number(value);
-    if (Number.isInteger(index) && index >= 0 && index < 20) view.region = index;
+    if (Number.isInteger(index) && index >= 0) view.region = index;
     return;
   }
   const allowed = kind === "tab" ? CLASSIFY_TABS : PERIODS;
@@ -140,6 +141,20 @@ export function setStatsView(kind, value) {
 const n = (value) => Number(value) || 0;
 const sum = (list) => (list || []).reduce((a, b) => a + n(b), 0);
 const fmt = (value) => n(value).toLocaleString("ko-KR");
+
+/** 전기 대비 증감률을 표시할 최소 비교 건수입니다. 이보다 적으면 소수 건 변동이 과장됩니다. */
+const MIN_BASE = 5;
+
+/** 막대 높이(px)입니다. 0건은 0으로 그려 1건과 구별하고, 1건 이상은 최소 4px을 둡니다. */
+function barPx(value, peak) {
+  return value > 0 ? Math.max(4, Math.round((value / peak) * 130)) : 0;
+}
+
+/** 완료된 구간만으로 일평균 접수를 계산합니다(마지막 진행 중 구간 제외). */
+function dailyAverage(received, meta) {
+  const done = (received || []).slice(0, -1);
+  return done.length ? sum(done) / (done.length * meta.days) : 0;
+}
 
 /** 증감률(%)을 계산합니다. 비교 대상이 0이면 null입니다. */
 function changePct(last, prev) {
@@ -182,7 +197,7 @@ function trendBars(series) {
   const cols = (series.labels || [])
     .map(
       (label, i) =>
-        `<div class="tcol${i === lastIndex ? " hot" : ""}"><em>${recv[i]}</em><div class="tbars"><b style="height:${Math.max(4, Math.round((recv[i] / peak) * 130))}px" title="접수 ${recv[i]}건"></b><b class="d" style="height:${Math.max(4, Math.round((done[i] / peak) * 130))}px" title="처리 ${done[i]}건"></b></div><span>${esc(label)}</span></div>`,
+        `<div class="tcol${i === lastIndex ? " hot" : ""}"><em>${recv[i]}</em><div class="tbars"><b style="height:${barPx(recv[i], peak)}px" title="접수 ${recv[i]}건"></b><b class="d" style="height:${barPx(done[i], peak)}px" title="처리 ${done[i]}건"></b></div><span>${esc(label)}</span></div>`,
     )
     .join("");
   return `<div class="tchart">${cols}</div><div class="lgd"><span class="lg-item"><i class="sw-recv"></i>접수</span><span class="lg-item"><i class="sw-done"></i>처리(답변 게시)</span><span class="lg-note">마지막 막대는 진행 중인 구간입니다</span></div>`;
@@ -196,7 +211,7 @@ function categoryRanking(series, analytics, includeSynthetic) {
     .map(([name, counts]) => ({
       name,
       total: sum(counts),
-      pct: changePct(n(counts.at(-2)), n(counts.at(-3))),
+      pct: n(counts.at(-3)) >= MIN_BASE ? changePct(n(counts.at(-2)), n(counts.at(-3))) : null,
       info: avgDays.get(name),
     }))
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
@@ -209,7 +224,7 @@ function categoryRanking(series, analytics, includeSynthetic) {
       return `<a class="catrow" href="#/staff/complaints?category=${encodeURIComponent(r.name)}${syn}"><span class="rk">${i + 1}</span><div class="nm"><b>${esc(r.name)}</b><span>처리 ${n(r.info?.resolved)}건</span></div><div class="bw"><div class="bar"><i style="width:${share.toFixed(1)}%;background:${shades[Math.min(i, 2)]}"></i></div></div><span class="pc">${share.toFixed(1)}</span><span class="ct">${fmt(r.total)}</span><span class="av">${avg}</span><span class="dl">${deltaTag(r.pct)}</span></a>`;
     })
     .join("");
-  return `<div class="catrow-head"><span class="rk"></span><span class="nm">분야</span><span class="bw">비중</span><span class="pc">%</span><span class="ct">건수</span><span class="av">평균 처리</span><span class="dl">전기 대비</span></div>${body}`;
+  return `<div class="catrow-head"><span class="rk"></span><span class="nm">분야</span><span class="bw">비중</span><span class="pc">%</span><span class="ct">건수</span><span class="av">평균 처리</span><span class="dl" title="직전 구간 접수가 ${MIN_BASE}건 미만이면 변동이 커서 표시하지 않습니다">전기 대비</span></div>${body}`;
 }
 
 /** 요일×시각 행렬에서 시간대별 합계를 구합니다. */
@@ -242,7 +257,7 @@ function periodCompare(analytics) {
       const r = sum(t.received);
       const d = sum(t.resolved);
       const on = view.period === t.unit;
-      return `<tr class="clickable${on ? " on" : ""}" data-action="stats-period" data-id="${t.unit}"><td><b>${esc(meta.label)}</b></td><td class="num">${fmt(r)}</td><td class="num">${fmt(d)}</td><td class="num">${r ? Math.round((d / r) * 100) : 0}%</td><td class="num">${(r / meta.days).toFixed(1)}</td><td>${on ? "현재 보는 기간" : "누르면 위 차트가 바뀝니다"}</td></tr>`;
+      return `<tr class="clickable${on ? " on" : ""}" data-action="stats-period" data-id="${t.unit}"><td><b>${esc(meta.label)}</b></td><td class="num">${fmt(r)}</td><td class="num">${fmt(d)}</td><td class="num">${r ? Math.round((d / r) * 100) : 0}%</td><td class="num">${dailyAverage(t.received, meta).toFixed(1)}</td><td>${on ? "현재 보는 기간" : "누르면 위 차트가 바뀝니다"}</td></tr>`;
     })
     .join("");
   return `<div class="stats-db-table-wrap"><table><thead><tr><th scope="col">구분</th><th scope="col" class="num">접수</th><th scope="col" class="num">답변 게시</th><th scope="col" class="num">접수 대비</th><th scope="col" class="num">일평균</th><th scope="col">비고</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -269,7 +284,7 @@ function statsAnalysis(analytics, includeSynthetic) {
   const rate = total ? Math.round((doneTotal / total) * 100) : 0;
   const switcher = `<div class="scope" role="group" aria-label="집계 단위">${PERIODS.map(([key, label]) => `<button type="button" data-action="stats-period" data-id="${key}" aria-pressed="${view.period === key}">${label}</button>`).join("")}</div>`;
   const cards = [
-    metricCard(`${meta.label} 접수`, `${fmt(total)}건`, `일평균 ${(total / meta.days).toFixed(1)}건`, "blue"),
+    metricCard(`${meta.label} 접수`, `${fmt(total)}건`, `일평균 ${dailyAverage(recv, meta).toFixed(1)}건 · 진행 중 ${meta.unit} 제외`, "blue"),
     metricCard(`${meta.label} 답변 게시`, `${fmt(doneTotal)}건`, `접수 대비 ${rate}% · 접수일과 답변일이 달라 100%를 넘을 수 있음`, "blue"),
     metricCard(
       `지난 ${meta.unit} 접수`,
@@ -314,6 +329,7 @@ function classifyRegion(analytics, includeSynthetic) {
   const cats = analytics.categories || [];
   const rows = analytics.districtCategory || [];
   const index = Math.min(view.region, Math.max(0, rows.length - 1));
+  view.region = index; // 자료가 줄어 번호가 범위를 벗어나면 선택 상태도 실제 선택 행으로 맞춥니다.
   const row = rows[index];
   const peak = Math.max(1, ...rows.flatMap((r) => (r.counts || []).map(n)));
   const syn = includeSynthetic ? "" : "&synthetic=0";
