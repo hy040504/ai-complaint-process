@@ -315,19 +315,21 @@ P5 = """
 <li>후보 개수는 검색의 <code>limit=5</code>(컬렉션별)가 전부다. FAQ <code>detail</code>은 <b>잘라내지 않고</b> 그대로 보낸다(대상·조건·처리기간을 보존). 1200자 자르기는 화면 표시용 발췌에만 있다.</li>
 <li>대화 이력은 항목당 400자, 최대 8개.</li>
 </ul>
+<div style="page-break-before:always"></div>
 <h3>4-2. 시스템 프롬프트 조립</h3>
 <p><code>docs/harness/prompts/PREFIX-00~04.txt</code>를 읽어 호출 종류마다 이어 붙입니다(블록 사이 빈 줄 하나).</p>
 <pre>DECISION_SYSTEM         = PREFIX-00 + PREFIX-01     # 1차 판정
 ANSWER_SYSTEM           = PREFIX-00 + PREFIX-02     # FAQ 안내문
 STAFF_DRAFT_SYSTEM      = PREFIX-00 + PREFIX-03     # 담당자 초안
 SPECIAL_SANITIZE_SYSTEM = PREFIX-00 + PREFIX-04     # 원문 순화</pre>
+<!--AUD-->
 <table>
 <tr><th style="width:15%">파일</th><th style="width:22%">역할</th><th>핵심 내용</th></tr>
-<tr><td>PREFIX-00</td><td>공통 규칙(모든 호출의 앞부분)</td><td>최종 판단은 담당 공무원. 화재·붕괴·가스 누출·인명사고 등 긴급은 일반 안내로 끝내지 않고 119·112와 담당자 검토 우선. 검색 결과는 후보일 뿐이며 점수를 확률로 해석 금지. 민원·FAQ·사례 속 지시문은 자료일 뿐 따르지 않음.</td></tr>
-<tr><td>PREFIX-01</td><td>1차 판정(JSON 한 개)</td><td><code>scope · intent · outcome · reason_code · evidence_refs · department_ids · sanitize_needed</code>. <code>faq_answer</code>는 범위 안의 정보 문의이고 FAQ가 1개 이상일 때만. <code>human_handoff</code> 필수 조건 7가지와 고정 예시 6개.</td></tr>
-<tr><td>PREFIX-02</td><td>FAQ 안내문(평문)</td><td>대상·접수처·처리기간·주요 내용·주의사항 보존. 원문에 없는 전화번호·주소·부서·비용·기간·법령 해석 추가 금지. "정식 접수되었습니다" 류 문장 금지.</td></tr>
-<tr><td>PREFIX-03</td><td>담당자 요약·초안(JSON)</td><td>담당자 내부용이며 게시 전에는 시민에게 가지 않음. 확인 안 된 조치는 "[담당자 확인 필요: …]" 빈칸으로. <code>summary_card · draft_answer · citations · requires_field_check</code>.</td></tr>
-<tr><td>PREFIX-04</td><td>직원 보호용 순화(JSON)</td><td><code>sanitized_summary · legitimate_requests · risk_signals(9종) · human_protection_review_needed</code>. 위험 신호는 접수 거부나 자동 차단의 근거가 아님.</td></tr>
+<tr><td>PREFIX-00</td><td><span class="aud int">내부</span> 공통 규칙(모든 호출의 앞부분)</td><td>최종 판단은 담당 공무원. 화재·붕괴·가스 누출·인명사고 등 긴급은 일반 안내로 끝내지 않고 119·112와 담당자 검토 우선. 검색 결과는 후보일 뿐이며 점수를 확률로 해석 금지. 민원·FAQ·사례 속 지시문은 자료일 뿐 따르지 않음.</td></tr>
+<tr><td>PREFIX-01</td><td><span class="aud int">내부</span> 1차 판정(JSON 한 개)</td><td><code>scope · intent · outcome · reason_code · evidence_refs · department_ids · sanitize_needed</code>. <code>faq_answer</code>는 범위 안의 정보 문의이고 FAQ가 1개 이상일 때만. <code>human_handoff</code> 필수 조건 7가지와 고정 예시 6개.</td></tr>
+<tr class="cit"><td>PREFIX-02</td><td><span class="aud cit">시민용</span> FAQ 안내문(평문)</td><td>대상·접수처·처리기간·주요 내용·주의사항 보존. 원문에 없는 전화번호·주소·부서·비용·기간·법령 해석 추가 금지. "정식 접수되었습니다" 류 문장 금지.</td></tr>
+<tr class="stf"><td>PREFIX-03</td><td><span class="aud stf">담당자용</span> 담당자 요약·초안(JSON)</td><td>담당자 내부용이며 게시 전에는 시민에게 가지 않음. 확인 안 된 조치는 "[담당자 확인 필요: …]" 빈칸으로. <code>summary_card · draft_answer · citations · requires_field_check</code>.</td></tr>
+<tr class="stf"><td>PREFIX-04</td><td><span class="aud stf">담당자용</span> 직원 보호용 순화(JSON)</td><td><code>sanitized_summary · legitimate_requests · risk_signals(9종) · human_protection_review_needed</code>. 위험 신호는 접수 거부나 자동 차단의 근거가 아님.</td></tr>
 </table>
 <h3>4-3. 호출 순서</h3>
 <table>
@@ -338,8 +340,8 @@ SPECIAL_SANITIZE_SYSTEM = PREFIX-00 + PREFIX-04     # 원문 순화</pre>
 <tr><td>4</td><td>검색 호출</td><td>없음</td></tr>
 <tr><td>5</td><td><b>판정</b></td><td>PREFIX-00+01</td></tr>
 <tr><td>6</td><td>코드 검증 <code>validate_decision</code></td><td>없음</td></tr>
-<tr><td>7</td><td>FAQ 안내문(<code>faq_answer</code>일 때)</td><td>PREFIX-00+02</td></tr>
-<tr><td>8</td><td>순화·담당자 초안(조건부, 동시 실행 가능)</td><td>PREFIX-00+04 / 00+03</td></tr>
+<tr class="cit"><td>7</td><td><span class="aud cit">시민용</span> FAQ 안내문(<code>faq_answer</code>일 때)</td><td>PREFIX-00+02</td></tr>
+<tr class="stf"><td>8</td><td><span class="aud stf">담당자용</span> 순화·담당자 초안(조건부, 동시 실행 가능. 시민 챗봇 경로에서는 실행 안 함)</td><td>PREFIX-00+04 / 00+03</td></tr>
 </table>
 <p class="small">프롬프트에는 "후보가 없으면 검색 도구를 호출하라"는 문구가 있지만, 파이프라인이 항상 후보를 미리 넣어 보내므로 일반 흐름에서는 도구가 호출되지 않는다.</p>
 """
@@ -417,7 +419,7 @@ P8 = """
 <h2>7. 세 갈래와 케이스별 대응</h2>
 <h3>7-1. 갈래별 응답 만드는 법</h3>
 <table>
-<tr><th style="width:17%">갈래</th><th style="width:27%">언제</th><th>시민에게 가는 문구가 만들어지는 방식</th></tr>
+<tr><th style="width:17%">갈래</th><th style="width:27%">언제</th><th><span class="aud cit">시민용</span> 시민에게 가는 문구가 만들어지는 방식</th></tr>
 <tr><td><b>faq_answer</b><br>FAQ 안내</td><td>범위 안의 정보 문의이고 조건에 맞는 FAQ가 있음</td><td><b>LLM이 작성</b>(PREFIX-02). 판정이 인용한 FAQ만 넣고 조건을 보존한 평문을 받는다. 20자 미만이거나 호출 실패면 담당자 검토로 바꾼다(<code>faq_generation_failed</code>).</td></tr>
 <tr><td><b>department_suggestion</b><br>부서 추천</td><td>조치 요청이거나 FAQ가 부족하고, 쓸 만한 부서 후보가 있음</td><td><b>정해진 틀</b>(LLM 호출 없음): "유사한 공개 사례를 기준으로 담당 부서 후보를 안내합니다. 공식 접수·이관이 아니며 담당자 확인이 필요합니다.<br>- {부서명} (업무분장: {상태}, 자동 이관 아님)"</td></tr>
 <tr><td><b>human_handoff</b><br>담당자 검토</td><td>근거 부족, 긴급, 복합, 범위 밖 등</td><td><b>reason_code별 고정 문구</b>. 예) insufficient_evidence "현재 검색 근거만으로 안내를 확정하기 어렵습니다. 담당자 검토가 필요합니다." / mixed_request "안내와 조치가 섞여 있어 일부 FAQ만으로 전체를 종결하지 않습니다. …"</td></tr>
@@ -425,8 +427,8 @@ P8 = """
 <h3>7-2. 후속 호출 조건</h3>
 <table>
 <tr><th style="width:20%">호출</th><th>실행 조건</th></tr>
-<tr><td>순화(PREFIX-04)</td><td>판정 JSON의 <code>sanitize_needed=true</code>이거나, false여도 원문에 분명한 욕설이 있을 때. 필드가 없으면 정규식 휴리스틱(시설물 서술 "가로등이 꺼져" 등은 제외). 결과는 요약 10자 이상, 위험 신호 9종만 허용으로 검증.</td></tr>
-<tr><td>담당자 초안(PREFIX-03)</td><td><code>outcome ≠ faq_answer</code> 이고 <code>scope ≠ out_of_scope</code>. 검증은 요약 카드 4필드, 초안 20자 이상, 인용은 검색 후보에 있는 것만.</td></tr>
+<tr class="stf"><td>순화(PREFIX-04)<br><span class="aud stf">담당자용</span></td><td>판정 JSON의 <code>sanitize_needed=true</code>이거나, false여도 원문에 분명한 욕설이 있을 때. 필드가 없으면 정규식 휴리스틱(시설물 서술 "가로등이 꺼져" 등은 제외). 결과는 요약 10자 이상, 위험 신호 9종만 허용으로 검증.</td></tr>
+<tr class="stf"><td>담당자 초안(PREFIX-03)<br><span class="aud stf">담당자용</span></td><td><code>outcome ≠ faq_answer</code> 이고 <code>scope ≠ out_of_scope</code>. 검증은 요약 카드 4필드, 초안 20자 이상, 인용은 검색 후보에 있는 것만.</td></tr>
 <tr><td>JSON 재시도</td><td>순화·초안은 형식 오류 시 "[형식 재확인] … JSON 객체 하나만" 문구를 붙여 <b>1회</b> 다시 호출. <b>판정은 재시도가 없다.</b></td></tr>
 </table>
 <p class="small">순화와 초안은 시민 갈래를 바꾸지 않는다. 실패하면 해당 필드만 비고 <code>policy_failures</code>에 사유가 남는다.</p>
@@ -445,6 +447,17 @@ P8 = """
 <p class="small">위 표는 "어떤 결과가 나오는가"입니다. 각 케이스에서 <b>어떤 프롬프트로, 어떤 데이터를 LLM에 넘기고, 실제로 무엇이 저장되는가</b>는 아래 8-4에 정리했습니다.</p>
 <h3>7-4. 케이스별 두 번째 로직 — 프롬프트 조합·넘기는 데이터·저장되는 값</h3>
 <p>1차 판정 뒤에 무엇을 더 호출하는지는 판정 결과(갈래·범위)와 원문 조건으로 <b>코드가</b> 정합니다(<code>pipeline.py</code> 700~930행). 먼저 모든 케이스가 공유하는 첫 호출부터 봅니다.</p>
+<!--AUD-->
+<table>
+<tr><th style="width:22%">만들어지는 것</th><th style="width:10%">대상</th><th style="width:22%">만드는 호출</th><th style="width:16%">시민 챗봇 경로</th><th>저장 필드</th></tr>
+<tr class="cit"><td>FAQ 안내문</td><td><span class="aud cit">시민용</span></td><td>LLM(PREFIX-00+02)</td><td>만든다</td><td><code>answer</code></td></tr>
+<tr class="cit"><td>부서 추천 문구</td><td><span class="aud cit">시민용</span></td><td>고정 틀(LLM 없음)</td><td>만든다</td><td><code>answer</code></td></tr>
+<tr class="cit"><td>담당자 검토 문구</td><td><span class="aud cit">시민용</span></td><td>사유별 고정 문구(LLM 없음)</td><td>만든다</td><td><code>answer</code></td></tr>
+<tr class="stf"><td>담당자 요약 카드·초안</td><td><span class="aud stf">담당자용</span></td><td>LLM(PREFIX-00+03)</td><td><b>만들지 않는다</b></td><td><code>staff_draft</code></td></tr>
+<tr class="stf"><td>순화 요약·위험 신호</td><td><span class="aud stf">담당자용</span></td><td>LLM(PREFIX-00+04)</td><td><b>만들지 않는다</b></td><td><code>sanitize</code></td></tr>
+<tr><td>1차 판정</td><td><span class="aud int">내부</span></td><td>LLM(PREFIX-00+01)</td><td>만든다</td><td><code>decision</code></td></tr>
+</table>
+<p class="small">시민 챗봇은 <code>include_staff_outputs=False</code>로 같은 파이프라인을 호출해 담당자용 산출물(초안·순화)의 LLM 호출을 건너뜁니다. 접수된 민원에서는 시민 문구와 담당자용 산출물이 모두 만들어지지만, 시민에게는 담당자가 게시한 답변만 보입니다.</p>
 <div class="note"><b>공통 1차 판정 호출</b> — 사전 검증을 통과해 검색까지 성공한 모든 민원은 같은 입력으로 한 번 호출합니다.<br>
 시스템 프롬프트 = <code>PREFIX-00 + PREFIX-01</code>. 사용자 JSON = <b>민원 원문 전체</b>(자르지 않음, 1~2000자) + <b>RAG 후보 전부</b>.</div>
 <pre>{"query": "민원 원문 전체(제목+본문)",
@@ -465,11 +478,11 @@ P8 = """
 <h4 style="page-break-before:always">② 1차 판정 이후 갈래별 후속 호출</h4>
 <table>
 <tr><th style="width:12%">갈래</th><th style="width:22%">후속 LLM 호출·시스템 프롬프트</th><th style="width:30%">그 호출에 넘기는 데이터</th><th>시민 문구와 실제 저장 값</th></tr>
-<tr><td><b>faq_answer</b></td><td>안내문 <code>PREFIX-00+02</code> 1회.<br>담당자 초안은 없음(갈래가 faq_answer이므로)</td><td><code>{"query": 원문 전체, "faq": [판정이 인용한 FAQ만, detail 전체]}</code><br>사례·부서 후보는 <b>넘기지 않음</b>. 챗봇이면 <code>conversation_history</code> 추가</td><td>시민 문구 = LLM이 쓴 평문(20자 이상). 저장: 판정, 인용 FAQ, 후보 목록 전체, 단계별 소요.<br>20자 미만이거나 호출 실패면 갈래를 <code>human_handoff / faq_generation_failed</code>로 바꾸고 고정 문구를 쓰며, <b>이때는 담당자 초안 호출이 이어서 실행</b>된다</td></tr>
-<tr><td><b>department_suggestion</b></td><td>시민 문구는 <b>LLM 호출 없음</b>(고정 틀).<br>담당자 초안 <code>PREFIX-00+03</code> 1회</td><td>초안 호출: 아래 "담당자 초안 입력"(원문 전체 + 후보 전부 + 갈래·사유)</td><td>시민 문구 = "유사한 공개 사례를 기준으로… - {부서명} (업무분장: {상태}, 자동 이관 아님)". 저장: 검증을 통과한 <code>department_ids</code>, 부서 목록의 <code>selected=true</code>, 담당자 초안. <code>automatic_transfer</code>는 항상 false</td></tr>
-<tr><td><b>human_handoff</b><br>(범위 안)</td><td>담당자 초안 <code>PREFIX-00+03</code> 1회</td><td>같은 "담당자 초안 입력"</td><td>시민 문구 = <code>reason_code</code>별 고정 문구(LLM이 쓰지 않음). 저장: 사유 코드, 담당자 초안, 있으면 순화 결과</td></tr>
+<tr class="cit"><td><b>faq_answer</b></td><td><span class="aud cit">시민용</span> 안내문 <code>PREFIX-00+02</code> 1회.<br>담당자 초안은 없음(갈래가 faq_answer이므로)</td><td><code>{"query": 원문 전체, "faq": [판정이 인용한 FAQ만, detail 전체]}</code><br>사례·부서 후보는 <b>넘기지 않음</b>. 챗봇이면 <code>conversation_history</code> 추가</td><td>시민 문구 = LLM이 쓴 평문(20자 이상). 저장: 판정, 인용 FAQ, 후보 목록 전체, 단계별 소요.<br>20자 미만이거나 호출 실패면 갈래를 <code>human_handoff / faq_generation_failed</code>로 바꾸고 고정 문구를 쓰며, <b>이때는 담당자 초안 호출이 이어서 실행</b>된다</td></tr>
+<tr><td><b>department_suggestion</b></td><td><span class="aud cit">시민용</span> 문구는 <b>LLM 호출 없음</b>(고정 틀).<br><span class="aud stf">담당자용</span> 초안 <code>PREFIX-00+03</code> 1회</td><td>초안 호출: 아래 "담당자 초안 입력"(원문 전체 + 후보 전부 + 갈래·사유)</td><td>시민 문구 = "유사한 공개 사례를 기준으로… - {부서명} (업무분장: {상태}, 자동 이관 아님)". 저장: 검증을 통과한 <code>department_ids</code>, 부서 목록의 <code>selected=true</code>, 담당자 초안. <code>automatic_transfer</code>는 항상 false</td></tr>
+<tr><td><b>human_handoff</b><br>(범위 안)</td><td><span class="aud stf">담당자용</span> 초안 <code>PREFIX-00+03</code> 1회</td><td>같은 "담당자 초안 입력"</td><td>시민 문구 = <code>reason_code</code>별 고정 문구(LLM이 쓰지 않음). 저장: 사유 코드, 담당자 초안, 있으면 순화 결과</td></tr>
 <tr><td><b>human_handoff</b><br>(모델이 범위 밖·scope=out_of_scope로 판정)</td><td>초안 LLM <b>호출 안 함</b></td><td>—</td><td>고정 담당자 초안(위 사전 관할 검증과 같은 틀)을 만들어 저장</td></tr>
-<tr><td><b>순화</b><br>(갈래와 무관, 조건부)</td><td><code>PREFIX-00+04</code> 1회</td><td><code>{"query": 원문 전체}</code> <b>만</b>. FAQ·사례·부서 후보와 판정 결과를 넣지 않음</td><td>실행 조건은 8-2와 같음. 저장: 순화 요약·정당한 요청·위험 신호(9종)·사람 보호 검토 필요 여부. 갈래는 바꾸지 않음. 순화와 초안이 둘 다 필요하면 <b>동시에</b> 실행(exaone은 초안을 약 1초 늦춰 초당 한도 회피)</td></tr>
+<tr class="stf"><td><b>순화</b><br>(갈래와 무관, 조건부)</td><td><span class="aud stf">담당자용</span> <code>PREFIX-00+04</code> 1회</td><td><code>{"query": 원문 전체}</code> <b>만</b>. FAQ·사례·부서 후보와 판정 결과를 넣지 않음</td><td>실행 조건은 8-2와 같음. 저장: 순화 요약·정당한 요청·위험 신호(9종)·사람 보호 검토 필요 여부. 갈래는 바꾸지 않음. 순화와 초안이 둘 다 필요하면 <b>동시에</b> 실행(exaone은 초안을 약 1초 늦춰 초당 한도 회피)</td></tr>
 </table>
 <h4>담당자 초안 입력 (PREFIX-03)</h4>
 <pre>{"query": "민원 원문 전체",
@@ -483,6 +496,18 @@ P8 = """
 <li>초안 입력에는 판정이 고른 <code>evidence_refs</code>·<code>department_ids</code>가 <b>들어가지 않는다</b>. 모델은 갈래와 사유 코드만 알고, 후보 전체를 다시 보며 초안을 쓴다.</li>
 <li>초안 결과는 코드가 다시 검사한다. 요약 카드 4필드와 20자 이상 초안이 있어야 하고, 인용은 <b>이번 검색 후보에 있는 문서</b>만 남긴다. 형식 오류면 같은 입력 뒤에 "[형식 재확인]" 문구를 붙여 1회만 다시 호출한다.</li>
 <li>어떤 호출이든 실패하면 시민 갈래는 그대로이고 해당 필드(순화·초안)만 비며, 사유가 <code>policy_failures</code>에 남는다.</li>
+</ul>
+<h4>순화(PREFIX-04)의 위치와 성격 — <span class="aud stf">담당자용</span> 보조 산출물</h4>
+<pre>faq_answer             : 판정(01) → 안내문(02) → 순화(04)        ← 순화는 혼자, 워커 스레드가 직접 실행
+담당자 검토 · 부서 추천  : 판정(01) → 순화(04) ∥ 담당자 초안(03)   ← 둘이 동시에, 스레드 2개를 더 만들어 실행
+(타 지자체 사전 반려)    : 순화(04)만 (판정·검색·초안 없음)</pre>
+<ul>
+<li><b>항상 돌지는 않는다.</b> 판정 JSON의 <code>sanitize_needed=true</code>이거나, false여도 원문에 분명한 욕설 패턴이 있을 때만 돈다. 판정 호출이 실패하면 건너뛴다.</li>
+<li><b>입력은 원문뿐이고 결과는 어디에도 다시 넣지 않는다.</b> 판정(01)·안내문(02)·초안(03)은 모두 <b>순화 전 원문</b>을 받는다. 순화 결과로 다른 호출을 다시 만들지 않는다.</li>
+<li><b>안내문과도 독립이다.</b> faq_answer에서는 안내문이 먼저 만들어지고 순화가 이어서 돈다. 순화 시간만큼 분석 완료가 늦어지며, 결과는 <code>done</code> 한 번으로 저장되므로 안내문만 먼저 화면에 가지는 않는다.</li>
+<li><b>갈래와 무관하다.</b> 욕이 있어도 갈래(faq_answer·department_suggestion·human_handoff)와 시민 문구는 바뀌지 않는다. 담당자가 거친 표현을 그대로 읽는 부담을 줄이고 위험 신호를 알아보게 하는 용도이며, 위험 신호는 접수 거부나 차단의 근거가 아니다.</li>
+<li><b>스레드:</b> 모두 AI 워커 스레드 안에서 실행된다. 순화·초안이 둘 다 필요할 때만 그 안에서 2개짜리 스레드 풀이 순화와 초안을 동시에 돌리고 워커 스레드는 두 결과를 기다린다(exaone은 초안을 약 1초 늦춤).</li>
+<li><b>시민 챗봇 경로는 실행하지 않는다.</b> 담당자용 산출물이므로 <code>include_staff_outputs=False</code>이면 순화·초안 호출 자체가 없다.</li>
 </ul>
 <h4>실제로 무엇이 남는가</h4>
 <ul>
@@ -519,6 +544,16 @@ P9 = """
               "human_protection_review_needed":true}
 }</pre>
 <p class="small">※ 위 JSON은 설명용 조합이다. 내용은 평가 케이스 B01(부서 추천)이고, <code>stages</code>의 시간은 평가 기록의 케이스 A16에서 가져왔다. 공급자 한도 폴백이 있었으면 <code>llm_provider</code>·<code>llm_model</code>에는 폴백된 값이 기록된다. <code>codex</code>는 호출 데이터와 프롬프트 전문이며 담당자 모달에서만 본다.</p>
+<!--AUD-->
+<table>
+<tr><th style="width:30%">결과 값</th><th style="width:12%">대상</th><th>비고</th></tr>
+<tr class="cit"><td><code>answer</code> · <code>outcome</code> · <code>reason_code</code> · <code>handoff_required</code> · <code>automatic_transfer</code> · <code>district</code></td><td><span class="aud cit">시민용</span></td><td>시민 챗봇 응답에 그대로 담기는 값. 접수된 민원에서는 담당자가 보는 AI 결과이며 시민에게는 게시된 답변만 나간다.</td></tr>
+<tr class="cit"><td><code>faq</code> · <code>departments</code></td><td><span class="aud cit">시민용</span></td><td>챗봇은 출처 최대 3건·부서 힌트 최대 3건만 담는다.</td></tr>
+<tr class="cit"><td><code>llm_provider</code></td><td><span class="aud cit">시민용</span></td><td>챗봇 응답의 <code>llmProvider</code>.</td></tr>
+<tr class="stf"><td><code>staff_draft</code> · <code>sanitize</code></td><td><span class="aud stf">담당자용</span></td><td>담당자 요약 카드·초안과 순화·보호 검토 배지. 챗봇은 생성도 하지 않는다.</td></tr>
+<tr class="stf"><td><code>cases</code> · <code>codex</code> · <code>policy_failures</code> · <code>llm_model</code> · <code>district_inferred</code> · <code>inferred_place</code></td><td><span class="aud stf">담당자용</span></td><td>유사 사례, 모델에 넣은 호출 전문, 정책 교정 사유, 모델 이름, 장소 추적 결과. 챗봇 응답에서는 제거된다.</td></tr>
+<tr><td><code>decision</code>(<code>model_raw</code> 포함) · <code>stages</code> · <code>retrieval</code></td><td><span class="aud int">내부</span></td><td>판정 원본과 검증 결과, 단계별 시간, 검색 경로. 담당자 화면에는 판정 요약과 단계 표시로만 보인다.</td></tr>
+</table>
 <h3>8-2. 누가 무엇을 보나</h3>
 <table>
 <tr><th style="width:15%">화면</th><th>보이는 것</th></tr>
@@ -1463,7 +1498,26 @@ CSS += """
 .part { background:#16203a; color:#fff; border-radius:8px; padding:8px 14px; margin:0 0 10px; font-size:11.5pt; font-weight:700; }
 .part small { display:block; font-weight:400; font-size:8.6pt; color:#c9d4ea; margin-top:2px; }
 .part.ai { background:#1e4fc7; }
+.aud { display:inline-block; padding:0 7px; border-radius:9px; font-size:8pt; font-weight:700; white-space:nowrap; }
+.aud.cit { background:#e3edff; color:#1546a8; }
+.aud.stf { background:#ffe9d2; color:#a14b00; }
+.aud.int { background:#e8ebf0; color:#444c5a; }
+.legend { border:1px solid #d5dbe6; border-radius:8px; padding:6px 10px; margin:6px 0 10px; font-size:9pt; background:#fafbfd; }
+tr.cit td { background:#f3f7ff; }
+tr.stf td { background:#fff8ef; }
 """
+
+# 시민용·담당자용·내부 구분 표시(범례는 <!--AUD--> 자리에 들어간다)
+AUD_CIT = '<span class="aud cit">시민용</span>'
+AUD_STF = '<span class="aud stf">담당자용</span>'
+AUD_INT = '<span class="aud int">내부</span>'
+AUD_LEGEND = (
+    '<div class="legend"><b>대상 표시</b> · '
+    f"{AUD_CIT} 시민 화면(챗봇 응답)에 나갈 수 있는 값 · "
+    f"{AUD_STF} 담당자 화면에만 보이는 값(시민에게 나가지 않음) · "
+    f"{AUD_INT} 판정·검증처럼 처리 과정에서만 쓰는 값.<br>"
+    "접수된 민원(게시판)에서는 AI 결과 전체가 담당자 검토용이고, 시민은 담당자가 게시한 답변만 봅니다(3장).</div>"
+)
 
 
 def _renum(text: str, old: int, new: int) -> str:
@@ -1546,7 +1600,10 @@ def build() -> str:
         P15,
         P14,
     ]
-    pages = [x.replace("3장의 검색", "4장의 검색") for x in pages]
+    pages = [
+        x.replace("3장의 검색", "4장의 검색").replace("<!--AUD-->", AUD_LEGEND)
+        for x in pages
+    ]
     body = "".join(page(add_korean_json(p)) for p in pages)
     return (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
