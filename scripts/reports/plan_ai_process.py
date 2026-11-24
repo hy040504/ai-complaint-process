@@ -244,6 +244,44 @@ P5 = """
  "inferred_place": {"title":"서원대학교후문","gu":"서원구","dong":"모충동","is_cheongju":true},   // 있을 때만
  "conversation_history": [{"role":"user","content":"..."}]                                       // 시민 챗봇 다중 턴일 때만
 }</pre>
+<h3>키 이름 직역 (키 부분만)</h3>
+<p class="small">영어 키 이름을 그대로 우리말로 옮긴 것입니다. 오른쪽은 이 프로젝트에서 쓰는 뜻입니다.</p>
+<table>
+<tr><th style="width:27%">키</th><th style="width:21%">직역</th><th>이 프로젝트에서의 뜻</th></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>맨 위 단계</b></td></tr>
+<tr><td><code>query</code></td><td>질의, 물음</td><td>시민 민원 원문(제목 + 본문 + 추가 문의)</td></tr>
+<tr><td><code>district</code></td><td>구역</td><td>민원이 속한 구(상당·서원·흥덕·청원). 모르면 비어 있음</td></tr>
+<tr><td><code>faq_candidates</code></td><td>FAQ 후보들</td><td>검색으로 찾은 안내 근거 FAQ 목록</td></tr>
+<tr><td><code>case_candidates</code></td><td>사례 후보들</td><td>검색으로 찾은 공개 사례 목록(부서 후보의 근거)</td></tr>
+<tr><td><code>department_candidates</code></td><td>부서 후보들</td><td>사례에서 묶어 낸 담당 부서 후보 목록</td></tr>
+<tr><td><code>inferred_place</code></td><td>추론된 장소</td><td>본문 속 장소명(예: 학교·건물)으로 찾아낸 주소 정보. 있을 때만</td></tr>
+<tr><td><code>conversation_history</code></td><td>대화 이력</td><td>시민 챗봇의 앞선 대화. 다중 턴일 때만</td></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>후보 안쪽 (FAQ·사례 공통)</b></td></tr>
+<tr><td><code>corpus</code></td><td>말뭉치, 자료 묶음</td><td>어느 자료 묶음인지: <code>faq</code> 또는 <code>routing</code>(공개 사례)</td></tr>
+<tr><td><code>source_id</code></td><td>출처 번호</td><td>원본 자료의 고유 번호. <code>(corpus, source_id)</code> 쌍이 문서 키</td></tr>
+<tr><td><code>title</code></td><td>제목</td><td>FAQ 업무명 또는 사례 제목</td></tr>
+<tr><td><code>source_url</code></td><td>출처 주소</td><td>원본 안내 페이지 주소</td></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>FAQ 상세 (<code>detail</code>, 상세)</b></td></tr>
+<tr><td><code>target</code></td><td>대상</td><td>누구에게 해당하는지</td></tr>
+<tr><td><code>received_by</code></td><td>접수된 곳</td><td>어디서 접수하는지(접수처와 조건)</td></tr>
+<tr><td><code>main_content</code></td><td>주된 내용</td><td>안내의 본문</td></tr>
+<tr><td><code>processing_period</code></td><td>처리 기간</td><td>얼마나 걸리는지</td></tr>
+<tr><td><code>warnings</code></td><td>경고들</td><td>주의사항</td></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>사례 안쪽</b></td></tr>
+<tr><td><code>summary</code></td><td>요약</td><td>사례의 민원 요지(과거 답변은 넣지 않음)</td></tr>
+<tr><td><code>routing_eligible</code></td><td>이관 경로로 쓸 자격 있음</td><td>부서 이름이 확인돼 부서 후보의 근거가 될 수 있다는 표시. <b>자동 이관 허가가 아님</b></td></tr>
+<tr><td><code>department_status</code></td><td>부서 상태</td><td>부서 이름 확인 상태(검토 필요 여부 등)</td></tr>
+<tr><td><code>department_id</code></td><td>부서 번호</td><td>부서의 고유 번호</td></tr>
+<tr><td><code>department_name</code></td><td>부서 이름</td><td>사례에 붙은 부서 이름</td></tr>
+<tr><td><code>duty_status</code></td><td>업무 상태</td><td>업무분장(그 부서가 이 일을 맡는지) 확인 상태. <code>unverified</code>는 미확인</td></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>부서 후보 안쪽</b></td></tr>
+<tr><td><code>canonical_name</code></td><td>정식 이름, 표준 이름</td><td>정리된 공식 부서 이름</td></tr>
+<tr><td><code>supporting_case_ids</code></td><td>뒷받침하는 사례 번호들</td><td>이 부서를 후보로 올린 사례의 <code>source_id</code> 목록</td></tr>
+<tr><td colspan="3" style="background:#f6f8fc"><b>장소·대화 안쪽</b></td></tr>
+<tr><td><code>gu</code> · <code>dong</code></td><td>구 · 동</td><td>장소가 속한 구와 동</td></tr>
+<tr><td><code>is_cheongju</code></td><td>청주인가</td><td>그 장소가 청주시 안인지(참/거짓)</td></tr>
+<tr><td><code>role</code> · <code>content</code></td><td>역할 · 내용</td><td>대화 한 줄의 말한 사람(<code>user</code> 등)과 말한 내용</td></tr>
+</table>
 <ul>
 <li>후보 개수는 검색의 <code>limit=5</code>(컬렉션별)가 전부다. FAQ <code>detail</code>은 <b>잘라내지 않고</b> 그대로 보낸다(대상·조건·처리기간을 보존). 1200자 자르기는 화면 표시용 발췌에만 있다.</li>
 <li>대화 이력은 항목당 400자, 최대 8개.</li>
