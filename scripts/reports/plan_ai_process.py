@@ -92,10 +92,23 @@ P1 = (
 <tr><td>10</td><td>실제 예시</td><td>평가 기록의 케이스별 입력→판정→응답</td></tr>
 <tr><td>11</td><td>오류와 폴백</td><td>검색 실패·LLM 실패·JSON 오류 때의 값</td></tr>
 <tr><td>부록 A</td><td>검색 용어 쉬운 설명</td><td>형태소·Kiwi, 낱말 찾기(BM25), 뜻 찾기(코사인), RRF, 청킹을 하지 않는 이유 — 그림 6장과 단계별 비교</td></tr>
+<tr><td>부록 B</td><td>코드 위치 사전</td><td>본문의 함수·파일·데이터 모델·상수 이름이 어디 있고 무엇을 하는지</td></tr>
 </table>
 <div class="note"><b>두 가지 먼저 알아둘 점</b><br>
 ① 응답 필드 표기가 두 가지다. 내부 딕셔너리(<code>build_result</code>)는 snake_case, HTTP 응답과 DB는 camelCase(<code>aiAssist</code>, <code>reasonCode</code>)다.<br>
 ② 시민 화면은 AI 결과를 직접 받지 않는다. 시민에게 AI 내용이 가는 경로는 <b>담당자가 게시한 답변</b>과 <b>별도의 시민 챗봇</b>뿐이다.</div>
+<h3>코드 이름 읽는 법</h3>
+<p class="small">이 문서에는 코드에서 가져온 이름이 많습니다. 이름만 봐서는 함수인지 파일인지 알 수 없으므로, 제목과 처음 나오는 곳에 <b>종류 표시</b>를 붙였습니다. 이름별 위치와 하는 일은 <b>부록 B 코드 위치 사전</b>에 모았습니다. 경로는 모두 저장소 루트 기준입니다.</p>
+<table>
+<tr><th style="width:15%">표시</th><th style="width:33%">뜻</th><th>예</th></tr>
+<tr><td><span class="kind fn">함수</span></td><td>파이썬 함수. 뒤에 <code>()</code>를 붙여 "호출한다"는 뜻을 나타냄. 이름 앞의 <code>_</code>는 그 파일 안에서만 쓰는 내부 함수</td><td><code>decision_payload()</code> — 판정 LLM에 보낼 JSON을 만드는 함수</td></tr>
+<tr><td><span class="kind file">파일</span></td><td>소스·데이터·프롬프트 파일 경로. 이름 뒤 "747~802행"은 그 파일의 줄 번호</td><td><code>src/assist/policy.py</code></td></tr>
+<tr><td><span class="kind model">데이터 모델</span></td><td>값의 형식과 검사 규칙을 정한 파이썬 클래스(JSON이 이 모양인지 확인)</td><td><code>ComplaintInput</code>, <code>PublicComplaint</code></td></tr>
+<tr><td><span class="kind field">필드</span></td><td>JSON·DB 안의 항목 이름(키)</td><td><code>reason_code</code>, <code>aiAssist</code></td></tr>
+<tr><td><span class="kind val">값</span></td><td>결과에 기록되는 문자열. 함수나 파일이 아님</td><td><code>early_external_reject</code></td></tr>
+<tr><td><span class="kind api">API</span></td><td>HTTP 요청 주소</td><td><code>POST :8007/search</code></td></tr>
+<tr><td><span class="kind tool">도구</span></td><td>LLM이 부를 수 있게 등록한 MCP 도구 이름</td><td><code>search_complaint_rag</code></td></tr>
+</table>
 <p class="small">기준: 저장소 코드와 <code>rag/reports/lab-5010-eval-200-20261119.json</code> 등 실측 기록. 줄 번호는 조사 시점 기준이며 코드가 바뀌면 달라질 수 있다. 키·토큰 등 비밀 값은 싣지 않았다.</p>
 """
 )
@@ -115,7 +128,7 @@ Idempotency-Key: &lt;uuid&gt;           (폼마다 crypto.randomUUID(), 재전�
 <li>시민 화면은 <code>provider</code>(LLM 공급자)를 보내지 않는다. 담당자 재실행이나 API 직접 호출에서만 쓴다.</li>
 <li>사진·PDF는 등록 직후 <code>POST /complaints/{id}/attachments</code>로 따로 올린다.</li>
 </ul>
-<h3>1-2. 서버가 검사하는 입력 (<code>ComplaintInput</code>)</h3>
+<h3>1-2. 서버가 검사하는 입력 (<span class="kind model">데이터 모델</span> <code>ComplaintInput</code> · <code>src/complaints/models.py</code>)</h3>
 <table>
 <tr><th style="width:18%">필드</th><th>제약</th></tr>
 <tr><td>title</td><td>1~120자</td></tr>
@@ -126,7 +139,7 @@ Idempotency-Key: &lt;uuid&gt;           (폼마다 crypto.randomUUID(), 재전�
 <tr><td>provider</td><td>선택(<code>exaone_api · codex_cli · openai_api</code>)</td></tr>
 </table>
 <p class="small">정의되지 않은 필드를 보내면 422로 거부된다(<code>extra="forbid"</code>).</p>
-<h3>1-3. 서버의 생성 흐름 (<code>service.py:747-802</code>)</h3>
+<h3>1-3. 서버의 생성 흐름 (<span class="kind file">파일</span> <code>src/complaints/service.py</code> 747~802행)</h3>
 <table>
 <tr><th style="width:6%">순서</th><th>동작</th></tr>
 <tr><td>1</td><td>시민 역할이 아니면 403(<code>citizen_required</code>).</td></tr>
@@ -136,7 +149,7 @@ Idempotency-Key: &lt;uuid&gt;           (폼마다 crypto.randomUUID(), 재전�
 <tr><td>5</td><td>멱등성 키와 본문 해시(sha256)로 저장한다. 같은 키로 다시 보내면 기존 민원을 돌려준다.</td></tr>
 <tr><td>6</td><td>SSE <code>complaint.created</code> 발행 후 AI 워커를 시작한다.</td></tr>
 </table>
-<h3>1-4. 응답 (201, 시민용 <code>PublicComplaint</code>)</h3>
+<h3>1-4. 응답 (201, 시민용 <span class="kind model">데이터 모델</span> <code>PublicComplaint</code>)</h3>
 <pre>{"id":"DEMO-2026-XXXXXXXXXXXX","title":"...","body":"...","category":"도로·교통","district":"흥덕구",
  "owner":"&lt;사용자 id&gt;","visibility":"private","status":"submitted","date":"...","version":1,"contextVersion":1,
  "isSynthetic":false,"published":null,"messages":[],"attachments":[],
@@ -147,7 +160,7 @@ Idempotency-Key: &lt;uuid&gt;           (폼마다 crypto.randomUUID(), 재전�
 P3 = """
 <h2>2. 비동기 AI 워커</h2>
 <p>별도 큐 시스템은 없고 <b>서버 프로세스 안의 스레드</b>입니다. 등록 요청은 저장만 끝내고 바로 응답하며, AI는 그 뒤에 따로 돕니다. 그래서 AI가 실패해도 민원은 남습니다.</p>
-<h3>2-1. 시작과 호출 (<code>service.py:1629-1725</code>)</h3>
+<h3>2-1. 시작과 호출 (<span class="kind file">파일</span> <code>src/complaints/service.py</code> 1629~1725행의 <span class="kind fn">함수</span> <code>_launch_ai_job()</code>·<code>_run_ai_worker()</code>)</h3>
 <pre>Thread(target=_run_ai_worker, daemon=True,
        args=(키, 질의, 구, 공급자, 이벤트)).start()
 # 중복 실행 방지 키: (민원 id, attempt, context_version)
@@ -172,7 +185,7 @@ iter_web_assist(query, district, 5, False, provider=provider)
 <tr><td>draft</td><td>담당자용 초안을 준비하고 있어요</td></tr>
 </table>
 <p class="small">단계가 바뀔 때마다 SSE <code>ai_job.stage_changed</code>를 발행한다. 같은 라벨이 연속되면 중복 추가하지 않는다.</p>
-<h3>2-3. 완료 저장 (<code>_commit_ai_completion</code>)</h3>
+<h3>2-3. 완료 저장 (<span class="kind fn">함수</span> <code>_commit_ai_completion()</code> · <code>src/complaints/service.py</code>)</h3>
 <ul>
 <li><code>attempt</code>와 <code>context_version</code>이 같고 작업이 <code>running</code>일 때만 저장한다. 다르면 늦게 도착한 결과로 보고 <b>버린다</b>(수정·답변 게시·철회·추가 문의 등으로 <code>context_version</code>이 올라가 작업이 <code>superseded</code>가 된 경우).</li>
 <li>결과를 <code>Complaint.aiAssist</code>에 넣고 <code>job.status="succeeded"</code>로 둔다. 라벨은 갈래별로 "AI 분석 완료 (FAQ 안내|부서 후보|담당자 검토) · 담당자 검토 대기".</li>
@@ -227,7 +240,7 @@ Content-Type: application/json
 <li>응답 계약 검사: <code>retrieval_only=true</code>이고 <code>decision="requires_gate"</code>가 아니면 오류로 처리한다. 검색은 "후속 판단이 필요하다"는 뜻일 뿐 자동 답변이 아니다.</li>
 <li>서버 검증: <code>query</code> 1~2000자, <code>collection</code>은 <code>faq · routing · both</code>, <code>limit</code> 1~20, <code>district</code>는 4개 구 또는 null.</li>
 </ul>
-<h3>3-2. 검색 알고리즘 (<code>rag/search.py</code>)</h3>
+<h3>3-2. 검색 알고리즘 (<span class="kind file">파일</span> <code>rag/search.py</code>)</h3>
 <table>
 <tr><th style="width:6%">순서</th><th>동작</th></tr>
 <tr><td>1</td><td>질문을 정규화하고, 한국어 토큰이 하나도 없으면 오류.</td></tr>
@@ -237,7 +250,7 @@ Content-Type: application/json
 <tr><td>5</td><td><code>rerank=true</code>면 상위를 재정렬 모델로 다시 정렬. 접수 워커는 <code>rerank=false</code>라서 RRF 상위 5건을 쓴다.</td></tr>
 <tr><td>6</td><td>관할 필터는 <b>공개 사례에만</b> 적용(<code>district</code>가 있으면 같은 구 또는 구 미지정 사례). 질문 속 지명으로 구를 추측해 필터하지 않는다.</td></tr>
 </table>
-<h3>3-3. 응답 구조 (실측 예: <code>rag/reports/search-example-cpu12.json</code>)</h3>
+<h3>3-3. 응답 구조 (실측 예: <span class="kind file">파일</span> <code>rag/reports/search-example-cpu12.json</code>)</h3>
 <pre>{"query":"...","district_filter":null,"pipeline":"vector+kiwi_bm25+rrf+reranker",
  "retrieval_only":true,"decision":"requires_gate",
  "score_note":"검색 순위와 rerank_logit은 자동 답변/이관의 정답 확률이 아닙니다.",
@@ -253,12 +266,13 @@ Content-Type: application/json
 </ul>
 <p class="small">BM25·코사인·Kiwi·RRF 같은 용어는 뒤의 <b>부록 A</b>에서 그림으로 쉽게 설명한다.</p>
 <h3>3-4. 점수는 어떻게 쓰이나</h3>
-<div class="note"><b>점수는 AI에게도 넘기지 않는다.</b> <code>compact_faq / compact_case</code>가 점수·임베딩·원문 해시를 제거하고, 순위(<code>rank</code>)와 근거 본문만 남긴다. 컷오프 임계값 코드도 없다. 후보를 그대로 넘기고, 채택 여부는 LLM 판정과 코드 검증이 정한다. 공개 사례의 <b>과거 답변도 AI 입력에서 제외</b>한다.</div>
+<div class="note"><b>점수는 AI에게도 넘기지 않는다.</b> <span class="kind fn">함수</span> <code>compact_faq()</code>·<code>compact_case()</code>(<code>src/search_client/evidence.py</code>)가 점수·임베딩·원문 해시를 제거하고, 순위(<code>rank</code>)와 근거 본문만 남긴다. 컷오프 임계값 코드도 없다. 후보를 그대로 넘기고, 채택 여부는 LLM 판정과 코드 검증이 정한다. 공개 사례의 <b>과거 답변도 AI 입력에서 제외</b>한다.</div>
 """
 
 P5 = """
 <h2>4. 판정 입력과 시스템 프롬프트</h2>
-<h3>4-1. 판정 호출의 user 메시지 (<code>decision_payload</code>)</h3>
+<h3>4-1. 판정 호출의 user 메시지 (<span class="kind fn">함수</span> <code>decision_payload()</code> · <span class="kind file">파일</span> <code>src/assist/policy.py</code>)</h3>
+<p class="small"><span class="kind fn">함수</span> <code>decision_payload()</code>는 <code>src/assist/policy.py</code>에 있는 파이썬 함수입니다. 민원 원문과 RAG 검색 결과를 받아, 판정 LLM에 보낼 user 메시지(JSON)를 만들어 돌려줍니다. 아래 JSON이 그 함수의 출력입니다. 종류 표시를 읽는 법은 맨 앞 "코드 이름 읽는 법", 이름별 위치는 부록 B를 보세요.</p>
 <p>키 순서가 고정된 JSON을 <code>json.dumps(indent=2)</code>로 문자열로 만들어 user 메시지로 보냅니다.</p>
 <pre>{
  "query": "&lt;제목\\n\\n본문[\\n\\n[추가 문의]\\n...]&gt;",
@@ -382,7 +396,7 @@ Authorization: Bearer &lt;키&gt;
 
 P7 = """
 <h2>6. 판단과 코드 검증</h2>
-<h3>6-1. 사전 관할 검증 (<code>early_external_reject</code>)</h3>
+<h3>6-1. 사전 관할 검증 (결과에 기록되는 <span class="kind val">처리 경로 값</span> <code>early_external_reject</code> · 판단 코드는 <code>src/assist/pipeline.py</code>·<code>district.py</code>)</h3>
 <p>LLM과 검색을 부르기 전에 코드가 먼저 봅니다. 아래 <b>세 조건을 모두</b> 만족하면 검색·판정·초안을 건너뛰고 바로 담당자 검토로 보냅니다.</p>
 <table>
 <tr><th style="width:5%">#</th><th>조건</th></tr>
@@ -394,7 +408,7 @@ P7 = """
       search.pipeline="early_external_reject", stages=[관할검증], 소요 약 0.01~0.02초
       policy_failures=["타 지자체(서울시 종로구) 관할로 확인되어 청주시 검색·자동 응대를 건너뛰고 담당자 검토로 연결합니다."]
       staff_draft = 고정 초안 (LLM 호출 없음)</pre>
-<h3>6-2. 코드 검증 14규칙 (<code>validate_decision</code>, 적용 순서대로)</h3>
+<h3>6-2. 코드 검증 14규칙 (<span class="kind fn">함수</span> <code>validate_decision()</code> · <code>src/assist/policy.py</code>, 적용 순서대로)</h3>
 <p>모델의 판정을 그대로 믿지 않고 코드가 다시 검사합니다. 규칙은 <b>안내를 막는 방향으로만</b> 교정합니다.</p>
 <table>
 <tr><th style="width:4%">#</th><th style="width:44%">조건</th><th>교정</th></tr>
@@ -520,7 +534,7 @@ P8 = """
 
 P9 = """
 <h2>8. 최종 응답과 보이는 범위</h2>
-<h3>8-1. 저장되는 결과 (<code>build_result</code> → <code>aiAssist</code>)</h3>
+<h3>8-1. 저장되는 결과 (<span class="kind fn">함수</span> <code>build_result()</code> · <code>src/assist/pipeline.py</code>가 만들고 <span class="kind field">필드</span> <code>aiAssist</code>에 저장)</h3>
 <pre>{
  "query": "&lt;원문&gt;", "district": "서원구", "district_inferred": true,
  "inferred_place": {"title":"서원대학교후문","gu":"서원구","dong":"모충동","is_cheongju":true, ...},
@@ -1503,6 +1517,14 @@ CSS += """
 .aud.cit { background:#e3edff; color:#1546a8; }
 .aud.stf { background:#ffe9d2; color:#a14b00; }
 .aud.int { background:#e8ebf0; color:#444c5a; }
+.kind { display:inline-block; padding:0 6px; border-radius:4px; font-size:7.8pt; font-weight:700; white-space:nowrap; vertical-align:1px; border:1px solid transparent; }
+.kind.fn { background:#efe7ff; color:#5a2ca8; border-color:#d9c8fb; }
+.kind.file { background:#e6f3f1; color:#136b5f; border-color:#bfe0da; }
+.kind.model { background:#fff3d6; color:#8a5a00; border-color:#f0dca4; }
+.kind.field { background:#e8ebf0; color:#344054; border-color:#d0d5dd; }
+.kind.api { background:#e0f2fe; color:#075985; border-color:#b9e0f7; }
+.kind.val { background:#fde8ef; color:#9d174d; border-color:#f6c5d6; }
+.kind.tool { background:#e9f5df; color:#3b6a12; border-color:#cde5b4; }
 .legend { border:1px solid #d5dbe6; border-radius:8px; padding:6px 10px; margin:6px 0 10px; font-size:9pt; background:#fafbfd; }
 tr.cit td { background:#f3f7ff; }
 tr.stf td { background:#fff8ef; }
@@ -1569,6 +1591,64 @@ IFACE = """
 """
 
 
+# (종류 클래스, 종류 표시, 이름, 위치, 하는 일, 나오는 장)
+DICT_ROWS = [
+    ("fn", "함수", "iter_web_assist()", "src/assist/__init__.py", "서버(워커)가 AI 계층을 부르는 진입점. <code>iter_assist()</code>를 정해진 인자로 감싼다", "2장·경계"),
+    ("fn", "함수", "iter_assist()", "src/assist/pipeline.py", "AI 계층 본체. 구 추론·검색·판정·검증·후속 호출을 차례로 하며 진행(progress)·완료(done) 이벤트를 하나씩 내보낸다(제너레이터)", "2·5~9장"),
+    ("field", "인자", "include_staff_outputs", "iter_assist()의 인자", "담당자용 산출물(초안·순화)을 만들지 정한다. 시민 챗봇은 False", "5·8장"),
+    ("fn", "함수", "resolve_district_and_place()", "src/assist/district.py", "구와 장소를 추론한다", "5장"),
+    ("fn", "함수", "extract_external_jurisdiction()", "src/assist/district.py", "본문에서 타 지자체 주소를 찾는다(사전 관할 검증)", "7장"),
+    ("fn", "함수", "search_via_api()", "src/search_client/client.py", "검색 API(<code>POST :8007/search</code>)를 HTTP로 부른다", "4장"),
+    ("fn", "함수", "require_search_contract()", "src/search_client/client.py", "검색 응답이 약속한 형식인지 확인한다", "4장"),
+    ("fn", "함수", "compact_faq() · compact_case()", "src/search_client/evidence.py", "검색 결과에서 점수 등을 빼고 LLM에 넣을 만큼 줄인다", "4·5장"),
+    ("fn", "함수", "decision_payload()", "src/assist/policy.py", "1차 판정 LLM에 보낼 user 메시지(JSON: 원문+RAG 후보)를 만든다", "5·8장"),
+    ("fn", "함수", "staff_draft_payload()", "src/assist/followup.py", "담당자 초안(PREFIX-03) 호출의 user 메시지를 만든다", "8장"),
+    ("fn", "함수", "sanitize_payload()", "src/assist/followup.py", "순화(PREFIX-04) 호출의 user 메시지를 만든다(원문만)", "8장"),
+    ("fn", "함수", "should_run_sanitize() · needs_sanitize()", "src/assist/followup.py", "순화를 돌릴지 정한다", "8장"),
+    ("fn", "함수", "validate_decision()", "src/assist/policy.py", "판정 JSON을 14규칙으로 검증·교정한다", "7장"),
+    ("fn", "함수", "validate_staff_draft() · validate_sanitize()", "src/assist/followup.py", "초안·순화 결과의 형식과 출처를 검사한다", "8장"),
+    ("fn", "함수", "citizen_answer()", "src/assist/policy.py", "갈래에 맞는 시민 문구(FAQ 생성문·부서 추천 틀·고정 문구)를 고른다", "8장"),
+    ("fn", "함수", "build_result()", "src/assist/pipeline.py", "최종 결과 딕셔너리를 조립한다", "9장"),
+    ("fn", "함수", "complete_result()", "src/llm/complete.py", "공급자별로 LLM을 실제 호출한다", "6장"),
+    ("fn", "함수", "compose_complaint_query()", "src/complaints/service.py", "민원 제목+본문(+추가 문의)을 합쳐 AI에 넘길 질의를 만든다", "2장"),
+    ("fn", "함수", "_launch_ai_job() · _run_ai_worker()", "src/complaints/service.py", "AI 워커 스레드를 시작하고, 그 스레드에서 AI 계층을 돌려 결과를 받는다", "2장"),
+    ("fn", "함수", "_commit_with_retry() · _matches_running_job()", "src/complaints/service.py", "결과를 저장하기 직전 같은 시도·맥락의 실행 중 작업인지 확인하고 저장한다", "2장"),
+    ("fn", "함수", "_commit_ai_completion() · _commit_ai_failure()", "src/complaints/service.py", "AI 성공·실패 결과를 민원에 기록한다", "2장"),
+    ("fn", "함수", "extract_ai_candidate()", "src/complaints/service.py", "AI 결과에서 담당자 초안 후보를 꺼낸다", "2장"),
+    ("fn", "함수", "project_citizen_chat() · _build_citizen_message()", "src/complaints/chat.py", "AI 결과를 시민 챗봇 응답으로 줄이고 시민 문구를 만든다", "3·9장"),
+    ("model", "데이터 모델", "ComplaintInput", "src/complaints/models.py", "민원 등록 요청의 형식과 검사 규칙", "1장"),
+    ("model", "데이터 모델", "PublicComplaint", "src/complaints/models.py", "시민에게 보이는 민원 응답 형식", "1·3장"),
+    ("model", "데이터 모델", "AssistResponse", "src/complaints/models.py", "AI 결과(<code>aiAssist</code>)의 형식", "2·9장"),
+    ("model", "데이터 모델", "CitizenChatResponse", "src/complaints/models.py", "시민 챗봇 응답 형식", "3·9장"),
+    ("val", "상수", "DECISION_SYSTEM · ANSWER_SYSTEM · STAFF_DRAFT_SYSTEM · SPECIAL_SANITIZE_SYSTEM", "src/assist/prompts.py", "PREFIX 파일을 이어 붙여 만든 시스템 프롬프트 문자열", "5장"),
+    ("val", "상수", "HANDOFF_REASONS", "src/assist/constants.py", "담당자 검토 사유별 고정 시민 문구", "8장"),
+    ("file", "파일", "PREFIX-00 ~ PREFIX-04.txt", "docs/harness/prompts/", "시스템 프롬프트 원문(공통·판정·FAQ 안내·담당자 초안·순화)", "5장"),
+    ("file", "파일", "rag/search.py", "rag/search.py", "검색 알고리즘(벡터+BM25+RRF) 구현", "4장"),
+    ("api", "API", "POST :8007/search", "rag 검색 서버", "FAQ·공개 사례 후보를 찾아 돌려준다. 서버 안에서만 쓰는 내부 주소", "4장"),
+    ("tool", "도구", "search_complaint_rag", "src/llm/rag_tool.py", "LLM(codex_cli 판정 단계)이 직접 검색할 때 쓰는 MCP 도구", "5장"),
+    ("tool", "도구", "lookup_navermap_place", "src/llm/place_tool.py", "장소를 찾아 구·동을 확인하는 MCP 도구", "5장"),
+    ("val", "값", "exaone_api · openai_api · codex_cli", "src/llm/settings.py", "LLM 공급자 이름(설정으로 고른다)", "6장"),
+    ("val", "값", "early_external_reject", "src/assist/pipeline.py", "타 지자체로 반려했을 때 결과의 처리 경로(<code>search.pipeline</code>)에 기록되는 값", "7장"),
+    ("field", "필드", "aiAssist", "민원 레코드(JSON)", "AI 결과 전체가 들어가는 항목. 내부 딕셔너리는 snake_case, 저장·응답은 camelCase", "2·9장"),
+]  # fmt: skip
+
+
+def dict_page() -> str:
+    """부록 B 코드 위치 사전 쪽을 만듭니다."""
+    rows = "".join(
+        f'<tr><td><span class="kind {cls}">{label}</span></td><td><code>{name}</code></td>'
+        f"<td><code>{where}</code></td><td>{what}</td><td>{ch}</td></tr>"
+        for cls, label, name, where, what, ch in DICT_ROWS
+    )
+    return (
+        "<h2>부록 B. 코드 위치 사전</h2>"
+        '<p class="small">본문에 나오는 코드 이름이 어디에 있고 무엇을 하는지 모았습니다. 경로는 저장소 루트 기준이며, 실제 코드를 읽어 확인한 이름만 실었습니다.</p>'
+        '<table><tr><th style="width:8%">종류</th><th style="width:22%">이름</th>'
+        '<th style="width:17%">위치</th><th>하는 일</th><th style="width:9%">나오는 장</th></tr>'
+        f"{rows}</table>"
+    )
+
+
 def build() -> str:
     p2 = PART1 + P2
     p4 = PART2 + _renum(P4, 3, 4)
@@ -1600,6 +1680,7 @@ def build() -> str:
         P13,
         P15,
         P14,
+        dict_page(),
     ]
     pages = [
         x.replace("3장의 검색", "4장의 검색").replace("<!--AUD-->", AUD_LEGEND)
