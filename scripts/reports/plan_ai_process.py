@@ -191,6 +191,28 @@ iter_web_assist(query, district, 5, False, provider=provider)
 {"eventId":12,"type":"ai_job.stage_changed","complaintId":"DEMO-2026-...","contextVersion":1,"attempt":1,
  "jobStatus":"running","stage":"저장된 안내와 사례를 찾고 있어요","occurredAt":"2026-...Z"}</pre>
 <p class="small">이벤트 종류: <code>ai_job.stage_changed · completed · failed · cancelled</code>, <code>complaint.created · updated · deleted</code>. 본문·미게시 초안은 보내지 않고 메타데이터만 보낸다. 연속 오류 2회 이상이면 화면이 3초 폴링으로 바꾼다.</p>
+<h3>2-6. 워커의 역할 범위 — 질문을 보내는 데서 끝나지 않는다</h3>
+<p>워커 스레드는 <code>iter_assist</code>(AI 계층, 제2부)를 <b>같은 스레드 안에서 끝까지 돌리고</b>, 그 결과를 받아 서버에 저장하는 일까지 맡는다. "질의를 만들어 LLM에 보내는 것"만이 아니라 앞뒤가 모두 워커의 한 번 실행에 들어 있다.</p>
+<table>
+<tr><th style="width:8%">순서</th><th style="width:22%">일</th><th style="width:16%">하는 곳</th><th>내용</th></tr>
+<tr><td>①</td><td>질의 조립</td><td>서버(워커 시작 전)</td><td>제목+본문(+추가 문의)을 합쳐 <code>query</code>, 구 이름을 <code>district</code>로 만든다. 스레드에 인자로 넘긴다.</td></tr>
+<tr><td>②</td><td>AI 계층 호출</td><td>워커 스레드</td><td><code>iter_assist</code>가 한 단계씩 이벤트를 내보낸다(아래 4~11장의 내용).<br>구 추론과 외부 지역 조기 반려 → 검색 API <code>/search</code> 호출 → 시스템 프롬프트와 판정 입력(민원 원문·FAQ·사례·부서 후보)으로 LLM 호출 → <code>validate_decision</code> 코드 검증 → 안내문·순화·담당자 초안 생성(LLM을 더 부를 수 있음).</td></tr>
+<tr><td>③</td><td>진행 알림</td><td>워커 스레드</td><td><code>progress</code> 이벤트마다 단계 라벨을 메모리와 이력에 쌓고 SSE로 발행한다.</td></tr>
+<tr><td>④</td><td>결과 검증·저장</td><td>워커 스레드</td><td><code>done</code> 결과를 <code>AssistResponse</code> 모델로 검증한 뒤 <code>_commit_with_retry</code>로 저장한다. 실패(<code>error</code>·예외)는 <code>_commit_ai_failure</code>로 실패 상태와 사유만 기록한다.</td></tr>
+<tr><td>⑤</td><td>정리</td><td>워커 스레드</td><td><code>finally</code>에서 메모리의 진행 정보와 스레드 등록을 지운다. 스레드가 끝난다.</td></tr>
+</table>
+<p class="small">정리: <b>검색·프롬프트 조립·LLM 호출·코드 검증은 AI 계층(<code>src/assist</code>)의 코드</b>이고, 워커는 그 코드를 백그라운드에서 돌리고 <b>진행 알림·최종 저장·오류 처리</b>를 맡는 서버 쪽 껍데기다. 시스템 프롬프트는 워커가 아니라 AI 계층이 붙이며, RAG 후보는 질의에 합쳐지지 않고 판정 입력 JSON의 별도 항목으로 들어간다(5장).</p>
+<h3>2-7. 생성 시점·수명·세션과의 차이</h3>
+<table>
+<tr><th style="width:24%">항목</th><th>내용</th></tr>
+<tr><td>생성 시점</td><td>세 곳이다. ① 시민의 민원 등록 ② 시민의 원문 수정·추가 문의(맥락이 바뀔 때) ③ 담당자의 "재시도". 모두 상태가 <code>running</code>일 때 <code>_launch_ai_job</code>이 호출된다.</td></tr>
+<tr><td>생성 방식</td><td>요청마다 파이썬 <code>Thread</code> 하나를 새로 만든다(<code>daemon=True</code>). 상시 대기 워커 풀·큐 서버는 없다.</td></tr>
+<tr><td>중복 방지</td><td>같은 <code>(민원 id, attempt, context_version)</code> 키로 이미 도는 스레드가 있으면 새로 만들지 않는다.</td></tr>
+<tr><td>수명</td><td>분석 1회가 끝나면(성공·실패·버려짐) 스레드가 끝난다. 재시도는 새 <code>attempt</code>로 새 스레드를 만든다.</td></tr>
+<tr><td>세션이 아님</td><td>워커는 <b>민원 한 건의 분석 1회</b>이고, 시민 챗봇의 세션은 <b>다중 턴 대화</b>(DB에 대화 보관)로 별개다. 로그인 세션 쿠키와도 관계없다.</td></tr>
+<tr><td>늦은 결과</td><td>저장 직전 <code>_matches_running_job</code>이 철회 여부·<code>context_version</code>·<code>attempt</code>·<code>running</code> 상태를 다시 본다. 하나라도 다르면 저장하지 않고 버린다. <code>version</code>만 오른 경우(담당자 지정·초안 저장)는 최신본을 읽어 최대 4회 다시 시도한다.</td></tr>
+<tr><td>한계</td><td>스레드는 서버 프로세스 안에만 있다. 서버가 재시작되면 돌던 작업은 사라지고, 이를 자동으로 되살리는 코드는 확인되지 않았다. 다중 워커 이벤트 브로커는 사용자 결정으로 구현 범위 밖이다.</td></tr>
+</table>
 """
 
 P4 = """
