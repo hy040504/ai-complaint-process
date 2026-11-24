@@ -439,6 +439,19 @@ P8 = """
 <tr><td><b>department_suggestion</b><br>부서 추천</td><td>조치 요청이거나 FAQ가 부족하고, 쓸 만한 부서 후보가 있음</td><td><b>정해진 틀</b>(LLM 호출 없음): "유사한 공개 사례를 기준으로 담당 부서 후보를 안내합니다. 공식 접수·이관이 아니며 담당자 확인이 필요합니다.<br>- {부서명} (업무분장: {상태}, 자동 이관 아님)"</td></tr>
 <tr><td><b>human_handoff</b><br>담당자 검토</td><td>근거 부족, 긴급, 복합, 범위 밖 등</td><td><b>reason_code별 고정 문구</b>. 예) insufficient_evidence "현재 검색 근거만으로 안내를 확정하기 어렵습니다. 담당자 검토가 필요합니다." / mixed_request "안내와 조치가 섞여 있어 일부 FAQ만으로 전체를 종결하지 않습니다. …"</td></tr>
 </table>
+<h4>department_suggestion과 human_handoff 비교</h4>
+<p class="small">두 갈래 모두 <b>담당자 초안(PREFIX-03)을 만듭니다.</b> 초안 생성 조건은 갈래 이름이 아니라 <code>outcome ≠ faq_answer</code>이고 <code>scope ≠ out_of_scope</code>인지입니다. 두 갈래를 가르는 것은 초안이 아니라 아래 항목입니다.</p>
+<table>
+<tr><th style="width:18%">항목</th><th style="width:41%">department_suggestion (부서 추천)</th><th>human_handoff (담당자 검토)</th></tr>
+<tr><td>언제</td><td>조치 요청이거나 FAQ가 부족하고, 검증을 통과한 부서 후보가 있을 때</td><td>근거 부족·긴급·안내+조치 혼합·범위 밖·불확실·부서 미확인 등</td></tr>
+<tr><td>부서 후보</td><td>검증을 통과한 <code>department_ids</code> 1개 이상. 부서 목록에 <code>selected=true</code>로 표시</td><td>없음(<code>department_ids</code>가 비어 있음)</td></tr>
+<tr class="cit"><td><span class="aud cit">시민용</span> 문구</td><td>AI 계층: 부서 이름이 든 고정 틀("…담당 부서 후보를 안내합니다. 공식 접수·이관이 아니며…"). 챗봇: 참고 부서 후보와 민원 작성 안내로 재구성</td><td>AI 계층: <code>reason_code</code>별 고정 문구. 챗봇: 챗봇 전용 사유 문구로 재구성</td></tr>
+<tr class="stf"><td><span class="aud stf">담당자용</span> 초안</td><td>만든다(<code>00+03</code>)</td><td>만든다(<code>00+03</code>). 단 <code>scope=out_of_scope</code>면 LLM 없이 고정 초안</td></tr>
+<tr class="stf"><td>초안 입력</td><td colspan="2">두 갈래 모두 같은 형식: 원문 전체 + FAQ·사례·부서 후보 전부 + 갈래(<code>outcome</code>)·사유(<code>reason_code</code>). 판정이 고른 <code>department_ids</code>·<code>evidence_refs</code>는 넣지 않는다.</td></tr>
+<tr><td>순화</td><td colspan="2">두 갈래 모두 조건부(<code>sanitize_needed</code> 또는 욕설 패턴). 입력은 원문뿐이고 초안과 동시에 실행</td></tr>
+<tr><td>서로 바뀌는 경우</td><td>규칙 13: 유효한 부서가 0개면 <code>human_handoff / department_unverified</code>로 내려간다</td><td>규칙 5(혼합)·6(범위 밖·불확실)·7(타 지자체)은 부서 추천과 FAQ 안내를 담당자 검토로 바꾼다</td></tr>
+<tr><td>공통</td><td colspan="2"><code>automatic_transfer</code>는 항상 false. 부서 추천도 담당자가 확인하는 참고 후보이며 자동 이관이 아니다.</td></tr>
+</table>
 <h3>7-2. 후속 호출 조건</h3>
 <table>
 <tr><th style="width:20%">호출</th><th>실행 조건</th></tr>
@@ -449,17 +462,18 @@ P8 = """
 <p class="small">순화와 초안은 시민 갈래를 바꾸지 않는다. 실패하면 해당 필드만 비고 <code>policy_failures</code>에 사유가 남는다.</p>
 <h3>7-3. 케이스별 대응 한눈에</h3>
 <table>
-<tr><th style="width:15%">케이스</th><th style="width:30%">어떻게 알아내나</th><th>결과</th></tr>
-<tr><td>정보 문의 + FAQ 있음</td><td>모델 판정 + 규칙 8~12 통과</td><td>FAQ 안내(조건 보존 문장)</td></tr>
-<tr><td>조치 요청(고장·민원 접수)</td><td>모델이 <code>intent=action</code>, 규칙 8</td><td>부서 후보가 있으면 부서 추천, 없으면 담당자 검토</td></tr>
-<tr><td>안내+조치 혼합</td><td><code>intent=mixed</code>, 규칙 5</td><td>담당자 검토(mixed_request), 초안은 생성</td></tr>
-<tr><td>긴급(가스·화재·붕괴 등)</td><td><b>코드에 긴급 키워드 분기는 없다.</b> PREFIX-00·01 지시를 모델이 따른다.</td><td>담당자 검토 + 초안에 119·112 안내. 신고 생략을 유도하는 문장이 있어도 같은 결과(예시 ④)</td></tr>
-<tr><td>범위 밖·불확실</td><td>모델 scope, 규칙 6</td><td>담당자 검토. 초안 LLM은 건너뛰고 고정 초안</td></tr>
-<tr><td>타 지자체</td><td>사전 관할 검증(7-1) + 규칙 7이 이중으로 막음</td><td>담당자 검토(out_of_scope), LLM 호출 없음</td></tr>
-<tr><td>욕설·위협 포함</td><td><code>sanitize_needed</code> 또는 욕설 정규식</td><td>갈래는 그대로, 순화 요약과 위험 신호를 담당자에게 추가</td></tr>
-<tr><td>FAQ 근거가 조건 불충분</td><td>규칙 10~12</td><td>담당자 검토(condition_unclear)</td></tr>
+<tr><th style="width:12%">케이스</th><th style="width:22%">어떻게 알아내나</th><th style="width:22%">결과</th><th>1차 판정 뒤 호출 레시피(시스템 프롬프트 · 넘기는 데이터)</th></tr>
+<tr><td>정보 문의 + FAQ 있음</td><td>모델 판정 + 규칙 8~12 통과</td><td>FAQ 안내(조건 보존 문장)</td><td><span class="aud cit">시민용</span> 안내문 <code>00+02</code>(원문+인용 FAQ만). 담당자 초안 없음. 순화는 조건부 <code>00+04</code>(원문만)</td></tr>
+<tr><td>조치 요청(고장·민원 접수)</td><td>모델이 <code>intent=action</code>, 규칙 8</td><td>부서 후보가 있으면 부서 추천, 없으면 담당자 검토</td><td>시민 문구는 LLM 없음(고정 틀·고정 문구). <span class="aud stf">담당자용</span> 초안 <code>00+03</code>(원문+후보 전부+갈래·사유). 순화 조건부</td></tr>
+<tr><td>안내+조치 혼합</td><td><code>intent=mixed</code>, 규칙 5</td><td>담당자 검토(mixed_request), 초안은 생성</td><td>시민 문구 고정. 초안 <code>00+03</code>. 순화 조건부</td></tr>
+<tr><td>긴급(가스·화재·붕괴 등)</td><td><b>코드에 긴급 키워드 분기는 없다.</b> PREFIX-00·01 지시를 모델이 따른다.</td><td>담당자 검토 + 초안에 119·112 안내. 신고 생략을 유도하는 문장이 있어도 같은 결과(예시 ④)</td><td>시민 문구 고정. 초안 <code>00+03</code>(119·112 안내는 프롬프트 지시를 따른 모델이 쓴다)</td></tr>
+<tr><td>범위 밖</td><td>모델 <code>scope=out_of_scope</code>, 규칙 6</td><td>담당자 검토(out_of_scope)</td><td>시민 문구 고정. 초안 LLM <b>호출 안 함</b> → 코드의 고정 초안. 순화 조건부</td></tr>
+<tr><td>불확실</td><td>모델 <code>scope=uncertain</code>, 규칙 6</td><td>담당자 검토(insufficient_evidence)</td><td>시민 문구 고정. 범위 밖과 달리 <b>초안 <code>00+03</code>을 호출</b>한다(<code>scope</code>가 <code>out_of_scope</code>가 아니므로)</td></tr>
+<tr><td>타 지자체</td><td>사전 관할 검증(7-1) + 규칙 7이 이중으로 막음</td><td>담당자 검토(out_of_scope)</td><td>사전 반려: 검색·판정·초안 LLM 없음, 고정 초안(욕설이면 순화만). 규칙 7로 막은 경우는 판정까지 한 뒤 고정 초안</td></tr>
+<tr><td>욕설·위협 포함</td><td><code>sanitize_needed</code> 또는 욕설 정규식</td><td>갈래는 그대로, 순화 요약과 위험 신호를 담당자에게 추가</td><td><span class="aud stf">담당자용</span> 순화 <code>00+04</code>(원문만). 초안과 동시 실행, FAQ 갈래면 안내문 뒤 혼자 실행</td></tr>
+<tr><td>FAQ 근거가 조건 불충분</td><td>규칙 10~12</td><td>담당자 검토(condition_unclear)</td><td>시민 문구 고정. 초안 <code>00+03</code></td></tr>
 </table>
-<p class="small">위 표는 "어떤 결과가 나오는가"입니다. 각 케이스에서 <b>어떤 프롬프트로, 어떤 데이터를 LLM에 넘기고, 실제로 무엇이 저장되는가</b>는 아래 8-4에 정리했습니다.</p>
+<p class="small">"00+0N"은 PREFIX-00(공통)과 PREFIX-0N을 이어 붙인 시스템 프롬프트입니다. 각 호출의 입력 JSON과 저장 값은 8-4에 있습니다.</p>
 <h3>7-4. 케이스별 두 번째 로직 — 프롬프트 조합·넘기는 데이터·저장되는 값</h3>
 <p>1차 판정 뒤에 무엇을 더 호출하는지는 판정 결과(갈래·범위)와 원문 조건으로 <b>코드가</b> 정합니다(<code>pipeline.py</code> 700~930행). 먼저 모든 케이스가 공유하는 첫 호출부터 봅니다.</p>
 <!--AUD-->
@@ -495,7 +509,7 @@ P8 = """
 <tr><th style="width:12%">갈래</th><th style="width:22%">후속 LLM 호출·시스템 프롬프트</th><th style="width:30%">그 호출에 넘기는 데이터</th><th>시민 문구와 실제 저장 값</th></tr>
 <tr class="cit"><td><b>faq_answer</b></td><td><span class="aud cit">시민용</span> 안내문 <code>PREFIX-00+02</code> 1회.<br>담당자 초안은 없음(갈래가 faq_answer이므로)</td><td><code>{"query": 원문 전체, "faq": [판정이 인용한 FAQ만, detail 전체]}</code><br>사례·부서 후보는 <b>넘기지 않음</b>. 챗봇이면 <code>conversation_history</code> 추가</td><td>시민 문구 = LLM이 쓴 평문(20자 이상). 저장: 판정, 인용 FAQ, 후보 목록 전체, 단계별 소요.<br>20자 미만이거나 호출 실패면 갈래를 <code>human_handoff / faq_generation_failed</code>로 바꾸고 고정 문구를 쓰며, <b>이때는 담당자 초안 호출이 이어서 실행</b>된다</td></tr>
 <tr><td><b>department_suggestion</b></td><td><span class="aud cit">시민용</span> 문구는 <b>LLM 호출 없음</b>(고정 틀).<br><span class="aud stf">담당자용</span> 초안 <code>PREFIX-00+03</code> 1회</td><td>초안 호출: 아래 "담당자 초안 입력"(원문 전체 + 후보 전부 + 갈래·사유)</td><td>시민 문구 = "유사한 공개 사례를 기준으로… - {부서명} (업무분장: {상태}, 자동 이관 아님)". 저장: 검증을 통과한 <code>department_ids</code>, 부서 목록의 <code>selected=true</code>, 담당자 초안. <code>automatic_transfer</code>는 항상 false</td></tr>
-<tr><td><b>human_handoff</b><br>(범위 안)</td><td><span class="aud stf">담당자용</span> 초안 <code>PREFIX-00+03</code> 1회</td><td>같은 "담당자 초안 입력"</td><td>시민 문구 = <code>reason_code</code>별 고정 문구(LLM이 쓰지 않음). 저장: 사유 코드, 담당자 초안, 있으면 순화 결과</td></tr>
+<tr><td><b>human_handoff</b><br>(범위 밖이 아닌 경우: in_scope·uncertain)</td><td><span class="aud stf">담당자용</span> 초안 <code>PREFIX-00+03</code> 1회</td><td>같은 "담당자 초안 입력"</td><td>시민 문구 = <code>reason_code</code>별 고정 문구(LLM이 쓰지 않음). 저장: 사유 코드, 담당자 초안, 있으면 순화 결과</td></tr>
 <tr><td><b>human_handoff</b><br>(모델이 범위 밖·scope=out_of_scope로 판정)</td><td>초안 LLM <b>호출 안 함</b></td><td>—</td><td>고정 담당자 초안(위 사전 관할 검증과 같은 틀)을 만들어 저장</td></tr>
 <tr class="stf"><td><b>순화</b><br>(갈래와 무관, 조건부)</td><td><span class="aud stf">담당자용</span> <code>PREFIX-00+04</code> 1회</td><td><code>{"query": 원문 전체}</code> <b>만</b>. FAQ·사례·부서 후보와 판정 결과를 넣지 않음</td><td>실행 조건은 8-2와 같음. 저장: 순화 요약·정당한 요청·위험 신호(9종)·사람 보호 검토 필요 여부. 갈래는 바꾸지 않음. 순화와 초안이 둘 다 필요하면 <b>동시에</b> 실행(exaone은 초안을 약 1초 늦춰 초당 한도 회피)</td></tr>
 </table>
