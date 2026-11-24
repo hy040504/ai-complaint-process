@@ -86,6 +86,7 @@ P1 = (
 <tr><td>8</td><td>최종 응답과 보이는 범위</td><td>저장되는 값, 시민·담당자 화면, 초안 비노출</td></tr>
 <tr><td>9</td><td>실제 예시</td><td>평가 기록의 케이스별 입력→판정→응답</td></tr>
 <tr><td>10</td><td>오류와 폴백</td><td>검색 실패·LLM 실패·JSON 오류 때의 값</td></tr>
+<tr><td>부록 A</td><td>검색 용어 쉬운 설명</td><td>형태소·Kiwi, 낱말 찾기(BM25), 뜻 찾기(코사인), RRF, 청킹을 하지 않는 이유 — 그림 6장</td></tr>
 </table>
 <div class="note"><b>두 가지 먼저 알아둘 점</b><br>
 ① 응답 필드 표기가 두 가지다. 내부 딕셔너리(<code>build_result</code>)는 snake_case, HTTP 응답과 DB는 camelCase(<code>aiAssist</code>, <code>reasonCode</code>)다.<br>
@@ -222,6 +223,7 @@ Content-Type: application/json
 <li>공개 사례(<code>routing_cases</code>) 히트는 <code>routing_eligible · department_status · department{canonical_name, duty_status, ...}</code>가 더해지고, <code>department_candidates</code>가 별도로 묶여 나온다(<code>automatic_transfer</code>는 항상 false).</li>
 <li>부서 후보는 <code>department_current</code>가 있고 검토 대상이 아닌 사례만 올라간다. 사례 수 다수결은 쓰지 않고 가장 높은 순위의 사례로 정렬한다.</li>
 </ul>
+<p class="small">BM25·코사인·Kiwi·RRF 같은 용어는 뒤의 <b>부록 A</b>에서 그림으로 쉽게 설명한다.</p>
 <h3>3-4. 점수는 어떻게 쓰이나</h3>
 <div class="note"><b>점수는 AI에게도 넘기지 않는다.</b> <code>compact_faq / compact_case</code>가 점수·임베딩·원문 해시를 제거하고, 순위(<code>rank</code>)와 근거 본문만 남긴다. 컷오프 임계값 코드도 없다. 후보를 그대로 넘기고, 채택 여부는 LLM 판정과 코드 검증이 정한다. 공개 사례의 <b>과거 답변도 AI 입력에서 제외</b>한다.</div>
 """
@@ -458,8 +460,248 @@ P11 = """
 """
 
 
+_MK = '<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker></defs>'
+
+# 부록 그림 A-1: 검색 전체 흐름
+FIG_A1 = (
+    '<svg viewBox="0 0 1100 330" font-family="\'Malgun Gothic\',sans-serif">'
+    + _MK
+    + """
+ <g font-size="13.5" fill="#16203a">
+  <rect x="10" y="125" width="170" height="80" rx="10" fill="#fff4e0" stroke="#d97b06" stroke-width="2"/><text x="95" y="157" text-anchor="middle" font-weight="700">질문</text><text x="95" y="180" text-anchor="middle" font-size="11.5" fill="#6a5300">"소파 버리려는데</text><text x="95" y="196" text-anchor="middle" font-size="11.5" fill="#6a5300">어떻게 해요?"</text>
+  <rect x="250" y="20" width="200" height="80" rx="10" fill="#fff" stroke="#c9d4ea"/><text x="350" y="52" text-anchor="middle" font-weight="700">Kiwi 형태소 분석</text><text x="350" y="76" text-anchor="middle" font-size="11.5" fill="#4a5873">소파 · 버리 · 어떻</text>
+  <rect x="250" y="230" width="200" height="80" rx="10" fill="#fff" stroke="#c9d4ea"/><text x="350" y="262" text-anchor="middle" font-weight="700">임베딩(숫자 점 찍기)</text><text x="350" y="286" text-anchor="middle" font-size="11.5" fill="#4a5873">384개 숫자로 바꿈</text>
+  <rect x="510" y="20" width="200" height="80" rx="10" fill="#e8f0ff" stroke="#2f6fed" stroke-width="2"/><text x="610" y="52" text-anchor="middle" font-weight="700">BM25 · 낱말로 찾기</text><text x="610" y="76" text-anchor="middle" font-size="11.5" fill="#1e4fc7">겹치는 낱말을 센다</text>
+  <rect x="510" y="230" width="200" height="80" rx="10" fill="#e9f7ef" stroke="#1f9d55" stroke-width="2"/><text x="610" y="262" text-anchor="middle" font-weight="700">pgvector 코사인 · 뜻으로 찾기</text><text x="610" y="286" text-anchor="middle" font-size="11.5" fill="#16803f">가까운 점을 찾는다</text>
+  <rect x="770" y="125" width="150" height="80" rx="10" fill="#fff" stroke="#c9d4ea" stroke-width="2"/><text x="845" y="157" text-anchor="middle" font-weight="700">RRF</text><text x="845" y="180" text-anchor="middle" font-size="11.5" fill="#4a5873">두 순위를 합침</text>
+  <rect x="960" y="125" width="130" height="80" rx="10" fill="#fff" stroke="#c9d4ea"/><text x="1025" y="157" text-anchor="middle" font-weight="700">후보 5건</text><text x="1025" y="180" text-anchor="middle" font-size="11.5" fill="#4a5873">AI에게 전달</text>
+ </g>
+ <g stroke="#5b6f95" stroke-width="2" fill="none" marker-end="url(#a)">
+  <path d="M180 150 L248 70"/><path d="M180 180 L248 270"/><path d="M450 60h58"/><path d="M450 270h58"/><path d="M710 60 L768 140"/><path d="M710 270 L768 190"/><path d="M920 165h38"/>
+ </g>
+ <text x="10" y="320" font-size="12" fill="#5a6782">문서는 조각내지 않는다. FAQ 한 건, 공개 사례 한 건이 각각 문서 하나이며 검색 결과도 문서 단위로 나온다.</text>
+</svg>
+"""
+)
+
+# 부록 그림 A-2: 형태소
+FIG_A2 = (
+    '<svg viewBox="0 0 1100 250" font-family="\'Malgun Gothic\',sans-serif">'
+    + _MK
+    + """
+ <text x="10" y="26" font-size="14" font-weight="700" fill="#16203a">"소파를 버렸는데" 를 뜻 있는 조각(형태소)으로 쪼개면</text>
+ <g font-size="18" font-weight="800" text-anchor="middle">
+  <rect x="40" y="50" width="150" height="70" rx="10" fill="#e8f0ff" stroke="#2f6fed" stroke-width="2"/><text x="115" y="94" fill="#1e4fc7">소파</text>
+  <rect x="210" y="50" width="100" height="70" rx="10" fill="#f1f3f8" stroke="#c9d4ea"/><text x="260" y="94" fill="#7a8496">를</text>
+  <rect x="330" y="50" width="150" height="70" rx="10" fill="#e8f0ff" stroke="#2f6fed" stroke-width="2"/><text x="405" y="94" fill="#1e4fc7">버리</text>
+  <rect x="500" y="50" width="100" height="70" rx="10" fill="#f1f3f8" stroke="#c9d4ea"/><text x="550" y="94" fill="#7a8496">었</text>
+  <rect x="620" y="50" width="130" height="70" rx="10" fill="#f1f3f8" stroke="#c9d4ea"/><text x="685" y="94" fill="#7a8496">는데</text>
+ </g>
+ <g font-size="12.5" text-anchor="middle" fill="#3d4860">
+  <text x="115" y="142">명사 (뼈대)</text><text x="260" y="142">조사</text><text x="405" y="142">동사 (뼈대)</text><text x="550" y="142">어미</text><text x="685" y="142">어미</text>
+ </g>
+ <path d="M115 150v22M405 150v22" stroke="#2f6fed" stroke-width="2" fill="none" marker-end="url(#a)"/>
+ <rect x="40" y="178" width="440" height="50" rx="10" fill="#e8f0ff"/><text x="260" y="208" font-size="14" font-weight="700" fill="#1e4fc7" text-anchor="middle">검색에는 뼈대만 사용: 소파 · 버리</text>
+ <rect x="800" y="50" width="290" height="178" rx="10" fill="#fff" stroke="#d6deec"/>
+ <text x="815" y="78" font-size="13" font-weight="700" fill="#16203a">왜 필요한가</text>
+ <g font-size="12.5" fill="#3d4860"><text x="815" y="104">버리려는데 · 버렸는데 · 버리고</text><text x="815" y="124">→ 글자는 달라도 뼈대는 모두 "버리"</text><text x="815" y="154">쪼개 두면 같은 낱말로 비교할 수 있다.</text><text x="815" y="184" fill="#6a7690">Kiwi = 이 쪼개기를 해 주는</text><text x="815" y="202" fill="#6a7690">한국어 형태소 분석기 프로그램</text></g>
+</svg>
+"""
+)
+
+# 부록 그림 A-3: BM25
+FIG_A3 = (
+    '<svg viewBox="0 0 1100 280" font-family="\'Malgun Gothic\',sans-serif">'
+    + """
+ <text x="10" y="24" font-size="14" font-weight="700" fill="#16203a">낱말 찾기(BM25): 질문 낱말이 문서에 있는지 센다 — 드문 낱말일수록 점수가 크다</text>
+ <g font-size="13" fill="#16203a">
+  <rect x="10" y="44" width="330" height="40" fill="#eef3fc" stroke="#cdd7ea"/><text x="24" y="70" font-weight="700">문서</text>
+  <rect x="340" y="44" width="150" height="40" fill="#eef3fc" stroke="#cdd7ea"/><text x="415" y="70" text-anchor="middle" font-weight="700">소파(드묾)</text>
+  <rect x="490" y="44" width="150" height="40" fill="#eef3fc" stroke="#cdd7ea"/><text x="565" y="70" text-anchor="middle" font-weight="700">버리</text>
+  <rect x="640" y="44" width="150" height="40" fill="#eef3fc" stroke="#cdd7ea"/><text x="715" y="70" text-anchor="middle" font-weight="700">어떻(흔함)</text>
+  <rect x="790" y="44" width="300" height="40" fill="#eef3fc" stroke="#cdd7ea"/><text x="940" y="70" text-anchor="middle" font-weight="700">낱말 점수</text>
+ </g>
+ <g font-size="13" fill="#3d4860">
+  <rect x="10" y="84" width="330" height="48" fill="#fff" stroke="#d9e0ee"/><text x="24" y="114">A 대형폐기물 배출 방법</text>
+  <rect x="340" y="84" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="415" y="114" text-anchor="middle">–</text>
+  <rect x="490" y="84" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="565" y="114" text-anchor="middle">–</text>
+  <rect x="640" y="84" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="715" y="114" text-anchor="middle">있음</text>
+  <rect x="790" y="84" width="300" height="48" fill="#fff" stroke="#d9e0ee"/><rect x="800" y="100" width="40" height="16" fill="#9fb8ee"/><text x="850" y="114">낮음 (3위)</text>
+  <rect x="10" y="132" width="330" height="48" fill="#f3f8ff" stroke="#d9e0ee"/><text x="24" y="162" font-weight="700" fill="#1e4fc7">C 소파·장롱 처분 안내</text>
+  <rect x="340" y="132" width="150" height="48" fill="#f3f8ff" stroke="#d9e0ee"/><text x="415" y="162" text-anchor="middle" font-weight="700" fill="#1e4fc7">있음</text>
+  <rect x="490" y="132" width="150" height="48" fill="#f3f8ff" stroke="#d9e0ee"/><text x="565" y="162" text-anchor="middle">–</text>
+  <rect x="640" y="132" width="150" height="48" fill="#f3f8ff" stroke="#d9e0ee"/><text x="715" y="162" text-anchor="middle">–</text>
+  <rect x="790" y="132" width="300" height="48" fill="#f3f8ff" stroke="#d9e0ee"/><rect x="800" y="148" width="190" height="16" fill="#2f6fed"/><text x="1000" y="162" font-weight="700" fill="#1e4fc7">높음 (1위)</text>
+  <rect x="10" y="180" width="330" height="48" fill="#fff" stroke="#d9e0ee"/><text x="24" y="210">B 가로등 고장 신고 방법</text>
+  <rect x="340" y="180" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="415" y="210" text-anchor="middle">–</text>
+  <rect x="490" y="180" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="565" y="210" text-anchor="middle">–</text>
+  <rect x="640" y="180" width="150" height="48" fill="#fff" stroke="#d9e0ee"/><text x="715" y="210" text-anchor="middle">있음</text>
+  <rect x="790" y="180" width="300" height="48" fill="#fff" stroke="#d9e0ee"/><rect x="800" y="196" width="60" height="16" fill="#9fb8ee"/><text x="870" y="210">낮음 (2위)</text>
+ </g>
+ <text x="10" y="256" font-size="12.5" fill="#a85f00">약점: 질문이 "쓰던 가구 처분하고 싶어요"였다면 글자가 달라 A("대형폐기물")를 놓친다 — 뜻은 같아도 글자가 다르면 못 찾는다.</text>
+ <text x="10" y="274" font-size="11.5" fill="#6a7690">(표의 문서와 순위는 설명을 위한 가상의 예다.)</text>
+</svg>
+"""
+)
+
+# 부록 그림 A-4: 코사인
+FIG_A4 = (
+    '<svg viewBox="0 0 1100 330" font-family="\'Malgun Gothic\',sans-serif">'
+    + _MK
+    + """
+ <text x="10" y="24" font-size="14" font-weight="700" fill="#16203a">뜻 찾기(코사인): 문장을 지도 위의 점으로 찍고, 같은 방향을 가리키는 점을 찾는다</text>
+ <rect x="10" y="40" width="640" height="270" rx="10" fill="#f6f8fc" stroke="#d6deec"/>
+ <path d="M60 280H630M60 280V60" stroke="#8a97b3" stroke-width="2" fill="none" marker-end="url(#a)"/>
+ <text x="600" y="300" font-size="12" fill="#5a6782" text-anchor="end">쓰레기·폐기물 쪽일수록 오른쪽 →</text>
+ <text x="70" y="70" font-size="12" fill="#5a6782">시설·도로 쪽일수록 위 ↑</text>
+ <g stroke="#1f9d55" stroke-width="2" stroke-dasharray="5 4"><path d="M60 280L420 215"/><path d="M60 280L470 230"/></g>
+ <path d="M60 280L180 110" stroke="#c9a37a" stroke-width="2" stroke-dasharray="5 4"/>
+ <circle cx="430" cy="218" r="11" fill="#d97b06"/><text x="445" y="204" font-size="13" font-weight="700" fill="#a85f00">질문 "소파 버리려는데"</text>
+ <circle cx="500" cy="236" r="10" fill="#1f9d55"/><text x="512" y="262" font-size="13" fill="#16803f">A 대형폐기물</text>
+ <circle cx="400" cy="244" r="10" fill="#1f9d55"/><text x="330" y="270" font-size="13" fill="#16803f">C 소파 처분</text>
+ <circle cx="180" cy="110" r="10" fill="#8a97b3"/><text x="195" y="116" font-size="13" fill="#5a6782">B 가로등 고장</text>
+ <rect x="680" y="40" width="410" height="270" rx="10" fill="#fff" stroke="#d6deec"/>
+ <g font-size="13" fill="#3d4860">
+  <text x="698" y="72" font-weight="700" fill="#16203a">읽는 법</text>
+  <text x="698" y="100">· 점이 가까울수록 뜻이 비슷하다.</text>
+  <text x="698" y="124">· "가깝다"는 원점에서 본 방향이 같은지로 잰다.</text>
+  <text x="698" y="148">  → 이것이 코사인.</text>
+  <text x="698" y="180" font-weight="700" fill="#16803f">강점</text>
+  <text x="698" y="202">"쓰던 가구 처분" 처럼 글자가 달라도</text>
+  <text x="698" y="222">뜻이 같으면 같은 쪽에 찍혀 A를 찾는다.</text>
+  <text x="698" y="254" font-weight="700" fill="#a85f00">약점</text>
+  <text x="698" y="276">"흥덕구 복대동"과 "서원구 모충동"은</text>
+  <text x="698" y="296">둘 다 동네 이름이라 비슷한 곳에 찍힌다.</text>
+ </g>
+</svg>
+"""
+)
+
+# 부록 그림 A-5: RRF
+FIG_A5 = (
+    '<svg viewBox="0 0 1100 300" font-family="\'Malgun Gothic\',sans-serif">'
+    + _MK
+    + """
+ <text x="10" y="24" font-size="14" font-weight="700" fill="#16203a">RRF: 점수는 버리고 순위만 본다 — 문서마다 1 ÷ (60 + 순위)를 더한다</text>
+ <g font-size="13" fill="#16203a">
+  <rect x="10" y="44" width="250" height="210" rx="10" fill="#e9f7ef" stroke="#1f9d55"/><text x="135" y="70" text-anchor="middle" font-weight="700">뜻 검색(코사인) 순위</text>
+  <text x="40" y="104">1위  A 대형폐기물</text><text x="40" y="134">2위  C 소파 처분</text><text x="40" y="164" fill="#7a8496">B 가로등: 순위 밖</text>
+  <rect x="290" y="44" width="250" height="210" rx="10" fill="#e8f0ff" stroke="#2f6fed"/><text x="415" y="70" text-anchor="middle" font-weight="700">낱말 검색(BM25) 순위</text>
+  <text x="320" y="104">1위  C 소파 처분</text><text x="320" y="134">2위  B 가로등</text><text x="320" y="164">3위  A 대형폐기물</text>
+ </g>
+ <path d="M262 150h26M542 150h26" stroke="#5b6f95" stroke-width="2" fill="none"/>
+ <rect x="570" y="44" width="520" height="210" rx="10" fill="#fff" stroke="#d6deec"/>
+ <g font-size="13" fill="#16203a">
+  <text x="590" y="70" font-weight="700">합산 (순위만 사용)</text>
+  <text x="590" y="102">C  1/(60+2) + 1/(60+1) = 0.0161 + 0.0164 = <tspan font-weight="800" fill="#1e4fc7">0.0325</tspan>  → 1등</text>
+  <text x="590" y="134">A  1/(60+1) + 1/(60+3) = 0.0164 + 0.0159 = <tspan font-weight="800">0.0323</tspan>  → 2등</text>
+  <text x="590" y="166">B  낱말에서만 2위 = 1/(60+2) = <tspan font-weight="800">0.0161</tspan>  → 3등</text>
+  <text x="590" y="204" fill="#4a5873" font-size="12.5">두 검색 모두에서 상위인 문서가 가장 위로 올라온다.</text>
+  <text x="590" y="226" fill="#4a5873" font-size="12.5">60은 1위와 5위의 차이를 너무 키우지 않는 완충값이다.</text>
+ </g>
+ <text x="10" y="282" font-size="12" fill="#5a6782">실제 검색은 컬렉션마다 후보 30개씩을 합쳐 상위 5건을 쓴다. 이 점수는 정답 확률이 아니며 AI에게도 넘기지 않는다.</text>
+</svg>
+"""
+)
+
+# 부록 그림 A-6: 청킹 아님
+FIG_A6 = (
+    '<svg viewBox="0 0 1100 270" font-family="\'Malgun Gothic\',sans-serif">'
+    + _MK
+    + """
+ <g font-size="13" fill="#16203a">
+  <rect x="10" y="20" width="520" height="220" rx="10" fill="#fff" stroke="#d6deec"/>
+  <text x="270" y="46" text-anchor="middle" font-weight="700">청킹 방식 (이 프로젝트는 쓰지 않음)</text>
+  <rect x="40" y="62" width="460" height="34" fill="#f1f3f8" stroke="#c9d4ea"/><text x="50" y="84" fill="#5a6782">FAQ 한 건의 긴 글</text>
+  <path d="M270 98v22" stroke="#8a97b3" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="40" y="124" width="140" height="34" fill="#fff4e0" stroke="#d97b06"/><text x="110" y="146" text-anchor="middle">조각 1</text>
+  <rect x="190" y="124" width="140" height="34" fill="#fff4e0" stroke="#d97b06"/><text x="260" y="146" text-anchor="middle">조각 2</text>
+  <rect x="340" y="124" width="160" height="34" fill="#fff4e0" stroke="#d97b06"/><text x="420" y="146" text-anchor="middle">조각 3 (처리기간만)</text>
+  <text x="40" y="190" font-size="12.5" fill="#a85f00">조각마다 따로 저장·검색 → "처리기간"만 떨어져 나와</text>
+  <text x="40" y="210" font-size="12.5" fill="#a85f00">어느 대상의 기간인지 잃을 수 있다.</text>
+  <rect x="570" y="20" width="520" height="220" rx="10" fill="#fff" stroke="#1f9d55" stroke-width="2"/>
+  <text x="830" y="46" text-anchor="middle" font-weight="700" fill="#16803f">건 단위 문서 (이 프로젝트)</text>
+  <rect x="600" y="62" width="460" height="96" fill="#e9f7ef" stroke="#1f9d55"/>
+  <text x="614" y="84">업무명 · 분류 · 상세 안내 · 대상 · 접수처와 조건</text><text x="614" y="106">· 처리기간 · 주의사항 → 한 문서로 통째로 저장</text>
+  <text x="614" y="134" fill="#16803f" font-weight="700">검색 결과도 이 한 건 전체가 후보로 올라온다.</text>
+  <text x="600" y="190" font-size="12.5" fill="#16803f">대상·조건·기간·주의사항이 항상 함께 다닌다.</text>
+  <text x="600" y="210" font-size="11.5" fill="#6a7690">(입력 한도 512토큰을 넘는 뒷부분은 뜻 검색에 반영되지 않을 수 있다.</text><text x="600" y="228" font-size="11.5" fill="#6a7690"> AI에는 원문 전체를 넘긴다.)</text>
+ </g>
+ <text x="10" y="262" font-size="12" fill="#5a6782">Kiwi 형태소 분석은 문서를 자르는 청킹이 아니라, 검색할 때 문장을 낱말로 나누는 준비 작업이다.</text>
+</svg>
+"""
+)
+
+P12 = (
+    """
+<h2>부록 A. 검색 용어를 쉽게 — 그림으로 보기</h2>
+<p>3장의 검색에 나오는 용어를 "소파 버리려는데 어떻게 해요?"라는 질문 하나로 풀어 봅니다.</p>
+<div class="fig">"""
+    + FIG_A1
+    + """</div><div class="cap">그림 A-1. 질문 하나가 후보 5건이 되는 과정</div>
+<h3>A-1. Kiwi와 형태소</h3>
+<ul>
+<li><b>형태소</b>: 뜻을 가진 가장 작은 말 조각. 한국어는 낱말 끝에 조사·어미가 붙어 모양이 계속 변하므로, 변하지 않는 <b>뼈대</b>를 뽑아야 같은 낱말로 비교할 수 있다.</li>
+<li><b>Kiwi</b>: 문장을 형태소로 쪼개고 품사 이름표를 달아 주는 한국어 형태소 분석기 프로그램(파이썬 패키지, 별도 서버 불필요). 같은 일을 하는 다른 프로그램으로 Mecab·Okt·Komoran 등이 있다.</li>
+<li>이 프로젝트는 쪼갠 조각 중 명사·동사 같은 <b>뼈대만 남기고</b> 조사·어미는 걸러 낱말 검색(BM25)에 쓴다.</li>
+</ul>
+<div class="fig">"""
+    + FIG_A2
+    + """</div><div class="cap">그림 A-2. 형태소 쪼개기 — 뼈대만 검색에 사용</div>
+"""
+)
+
+P13 = (
+    """
+<h2>부록 A (계속). 낱말로 찾기와 뜻으로 찾기</h2>
+<h3>A-2. 낱말로 찾기 — BM25</h3>
+<ul>
+<li>질문의 낱말(뼈대)이 문서에 <b>있는지 세는</b> 전통적인 검색. 책 뒤의 <b>색인</b>에서 단어를 찾는 것과 같다.</li>
+<li>흔한 낱말(어떻)은 점수를 적게, 드문 낱말(소파)은 많이 준다. 문서가 길다고 점수를 무작정 올려 주지도 않는다.</li>
+<li>잘하는 것은 지명·번호·정확한 이름. 놓치는 것은 <b>뜻은 같고 글자가 다른</b> 표현이다.</li>
+</ul>
+<div class="fig">"""
+    + FIG_A3
+    + """</div><div class="cap">그림 A-3. 낱말 찾기 — 겹치는 낱말과 점수</div>
+<h3>A-3. 뜻으로 찾기 — pgvector 코사인</h3>
+<ul>
+<li>문장을 숫자 384개로 바꿔(임베딩) 지도 위의 점으로 만든다. 뜻이 비슷하면 가까운 점이 된다. <b>pgvector</b>는 이 점들을 PostgreSQL에 저장하고 가까운 것을 빨리 찾게 해 주는 도구다.</li>
+<li><b>코사인</b>은 "가까움"을 재는 방법으로, 두 점이 같은 방향을 가리키는지를 본다. 아래 그림은 설명을 위해 2칸으로 줄인 지도이며, 실제 384칸이 각각 무엇을 뜻하는지는 사람이 알 수 없다(모델이 학습하며 정한 값).</li>
+</ul>
+<div class="fig">"""
+    + FIG_A4
+    + """</div><div class="cap">그림 A-4. 뜻 찾기 — 지도 위의 점과 방향</div>
+"""
+)
+
+P14 = (
+    """
+<h2>부록 A (계속). 합치기와 청킹 여부</h2>
+<h3>A-4. 두 순위를 합치기 — RRF</h3>
+<ul>
+<li>두 검색의 점수는 단위가 달라 그대로 더할 수 없으므로, <b>점수는 버리고 순위만</b> 쓴다. 문서마다 <code>1 ÷ (60 + 순위)</code>를 각 검색에서 구해 더한다.</li>
+<li>뜻 검색과 낱말 검색이 서로의 약점을 메우고, 양쪽에서 모두 상위인 문서가 가장 위로 올라온다. 이렇게 두 방식을 섞은 것을 <b>하이브리드 검색</b>이라 부른다.</li>
+</ul>
+<div class="fig">"""
+    + FIG_A5
+    + """</div><div class="cap">그림 A-5. RRF 계산 예 (가상의 순위)</div>
+<h3>A-5. 청킹은 하지 않는다</h3>
+<table>
+<tr><th style="width:18%"></th><th>청킹</th><th>Kiwi 형태소 분석</th></tr>
+<tr><td>쪼개는 대상</td><td><b>문서</b>(긴 글)</td><td><b>문장 속 낱말</b>(질문과 문서)</td></tr>
+<tr><td>결과 단위</td><td>조각마다 따로 저장·검색</td><td>검색 결과는 여전히 <b>문서 한 건</b></td></tr>
+<tr><td>비유</td><td>책을 챕터별로 잘라 따로 꽂기</td><td>색인을 만들려고 단어 골라내기</td></tr>
+</table>
+<div class="fig">"""
+    + FIG_A6
+    + """</div><div class="cap">그림 A-6. 청킹 방식과 이 프로젝트의 건 단위 문서</div>
+<div class="note">프로젝트 지침이 "FAQ의 대상·접수 조건·처리기간·주의사항을 보존하고 임의 요약이나 잘라내기로 조건을 없애지 않는다"이므로 건 단위 문서를 쓴다(<code>rag/data.py</code>의 <code>faq_text</code>·<code>case_text</code>). 청킹 관련 이름은 캐시를 500개씩 끊어 처리하는 <code>_CACHE_CHUNK</code>뿐이며 검색 문서와 무관하다. 뜻 검색에서 입력 한도(512토큰)를 넘는 문서의 뒷부분이 실제로 몇 건 잘리는지는 확인하지 못했다.</div>
+"""
+)
+
+
 def build() -> str:
-    pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11]
+    pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14]
     body = "".join(page(p) for p in pages)
     return (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
