@@ -443,7 +443,7 @@ P9 = """
  "sanitize": {"sanitized_summary":"...","legitimate_requests":["..."],"risk_signals":["profanity_insult"],
               "human_protection_review_needed":true}
 }</pre>
-<p class="small">공급자 한도 폴백이 있었으면 <code>llm_provider</code>·<code>llm_model</code>에는 폴백된 값이 기록된다. <code>codex</code>는 호출 데이터와 프롬프트 전문이며 담당자 모달에서만 본다.</p>
+<p class="small">※ 위 JSON은 설명용 조합이다. 내용은 평가 케이스 B01(부서 추천)이고, <code>stages</code>의 시간은 평가 기록의 케이스 A16에서 가져왔다. 공급자 한도 폴백이 있었으면 <code>llm_provider</code>·<code>llm_model</code>에는 폴백된 값이 기록된다. <code>codex</code>는 호출 데이터와 프롬프트 전문이며 담당자 모달에서만 본다.</p>
 <h3>8-2. 누가 무엇을 보나</h3>
 <table>
 <tr><th style="width:15%">화면</th><th>보이는 것</th></tr>
@@ -1143,7 +1143,7 @@ P6 = _ins_before(
 )
 P9 = _ins_before(
     P9,
-    '<p class="small">공급자 한도 폴백이 있었으면',
+    '<p class="small">※ 위 JSON은 설명용 조합이다. 내용은 평가 케이스 B01(부서 추천)이고, <code>stages</code>의 시간은 평가 기록의 케이스 A16에서 가져왔다. 공급자 한도 폴백이 있었으면',
     kt(
         "8-1의 최종 결과(aiAssist) JSON 키 직역",
         [
