@@ -170,7 +170,7 @@ iter_web_assist(query, district, 5, False, provider=provider)
 <p class="small">단계가 바뀔 때마다 SSE <code>ai_job.stage_changed</code>를 발행한다. 같은 라벨이 연속되면 중복 추가하지 않는다.</p>
 <h3>2-3. 완료 저장 (<code>_commit_ai_completion</code>)</h3>
 <ul>
-<li><code>attempt</code>와 <code>context_version</code>이 같고 작업이 <code>running</code>일 때만 저장한다. 다르면 늦게 도착한 결과로 보고 <b>버린다</b>(시민이 원문을 고쳤거나 철회한 경우).</li>
+<li><code>attempt</code>와 <code>context_version</code>이 같고 작업이 <code>running</code>일 때만 저장한다. 다르면 늦게 도착한 결과로 보고 <b>버린다</b>(수정·답변 게시·철회·추가 문의 등으로 <code>context_version</code>이 올라가 작업이 <code>superseded</code>가 된 경우).</li>
 <li>결과를 <code>Complaint.aiAssist</code>에 넣고 <code>job.status="succeeded"</code>로 둔다. 라벨은 갈래별로 "AI 분석 완료 (FAQ 안내|부서 후보|담당자 검토) · 담당자 검토 대기".</li>
 <li>담당자용 초안 후보(<code>aiCandidate</code>)는 <code>staff_draft.draft_answer</code>, 없으면 시민 안내문이다. 담당자가 이미 초안을 저장했거나 게시했으면 <b>초안을 덮어쓰지 않는다</b>.</li>
 <li>비공개 이력 "AI 응대 분석 완료 · {공급자} ({모델})"을 남기고 SSE <code>ai_job.completed</code>를 발행한다.</li>
@@ -270,14 +270,14 @@ P5 = """
 <tr><td><code>warnings</code></td><td>경고들</td><td>주의사항</td></tr>
 <tr><td colspan="3" style="background:#f6f8fc"><b>사례 안쪽</b></td></tr>
 <tr><td><code>summary</code></td><td>요약</td><td>사례의 민원 요지(과거 답변은 넣지 않음)</td></tr>
-<tr><td><code>routing_eligible</code></td><td>이관 경로로 쓸 자격 있음</td><td>부서 이름이 확인돼 부서 후보의 근거가 될 수 있다는 표시. <b>자동 이관 허가가 아님</b></td></tr>
-<tr><td><code>department_status</code></td><td>부서 상태</td><td>부서 이름 확인 상태(검토 필요 여부 등)</td></tr>
+<tr><td><code>routing_eligible</code></td><td>이관 경로로 쓸 자격 있음</td><td>부서 추천의 근거로 써도 되는 사례라는 표시. 부서가 연결돼 있고 상태가 <code>review_required</code>가 아닐 때 참(DB 제약). <b>자동 이관 허가가 아님</b></td></tr>
+<tr><td><code>department_status</code></td><td>부서 상태</td><td>부서 연결 상태(<code>review_required</code>는 검토 필요, 값 제한 없음)</td></tr>
 <tr><td><code>department_id</code></td><td>부서 번호</td><td>부서의 고유 번호</td></tr>
 <tr><td><code>department_name</code></td><td>부서 이름</td><td>사례에 붙은 부서 이름</td></tr>
-<tr><td><code>duty_status</code></td><td>업무 상태</td><td>업무분장(그 부서가 이 일을 맡는지) 확인 상태. <code>unverified</code>는 미확인</td></tr>
+<tr><td><code>duty_status</code></td><td>업무 상태</td><td>업무 확인 상태. <code>unverified</code> 미확인 / <code>verified</code> 확인됨(둘 중 하나로 제한)</td></tr>
 <tr><td colspan="3" style="background:#f6f8fc"><b>부서 후보 안쪽</b></td></tr>
-<tr><td><code>canonical_name</code></td><td>정식 이름, 표준 이름</td><td>정리된 공식 부서 이름</td></tr>
-<tr><td><code>jurisdiction_status</code></td><td>관할 상태</td><td>그 부서의 관할 확인 상태(<code>duty_status</code>와 함께 후보의 신뢰도를 가늠하는 값)</td></tr>
+<tr><td><code>canonical_name</code></td><td>정식 이름, 표준 이름</td><td>현재 공식 부서 이름(겹치지 않음)</td></tr>
+<tr><td><code>jurisdiction_status</code></td><td>관할 상태</td><td>담당 지역을 확인했는지 나타내는 상태(값 제한 없음)</td></tr>
 <tr><td><code>supporting_case_ids</code></td><td>뒷받침하는 사례 번호들</td><td>이 부서를 후보로 올린 사례의 <code>source_id</code> 목록</td></tr>
 <tr><td colspan="3" style="background:#f6f8fc"><b>장소·대화 안쪽</b></td></tr>
 <tr><td><code>gu</code> · <code>dong</code></td><td>구 · 동</td><td>장소가 속한 구와 동</td></tr>
@@ -947,7 +947,7 @@ P2 = _ins_before(
             (
                 "contextVersion",
                 "맥락 버전",
-                "민원 원문이 바뀔 때마다 오르는 번호. 늦게 도착한 AI 결과를 버릴지 정하는 데 씀",
+                "수정·답변 게시·철회·추가 문의·검토 전환 등으로 민원 상태가 바뀔 때마다 오르는 번호. 오르면 실행 중인 AI 작업은 중단되고 늦게 도착한 결과는 버려짐",
             ),
             ("isSynthetic", "합성인가", "시연용으로 만든 가짜 민원인지 여부"),
             (
@@ -979,7 +979,7 @@ P3 = _ins_before(
             ),
             ("type", "종류", "알림 종류(<code>ai_job.stage_changed</code> 등)"),
             ("complaintId", "민원 번호", "어느 민원의 알림인지"),
-            ("contextVersion", "맥락 버전", "원문 버전 번호"),
+            ("contextVersion", "맥락 버전", "민원 맥락 버전 번호(위 응답 표 참고)"),
             ("attempt", "시도 회차", "AI 작업을 몇 번째 시도하는지"),
             ("jobStatus", "작업 상태", "<code>running</code> 실행 중 등"),
             ("stage", "단계", "지금 단계 문구(140자까지)"),
