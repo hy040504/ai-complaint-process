@@ -670,6 +670,102 @@ FIG_A6 = (
 """
 )
 
+# --- 부록 예시를 "낡은 소파 버리고 싶어요"로 통일 (문서 A 대형폐기물 / B 소파 수리 / C 도로 파손) ---
+FIG_A1 = (
+    FIG_A1.replace('"소파 버리려는데', '"낡은 소파 버리고')
+    .replace('어떻게 해요?"', '싶어요"')
+    .replace("소파 · 버리 · 어떻", "낡 · 소파 · 버리")
+)
+
+FIG_A3 = """
+<svg viewBox="0 0 1100 330" font-family="'Malgun Gothic',sans-serif">
+ <text x="10" y="22" font-size="14" font-weight="700" fill="#16203a">낱말로 찾기(BM25): 같은 글자가 있어야 점수를 받는다</text>
+ <text x="10" y="58" font-size="13" fill="#16203a" font-weight="700">질문 낱말</text>
+ <g font-size="13" font-weight="700" fill="#fff"><rect x="110" y="40" width="60" height="26" rx="13" fill="#2f6fed"/><text x="140" y="58" text-anchor="middle">낡</text>
+ <rect x="180" y="40" width="70" height="26" rx="13" fill="#2f6fed"/><text x="215" y="58" text-anchor="middle">소파</text>
+ <rect x="260" y="40" width="70" height="26" rx="13" fill="#2f6fed"/><text x="295" y="58" text-anchor="middle">버리</text></g>
+ <g font-size="13" fill="#16203a">
+  <rect x="10" y="90" width="1080" height="64" rx="8" fill="#fff" stroke="#c9d4ea"/>
+  <text x="24" y="116" font-weight="800">A 대형폐기물</text>
+  <g font-size="12.5"><rect x="150" y="100" width="110" height="26" rx="6" fill="#eef1f7"/><text x="205" y="118" text-anchor="middle">대형폐기물</text>
+  <rect x="270" y="100" width="60" height="26" rx="6" fill="#eef1f7"/><text x="300" y="118" text-anchor="middle">가구를</text>
+  <rect x="340" y="100" width="90" height="26" rx="6" fill="#ffe9a8" stroke="#d97b06"/><text x="385" y="118" text-anchor="middle">버릴(버리)</text>
+  <rect x="440" y="100" width="70" height="26" rx="6" fill="#eef1f7"/><text x="475" y="118" text-anchor="middle">신고 후</text></g>
+  <text x="1070" y="118" text-anchor="end" font-weight="800" fill="#a85f00">겹침 1개 · 2등</text>
+  <text x="150" y="146" font-size="11.5" fill="#6a7690">"소파"라는 글자가 없어서 놓치기 쉽다</text>
+  <rect x="10" y="166" width="1080" height="64" rx="8" fill="#fff" stroke="#c9d4ea"/>
+  <text x="24" y="192" font-weight="800">B 소파 수리</text>
+  <g font-size="12.5"><rect x="150" y="176" width="70" height="26" rx="6" fill="#ffe9a8" stroke="#d97b06"/><text x="185" y="194" text-anchor="middle">소파</text>
+  <rect x="230" y="176" width="90" height="26" rx="6" fill="#eef1f7"/><text x="275" y="194" text-anchor="middle">수리 업체</text>
+  <rect x="330" y="176" width="90" height="26" rx="6" fill="#ffe9a8" stroke="#d97b06"/><text x="375" y="194" text-anchor="middle">낡은(낡)</text>
+  <rect x="430" y="176" width="70" height="26" rx="6" fill="#eef1f7"/><text x="465" y="194" text-anchor="middle">고쳐 드림</text></g>
+  <text x="1070" y="194" text-anchor="end" font-weight="800" fill="#16803f">겹침 2개 · 1등</text>
+  <text x="150" y="222" font-size="11.5" fill="#6a7690">하지만 사용자는 고치려는 게 아니라 버리려는 것</text>
+  <rect x="10" y="242" width="1080" height="50" rx="8" fill="#fff" stroke="#c9d4ea"/>
+  <text x="24" y="272" font-weight="800">C 도로 파손</text>
+  <g font-size="12.5"><rect x="150" y="252" width="60" height="26" rx="6" fill="#eef1f7"/><text x="180" y="270" text-anchor="middle">도로</text>
+  <rect x="220" y="252" width="70" height="26" rx="6" fill="#eef1f7"/><text x="255" y="270" text-anchor="middle">포트홀</text>
+  <rect x="300" y="252" width="60" height="26" rx="6" fill="#eef1f7"/><text x="330" y="270" text-anchor="middle">신고</text></g>
+  <text x="1070" y="270" text-anchor="end" font-weight="800" fill="#6a7690">겹침 0개 · 검색 안 됨</text>
+ </g>
+ <text x="10" y="318" font-size="11.5" fill="#6a7690">※ 낱말은 한국어 형태소 분석(Kiwi)이 끝말을 떼어 낸 조각이다. 순위는 설명을 위한 가상의 예이며 실제 계산값이 아니다.</text>
+</svg>
+"""
+
+FIG_A4 = """
+<svg viewBox="0 0 1100 400" font-family="'Malgun Gothic',sans-serif">
+ <defs><marker id="m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1l8 4-8 4z" fill="#2f6fed"/></marker></defs>
+ <text x="10" y="22" font-size="14" font-weight="700" fill="#16203a">뜻으로 찾기(코사인): 뜻의 지도에서 화살표 방향이 같은 문서를 찾는다</text>
+ <rect x="60" y="40" width="620" height="330" rx="10" fill="#fff" stroke="#c9d4ea"/>
+ <text x="70" y="62" font-size="11.5" fill="#6a7690">↑ 물건을 처분·배출하는 이야기</text>
+ <text x="560" y="362" font-size="11.5" fill="#6a7690">도로·시설 이야기 →</text>
+ <circle cx="160" cy="300" r="7" fill="#16203a"/><text x="172" y="322" font-size="12" fill="#16203a" font-weight="700">출발(원점)</text>
+ <g stroke="#2f6fed" stroke-width="2.5" fill="none" marker-end="url(#m)"><path d="M160 300 L265 130"/></g>
+ <g stroke="#9aa9c7" stroke-width="2" fill="none" marker-end="url(#m)" stroke-dasharray="5 4"><path d="M160 300 L305 120"/><path d="M160 300 L400 255"/><path d="M160 300 L590 290"/></g>
+ <polygon points="268,118 276,134 258,134" fill="#d97b06"/><text x="70" y="96" font-size="12.5" font-weight="800" fill="#a85f00">질문 "낡은 소파 버리고 싶어요"</text>
+ <circle cx="305" cy="118" r="10" fill="#1f9d55"/><text x="320" y="106" font-size="12.5" font-weight="800" fill="#16803f">A 대형폐기물 배출 (방향 거의 같음)</text>
+ <circle cx="400" cy="255" r="10" fill="#d97b06"/><text x="415" y="248" font-size="12.5" font-weight="800" fill="#a85f00">B 소파 수리 (조금 다름)</text>
+ <circle cx="590" cy="290" r="10" fill="#8794b3"/><text x="475" y="318" font-size="12.5" font-weight="800" fill="#5a6782">C 도로 파손 (전혀 다름)</text>
+ <rect x="720" y="50" width="370" height="310" rx="10" fill="#f3f6fc" stroke="#d6deec"/>
+ <text x="740" y="82" font-size="14" font-weight="800" fill="#16203a">코사인 점수 (설명용 가짜 값)</text>
+ <g font-size="13" fill="#3d4860">
+  <text x="740" y="120">A 대형폐기물</text><rect x="860" y="106" width="200" height="16" rx="8" fill="#e1e8f5"/><rect x="860" y="106" width="164" height="16" rx="8" fill="#1f9d55"/><text x="1062" y="119" text-anchor="end" font-size="11.5" fill="#fff" font-weight="700">0.82</text>
+  <text x="740" y="164">B 소파 수리</text><rect x="860" y="150" width="200" height="16" rx="8" fill="#e1e8f5"/><rect x="860" y="150" width="110" height="16" rx="8" fill="#d97b06"/><text x="1062" y="163" text-anchor="end" font-size="11.5" fill="#5a4400" font-weight="700">0.55</text>
+  <text x="740" y="208">C 도로 파손</text><rect x="860" y="194" width="200" height="16" rx="8" fill="#e1e8f5"/><rect x="860" y="194" width="20" height="16" rx="8" fill="#8794b3"/><text x="1062" y="207" text-anchor="end" font-size="11.5" fill="#5a6782" font-weight="700">0.10</text>
+ </g>
+ <text x="740" y="248" font-size="12.5" fill="#3d4860">1에 가까울수록 같은 방향(비슷한 뜻),</text>
+ <text x="740" y="268" font-size="12.5" fill="#3d4860">0에 가까울수록 다른 방향.</text>
+ <text x="740" y="304" font-size="12.5" fill="#16803f" font-weight="700">"버리고 싶다"와 "배출 방법"은 낱말이</text>
+ <text x="740" y="324" font-size="12.5" fill="#16803f" font-weight="700">하나도 안 겹쳐도 같은 방향이라 1등.</text>
+ <text x="10" y="392" font-size="11.5" fill="#6a7690">※ 실제로는 2칸이 아니라 384칸 숫자이고, 지도는 이해를 돕기 위한 단순화다.</text>
+</svg>
+"""
+
+FIG_A5 = """
+<svg viewBox="0 0 1100 340" font-family="'Malgun Gothic',sans-serif">
+ <defs><marker id="r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1l8 4-8 4z" fill="#5b6f95"/></marker></defs>
+ <text x="10" y="22" font-size="14" font-weight="700" fill="#16203a">RRF: 점수는 버리고 순위만 모아 더한다 (1 ÷ (60 + 순위))</text>
+ <rect x="10" y="44" width="280" height="250" rx="10" fill="#fff" stroke="#c9d4ea"/>
+ <text x="26" y="72" font-size="14" font-weight="800" fill="#16203a">뜻 검색 순위</text>
+ <g font-size="13.5" fill="#16203a"><text x="30" y="108">1위  A 대형폐기물</text><text x="30" y="144">2위  B 소파 수리</text><text x="30" y="180">3위  C 도로 파손</text></g>
+ <rect x="320" y="44" width="280" height="250" rx="10" fill="#fff" stroke="#c9d4ea"/>
+ <text x="336" y="72" font-size="14" font-weight="800" fill="#16203a">낱말 검색 순위</text>
+ <g font-size="13.5" fill="#16203a"><text x="340" y="108">1위  B 소파 수리</text><text x="340" y="144">2위  A 대형폐기물</text><text x="340" y="180" fill="#8794b3">(C는 겹친 낱말이 없어 제외)</text></g>
+ <path d="M602 170h58" stroke="#5b6f95" stroke-width="2.5" fill="none" marker-end="url(#r)"/>
+ <rect x="670" y="44" width="420" height="250" rx="10" fill="#e8f0ff" stroke="#2f6fed" stroke-width="2"/>
+ <text x="688" y="72" font-size="14" font-weight="800" fill="#1e4fc7">합친 점수 (설명용 계산)</text>
+ <g font-size="13" fill="#16203a">
+  <text x="688" y="108" font-weight="800">A</text><text x="716" y="108">1/61 + 1/62 = 0.0164 + 0.0161 = <tspan font-weight="800">0.0325</tspan></text>
+  <text x="688" y="144" font-weight="800">B</text><text x="716" y="144">1/62 + 1/61 = 0.0161 + 0.0164 = <tspan font-weight="800">0.0325</tspan></text>
+  <text x="688" y="180" font-weight="800">C</text><text x="716" y="180">1/63 (한쪽에서만) = <tspan font-weight="800">0.0159</tspan></text>
+ </g>
+ <text x="688" y="222" font-size="12.5" fill="#1e4fc7" font-weight="700">두 방식 모두에서 상위인 A·B가 나란히 위로 올라온다.</text>
+ <text x="688" y="244" font-size="12.5" fill="#3d4860">동점이면 둘 다 후보에 들어가고, 무엇이 맞는지는</text>
+ <text x="688" y="264" font-size="12.5" fill="#3d4860">그다음 단계인 AI 판정이 고른다.</text>
+ <text x="10" y="322" font-size="11.5" fill="#6a7690">※ 60은 1위와 5위의 차이를 너무 키우지 않으려는 완충값이다. 숫자는 설명용이며 실제 검색 점수와 다르다.</text>
+</svg>
+"""
+
 P12 = (
     """
 <h2>부록 A. 검색 용어를 쉽게 — 그림으로 보기</h2>
@@ -778,8 +874,264 @@ P14 = (
 )
 
 
+# --- 부록 본문 예시 통일, JSON 키 직역 표 삽입, 쪽 순서 정리 ---
+def _ins_before(page_text: str, anchor: str, html_text: str) -> str:
+    """페이지 문자열의 anchor 바로 앞에 html_text를 끼워 넣습니다. anchor가 없으면 오류를 냅니다."""
+    if anchor not in page_text:
+        raise ValueError(f"삽입 위치를 찾지 못했습니다: {anchor}")
+    return page_text.replace(anchor, html_text + anchor, 1)
+
+
+def kt(title: str, rows: list[tuple[str, ...]], note: str = "") -> str:
+    """JSON 키 직역 표 HTML을 만듭니다. 한 칸짜리 튜플은 묶음 제목 행입니다."""
+    out = [f"<h3>{title}</h3>"]
+    if note:
+        out.append(f'<p class="small">{note}</p>')
+    out.append(
+        '<table><tr><th style="width:27%">키</th><th style="width:21%">직역</th>'
+        "<th>이 프로젝트에서의 뜻</th></tr>"
+    )
+    for row in rows:
+        if len(row) == 1:
+            out.append(f'<tr><td colspan="3" style="background:#f6f8fc"><b>{row[0]}</b></td></tr>')
+        else:
+            out.append(f"<tr><td><code>{row[0]}</code></td><td>{row[1]}</td><td>{row[2]}</td></tr>")
+    out.append("</table>")
+    return "".join(out)
+
+
+_KT_NOTE = "영어 키 이름을 그대로 우리말로 옮긴 것입니다(키 부분만). 오른쪽은 이 프로젝트에서 쓰는 뜻입니다."
+
+P2 = _ins_before(
+    P2,
+    "<h3>1-2. 서버가 검사하는 입력",
+    kt(
+        "1-1의 요청 JSON 키 직역",
+        [
+            ("title", "제목", "민원 제목(1~120자)"),
+            ("body", "본문", "민원 내용(10~2000자)"),
+            ("district", "구역", "민원이 속한 구. 모르면 \"모름\""),
+            ("category", "범주, 분류", "민원 분야(도로·교통, 환경·청소 등 6가지)"),
+            ("visibility", "가시성", "공개 범위. <code>private</code> 비공개 / <code>public</code> 공개"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P2 = _ins_before(
+    P2,
+    '<p class="small">응답에 <code>job</code>',
+    kt(
+        "1-4의 응답 JSON 키 직역",
+        [
+            ("id", "식별자", "민원 번호(<code>DEMO-연도-12자리</code>)"),
+            ("title · body · category · district", "제목 · 본문 · 범주 · 구역", "요청에서 받은 값 그대로"),
+            ("owner", "소유자", "민원을 쓴 사용자의 id"),
+            ("visibility", "가시성", "공개 범위"),
+            ("status", "상태", "처리 상태. 처음은 <code>submitted</code>(접수 대기)"),
+            ("date", "날짜", "접수 시각"),
+            ("version", "버전", "수정 충돌을 막는 번호(고칠 때마다 오름)"),
+            ("contextVersion", "맥락 버전", "민원 원문이 바뀔 때마다 오르는 번호. 늦게 도착한 AI 결과를 버릴지 정하는 데 씀"),
+            ("isSynthetic", "합성인가", "시연용으로 만든 가짜 민원인지 여부"),
+            ("published", "게시됨", "담당자가 게시한 답변. 아직 없으면 <code>null</code>"),
+            ("messages", "메시지들", "추가 문의·답변 대화"),
+            ("attachments", "첨부들", "사진·PDF 첨부 목록(본인에게만 보임)"),
+            ("history", "이력들", "처리 이력. 안쪽 <code>text</code>는 글(내용), <code>public</code>은 공개 여부"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P3 = _ins_before(
+    P3,
+    '<p class="small">이벤트 종류:',
+    kt(
+        "2-5의 알림(SSE) JSON 키 직역",
+        [
+            ("eventId", "이벤트 번호", "알림 순번. 끊겼다 다시 연결할 때 이어 받는 기준"),
+            ("type", "종류", "알림 종류(<code>ai_job.stage_changed</code> 등)"),
+            ("complaintId", "민원 번호", "어느 민원의 알림인지"),
+            ("contextVersion", "맥락 버전", "원문 버전 번호"),
+            ("attempt", "시도 회차", "AI 작업을 몇 번째 시도하는지"),
+            ("jobStatus", "작업 상태", "<code>running</code> 실행 중 등"),
+            ("stage", "단계", "지금 단계 문구(140자까지)"),
+            ("occurredAt", "발생 시각", "알림이 만들어진 시각"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P4 = _ins_before(
+    P4,
+    "<h3>3-2. 검색 알고리즘",
+    kt(
+        "3-1의 검색 요청 JSON 키 직역",
+        [
+            ("query", "질의", "찾을 문장(제목 + 본문, 1~2000자)"),
+            ("collection", "컬렉션, 자료 묶음", "<code>faq</code> / <code>routing</code>(공개 사례) / <code>both</code>(둘 다)"),
+            ("limit", "한도", "컬렉션별로 돌려받을 개수(1~20, 접수 워커는 5)"),
+            ("district", "구역", "관할 필터에 쓸 구. 없으면 <code>null</code>"),
+            ("rerank", "재순위화", "상위 후보를 재정렬 모델로 다시 줄 세울지(접수 워커는 끔)"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P4 = _ins_before(
+    P4,
+    "<h3>3-4. 점수는 어떻게 쓰이나</h3>",
+    kt(
+        "3-3의 검색 응답 JSON 키 직역",
+        [
+            ("query", "질의", "보낸 문장"),
+            ("district_filter", "구역 필터", "적용한 구 필터"),
+            ("pipeline", "파이프라인, 처리 경로", "쓴 검색 방식(<code>vector+kiwi_bm25+rrf…</code>)"),
+            ("retrieval_only", "검색 전용", "항상 참. 검색만 했고 판단은 하지 않았다는 뜻"),
+            ("decision", "결정", "항상 <code>requires_gate</code>(후속 판단 필요)"),
+            ("score_note", "점수 주석", "점수가 정답 확률이 아니라는 안내문"),
+            ("results", "결과들", "컬렉션별 검색 결과 묶음"),
+            ("faq_knowledge", "FAQ 지식", "FAQ 컬렉션의 결과(공개 사례는 <code>routing_cases</code>)"),
+            ("hits", "적중", "찾은 문서 목록"),
+            ("rank", "순위", "결과 안에서의 순서"),
+            ("source_id · title · source_url", "출처 번호 · 제목 · 출처 주소", "원본 자료를 가리키는 값"),
+            ("scores", "점수들", "순위 계산에 쓴 값 묶음(AI에게는 넘기지 않음)"),
+            ("rrf_score", "RRF 점수", "두 검색 순위를 합친 점수"),
+            ("vector_rank", "벡터 순위", "뜻 검색에서의 순위"),
+            ("bm25_rank", "BM25 순위", "낱말 검색에서의 순위"),
+            ("rerank_logit", "재순위 로짓", "재정렬 모델이 준 원점수"),
+            ("evidence", "근거, 증거", "원본 자료의 내용 묶음"),
+            ("major · minor", "대분류 · 소분류", "FAQ 분류"),
+            ("detail", "상세", "대상·접수처·처리기간·주의사항 등 FAQ 상세"),
+            ("elapsed_ms", "경과 밀리초", "검색에 걸린 시간"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P5 = _ins_before(
+    P5,
+    "<h3>4-3. 호출 순서</h3>",
+    kt(
+        "판정 출력 JSON(PREFIX-01) 키 직역",
+        [
+            ("scope", "범위", "청주시 업무 범위 안인지(<code>in_scope</code> 안 / <code>out_of_scope</code> 밖 / <code>uncertain</code> 불확실)"),
+            ("intent", "의도", "정보 문의(<code>information</code>)·조치 요청(<code>action</code>)·혼합(<code>mixed</code>)·불분명(<code>unclear</code>)"),
+            ("outcome", "결과", "세 갈래: <code>faq_answer</code> · <code>department_suggestion</code> · <code>human_handoff</code>"),
+            ("reason_code", "사유 코드", "그렇게 판정한 이유(<code>ok</code>, <code>insufficient_evidence</code> 등)"),
+            ("evidence_refs", "근거 참조들", "판정이 기댄 자료 목록. 안쪽 <code>corpus</code>(자료 묶음), <code>source_id</code>(출처 번호)"),
+            ("department_ids", "부서 번호들", "추천할 부서 번호 목록"),
+            ("sanitize_needed", "순화 필요", "원문에 거친 표현이 있어 순화 단계가 필요한지(참/거짓)"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P6 = _ins_before(
+    P6,
+    "<h3>5-2. openai_api",
+    kt(
+        "5-1의 exaone 요청 JSON 키 직역",
+        [
+            ("model", "모델", "쓸 모델 이름"),
+            ("messages", "메시지들", "대화 목록. 안쪽 <code>role</code>은 역할(<code>system</code> 시스템 규칙 / <code>user</code> 사용자 입력), <code>content</code>는 내용"),
+            ("temperature", "온도", "답의 무작위성(높을수록 다양함)"),
+            ("top_p", "상위 확률", "다음 낱말 후보를 확률 상위 몇 %까지 고를지"),
+            ("max_tokens", "최대 토큰 수", "답의 최대 길이(단계마다 다름)"),
+            ("reasoning_effort", "추론 노력", "생각을 얼마나 오래 할지(<code>low</code> · <code>high</code> · <code>max</code>)"),
+            ("stream", "스트림", "조각조각 실시간 전송 여부(여기서는 거짓)"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P6 = _ins_before(
+    P6,
+    "<h3>5-3. codex_cli",
+    kt(
+        "5-2의 openai 요청 JSON 키 직역",
+        [
+            ("model", "모델", "쓸 모델 이름"),
+            ("instructions", "지시문", "system 프롬프트(PREFIX 조립)가 들어가는 자리"),
+            ("input", "입력", "user JSON 문자열이 들어가는 자리"),
+            ("reasoning", "추론", "추론 설정 묶음. 안쪽 <code>effort</code>는 노력(강도)"),
+        ],
+        _KT_NOTE,
+    ),
+)
+P9 = _ins_before(
+    P9,
+    '<p class="small">공급자 한도 폴백이 있었으면',
+    kt(
+        "8-1의 최종 결과(aiAssist) JSON 키 직역",
+        [
+            ("맨 위 단계",),
+            ("query · district", "질의 · 구역", "원문과 구"),
+            ("district_inferred", "구역 추론됨", "구를 입력받지 않고 장소로 알아냈는지"),
+            ("inferred_place", "추론된 장소", "장소 추적 결과(<code>gu</code> 구, <code>dong</code> 동, <code>is_cheongju</code> 청주인가)"),
+            ("outcome · reason_code", "결과 · 사유 코드", "세 갈래 중 하나와 그 이유"),
+            ("answer", "답", "시민에게 보일 안내 문구"),
+            ("handoff_required", "인계 필요", "담당자에게 넘겨야 하는지(<code>faq_answer</code>가 아니면 참)"),
+            ("automatic_transfer", "자동 이관", "항상 거짓. 자동 이관은 없음"),
+            ("faq · cases", "FAQ · 사례들", "근거로 쓴 FAQ와 공개 사례. 안쪽 <code>rank</code> 순위, <code>excerpt</code> 발췌, <code>corpus</code> 자료 묶음, <code>routing_eligible</code> 부서 근거로 쓸 수 있음"),
+            ("departments", "부서들", "부서 후보. 안쪽 <code>canonical_name</code> 정식 이름, <code>duty_status</code> 업무 상태, <code>selected</code> 선택됨"),
+            ("decision", "결정", "모델의 판정. 안쪽 <code>scope</code>·<code>intent</code>·<code>outcome</code>·<code>reason_code</code>·<code>evidence_refs</code>·<code>department_ids</code>(위 판정 표 참고)와 <code>model_raw</code>(모델 원본)"),
+            ("policy_failures", "정책 실패들", "코드 검증이 교정하거나 막은 사유 목록"),
+            ("stages", "단계들", "단계별 기록. 안쪽 <code>name</code> 이름, <code>elapsed_ms</code> 경과 밀리초, <code>ok</code> 정상 여부"),
+            ("llm_provider · llm_model", "LLM 공급자 · 모델", "실제로 쓴 AI 공급자와 모델"),
+            ("retrieval", "검색", "검색 요약(<code>retrieval_only</code>, <code>pipeline</code> 등)"),
+            ("codex", "코덱스(호출 기록)", "호출 기록. 안쪽 <code>role</code> 단계 종류, <code>system</code> 시스템 프롬프트 이름, <code>user</code> 사용자 입력, <code>prompt</code> 프롬프트 전문, <code>usage</code> 사용량"),
+            ("담당자 초안 (staff_draft)",),
+            ("staff_draft", "담당자 초안", "담당자 내부용 요약과 초안"),
+            ("summary_card", "요약 카드", "한눈에 보는 요약 묶음"),
+            ("core_summary", "핵심 요약", "민원의 핵심"),
+            ("citizen_request", "시민 요청", "시민이 요구하는 것"),
+            ("location_or_target", "장소 또는 대상", "어디·무엇에 관한 민원인지"),
+            ("missing_info", "빠진 정보", "확인이 더 필요한 항목"),
+            ("draft_answer", "초안 답변", "답변 초안(확인 안 된 조치는 빈칸)"),
+            ("citations", "인용들", "초안이 기댄 자료(검색 후보 안의 것만)"),
+            ("requires_field_check", "현장 확인 필요", "현장 확인이 필요한지"),
+            ("순화 (sanitize)",),
+            ("sanitize", "순화", "원문 순화 결과"),
+            ("sanitized_summary", "순화된 요약", "거친 표현을 뺀 요약"),
+            ("legitimate_requests", "정당한 요청들", "표현을 걷어 낸 뒤 남는 실제 요구"),
+            ("risk_signals", "위험 신호들", "욕설·위협 등 9종 중 해당 항목"),
+            ("human_protection_review_needed", "사람 보호 검토 필요", "직원 보호를 위해 사람이 살펴야 하는지"),
+        ],
+        _KT_NOTE,
+    ),
+)
+
+P15 = """
+<h2>부록 A (계속). 한눈에 비교와 정리</h2>
+<p>같은 질문 <b>"낡은 소파 버리고 싶어요"</b>로 두 방식이 어떻게 다르게 찾는지 정리합니다. 찾을 문서는 A 대형폐기물 배출 방법(가구를 버릴 때는 신고 후 스티커), B 소파 수리 업체 안내(낡은 소파를 고쳐 드립니다), C 도로 파손 신고(포트홀)라고 가정합니다. <b>순위와 점수는 설명용 가짜 값입니다.</b></p>
+<div class="grid3">
+ <div class="card bl"><h4>낱말로 찾기 (BM25) — 색인 찾기</h4>
+ <ul><li><b>1단계</b> 질문을 낱말로 쪼갠다: 낡 · 소파 · 버리</li>
+ <li><b>2단계</b> 각 문서에 같은 글자가 있는지 센다. B는 낡·소파 2개, A는 버리 1개, C는 0개.</li>
+ <li><b>3단계</b> 겹침이 많은 B가 1등, A가 2등, C는 검색되지 않는다.</li></ul>
+ <p class="small"><b>약점</b> 사용자는 고치려는 게 아니라 버리려는 것인데 B가 1등이다. A에는 "소파"라는 글자가 없어 밀린다.</p></div>
+ <div class="card g"><h4>뜻으로 찾기 (코사인) — 분위기 찾기</h4>
+ <ul><li><b>1단계</b> 문장마다 지도에 점을 찍는다. 질문과 A는 "물건을 처분" 쪽, B는 조금 비켜난 곳, C는 "도로·시설" 쪽.</li>
+ <li><b>2단계</b> 질문과 같은 방향을 가리키는 점을 찾는다. A가 1등(0.82), B가 2등(0.55), C는 거의 0.</li></ul>
+ <p class="small"><b>강점</b> "버리고 싶다"와 "배출 방법"은 낱말이 하나도 겹치지 않아도 같은 방향이라 A를 찾는다.<br><b>약점</b> "흥덕구 복대동"을 찾아도 "서원구 모충동"과 비슷한 곳에 찍힐 수 있다(둘 다 동네 이름).</p></div>
+</div>
+<h3>두 방식 비교</h3>
+<table>
+<tr><th style="width:16%"></th><th>낱말로 찾기 (BM25)</th><th>뜻으로 찾기 (코사인)</th></tr>
+<tr><td>위 예시의 1등</td><td>B 소파 수리</td><td>A 대형폐기물</td></tr>
+<tr><td>비유</td><td>책 뒤의 <b>색인</b>에서 단어 찾기</td><td><b>분위기가 비슷한</b> 책 찾기(도서관 사서)</td></tr>
+<tr><td>보는 것</td><td>같은 낱말이 있나</td><td>뜻의 방향이 같나</td></tr>
+<tr><td>잘 찾는 것</td><td>지명·번호·정확한 이름</td><td>말만 다르고 뜻이 같은 질문</td></tr>
+<tr><td>놓치는 것</td><td>뜻은 같고 글자가 다른 것</td><td>비슷한 이름의 정확한 구분</td></tr>
+</table>
+<h3>정리</h3>
+<ul>
+<li>뜻으로 찾는 코사인과 낱말로 찾는 BM25가 서로의 약점을 메운다. 한국어 낱말 쪼개기는 Kiwi가 맡고, RRF가 두 순위를 한 줄로 합친다. 이렇게 섞은 방식이 <b>하이브리드 검색</b>이다.</li>
+<li>문서는 자르지 않는다(청킹 없음). Kiwi 형태소 분석은 문서를 자르는 일이 아니라 <b>검색 때 문장을 낱말로 나누는 준비 작업</b>이며, 결과는 여전히 문서 한 건 단위로 나온다. 청킹은 책을 챕터별로 잘라 따로 꽂는 일, 형태소 분석은 색인을 만들려고 단어를 골라내는 일에 해당한다.</li>
+<li>이 점수들은 "정답일 확률"이 아니다. 후보를 줄 세우는 용도이며, 채택 여부는 LLM 판정과 코드 검증이 정한다. 그래서 점수를 AI에게도 넘기지 않는다.</li>
+<li>발표용 한 줄: <i>"문서는 자르지 않고 건 단위로 두고, 뜻 검색과 낱말 검색을 RRF로 합친 하이브리드 검색을 쓴다."</i></li>
+</ul>
+"""
+P13 = P13.replace("흔한 낱말(어떻)은", "흔한 낱말(하다 같은)은")
+P12 = P12.replace('"소파 버리려는데 어떻게 해요?"라는 질문 하나로', '"낡은 소파 버리고 싶어요"라는 질문 하나로')
+
+
+
 def build() -> str:
-    pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15]
+    pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P15, P14]
     body = "".join(page(p) for p in pages)
     return (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
