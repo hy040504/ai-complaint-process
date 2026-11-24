@@ -201,7 +201,8 @@ iter_web_assist(query, district, 5, False, provider=provider)
 <tr><td>④</td><td>결과 검증·저장</td><td>워커 스레드</td><td><code>done</code> 결과를 <code>AssistResponse</code> 모델로 검증한 뒤 <code>_commit_with_retry</code>로 저장한다. 실패(<code>error</code>·예외)는 <code>_commit_ai_failure</code>로 실패 상태와 사유만 기록한다.</td></tr>
 <tr><td>⑤</td><td>정리</td><td>워커 스레드</td><td><code>finally</code>에서 메모리의 진행 정보와 스레드 등록을 지운다. 스레드가 끝난다.</td></tr>
 </table>
-<p class="small">정리: <b>검색·프롬프트 조립·LLM 호출·코드 검증은 AI 계층(<code>src/assist</code>)의 코드</b>이고, 워커는 그 코드를 백그라운드에서 돌리고 <b>진행 알림·최종 저장·오류 처리</b>를 맡는 서버 쪽 껍데기다. 시스템 프롬프트는 워커가 아니라 AI 계층이 붙이며, RAG 후보는 질의에 합쳐지지 않고 판정 입력 JSON의 별도 항목으로 들어간다(5장).</p>
+<p class="small">정리: <b>실행은 한 스레드, 코드 소속만 둘로 나뉜다.</b> <code>iter_assist</code>는 제너레이터라서 워커가 이벤트를 하나 받을 때마다 같은 스레드에서 다음 단계가 실행된다. 즉 AI 계층 코드(<code>src/assist</code>·<code>src/llm</code>: 구 추론·프롬프트 조립·판정 검증)는 <b>워커 스레드 안에서 돈다</b>. 이 설명서가 두 부로 나누는 기준은 실행 위치가 아니라 <b>코드가 속한 곳</b>이다. 서버 코드(<code>src/complaints</code>)는 스레드 생성·<b>진행 알림·최종 저장·오류 처리</b>를, AI 계층 코드는 검색 호출·프롬프트·LLM 호출·코드 검증을 맡는다. 시스템 프롬프트는 AI 계층이 붙이며, RAG 후보는 질의에 합쳐지지 않고 판정 입력 JSON의 별도 항목으로 들어간다(5장).</p>
+<p class="small"><b>스레드 밖에서 실행되는 것:</b> 검색 API(<code>:8007</code>)는 별도 프로세스라 임베딩·pgvector 조회가 그쪽에서 돌고, 스레드는 HTTP 응답을 기다린다. LLM도 호출만 하고 기다린다(공급자별 호출 형태는 6장). 응답을 기다리는 동안에도 스레드는 이 민원의 분석에 묶여 있다.</p>
 <h3>2-7. 생성 시점·수명·세션과의 차이</h3>
 <table>
 <tr><th style="width:24%">항목</th><th>내용</th></tr>
