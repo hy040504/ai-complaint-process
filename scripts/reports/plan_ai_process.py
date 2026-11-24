@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 import sys
 
@@ -1274,9 +1275,118 @@ P12 = P12.replace(
 )
 
 
+# --- 각 JSON 예시 밑에 키와 알려진 고정 값을 우리말로 옮긴 읽기용 사본을 붙입니다 ---
+KO_KEYS = {
+    # 접수 요청·응답
+    "title": "제목", "body": "본문", "district": "구역", "category": "범주", "visibility": "가시성",
+    "id": "식별자", "owner": "소유자", "status": "상태", "date": "날짜", "version": "버전",
+    "contextVersion": "맥락_버전", "isSynthetic": "합성인가", "published": "게시됨",
+    "messages": "메시지들", "attachments": "첨부들", "history": "이력들", "text": "글", "public": "공개",
+    # 알림(SSE)
+    "eventId": "이벤트_번호", "type": "종류", "complaintId": "민원_번호", "attempt": "시도_회차",
+    "jobStatus": "작업_상태", "stage": "단계", "occurredAt": "발생_시각",
+    # 검색 요청·응답
+    "query": "질의", "collection": "컬렉션", "limit": "한도", "rerank": "재순위화",
+    "district_filter": "구역_필터", "pipeline": "처리_경로", "retrieval_only": "검색_전용",
+    "decision": "결정", "score_note": "점수_주석", "results": "결과들", "faq_knowledge": "FAQ_지식",
+    "hits": "적중", "rank": "순위", "source_id": "출처_번호", "source_url": "출처_주소",
+    "scores": "점수들", "rrf_score": "RRF_점수", "vector_rank": "벡터_순위", "bm25_rank": "BM25_순위",
+    "rerank_logit": "재순위_로짓", "evidence": "근거", "major": "대분류", "minor": "소분류",
+    "detail": "상세", "elapsed_ms": "경과_밀리초", "target": "대상", "received_by": "접수된_곳",
+    "main_content": "주된_내용", "processing_period": "처리_기간", "warnings": "경고들",
+    # 판정 입력
+    "faq_candidates": "FAQ_후보들", "case_candidates": "사례_후보들",
+    "department_candidates": "부서_후보들", "inferred_place": "추론된_장소",
+    "conversation_history": "대화_이력", "corpus": "말뭉치", "summary": "요약",
+    "routing_eligible": "이관_경로로_쓸_자격", "department_status": "부서_상태",
+    "department_id": "부서_번호", "department_name": "부서_이름", "duty_status": "업무_상태",
+    "canonical_name": "정식_이름", "supporting_case_ids": "뒷받침_사례_번호들", "gu": "구",
+    "dong": "동", "is_cheongju": "청주인가", "role": "역할", "content": "내용",
+    "jurisdiction_status": "관할_상태",
+    # LLM 요청
+    "model": "모델", "temperature": "온도", "top_p": "상위_확률", "max_tokens": "최대_토큰_수",
+    "reasoning_effort": "추론_노력", "stream": "스트림", "instructions": "지시문", "input": "입력",
+    "reasoning": "추론", "effort": "노력",
+    # 최종 결과
+    "district_inferred": "구역_추론됨", "outcome": "결과", "reason_code": "사유_코드", "answer": "답",
+    "handoff_required": "인계_필요", "automatic_transfer": "자동_이관", "faq": "FAQ",
+    "cases": "사례들", "departments": "부서들", "selected": "선택됨", "excerpt": "발췌",
+    "scope": "범위", "intent": "의도", "evidence_refs": "근거_참조들", "department_ids": "부서_번호들",
+    "model_raw": "모델_원본", "policy_failures": "정책_실패들", "stages": "단계들", "name": "이름",
+    "ok": "정상", "llm_provider": "LLM_공급자", "llm_model": "LLM_모델", "llm_configured": "LLM_설정됨",
+    "retrieval": "검색", "codex": "코덱스_호출기록", "system": "시스템", "user": "사용자",
+    "prompt": "프롬프트", "usage": "사용량", "staff_draft": "담당자_초안",
+    "summary_card": "요약_카드", "core_summary": "핵심_요약", "citizen_request": "시민_요청",
+    "location_or_target": "장소_또는_대상", "missing_info": "빠진_정보", "draft_answer": "초안_답변",
+    "citations": "인용들", "requires_field_check": "현장_확인_필요", "sanitize": "순화",
+    "sanitized_summary": "순화된_요약", "legitimate_requests": "정당한_요청들",
+    "risk_signals": "위험_신호들", "human_protection_review_needed": "사람_보호_검토_필요",
+}  # fmt: skip
+
+# 알려진 고정 값(열거형)만 옮깁니다. 모르는 값(자유 문장·번호·주소)은 그대로 둡니다.
+KO_VALUES = {
+    "department_suggestion": "부서_추천", "faq_answer": "FAQ_안내", "human_handoff": "담당자_검토",
+    "action_required": "조치_요청_필요", "in_scope": "범위_안", "out_of_scope": "범위_밖",
+    "uncertain": "불확실", "information": "정보_문의", "action": "조치_요청", "mixed": "혼합",
+    "unclear": "불분명", "faq": "FAQ", "routing": "공개_사례", "submitted": "접수_대기",
+    "running": "실행_중", "private": "비공개", "public": "공개", "unverified": "미확인",
+    "requires_gate": "후속_판단_필요", "profanity_insult": "욕설·모욕", "system": "시스템",
+    "user": "사용자", "low": "낮음", "high": "높음", "max": "최대", "medium": "중간",
+    "ai_job.stage_changed": "AI작업_단계_변경", "both": "둘_다",
+}  # fmt: skip
+
+_KO_UNMAPPED: set[str] = set()
+_PRE_RE = re.compile(r"<pre>(.*?)</pre>", re.S)
+_JSON_START_RE = re.compile(r'\{\s*"')
+_TOKEN_RE = re.compile(r'"([^"\n]+)"(\s*:)?')
+_BOOL_RE = re.compile(r"\b(true|false)\b")
+
+
+def _ko_json(text: str) -> str:
+    """JSON 예시의 키와 알려진 고정 값을 우리말로 바꾼 읽기용 문자열을 만듭니다."""
+
+    def repl(m: re.Match[str]) -> str:
+        word, colon = m.group(1), m.group(2)
+        if colon:
+            if word in KO_KEYS:
+                return f'"{KO_KEYS[word]}"{colon}'
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", word):
+                _KO_UNMAPPED.add(word)
+            return m.group(0)
+        return f'"{KO_VALUES[word]}"' if word in KO_VALUES else m.group(0)
+
+    out = _TOKEN_RE.sub(repl, text)
+    return _BOOL_RE.sub(lambda m: "참" if m.group(1) == "true" else "거짓", out)
+
+
+def add_korean_json(page_html: str) -> str:
+    """페이지 안의 JSON `<pre>` 블록마다 우리말 사본 블록을 바로 아래에 붙입니다."""
+
+    def repl(m: re.Match[str]) -> str:
+        body = m.group(1)
+        start = _JSON_START_RE.search(body)
+        if not start:
+            return m.group(0)
+        ko = _ko_json(body[start.start() :])
+        return (
+            m.group(0)
+            + '<div class="small kohead">▼ 위 JSON의 키(와 알려진 고정 값)를 우리말로 옮긴 읽기용 사본입니다. '
+            "실제 전송·저장 형식은 위의 영어 원문입니다.</div>"
+            f'<pre class="ko">{ko}</pre>'
+        )
+
+    return _PRE_RE.sub(repl, page_html)
+
+
+CSS += """
+pre.ko { background:#f1faf4; border-color:#bfe3cd; }
+.kohead { margin:2px 0 0; color:#16803f; font-weight:700; }
+"""
+
+
 def build() -> str:
     pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P15, P14]
-    body = "".join(page(p) for p in pages)
+    body = "".join(page(add_korean_json(p)) for p in pages)
     return (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
         f"<title>민원 AI 처리과정 상세설명서</title><style>{CSS}</style></head><body>{body}</body></html>"
