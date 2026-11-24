@@ -331,6 +331,7 @@ SPECIAL_SANITIZE_SYSTEM = PREFIX-00 + PREFIX-04     # 원문 순화</pre>
 <tr class="stf"><td>PREFIX-03</td><td><span class="aud stf">담당자용</span> 담당자 요약·초안(JSON)</td><td>담당자 내부용이며 게시 전에는 시민에게 가지 않음. 확인 안 된 조치는 "[담당자 확인 필요: …]" 빈칸으로. <code>summary_card · draft_answer · citations · requires_field_check</code>.</td></tr>
 <tr class="stf"><td>PREFIX-04</td><td><span class="aud stf">담당자용</span> 직원 보호용 순화(JSON)</td><td><code>sanitized_summary · legitimate_requests · risk_signals(9종) · human_protection_review_needed</code>. 위험 신호는 접수 거부나 자동 차단의 근거가 아님.</td></tr>
 </table>
+<div style="page-break-before:always"></div>
 <h3>4-3. 호출 순서</h3>
 <table>
 <tr><th style="width:6%">순서</th><th style="width:34%">단계</th><th>LLM</th></tr>
@@ -451,13 +452,13 @@ P8 = """
 <table>
 <tr><th style="width:22%">만들어지는 것</th><th style="width:10%">대상</th><th style="width:22%">만드는 호출</th><th style="width:16%">시민 챗봇 경로</th><th>저장 필드</th></tr>
 <tr class="cit"><td>FAQ 안내문</td><td><span class="aud cit">시민용</span></td><td>LLM(PREFIX-00+02)</td><td>만든다</td><td><code>answer</code></td></tr>
-<tr class="cit"><td>부서 추천 문구</td><td><span class="aud cit">시민용</span></td><td>고정 틀(LLM 없음)</td><td>만든다</td><td><code>answer</code></td></tr>
-<tr class="cit"><td>담당자 검토 문구</td><td><span class="aud cit">시민용</span></td><td>사유별 고정 문구(LLM 없음)</td><td>만든다</td><td><code>answer</code></td></tr>
+<tr class="cit"><td>부서 추천 문구</td><td><span class="aud cit">시민용</span></td><td>고정 틀(LLM 없음)</td><td>만든다(챗봇이 문구를 다시 구성)</td><td><code>answer</code></td></tr>
+<tr class="cit"><td>담당자 검토 문구</td><td><span class="aud cit">시민용</span></td><td>사유별 고정 문구(LLM 없음)</td><td>만든다(챗봇이 문구를 다시 구성)</td><td><code>answer</code></td></tr>
 <tr class="stf"><td>담당자 요약 카드·초안</td><td><span class="aud stf">담당자용</span></td><td>LLM(PREFIX-00+03)</td><td><b>만들지 않는다</b></td><td><code>staff_draft</code></td></tr>
 <tr class="stf"><td>순화 요약·위험 신호</td><td><span class="aud stf">담당자용</span></td><td>LLM(PREFIX-00+04)</td><td><b>만들지 않는다</b></td><td><code>sanitize</code></td></tr>
 <tr><td>1차 판정</td><td><span class="aud int">내부</span></td><td>LLM(PREFIX-00+01)</td><td>만든다</td><td><code>decision</code></td></tr>
 </table>
-<p class="small">시민 챗봇은 <code>include_staff_outputs=False</code>로 같은 파이프라인을 호출해 담당자용 산출물(초안·순화)의 LLM 호출을 건너뜁니다. 접수된 민원에서는 시민 문구와 담당자용 산출물이 모두 만들어지지만, 시민에게는 담당자가 게시한 답변만 보입니다.</p>
+<p class="small">시민 챗봇은 <code>include_staff_outputs=False</code>로 같은 파이프라인을 호출해 담당자용 산출물(초안·순화)의 LLM 호출을 건너뛰고, 진행 단계 표시에서도 순화·초안 라벨을 뺍니다. 챗봇은 FAQ 안내문만 AI 계층 문장을 그대로 쓰고, 부서 추천·담당자 검토 문구는 응답을 만들 때 챗봇 전용 문구로 다시 구성합니다(9-1 표). 접수된 민원에서는 시민 문구와 담당자용 산출물이 모두 만들어지지만, 시민에게는 담당자가 게시한 답변만 보입니다.</p>
 <div class="note"><b>공통 1차 판정 호출</b> — 사전 검증을 통과해 검색까지 성공한 모든 민원은 같은 입력으로 한 번 호출합니다.<br>
 시스템 프롬프트 = <code>PREFIX-00 + PREFIX-01</code>. 사용자 JSON = <b>민원 원문 전체</b>(자르지 않음, 1~2000자) + <b>RAG 후보 전부</b>.</div>
 <pre>{"query": "민원 원문 전체(제목+본문)",
@@ -547,18 +548,18 @@ P9 = """
 <!--AUD-->
 <table>
 <tr><th style="width:30%">결과 값</th><th style="width:12%">대상</th><th>비고</th></tr>
-<tr class="cit"><td><code>answer</code> · <code>outcome</code> · <code>reason_code</code> · <code>handoff_required</code> · <code>automatic_transfer</code> · <code>district</code></td><td><span class="aud cit">시민용</span></td><td>시민 챗봇 응답에 그대로 담기는 값. 접수된 민원에서는 담당자가 보는 AI 결과이며 시민에게는 게시된 답변만 나간다.</td></tr>
-<tr class="cit"><td><code>faq</code> · <code>departments</code></td><td><span class="aud cit">시민용</span></td><td>챗봇은 출처 최대 3건·부서 힌트 최대 3건만 담는다.</td></tr>
-<tr class="cit"><td><code>llm_provider</code></td><td><span class="aud cit">시민용</span></td><td>챗봇 응답의 <code>llmProvider</code>.</td></tr>
+<tr class="cit"><td><code>outcome</code> · <code>reason_code</code> · <code>handoff_required</code> · <code>automatic_transfer</code> · <code>district</code> · <code>district_inferred</code></td><td><span class="aud cit">시민용</span></td><td>시민 챗봇 응답에 그대로 담기는 값. 접수된 민원에서는 담당자가 보는 AI 결과이며 시민에게는 게시된 답변만 나간다.</td></tr>
+<tr class="cit"><td><code>answer</code></td><td><span class="aud cit">시민용</span></td><td><b>FAQ 안내문만 AI 계층의 문장이 그대로 나간다.</b> 부서 추천·담당자 검토는 챗봇이 <code>chat.py</code>의 <code>_build_citizen_message</code>로 문구를 <b>다시 만든다</b>(민원 작성 버튼 안내가 붙고, 부서 후보는 "참고 부서 후보"로 표현). 앞의 8-4·8-1에 적은 AI 계층의 고정 문구와 다를 수 있다.</td></tr>
+<tr class="cit"><td><code>faq</code> · <code>departments</code> · <code>inferred_place</code> · <code>llm_provider</code> · <code>llm_configured</code></td><td><span class="aud cit">시민용</span></td><td>챗봇은 일부만 담는다: FAQ 출처 최대 3건(제목·주소·발췌 180자까지, 판정이 인용한 FAQ만. faq_answer인데 인용이 없으면 앞 2건), 부서 힌트 이름 최대 3개(부서 추천일 때만), 장소는 이름만, 공급자·LLM 사용 여부.</td></tr>
 <tr class="stf"><td><code>staff_draft</code> · <code>sanitize</code></td><td><span class="aud stf">담당자용</span></td><td>담당자 요약 카드·초안과 순화·보호 검토 배지. 챗봇은 생성도 하지 않는다.</td></tr>
-<tr class="stf"><td><code>cases</code> · <code>codex</code> · <code>policy_failures</code> · <code>llm_model</code> · <code>district_inferred</code> · <code>inferred_place</code></td><td><span class="aud stf">담당자용</span></td><td>유사 사례, 모델에 넣은 호출 전문, 정책 교정 사유, 모델 이름, 장소 추적 결과. 챗봇 응답에서는 제거된다.</td></tr>
+<tr class="stf"><td><code>cases</code> · <code>codex</code> · <code>policy_failures</code> · <code>llm_model</code></td><td><span class="aud stf">담당자용</span></td><td>유사 사례, 모델에 넣은 호출 전문, 정책 교정 사유, 모델 이름. 챗봇 응답 모델에 필드가 없다.</td></tr>
 <tr><td><code>decision</code>(<code>model_raw</code> 포함) · <code>stages</code> · <code>retrieval</code></td><td><span class="aud int">내부</span></td><td>판정 원본과 검증 결과, 단계별 시간, 검색 경로. 담당자 화면에는 판정 요약과 단계 표시로만 보인다.</td></tr>
 </table>
 <h3>8-2. 누가 무엇을 보나</h3>
 <table>
 <tr><th style="width:15%">화면</th><th>보이는 것</th></tr>
 <tr><td><b>시민</b></td><td>제목·본문·분야·구·상태(접수 대기/담당자 검토 중/답변이 게시되었어요/처리 완료), <b>게시된 답변</b>, 추가 문의, 본인 첨부, 공개 이력. <code>aiAssist · job · draft · aiOriginal · versions</code>와 비공개 이력은 구조적으로 제거된다.</td></tr>
-<tr><td><b>시민 챗봇</b></td><td>별도 경로(<code>/citizen/chat</code>). <code>outcome · reasonCode · answer · handoffRequired · automaticTransfer · district · faqSources(최대 3) · departmentHints(최대 3) · llmProvider · demoNotice</code>만. 초안·순화·모델 원본은 담지 않는다.</td></tr>
+<tr><td><b>시민 챗봇</b></td><td>별도 경로(<code>/citizen/chat</code>). <code>query · effectiveQuery · outcome · reasonCode · answer · handoffRequired · automaticTransfer · district · districtInferred · inferredPlaceTitle · faqSources(최대 3) · departmentHints(최대 3) · llmProvider · llmConfigured · demoNotice · sessionId · persisted</code>만(<code>CitizenChatResponse</code>). 초안·순화·사례·호출 전문·모델 원본은 필드가 없다. 부서 추천·담당자 검토 문구는 챗봇이 다시 구성한다.</td></tr>
 <tr><td><b>담당자</b></td><td>민원 전체 + "검토 참고 정보": AI 엔진, 분야·구(자동 감지 여부), 장소 추적, AI 작업 상태·단계, AI 판정(outcome·reasonCode·policyFailures), 부서 후보(AI 추천/유사 사례 구분), 참고 근거(최대 4건), 민원 요약(summaryCard), 원문 순화·보호 검토 배지. 답변 편집기에 초안이 채워진다("시민 비공개").</td></tr>
 </table>
 <h3>8-3. 게시 전 초안은 시민에게 안 보이는 이유</h3>
@@ -1169,7 +1170,7 @@ P4 = _ins_before(
 )
 P5 = _ins_before(
     P5,
-    "<h3>4-3. 호출 순서</h3>",
+    '<div style="page-break-before:always"></div>\n<h3>4-3. 호출 순서</h3>',
     kt(
         "판정 출력 JSON(PREFIX-01) 키 직역",
         [
