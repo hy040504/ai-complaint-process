@@ -212,7 +212,6 @@ def _build_page1_main_report_html() -> str:
     <td colspan="3" class="full-val">
       <div class="section-title">1. 담당자 통계 대시보드 코드 점검과 보정</div>
       <div class="bullet-item">- <span class="highlight-tag">코드 리뷰 지적 7건 반영</span> : 분야 값이 목록 밖이면 통계 화면 전체가 오류로 멈추던 문제를 막고, 100%를 넘을 수 있는 "처리율"을 "답변 게시·접수 대비"로 고쳐 안내 문구를 붙임. 일평균은 진행 중인 구간을 빼고 계산하고, 접수 5건 미만 분야의 전기 대비는 "–"로 표시해 소수 건에서 +200%처럼 튀지 않게 함. 0건 막대를 1건과 구별하고 지역 선택 표시를 바로잡음</div>
-      <div class="bullet-item">- <span class="highlight-tag">11/20~11/23 업무보고 PDF 재생성</span> : 재구성한 통계 화면(통계 분석·민원 분류)으로 보고서를 다시 만듦</div>
       <div class="section-title">2. Jev 1차 판정 도입 제안서 (제안 단계, 구현 아님)</div>
       <div class="bullet-item">- <span class="highlight-tag">Jev 도입 제안서 PDF 5쪽</span> : 1차 판정에 Jev를 대체하거나 보완하는 방식, 보완 방식의 조합별 최종 결과, 코드 변경 목록과 위험, 비교 실험 계획을 그림·표로 정리함. 모델 서빙 정보가 정해져야 구현할 수 있어 코드는 바꾸지 않음</div>
       <div class="section-title">3. 민원 AI 처리과정 상세설명서 작성 (35쪽)</div>
