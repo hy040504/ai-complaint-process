@@ -1525,6 +1525,8 @@ CSS += """
 .kind.api { background:#e0f2fe; color:#075985; border-color:#b9e0f7; }
 .kind.val { background:#fde8ef; color:#9d174d; border-color:#f6c5d6; }
 .kind.tool { background:#e9f5df; color:#3b6a12; border-color:#cde5b4; }
+table.dict { table-layout:fixed; width:100%; }
+table.dict td code { overflow-wrap:anywhere; font-size:7.8pt; }
 .legend { border:1px solid #d5dbe6; border-radius:8px; padding:6px 10px; margin:6px 0 10px; font-size:9pt; background:#fafbfd; }
 tr.cit td { background:#f3f7ff; }
 tr.stf td { background:#fff8ef; }
@@ -1643,8 +1645,8 @@ def dict_page() -> str:
     return (
         "<h2>부록 B. 코드 위치 사전</h2>"
         '<p class="small">본문에 나오는 코드 이름이 어디에 있고 무엇을 하는지 모았습니다. 경로는 저장소 루트 기준이며, 실제 코드를 읽어 확인한 이름만 실었습니다.</p>'
-        '<table><tr><th style="width:8%">종류</th><th style="width:22%">이름</th>'
-        '<th style="width:17%">위치</th><th>하는 일</th><th style="width:9%">나오는 장</th></tr>'
+        '<table class="dict"><tr><th style="width:12%">종류</th><th style="width:24%">이름</th>'
+        '<th style="width:26%">위치</th><th style="width:27%">하는 일</th><th style="width:11%">나오는 장</th></tr>'
         f"{rows}</table>"
     )
 
