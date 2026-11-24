@@ -77,16 +77,20 @@ P1 = (
 <h3>이 문서를 읽는 법</h3>
 <table>
 <tr><th style="width:12%">장</th><th style="width:30%">내용</th><th>핵심</th></tr>
+<tr><td colspan="3" style="background:#16203a;color:#fff"><b>제1부 · 서버와 화면 영역</b> (시민 민원 웹 · 담당자 사이트 · Flask 업무 서버)</td></tr>
 <tr><td>1</td><td>민원 등록 API</td><td>어떤 주소로 어떤 JSON을 보내고, 서버는 무엇을 저장하나</td></tr>
-<tr><td>2</td><td>비동기 AI 워커</td><td>저장 직후 스레드가 AI를 부르고 결과를 저장·알림</td></tr>
-<tr><td>3</td><td>검색 API(RAG)</td><td>FAQ와 공개 사례를 따로 찾는 요청·응답</td></tr>
-<tr><td>4</td><td>판정 입력과 시스템 프롬프트</td><td>AI에게 실제로 넘기는 JSON과 PREFIX 파일의 역할</td></tr>
-<tr><td>5</td><td>LLM 호출 형태</td><td>공급자 3종의 실제 요청 구조</td></tr>
-<tr><td>6</td><td>판단과 코드 검증</td><td>관할 확인과 14가지 교정 규칙</td></tr>
-<tr><td>7</td><td>세 갈래와 케이스 대응</td><td>FAQ 안내·부서 추천·담당자 검토, 긴급·복합·타 지자체·순화</td></tr>
-<tr><td>8</td><td>최종 응답과 보이는 범위</td><td>저장되는 값, 시민·담당자 화면, 초안 비노출</td></tr>
-<tr><td>9</td><td>실제 예시</td><td>평가 기록의 케이스별 입력→판정→응답</td></tr>
-<tr><td>10</td><td>오류와 폴백</td><td>검색 실패·LLM 실패·JSON 오류 때의 값</td></tr>
+<tr><td>2</td><td>비동기 AI 워커·저장·알림</td><td>저장 직후 스레드가 AI를 부르고 결과를 저장·알림(SSE)</td></tr>
+<tr><td>3</td><td>화면에 보이는 범위와 게시 규칙</td><td>시민·챗봇·담당자가 보는 값, 게시 전 초안 비노출</td></tr>
+<tr><td colspan="3" style="background:#e8f0ff"><b>경계</b> 서버와 AI 계층이 주고받는 값(함수 호출 한 번)</td></tr>
+<tr><td colspan="3" style="background:#1e4fc7;color:#fff"><b>제2부 · AI 계층 영역</b> (검색 · 판정 · 검증 · 응답 생성)</td></tr>
+<tr><td>4</td><td>검색 API(RAG)</td><td>FAQ와 공개 사례를 따로 찾는 요청·응답</td></tr>
+<tr><td>5</td><td>판정 입력과 시스템 프롬프트</td><td>AI에게 실제로 넘기는 JSON과 PREFIX 파일의 역할</td></tr>
+<tr><td>6</td><td>LLM 호출 형태</td><td>공급자 3종의 실제 요청 구조</td></tr>
+<tr><td>7</td><td>판단과 코드 검증</td><td>관할 확인과 14가지 교정 규칙</td></tr>
+<tr><td>8</td><td>세 갈래와 케이스 대응</td><td>FAQ 안내·부서 추천·담당자 검토, 긴급·복합·타 지자체·순화</td></tr>
+<tr><td>9</td><td>최종 결과의 구조</td><td>AI가 돌려주는 값과 저장 형태</td></tr>
+<tr><td>10</td><td>실제 예시</td><td>평가 기록의 케이스별 입력→판정→응답</td></tr>
+<tr><td>11</td><td>오류와 폴백</td><td>검색 실패·LLM 실패·JSON 오류 때의 값</td></tr>
 <tr><td>부록 A</td><td>검색 용어 쉬운 설명</td><td>형태소·Kiwi, 낱말 찾기(BM25), 뜻 찾기(코사인), RRF, 청킹을 하지 않는 이유 — 그림 6장과 단계별 비교</td></tr>
 </table>
 <div class="note"><b>두 가지 먼저 알아둘 점</b><br>
@@ -1384,8 +1388,94 @@ pre.ko { background:#f1faf4; border-color:#bfe3cd; }
 """
 
 
+CSS += """
+.part { background:#16203a; color:#fff; border-radius:8px; padding:8px 14px; margin:0 0 10px; font-size:11.5pt; font-weight:700; }
+.part small { display:block; font-weight:400; font-size:8.6pt; color:#c9d4ea; margin-top:2px; }
+.part.ai { background:#1e4fc7; }
+"""
+
+
+def _renum(text: str, old: int, new: int) -> str:
+    """장 제목(`<h2>N.`)과 절 제목(`<h3>N-k.`)의 장 번호를 바꿉니다."""
+    text = re.sub(rf"<h2>{old}\.", f"<h2>{new}.", text)
+    return re.sub(rf"<h3>{old}-(\d)", rf"<h3>{new}-\1", text)
+
+
+PART1 = (
+    '<div class="part">제1부 · 서버와 화면 영역<small>시민 민원 웹과 담당자 사이트, '
+    "Flask 업무 서버가 맡는 일: 접수·저장·진행 표시·알림·게시. AI 판단은 하지 않습니다.</small></div>"
+)
+PART2 = (
+    '<div class="part ai">제2부 · AI 계층 영역<small>서버가 넘긴 민원 글을 받아 검색·판정·검증·응답 초안을 '
+    "만들고 결과를 돌려주는 일. 화면과 DB는 직접 건드리지 않습니다.</small></div>"
+)
+
+# 제1부 3장: 기존 8장의 "누가 무엇을 보나" 이후를 화면 영역 장으로 옮긴다
+_P9_HEAD, _P9_TAIL = P9.split("<h3>8-2.", 1)
+P9_AI = _P9_HEAD.replace(
+    "<h2>8. 최종 응답과 보이는 범위</h2>",
+    "<h2>8. 최종 결과의 구조 (AI가 돌려주는 값)</h2>",
+)
+P9_FRONT = (
+    "\n<h2>3. 화면에 보이는 범위와 게시 규칙</h2>\n<h3>3-1."
+    + _P9_TAIL.split("</h3>", 1)[0].replace(". 누가 무엇을 보나", " 누가 무엇을 보나")
+    + "</h3>"
+    + _P9_TAIL.split("</h3>", 1)[1].replace("<h3>8-3.", "<h3>3-2.")
+)
+
+IFACE = """
+<h2>서버와 AI 계층의 경계: 무엇을 주고받나</h2>
+<p>두 영역은 <b>함수 호출 한 번</b>으로 만납니다. 서버 쪽 AI 워커 스레드가 질의를 넘기고, AI 계층은 결과 딕셔너리 하나를 돌려줍니다. 이 경계 밖의 일(저장·알림·게시)은 서버가, 안쪽의 일(검색·판정·검증)은 AI 계층이 맡습니다.</p>
+<table>
+<tr><th style="width:16%">방향</th><th style="width:30%">값</th><th>설명</th></tr>
+<tr><td>서버 → AI</td><td><code>query</code></td><td>제목과 본문(추가 문의 포함)을 이어 붙인 글. 분야는 섞지 않는다.</td></tr>
+<tr><td>서버 → AI</td><td><code>district</code></td><td>구 이름. "모름"이면 <code>None</code>.</td></tr>
+<tr><td>서버 → AI</td><td><code>limit=5, rerank=False</code></td><td>컬렉션별 검색 건수와 재순위화 끔.</td></tr>
+<tr><td>서버 → AI</td><td><code>provider</code></td><td>선택. 시민 화면은 보내지 않고 기본 공급자를 쓴다.</td></tr>
+<tr><td>AI → 서버</td><td>결과 딕셔너리</td><td>outcome · reason_code · answer · faq · cases · departments · decision · stages · staff_draft · sanitize 등(9장). <code>automatic_transfer</code>는 항상 false.</td></tr>
+<tr><td>AI → 서버</td><td>진행 알림 콜백</td><td>read·search·review·write·sanitize·draft 단계가 바뀔 때마다 서버가 받아 SSE로 담당자에게 보낸다.</td></tr>
+</table>
+<div class="note"><b>책임 구분</b><br>
+· 서버·화면: 입력 검사, 저장, 멱등성, 권한(시민/담당자), 단계 표시, 실시간 알림, 시민에게 보일 범위, 게시·철회.<br>
+· AI 계층: 관할 확인, 검색, 시스템 프롬프트와 LLM 호출, 코드 검증 14규칙, 갈래별 응답 만들기, 폴백.<br>
+· 늦게 도착한 AI 결과는 서버가 <code>attempt</code>·<code>context_version</code>을 비교해 버린다(2-3). 결과의 신뢰 판단은 AI 계층의 코드 검증과 담당자 확인 두 곳에서 이뤄진다.</div>
+<p class="small">서버 쪽 호출 지점은 <code>service.py</code>의 AI 워커(<code>iter_web_assist</code>)이고, AI 계층의 진입점은 <code>src/assist</code>의 <code>iter_assist</code>입니다.</p>
+"""
+
+
 def build() -> str:
-    pages = [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P15, P14]
+    p2 = PART1 + P2
+    p4 = PART2 + _renum(P4, 3, 4)
+    p5, p6, p7, p8 = (
+        _renum(P5, 4, 5),
+        _renum(P6, 5, 6),
+        _renum(P7, 6, 7),
+        _renum(P8, 7, 8),
+    )
+    p9 = _renum(P9_AI.replace("<h3>8-1.", "<h3>9-1."), 8, 9)
+    p9 = p9.replace("<h2>8. 최종 결과", "<h2>9. 최종 결과")
+    p10 = _renum(P10, 9, 10).replace("3장의 검색", "4장의 검색")
+    p11 = _renum(P11, 10, 11)
+    pages = [
+        P1,
+        p2,
+        P3,
+        P9_FRONT,
+        IFACE,
+        p4,
+        p5,
+        p6,
+        p7,
+        p8,
+        p9,
+        p10,
+        p11,
+        P12,
+        P13,
+        P15,
+        P14,
+    ]
+    pages = [x.replace("3장의 검색", "4장의 검색") for x in pages]
     body = "".join(page(add_korean_json(p)) for p in pages)
     return (
         '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
