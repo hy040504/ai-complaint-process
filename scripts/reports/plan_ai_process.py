@@ -438,10 +438,58 @@ P8 = """
 <tr><td>안내+조치 혼합</td><td><code>intent=mixed</code>, 규칙 5</td><td>담당자 검토(mixed_request), 초안은 생성</td></tr>
 <tr><td>긴급(가스·화재·붕괴 등)</td><td><b>코드에 긴급 키워드 분기는 없다.</b> PREFIX-00·01 지시를 모델이 따른다.</td><td>담당자 검토 + 초안에 119·112 안내. 신고 생략을 유도하는 문장이 있어도 같은 결과(예시 ④)</td></tr>
 <tr><td>범위 밖·불확실</td><td>모델 scope, 규칙 6</td><td>담당자 검토. 초안 LLM은 건너뛰고 고정 초안</td></tr>
-<tr><td>타 지자체</td><td>사전 관할 검증(6-1) + 규칙 7이 이중으로 막음</td><td>담당자 검토(out_of_scope), LLM 호출 없음</td></tr>
+<tr><td>타 지자체</td><td>사전 관할 검증(7-1) + 규칙 7이 이중으로 막음</td><td>담당자 검토(out_of_scope), LLM 호출 없음</td></tr>
 <tr><td>욕설·위협 포함</td><td><code>sanitize_needed</code> 또는 욕설 정규식</td><td>갈래는 그대로, 순화 요약과 위험 신호를 담당자에게 추가</td></tr>
 <tr><td>FAQ 근거가 조건 불충분</td><td>규칙 10~12</td><td>담당자 검토(condition_unclear)</td></tr>
 </table>
+<p class="small">위 표는 "어떤 결과가 나오는가"입니다. 각 케이스에서 <b>어떤 프롬프트로, 어떤 데이터를 LLM에 넘기고, 실제로 무엇이 저장되는가</b>는 아래 8-4에 정리했습니다.</p>
+<h3>7-4. 케이스별 두 번째 로직 — 프롬프트 조합·넘기는 데이터·저장되는 값</h3>
+<p>1차 판정 뒤에 무엇을 더 호출하는지는 판정 결과(갈래·범위)와 원문 조건으로 <b>코드가</b> 정합니다(<code>pipeline.py</code> 700~930행). 먼저 모든 케이스가 공유하는 첫 호출부터 봅니다.</p>
+<div class="note"><b>공통 1차 판정 호출</b> — 사전 검증을 통과해 검색까지 성공한 모든 민원은 같은 입력으로 한 번 호출합니다.<br>
+시스템 프롬프트 = <code>PREFIX-00 + PREFIX-01</code>. 사용자 JSON = <b>민원 원문 전체</b>(자르지 않음, 1~2000자) + <b>RAG 후보 전부</b>.</div>
+<pre>{"query": "민원 원문 전체(제목+본문)",
+ "district": "구 이름 또는 null",
+ "faq_candidates": [ FAQ 후보 최대 5건(detail 포함, 자르지 않음) ],
+ "case_candidates": [ 공개 사례 후보 최대 5건 ],
+ "department_candidates": [ 부서 후보(부서 번호·정식 이름·업무 상태·관할 상태·뒷받침 사례 번호) ]}
+# 있으면 추가: "inferred_place"(장소 추론 결과), "conversation_history"(시민 챗봇만)</pre>
+<p class="small">모델이 돌려주는 값은 <code>scope · intent · outcome · reason_code · evidence_refs · department_ids · sanitize_needed</code>이며, 이를 7장의 14규칙으로 검증한 판정이 이후 단계의 입력이 됩니다. codex_cli 공급자는 이 판정 호출에만 검색·장소 도구를 붙입니다.</p>
+<h4>① 판정 이전에 끝나는 케이스 (판정 LLM 호출 없음)</h4>
+<table>
+<tr><th style="width:15%">케이스</th><th style="width:20%">LLM 호출</th><th style="width:24%">넘기는 데이터</th><th>실제 저장되는 값</th></tr>
+<tr><td>입력 오류<br>(비었거나 2000자 초과)</td><td>없음</td><td>—</td><td>판정 <code>human_handoff / condition_unclear</code>, 정책 실패에 "1~2000자" 안내, 검색 결과 비어 있음</td></tr>
+<tr><td>타 지자체 주소<br>(사전 관할 검증)</td><td>검색·판정·초안 모두 없음. 욕설이 있으면 순화만 <code>PREFIX-00+04</code> 1회</td><td>순화할 때만 <code>{"query": 원문}</code>. RAG는 검색 자체를 안 해서 없음</td><td>판정 <code>out_of_scope / human_handoff</code>, <code>search.pipeline="early_external_reject"</code>, 시민 문구 = <code>out_of_scope</code> 고정 문구, 담당자 초안 = <b>코드의 고정 초안</b>(원문 앞 160자를 "시민 요청"에 넣고 "관할 확인 필요" 빈칸 포함), FAQ·사례·부서 빈 목록</td></tr>
+<tr><td>검색 실패<br>(API 오류·계약 위반)</td><td>없음</td><td>—</td><td>판정 <code>human_handoff / search_failed</code>, 모델 미사용(<code>llm_configured=false</code>로 기록), 고정 문구</td></tr>
+<tr><td>LLM 사용 불가·판정 호출 실패</td><td>판정 호출이 실패하면 후속 호출도 모두 건너뜀(연달아 보내지 않음)</td><td>1차 판정 입력은 만들어졌지만 응답 없음</td><td>판정 <code>human_handoff / llm_unavailable</code>, 실패 사유 기록. 공급자를 따로 고르지 않았고 한도·시간 초과면 보조 공급자로 <b>1회</b> 바꿔 판정을 다시 시도</td></tr>
+</table>
+<h4 style="page-break-before:always">② 1차 판정 이후 갈래별 후속 호출</h4>
+<table>
+<tr><th style="width:12%">갈래</th><th style="width:22%">후속 LLM 호출·시스템 프롬프트</th><th style="width:30%">그 호출에 넘기는 데이터</th><th>시민 문구와 실제 저장 값</th></tr>
+<tr><td><b>faq_answer</b></td><td>안내문 <code>PREFIX-00+02</code> 1회.<br>담당자 초안은 없음(갈래가 faq_answer이므로)</td><td><code>{"query": 원문 전체, "faq": [판정이 인용한 FAQ만, detail 전체]}</code><br>사례·부서 후보는 <b>넘기지 않음</b>. 챗봇이면 <code>conversation_history</code> 추가</td><td>시민 문구 = LLM이 쓴 평문(20자 이상). 저장: 판정, 인용 FAQ, 후보 목록 전체, 단계별 소요.<br>20자 미만이거나 호출 실패면 갈래를 <code>human_handoff / faq_generation_failed</code>로 바꾸고 고정 문구를 쓰며, <b>이때는 담당자 초안 호출이 이어서 실행</b>된다</td></tr>
+<tr><td><b>department_suggestion</b></td><td>시민 문구는 <b>LLM 호출 없음</b>(고정 틀).<br>담당자 초안 <code>PREFIX-00+03</code> 1회</td><td>초안 호출: 아래 "담당자 초안 입력"(원문 전체 + 후보 전부 + 갈래·사유)</td><td>시민 문구 = "유사한 공개 사례를 기준으로… - {부서명} (업무분장: {상태}, 자동 이관 아님)". 저장: 검증을 통과한 <code>department_ids</code>, 부서 목록의 <code>selected=true</code>, 담당자 초안. <code>automatic_transfer</code>는 항상 false</td></tr>
+<tr><td><b>human_handoff</b><br>(범위 안)</td><td>담당자 초안 <code>PREFIX-00+03</code> 1회</td><td>같은 "담당자 초안 입력"</td><td>시민 문구 = <code>reason_code</code>별 고정 문구(LLM이 쓰지 않음). 저장: 사유 코드, 담당자 초안, 있으면 순화 결과</td></tr>
+<tr><td><b>human_handoff</b><br>(모델이 범위 밖·scope=out_of_scope로 판정)</td><td>초안 LLM <b>호출 안 함</b></td><td>—</td><td>고정 담당자 초안(위 사전 관할 검증과 같은 틀)을 만들어 저장</td></tr>
+<tr><td><b>순화</b><br>(갈래와 무관, 조건부)</td><td><code>PREFIX-00+04</code> 1회</td><td><code>{"query": 원문 전체}</code> <b>만</b>. FAQ·사례·부서 후보와 판정 결과를 넣지 않음</td><td>실행 조건은 8-2와 같음. 저장: 순화 요약·정당한 요청·위험 신호(9종)·사람 보호 검토 필요 여부. 갈래는 바꾸지 않음. 순화와 초안이 둘 다 필요하면 <b>동시에</b> 실행(exaone은 초안을 약 1초 늦춰 초당 한도 회피)</td></tr>
+</table>
+<h4>담당자 초안 입력 (PREFIX-03)</h4>
+<pre>{"query": "민원 원문 전체",
+ "district": "구 이름 또는 null",
+ "outcome": "코드 검증을 거친 갈래(department_suggestion 또는 human_handoff)",
+ "reason_code": "검증된 사유 코드",
+ "faq_candidates": [ 1차 판정과 같은 FAQ 후보 ],
+ "case_candidates": [ 같은 사례 후보 ],
+ "department_candidates": [ 같은 부서 후보 ]}</pre>
+<ul>
+<li>초안 입력에는 판정이 고른 <code>evidence_refs</code>·<code>department_ids</code>가 <b>들어가지 않는다</b>. 모델은 갈래와 사유 코드만 알고, 후보 전체를 다시 보며 초안을 쓴다.</li>
+<li>초안 결과는 코드가 다시 검사한다. 요약 카드 4필드와 20자 이상 초안이 있어야 하고, 인용은 <b>이번 검색 후보에 있는 문서</b>만 남긴다. 형식 오류면 같은 입력 뒤에 "[형식 재확인]" 문구를 붙여 1회만 다시 호출한다.</li>
+<li>어떤 호출이든 실패하면 시민 갈래는 그대로이고 해당 필드(순화·초안)만 비며, 사유가 <code>policy_failures</code>에 남는다.</li>
+</ul>
+<h4>실제로 무엇이 남는가</h4>
+<ul>
+<li>결과의 <code>codex</code> 배열에 <b>호출마다</b> 역할·시스템 프롬프트 조합 이름·모델에 넣은 사용자 JSON·실제 전송 여부가 기록된다. 즉 "그 민원에서 LLM이 정확히 무엇을 받았는지"를 저장된 결과에서 다시 확인할 수 있다.</li>
+<li>시민에게 가는 문구(<code>answer</code>)는 갈래별로 <b>LLM 작성(FAQ 안내만) / 고정 틀(부서 추천) / 사유별 고정 문구(담당자 검토)</b> 중 하나다. 담당자 초안·순화는 담당자 전용 산출물이며 게시 전에는 시민에게 보이지 않는다.</li>
+<li>LLM 호출 횟수는 케이스마다 다르다. 판정 1회에 더해, FAQ 안내 1회(faq_answer일 때), 초안 1회(담당자 검토·부서 추천일 때), 순화 1회(조건부)가 붙는다. 형식 오류 재시도는 안내·순화·초안에서만 있고 <b>판정은 재시도하지 않는다</b>.</li>
+</ul>
 """
 
 P9 = """
