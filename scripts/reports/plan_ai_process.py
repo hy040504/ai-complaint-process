@@ -276,6 +276,7 @@ P5 = """
 <tr><td><code>duty_status</code></td><td>업무 상태</td><td>업무분장(그 부서가 이 일을 맡는지) 확인 상태. <code>unverified</code>는 미확인</td></tr>
 <tr><td colspan="3" style="background:#f6f8fc"><b>부서 후보 안쪽</b></td></tr>
 <tr><td><code>canonical_name</code></td><td>정식 이름, 표준 이름</td><td>정리된 공식 부서 이름</td></tr>
+<tr><td><code>jurisdiction_status</code></td><td>관할 상태</td><td>그 부서의 관할 확인 상태(<code>duty_status</code>와 함께 후보의 신뢰도를 가늠하는 값)</td></tr>
 <tr><td><code>supporting_case_ids</code></td><td>뒷받침하는 사례 번호들</td><td>이 부서를 후보로 올린 사례의 <code>source_id</code> 목록</td></tr>
 <tr><td colspan="3" style="background:#f6f8fc"><b>장소·대화 안쪽</b></td></tr>
 <tr><td><code>gu</code> · <code>dong</code></td><td>구 · 동</td><td>장소가 속한 구와 동</td></tr>
@@ -893,9 +894,13 @@ def kt(title: str, rows: list[tuple[str, ...]], note: str = "") -> str:
     )
     for row in rows:
         if len(row) == 1:
-            out.append(f'<tr><td colspan="3" style="background:#f6f8fc"><b>{row[0]}</b></td></tr>')
+            out.append(
+                f'<tr><td colspan="3" style="background:#f6f8fc"><b>{row[0]}</b></td></tr>'
+            )
         else:
-            out.append(f"<tr><td><code>{row[0]}</code></td><td>{row[1]}</td><td>{row[2]}</td></tr>")
+            out.append(
+                f"<tr><td><code>{row[0]}</code></td><td>{row[1]}</td><td>{row[2]}</td></tr>"
+            )
     out.append("</table>")
     return "".join(out)
 
@@ -910,9 +915,13 @@ P2 = _ins_before(
         [
             ("title", "제목", "민원 제목(1~120자)"),
             ("body", "본문", "민원 내용(10~2000자)"),
-            ("district", "구역", "민원이 속한 구. 모르면 \"모름\""),
+            ("district", "구역", '민원이 속한 구. 모르면 "모름"'),
             ("category", "범주, 분류", "민원 분야(도로·교통, 환경·청소 등 6가지)"),
-            ("visibility", "가시성", "공개 범위. <code>private</code> 비공개 / <code>public</code> 공개"),
+            (
+                "visibility",
+                "가시성",
+                "공개 범위. <code>private</code> 비공개 / <code>public</code> 공개",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -924,18 +933,34 @@ P2 = _ins_before(
         "1-4의 응답 JSON 키 직역",
         [
             ("id", "식별자", "민원 번호(<code>DEMO-연도-12자리</code>)"),
-            ("title · body · category · district", "제목 · 본문 · 범주 · 구역", "요청에서 받은 값 그대로"),
+            (
+                "title · body · category · district",
+                "제목 · 본문 · 범주 · 구역",
+                "요청에서 받은 값 그대로",
+            ),
             ("owner", "소유자", "민원을 쓴 사용자의 id"),
             ("visibility", "가시성", "공개 범위"),
             ("status", "상태", "처리 상태. 처음은 <code>submitted</code>(접수 대기)"),
             ("date", "날짜", "접수 시각"),
             ("version", "버전", "수정 충돌을 막는 번호(고칠 때마다 오름)"),
-            ("contextVersion", "맥락 버전", "민원 원문이 바뀔 때마다 오르는 번호. 늦게 도착한 AI 결과를 버릴지 정하는 데 씀"),
+            (
+                "contextVersion",
+                "맥락 버전",
+                "민원 원문이 바뀔 때마다 오르는 번호. 늦게 도착한 AI 결과를 버릴지 정하는 데 씀",
+            ),
             ("isSynthetic", "합성인가", "시연용으로 만든 가짜 민원인지 여부"),
-            ("published", "게시됨", "담당자가 게시한 답변. 아직 없으면 <code>null</code>"),
-            ("messages", "메시지들", "추가 문의·답변 대화"),
+            (
+                "published",
+                "게시됨",
+                "담당자가 게시한 답변. 아직 없으면 <code>null</code>",
+            ),
+            ("messages", "메시지들", "시민이 남긴 추가 문의(작성자는 항상 시민)"),
             ("attachments", "첨부들", "사진·PDF 첨부 목록(본인에게만 보임)"),
-            ("history", "이력들", "처리 이력. 안쪽 <code>text</code>는 글(내용), <code>public</code>은 공개 여부"),
+            (
+                "history",
+                "이력들",
+                "처리 이력. 안쪽 <code>text</code>는 글(내용), <code>public</code>은 공개 여부",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -946,7 +971,11 @@ P3 = _ins_before(
     kt(
         "2-5의 알림(SSE) JSON 키 직역",
         [
-            ("eventId", "이벤트 번호", "알림 순번. 끊겼다 다시 연결할 때 이어 받는 기준"),
+            (
+                "eventId",
+                "이벤트 번호",
+                "알림 순번. 끊겼다 다시 연결할 때 이어 받는 기준",
+            ),
             ("type", "종류", "알림 종류(<code>ai_job.stage_changed</code> 등)"),
             ("complaintId", "민원 번호", "어느 민원의 알림인지"),
             ("contextVersion", "맥락 버전", "원문 버전 번호"),
@@ -965,10 +994,18 @@ P4 = _ins_before(
         "3-1의 검색 요청 JSON 키 직역",
         [
             ("query", "질의", "찾을 문장(제목 + 본문, 1~2000자)"),
-            ("collection", "컬렉션, 자료 묶음", "<code>faq</code> / <code>routing</code>(공개 사례) / <code>both</code>(둘 다)"),
+            (
+                "collection",
+                "컬렉션, 자료 묶음",
+                "<code>faq</code> / <code>routing</code>(공개 사례) / <code>both</code>(둘 다)",
+            ),
             ("limit", "한도", "컬렉션별로 돌려받을 개수(1~20, 접수 워커는 5)"),
             ("district", "구역", "관할 필터에 쓸 구. 없으면 <code>null</code>"),
-            ("rerank", "재순위화", "상위 후보를 재정렬 모델로 다시 줄 세울지(접수 워커는 끔)"),
+            (
+                "rerank",
+                "재순위화",
+                "상위 후보를 재정렬 모델로 다시 줄 세울지(접수 워커는 끔)",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -981,15 +1018,31 @@ P4 = _ins_before(
         [
             ("query", "질의", "보낸 문장"),
             ("district_filter", "구역 필터", "적용한 구 필터"),
-            ("pipeline", "파이프라인, 처리 경로", "쓴 검색 방식(<code>vector+kiwi_bm25+rrf…</code>)"),
-            ("retrieval_only", "검색 전용", "항상 참. 검색만 했고 판단은 하지 않았다는 뜻"),
+            (
+                "pipeline",
+                "파이프라인, 처리 경로",
+                "쓴 검색 방식(<code>vector+kiwi_bm25+rrf…</code>)",
+            ),
+            (
+                "retrieval_only",
+                "검색 전용",
+                "항상 참. 검색만 했고 판단은 하지 않았다는 뜻",
+            ),
             ("decision", "결정", "항상 <code>requires_gate</code>(후속 판단 필요)"),
             ("score_note", "점수 주석", "점수가 정답 확률이 아니라는 안내문"),
             ("results", "결과들", "컬렉션별 검색 결과 묶음"),
-            ("faq_knowledge", "FAQ 지식", "FAQ 컬렉션의 결과(공개 사례는 <code>routing_cases</code>)"),
+            (
+                "faq_knowledge",
+                "FAQ 지식",
+                "FAQ 컬렉션의 결과(공개 사례는 <code>routing_cases</code>)",
+            ),
             ("hits", "적중", "찾은 문서 목록"),
             ("rank", "순위", "결과 안에서의 순서"),
-            ("source_id · title · source_url", "출처 번호 · 제목 · 출처 주소", "원본 자료를 가리키는 값"),
+            (
+                "source_id · title · source_url",
+                "출처 번호 · 제목 · 출처 주소",
+                "원본 자료를 가리키는 값",
+            ),
             ("scores", "점수들", "순위 계산에 쓴 값 묶음(AI에게는 넘기지 않음)"),
             ("rrf_score", "RRF 점수", "두 검색 순위를 합친 점수"),
             ("vector_rank", "벡터 순위", "뜻 검색에서의 순위"),
@@ -1009,13 +1062,37 @@ P5 = _ins_before(
     kt(
         "판정 출력 JSON(PREFIX-01) 키 직역",
         [
-            ("scope", "범위", "청주시 업무 범위 안인지(<code>in_scope</code> 안 / <code>out_of_scope</code> 밖 / <code>uncertain</code> 불확실)"),
-            ("intent", "의도", "정보 문의(<code>information</code>)·조치 요청(<code>action</code>)·혼합(<code>mixed</code>)·불분명(<code>unclear</code>)"),
-            ("outcome", "결과", "세 갈래: <code>faq_answer</code> · <code>department_suggestion</code> · <code>human_handoff</code>"),
-            ("reason_code", "사유 코드", "그렇게 판정한 이유(<code>ok</code>, <code>insufficient_evidence</code> 등)"),
-            ("evidence_refs", "근거 참조들", "판정이 기댄 자료 목록. 안쪽 <code>corpus</code>(자료 묶음), <code>source_id</code>(출처 번호)"),
+            (
+                "scope",
+                "범위",
+                "청주시 업무 범위 안인지(<code>in_scope</code> 안 / <code>out_of_scope</code> 밖 / <code>uncertain</code> 불확실)",
+            ),
+            (
+                "intent",
+                "의도",
+                "정보 문의(<code>information</code>)·조치 요청(<code>action</code>)·혼합(<code>mixed</code>)·불분명(<code>unclear</code>)",
+            ),
+            (
+                "outcome",
+                "결과",
+                "세 갈래: <code>faq_answer</code> · <code>department_suggestion</code> · <code>human_handoff</code>",
+            ),
+            (
+                "reason_code",
+                "사유 코드",
+                "그렇게 판정한 이유(<code>ok</code>, <code>insufficient_evidence</code> 등)",
+            ),
+            (
+                "evidence_refs",
+                "근거 참조들",
+                "판정이 기댄 자료 목록. 안쪽 <code>corpus</code>(자료 묶음), <code>source_id</code>(출처 번호)",
+            ),
             ("department_ids", "부서 번호들", "추천할 부서 번호 목록"),
-            ("sanitize_needed", "순화 필요", "원문에 거친 표현이 있어 순화 단계가 필요한지(참/거짓)"),
+            (
+                "sanitize_needed",
+                "순화 필요",
+                "원문에 거친 표현이 있어 순화 단계가 필요한지(참/거짓)",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -1027,11 +1104,19 @@ P6 = _ins_before(
         "5-1의 exaone 요청 JSON 키 직역",
         [
             ("model", "모델", "쓸 모델 이름"),
-            ("messages", "메시지들", "대화 목록. 안쪽 <code>role</code>은 역할(<code>system</code> 시스템 규칙 / <code>user</code> 사용자 입력), <code>content</code>는 내용"),
+            (
+                "messages",
+                "메시지들",
+                "대화 목록. 안쪽 <code>role</code>은 역할(<code>system</code> 시스템 규칙 / <code>user</code> 사용자 입력), <code>content</code>는 내용",
+            ),
             ("temperature", "온도", "답의 무작위성(높을수록 다양함)"),
             ("top_p", "상위 확률", "다음 낱말 후보를 확률 상위 몇 %까지 고를지"),
             ("max_tokens", "최대 토큰 수", "답의 최대 길이(단계마다 다름)"),
-            ("reasoning_effort", "추론 노력", "생각을 얼마나 오래 할지(<code>low</code> · <code>high</code> · <code>max</code>)"),
+            (
+                "reasoning_effort",
+                "추론 노력",
+                "생각을 얼마나 오래 할지(<code>low</code> · <code>high</code> · <code>max</code>)",
+            ),
             ("stream", "스트림", "조각조각 실시간 전송 여부(여기서는 거짓)"),
         ],
         _KT_NOTE,
@@ -1046,7 +1131,11 @@ P6 = _ins_before(
             ("model", "모델", "쓸 모델 이름"),
             ("instructions", "지시문", "system 프롬프트(PREFIX 조립)가 들어가는 자리"),
             ("input", "입력", "user JSON 문자열이 들어가는 자리"),
-            ("reasoning", "추론", "추론 설정 묶음. 안쪽 <code>effort</code>는 노력(강도)"),
+            (
+                "reasoning",
+                "추론",
+                "추론 설정 묶음. 안쪽 <code>effort</code>는 노력(강도)",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -1059,20 +1148,65 @@ P9 = _ins_before(
         [
             ("맨 위 단계",),
             ("query · district", "질의 · 구역", "원문과 구"),
-            ("district_inferred", "구역 추론됨", "구를 입력받지 않고 장소로 알아냈는지"),
-            ("inferred_place", "추론된 장소", "장소 추적 결과(<code>gu</code> 구, <code>dong</code> 동, <code>is_cheongju</code> 청주인가)"),
+            (
+                "district_inferred",
+                "구역 추론됨",
+                "구를 입력받지 않고 장소로 알아냈는지",
+            ),
+            (
+                "inferred_place",
+                "추론된 장소",
+                "장소 추적 결과(<code>gu</code> 구, <code>dong</code> 동, <code>is_cheongju</code> 청주인가)",
+            ),
             ("outcome · reason_code", "결과 · 사유 코드", "세 갈래 중 하나와 그 이유"),
             ("answer", "답", "시민에게 보일 안내 문구"),
-            ("handoff_required", "인계 필요", "담당자에게 넘겨야 하는지(<code>faq_answer</code>가 아니면 참)"),
+            (
+                "handoff_required",
+                "인계 필요",
+                "담당자에게 넘겨야 하는지(<code>faq_answer</code>가 아니면 참)",
+            ),
             ("automatic_transfer", "자동 이관", "항상 거짓. 자동 이관은 없음"),
-            ("faq · cases", "FAQ · 사례들", "근거로 쓴 FAQ와 공개 사례. 안쪽 <code>rank</code> 순위, <code>excerpt</code> 발췌, <code>corpus</code> 자료 묶음, <code>routing_eligible</code> 부서 근거로 쓸 수 있음"),
-            ("departments", "부서들", "부서 후보. 안쪽 <code>canonical_name</code> 정식 이름, <code>duty_status</code> 업무 상태, <code>selected</code> 선택됨"),
-            ("decision", "결정", "모델의 판정. 안쪽 <code>scope</code>·<code>intent</code>·<code>outcome</code>·<code>reason_code</code>·<code>evidence_refs</code>·<code>department_ids</code>(위 판정 표 참고)와 <code>model_raw</code>(모델 원본)"),
+            (
+                "faq · cases",
+                "FAQ · 사례들",
+                "근거로 쓴 FAQ와 공개 사례. 안쪽 <code>rank</code> 순위, <code>excerpt</code> 발췌, <code>corpus</code> 자료 묶음, <code>routing_eligible</code> 부서 근거로 쓸 수 있음",
+            ),
+            (
+                "departments",
+                "부서들",
+                "부서 후보. 안쪽 <code>canonical_name</code> 정식 이름, <code>duty_status</code> 업무 상태, <code>selected</code> 선택됨",
+            ),
+            (
+                "decision",
+                "결정",
+                "모델의 판정. 안쪽 <code>scope</code>·<code>intent</code>·<code>outcome</code>·<code>reason_code</code>·<code>evidence_refs</code>·<code>department_ids</code>(위 판정 표 참고)와 <code>model_raw</code>(모델 원본)",
+            ),
             ("policy_failures", "정책 실패들", "코드 검증이 교정하거나 막은 사유 목록"),
-            ("stages", "단계들", "단계별 기록. 안쪽 <code>name</code> 이름, <code>elapsed_ms</code> 경과 밀리초, <code>ok</code> 정상 여부"),
-            ("llm_provider · llm_model", "LLM 공급자 · 모델", "실제로 쓴 AI 공급자와 모델"),
-            ("retrieval", "검색", "검색 요약(<code>retrieval_only</code>, <code>pipeline</code> 등)"),
-            ("codex", "코덱스(호출 기록)", "호출 기록. 안쪽 <code>role</code> 단계 종류, <code>system</code> 시스템 프롬프트 이름, <code>user</code> 사용자 입력, <code>prompt</code> 프롬프트 전문, <code>usage</code> 사용량"),
+            (
+                "stages",
+                "단계들",
+                "단계별 기록. 안쪽 <code>name</code> 이름, <code>elapsed_ms</code> 경과 밀리초, <code>ok</code> 정상 여부",
+            ),
+            (
+                "llm_configured",
+                "LLM 설정됨",
+                "이번 호출에서 AI 모델을 실제로 썼는지(미설정이면 거짓)",
+            ),
+            (
+                "llm_provider · llm_model",
+                "LLM 공급자 · 모델",
+                "실제로 쓴 AI 공급자와 모델",
+            ),
+            (
+                "retrieval",
+                "검색",
+                "검색 요약(<code>retrieval_only</code>, <code>pipeline</code> 등)",
+            ),
+            (
+                "codex",
+                "코덱스(호출 기록)",
+                "호출 기록. 안쪽 <code>role</code> 단계 종류, <code>system</code> 시스템 프롬프트 이름, <code>user</code> 사용자 입력, <code>prompt</code> 프롬프트 전문, <code>usage</code> 사용량",
+            ),
             ("담당자 초안 (staff_draft)",),
             ("staff_draft", "담당자 초안", "담당자 내부용 요약과 초안"),
             ("summary_card", "요약 카드", "한눈에 보는 요약 묶음"),
@@ -1086,9 +1220,17 @@ P9 = _ins_before(
             ("순화 (sanitize)",),
             ("sanitize", "순화", "원문 순화 결과"),
             ("sanitized_summary", "순화된 요약", "거친 표현을 뺀 요약"),
-            ("legitimate_requests", "정당한 요청들", "표현을 걷어 낸 뒤 남는 실제 요구"),
+            (
+                "legitimate_requests",
+                "정당한 요청들",
+                "표현을 걷어 낸 뒤 남는 실제 요구",
+            ),
             ("risk_signals", "위험 신호들", "욕설·위협 등 9종 중 해당 항목"),
-            ("human_protection_review_needed", "사람 보호 검토 필요", "직원 보호를 위해 사람이 살펴야 하는지"),
+            (
+                "human_protection_review_needed",
+                "사람 보호 검토 필요",
+                "직원 보호를 위해 사람이 살펴야 하는지",
+            ),
         ],
         _KT_NOTE,
     ),
@@ -1126,8 +1268,10 @@ P15 = """
 </ul>
 """
 P13 = P13.replace("흔한 낱말(어떻)은", "흔한 낱말(하다 같은)은")
-P12 = P12.replace('"소파 버리려는데 어떻게 해요?"라는 질문 하나로', '"낡은 소파 버리고 싶어요"라는 질문 하나로')
-
+P12 = P12.replace(
+    '"소파 버리려는데 어떻게 해요?"라는 질문 하나로',
+    '"낡은 소파 버리고 싶어요"라는 질문 하나로',
+)
 
 
 def build() -> str:
