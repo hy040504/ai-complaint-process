@@ -88,7 +88,7 @@ bash rag/test-search.sh --help
 
 ## 저장 구조
 
-PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리합니다. 아래 7개 테이블이 생성되어 있으며 FAQ·사례에는 임베딩도 실제 적재되어 있습니다.
+PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리합니다. 아래 8개 테이블이 생성되어 있으며 FAQ·사례에는 임베딩도 실제 적재되어 있습니다.
 
 | 테이블 | 내용 |
 | --- | --- |
@@ -98,6 +98,7 @@ PostgreSQL의 `complaints_native` DB, `complaint_rag` 스키마에서 관계형 
 | `term_postings` | Kiwi 토큰의 문서별 출현 빈도. PostgreSQL에 영속 저장 |
 | `term_statistics` / `corpus_statistics` | FAQ/사례별 문서 빈도·문서 수·평균 길이. BM25 계산에 사용 |
 | `index_metadata` | 모델 리비전, 색인 설정, 최근 적재 결과 |
+| `embedding_cache` | 색인 서명과 본문 해시별 벡터 보관. 재적재 때 같은 본문의 임베딩을 다시 계산하지 않도록 재사용 |
 
 FAQ와 사례 테이블은 일반 열·원본 JSON과 `embedding vector(__EMBEDDING_DIM__)`를 함께 저장합니다. 기본은 384차원입니다. `routing_cases.department_id`는 부서 디렉터리의 ID를 참조하는 외래 키입니다. 부서 사전과 BM25 통계는 일반 관계형 테이블로 사용합니다.
 

@@ -19,7 +19,7 @@ flowchart TD
     G --> O[FAQ 안내 / 부서 추천 / 담당자 검토]
 ```
 
-이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 현재 프로필 차원의 `embedding`이 저장되며 검색 순위는 각각 계산한다. 기본은 `dragonkue/multilingual-e5-small-ko` 384차원이다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개까지 총 7개 테이블을 사용한다.
+이 서버의 PostgreSQL `complaints_native` DB, `complaint_rag` 스키마에서 관계형 데이터와 pgvector 벡터를 함께 관리한다. `faq_knowledge`와 `routing_cases`에는 원문·메타데이터와 현재 프로필 차원의 `embedding`이 저장되며 검색 순위는 각각 계산한다. 기본은 `dragonkue/multilingual-e5-small-ko` 384차원이다. `routing_cases.department_id`는 `department_directory.department_id`를 참조하는 외래 키다. 부서 디렉터리는 일반 관계형 테이블이며, BM25와 색인 메타데이터용 보조 테이블 4개, 적재 때 벡터를 다시 쓰기 위한 `embedding_cache`까지 총 8개 테이블을 사용한다.
 
 ## 코드 탐색 지도
 
