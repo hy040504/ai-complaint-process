@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from plan_jev_proposal import CSS as BASE_CSS  # noqa: E402
 from report_common import render_html_to_pdf  # noqa: E402
+from plan_ai_process_rag import build_pages as rag_pages  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "docs" / "plans" / "민원_AI_처리과정_상세설명서.pdf"
@@ -264,7 +265,7 @@ Content-Type: application/json
 <li>공개 사례(<code>routing_cases</code>) 히트는 <code>routing_eligible · department_status · department{canonical_name, duty_status, ...}</code>가 더해지고, <code>department_candidates</code>가 별도로 묶여 나온다(<code>automatic_transfer</code>는 항상 false).</li>
 <li>부서 후보는 <code>department_current</code>가 있고 검토 대상이 아닌 사례만 올라간다. 사례 수 다수결은 쓰지 않고 가장 높은 순위의 사례로 정렬한다.</li>
 </ul>
-<p class="small">BM25·코사인·Kiwi·RRF 같은 용어는 뒤의 <b>부록 A</b>에서 그림으로 쉽게 설명한다.</p>
+<p class="small">BM25·코사인·Kiwi·RRF 같은 용어는 뒤의 <b>부록 A</b>에서 그림으로 쉽게 설명한다. 검색 대상을 만드는 과정(두 JSON → 벡터 DB 적재)과 DB 구조는 <b>부록 C</b>에서 다룬다.</p>
 <h3>3-4. 점수는 어떻게 쓰이나</h3>
 <div class="note"><b>점수는 AI에게도 넘기지 않는다.</b> <span class="kind fn">함수</span> <code>compact_faq()</code>·<code>compact_case()</code>(<code>src/search_client/evidence.py</code>)가 점수·임베딩·원문 해시를 제거하고, 순위(<code>rank</code>)와 근거 본문만 남긴다. 컷오프 임계값 코드도 없다. 후보를 그대로 넘기고, 채택 여부는 LLM 판정과 코드 검증이 정한다. 공개 사례의 <b>과거 답변도 AI 입력에서 제외</b>한다.</div>
 """
@@ -1640,6 +1641,13 @@ DICT_ROWS = [
     ("val", "상수", "HANDOFF_REASONS", "src/assist/constants.py", "담당자 검토 사유별 고정 시민 문구", "8장"),
     ("file", "파일", "PREFIX-00 ~ PREFIX-04.txt", "docs/harness/prompts/", "시스템 프롬프트 원문(공통·판정·FAQ 안내·담당자 초안·순화)", "5장"),
     ("file", "파일", "rag/search.py", "rag/search.py", "검색 알고리즘(벡터+BM25+RRF) 구현", "4장"),
+    ("fn", "함수", "dense_search() · bm25_search() · reciprocal_rank_fusion()", "rag/search.py", "뜻 검색(pgvector 코사인), 낱말 검색(BM25 SQL), 두 순위 합치기", "4장·부록 C"),
+    ("fn", "함수", "load_sources()", "rag/data.py", "두 JSON을 검사하고 검색 문서와 부서 사전을 만든다(적재 전 검사)", "부록 C"),
+    ("fn", "함수", "faq_text() · case_text()", "rag/data.py", "원본 한 건을 <code>search_text</code>(검색 본문)로 묶는다. 사례는 답변·부서를 넣지 않는다", "부록 C"),
+    ("fn", "함수", "ingest()", "rag/ingest.py", "벡터를 재사용·계산하고 낱말 표까지 한 트랜잭션으로 DB를 교체한다(<code>python -m rag ingest</code>)", "부록 C"),
+    ("fn", "함수", "KoreanTokenizer.tokens()", "rag/korean.py", "Kiwi 형태소에서 명사·동사 등만 남긴다(BM25 재료)", "부록 A·C"),
+    ("file", "파일", "complaint_rag.sql", "rag/origin/schema/complaint_rag.sql", "검색 스키마 DDL(표 8개, pgvector HNSW 색인)", "부록 C"),
+    ("val", "값", "EMBEDDING_PROFILES", "rag/config.py", "임베딩 모델 프로필(e5-small-ko 384차원이 기본)과 접두·서명 설정", "부록 C"),
     ("api", "API", "POST :8007/search", "rag 검색 서버", "FAQ·공개 사례 후보를 찾아 돌려준다. 서버 안에서만 쓰는 내부 주소", "4장"),
     ("tool", "도구", "search_complaint_rag", "src/llm/rag_tool.py", "LLM(codex_cli 판정 단계)이 직접 검색할 때 쓰는 MCP 도구", "5장"),
     ("tool", "도구", "lookup_navermap_place", "src/llm/place_tool.py", "장소를 찾아 구·동을 확인하는 MCP 도구", "5장"),
@@ -1689,7 +1697,7 @@ PIPE = """
   <p class="pl-title">제2부 · AI 계층 (4~9장)</p>
   <div class="pl-step"><b>① 읽기</b> 구·장소 추정, 길이 검사(1~2000자)</div>
   <div class="pl-step"><b>② 사전 관할 검증</b> 타 지자체 주소면 검색·판정 없이 종료 (고정 초안, 욕설이면 순화만)</div>
-  <div class="pl-step"><b>③ 검색</b> 검색 서버에서 FAQ 5건 + 공개 사례 5건 + 부서 후보를 받음</div>
+  <div class="pl-step"><b>③ 검색</b> 검색 서버에서 FAQ 5건 + 공개 사례 5건 + 부서 후보를 받음 (검색 대상의 구성은 부록 C)</div>
   <div class="pl-step"><b>④ 1차 판정</b> 시스템 프롬프트 PREFIX-00+01 · 입력 = 원문 전체 + 검색 후보 전부 AUD_INT</div>
   <div class="pl-step"><b>⑤ 코드 검증</b> 14규칙으로 판정을 다시 검사하고 갈래를 교정</div>
   <div class="pl-arrow">▼ 갈래 (8장)</div>
@@ -1747,6 +1755,7 @@ def build() -> str:
         P15,
         P14,
         dict_page(),
+        *rag_pages().values(),
     ]
     pages = [
         x.replace("3장의 검색", "4장의 검색").replace("<!--AUD-->", AUD_LEGEND)

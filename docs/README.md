@@ -31,7 +31,7 @@
 | 시연 웹의 게시판·민원 작성·답변 서버 설계 | [시연 웹·민원 서버 구현계획](plans/시연_웹_게시판과_민원_서버_구현계획.md) |
 | CRUD·AI 답변 편집·실시간 모니터와 네 분야 작업 | [통합 상세설계](plans/민원_웹_MVP_상세설계와_분야별_작업계획.md) · [그림 포함 PDF](plans/민원_웹_MVP_상세설계와_분야별_작업계획.pdf) |
 | Flask 민원 웹 Swagger를 인쇄·보고 | [청주톡톡 민원 업무 API Swagger PDF](api/청주톡톡_민원_업무_API_Swagger.pdf), 재생성 [`export_swagger_pdf.py`](../scripts/reports/export_swagger_pdf.py) |
-| 민원 접수부터 AI 응답까지의 처리 과정(주소·JSON·프롬프트·판정 규칙·AI 워커·갈래별 호출 레시피, 36쪽) | [민원 AI 처리과정 상세설명서 PDF](plans/민원_AI_처리과정_상세설명서.pdf) |
+| 민원 접수부터 AI 응답까지의 처리 과정(주소·JSON·프롬프트·판정 규칙·AI 워커·갈래별 호출 레시피, 부록 C RAG 지식베이스 구축·DB 구조, 42쪽) | [민원 AI 처리과정 상세설명서 PDF](plans/민원_AI_처리과정_상세설명서.pdf) |
 | Jev를 1차 판정에 쓰는 방안(제안·미구현) | [Jev 1차 판정 도입 제안서 PDF](plans/Jev_1차판정_도입_제안서.pdf) |
 | LLM 추천·LoRA 필요 여부 검토 | [모델 선정과 미세조정 제안](plans/모델_선정과_미세조정_제안.md) |
 
