@@ -155,7 +155,7 @@ def _build_page1_main_report_html() -> str:
   </tr>
   <tr>
     <td class="header-label">주제</td>
-    <td colspan="3">상세설명서 부록 C(RAG 지식베이스) 추가, 발표자료(PPT) 검토, 프로젝트 최종 점검과 문서·코드 불일치 정정 보고 (11/25)</td>
+    <td colspan="3">상세설명서 부록 C(RAG 지식베이스) 추가, 프로젝트 최종 점검과 문서·코드 불일치 정정 보고 (11/25)</td>
   </tr>
   <tr>
     <td class="label-cell">담당 업무<br>(전체)</td>
@@ -173,9 +173,7 @@ def _build_page1_main_report_html() -> str:
       <div class="bullet-item">- <span class="highlight-tag">두 JSON에서 벡터 DB까지</span> : FAQ 94건·공개 사례 5,015건이 검사·정리 → 검색 본문(FAQ는 업무명·안내·대상·접수 조건·기간·주의사항, 사례는 제목+요지만) → 임베딩 384차원과 낱말(BM25) 색인 → PostgreSQL(pgvector)에 저장되는 순서를 그림 4개로 설명</div>
       <div class="bullet-item">- <span class="highlight-tag">DB 구조·적재·검색 정리</span> : complaint_rag 표 8개와 HNSW 색인, 이미 만든 벡터를 해시로 알아보고 다시 계산하지 않는 적재 순서, 찾을 때 DB가 하는 일(후보 30건·RRF 60 등)과 한계. 건수·분포는 JSON을 직접 센 값이고 낱말 예시는 실제 형태소 분석 결과</div>
       <div class="bullet-item">- <span class="highlight-tag">한눈에 보는 파이프라인 쪽 추가</span> : 설명서 3쪽에 처리 흐름 요약을 넣고 부록 B(코드 위치 사전)에 7개 이름을 더해 설명서가 <strong>42쪽</strong>이 됨. 문서 목차도 갱신</div>
-      <div class="section-title">2. 발표자료(PPT) 검토</div>
-      <div class="bullet-item">- <span class="highlight-tag">평가와 교체 문구 제안</span> : 16·17장이 거의 같은 화면인 점, 목차 04 제목 비어 있음, 기술·검증·한계 내용 부재, 중복 이미지로 인한 약 12MB 용량을 지적. 16·17장 캡션·본문 문구 초안과 다시 찍을 화면을 안내(PPT 파일은 수정하지 않음)</div>
-      <div class="section-title">3. 프로젝트 최종 점검</div>
+      <div class="section-title">2. 프로젝트 최종 점검</div>
       <div class="bullet-item">- <span class="highlight-tag">시험·타입 검사 전체 재실행</span> : 코드 문제는 발견되지 않음. 공개 사이트와 상태 확인 API 정상, 추적 파일에서 비밀번호·토큰·키 흔적 없음, 문서 상대 링크 깨짐 0건</div>
       <div class="bullet-item">- <span class="highlight-tag">문서와 코드 불일치 정정</span> : 검색 스키마 표 수를 7개 → 8개(임베딩 캐시 표 포함), 업무 스키마 표 수 표기를 현재 DDL의 13개로 고침. 변경 이력(CHANGELOG)의 "아직 커밋·배포 전" 낡은 문구 2곳을 실제 상태로 정정</div>
     </td>
@@ -191,7 +189,7 @@ def _build_page1_main_report_html() -> str:
   <tr>
     <td class="label-cell">남은 일</td>
     <td colspan="3" class="full-val">
-      <div class="bullet-item">- 최종 발표 자료(PPT) 16·17장 화면 다시 찍어 교체와 기술·검증·한계 장 보강, 실제 서버 데이터로 통계 화면 다시 확인, 데이터베이스 격리 시험 10건 실행, Jev 도입 여부와 모델 서빙 정보 확정 (마감 2026-11-27)</div>
+      <div class="bullet-item">- 실제 서버 데이터로 통계 화면 다시 확인, 데이터베이스 격리 시험 10건 실행, Jev 도입 여부와 모델 서빙 정보 확정 (마감 2026-11-27)</div>
     </td>
   </tr>
   <tr>
@@ -258,11 +256,6 @@ def _build_att1_page2_html() -> str:
         <td><strong>처리 흐름 요약 쪽</strong></td>
         <td>설명서 3쪽에 접수부터 저장까지 한 쪽 요약, 부록 B 코드 위치 사전에 이름 7개 추가</td>
         <td>긴 설명서를 읽기 전에 전체 그림을 먼저 파악</td>
-      </tr>
-      <tr>
-        <td><strong>발표자료 검토</strong></td>
-        <td>PPT의 중복·빈 항목·누락 내용을 평가하고 16·17장 교체 문구 초안 작성</td>
-        <td>발표 전 고칠 곳이 분명해짐</td>
       </tr>
       <tr>
         <td><strong>최종 점검</strong></td>
