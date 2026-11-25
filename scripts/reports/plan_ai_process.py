@@ -1665,6 +1665,53 @@ def dict_page() -> str:
     )
 
 
+CSS += """
+.pl-lane { border-radius:6px; padding:6px 9px 7px; margin-bottom:6px; }
+.pl-lane.srv { background:#eef1f7; border:1px solid #c7cfe0; }
+.pl-lane.ai { background:#eaf1ff; border:1px solid #b6cdf5; }
+.pl-title { font-size:10pt; font-weight:800; margin:0 0 3px; color:#16203a; }
+.pl-lane.ai .pl-title { color:#1546a8; }
+.pl-step { border:1px solid #94a3b8; border-radius:4px; background:#fff; padding:3px 8px; margin:3px 0; font-size:9pt; word-break:keep-all; }
+.pl-arrow { text-align:center; color:#64748b; font-size:9pt; line-height:10pt; }
+.pl-branch { display:flex; gap:5px; margin:3px 0; }
+.pl-branch > div { flex:1; border:1px solid #94a3b8; border-radius:4px; background:#fff; padding:3px 7px; font-size:8.6pt; word-break:keep-all; }
+"""
+
+PIPE = """
+<h2>한눈에 보는 처리 파이프라인</h2>
+<p class="small">민원 한 건이 접수된 뒤 결과가 저장되기까지의 흐름입니다. 제2부 전체가 AI 워커 스레드 한 개 안에서 이어서 실행됩니다. 자세한 근거는 각 장(괄호 안 번호)을 보세요.</p>
+<div class="pl-lane srv">
+  <p class="pl-title">제1부 · 서버와 화면 (1~2장)</p>
+  <div class="pl-step"><b>민원 등록</b> → 서버가 입력을 검사하고 저장 → AI 워커 스레드 시작 (질의 = 제목 + 본문)</div>
+</div>
+<div class="pl-arrow">▼ 함수 한 번 호출 (질의·구·공급자)</div>
+<div class="pl-lane ai">
+  <p class="pl-title">제2부 · AI 계층 (4~9장)</p>
+  <div class="pl-step"><b>① 읽기</b> 구·장소 추정, 길이 검사(1~2000자)</div>
+  <div class="pl-step"><b>② 사전 관할 검증</b> 타 지자체 주소면 검색·판정 없이 종료 (고정 초안, 욕설이면 순화만)</div>
+  <div class="pl-step"><b>③ 검색</b> 검색 서버에서 FAQ 5건 + 공개 사례 5건 + 부서 후보를 받음</div>
+  <div class="pl-step"><b>④ 1차 판정</b> 시스템 프롬프트 PREFIX-00+01 · 입력 = 원문 전체 + 검색 후보 전부 AUD_INT</div>
+  <div class="pl-step"><b>⑤ 코드 검증</b> 14규칙으로 판정을 다시 검사하고 갈래를 교정</div>
+  <div class="pl-arrow">▼ 갈래 (8장)</div>
+  <div class="pl-branch">
+    <div><b>faq_answer</b><br>FAQ 안내<br>AUD_CIT 안내문을 LLM이 작성(PREFIX-00+02, 원문 + 인용 FAQ만)</div>
+    <div><b>department_suggestion</b><br>부서 추천<br>AUD_CIT 고정 틀(LLM 없음)</div>
+    <div><b>human_handoff</b><br>담당자 검토<br>AUD_CIT 사유별 고정 문구(LLM 없음)</div>
+  </div>
+  <div class="pl-step"><b>⑥ 담당자용 산출물</b> AUD_STF 접수된 민원에서만 만듦(시민 챗봇 경로는 생략)<br>
+    · 담당자 초안 PREFIX-00+03 : 부서 추천·담당자 검토이고 범위 밖이 아닐 때 (원문 + 후보 전부 + 갈래·사유)<br>
+    · 순화 PREFIX-00+04 : 조건부, 입력은 원문뿐, 초안과 동시 실행</div>
+  <div class="pl-step"><b>⑦ 결과 조립</b> 시민 문구·판정·근거·담당자용 산출물을 한 묶음으로 만들어 서버에 돌려줌 (9장)</div>
+</div>
+<div class="pl-arrow">▼ 결과 한 묶음</div>
+<div class="pl-lane srv">
+  <p class="pl-title">제1부 · 서버와 화면</p>
+  <div class="pl-step"><b>결과 검증</b> 형식 확인 → 늦게 온 결과면 버림 → DB 저장 → 담당자 화면에 실시간 알림. 시민은 담당자가 게시한 답변만 봄</div>
+</div>
+<!--AUD-->
+"""
+
+
 def build() -> str:
     p2 = PART1 + P2
     p4 = PART2 + _renum(P4, 3, 4)
@@ -1680,6 +1727,9 @@ def build() -> str:
     p11 = _renum(P11, 10, 11)
     pages = [
         P1,
+        PIPE.replace("AUD_INT", AUD_INT)
+        .replace("AUD_CIT", AUD_CIT)
+        .replace("AUD_STF", AUD_STF),
         p2,
         P3,
         P9_FRONT,
