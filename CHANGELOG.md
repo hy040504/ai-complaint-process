@@ -1,5 +1,9 @@
 ﻿# 변경 이력
 
+## 2026-11-27
+
+- 담당자 이용 가이드(`docs/guides/담당자_이용_가이드.md`·`담당자_이용_가이드.pdf`)의 「9. 통계 보기」 장을 CASE-133에서 재구성한 통계 대시보드(업무 현황·통계 분석·민원 분류 4개 탭·처리 현황 분포, 완료 구간 기준 일평균·증감률 및 답변 게시 표기)에 맞춰 갱신했다. 주석 캡처 그림 3장(`docs/assets/guide/s08-stats.png`·`s08b-stats-detail.png`·`s08c-stats-classify.png`)과 `scripts/reports/guide/screens.json` 선택자를 업데이트하고 인쇄용 PDF를 재생성했다. 문서만 변경, 코드 동작 변화 없음.
+
 ## 2026-11-26
 
 - 데이터베이스 ER 다이어그램 문서를 추가했다: `docs/plans/데이터베이스_ER다이어그램.md`(Mermaid, GitHub에서 바로 그려짐)와 `docs/plans/데이터베이스_ER다이어그램.pdf`(A3 가로 5쪽). DDL 두 파일 기준으로 `complaint_app` 13개·`complaint_rag` 8개 테이블의 칼럼·PK/FK/UK·관계를 그렸고, FK가 없는 논리 관계(`messages.published_version_id`, BM25 표 3개, `embedding_cache.text_hash = embedding_hash`)는 점선으로 구분했다. 스키마 간 연결은 조건부 FK `ai_results.department_id → department_directory` 하나다. 테이블 요약표의 행 수는 2026-11-26 배포 서버에서 읽기 전용으로 센 값이다. PDF는 새 스크립트 `scripts/reports/export_er_diagram_pdf.py`(Mermaid 문법 오류 시 실패)로 만든다. `docs/plans/README.md`·`docs/README.md`·`docs/harness/README.md`에 링크를 달고, `docs/README.md`의 업무 스키마 보조 테이블 수(3개)를 DDL대로 6개로 고쳤다. 문서만 변경, 코드 동작 변화 없음.

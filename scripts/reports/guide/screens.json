@@ -694,7 +694,16 @@
     },
     {
       "name": "s08-stats",
+      "height": 1190,
       "steps": [
+        {
+          "login": {
+            "site": "staff",
+            "id": "$ENV:GUIDE_STAFF_ID",
+            "pw": "$ENV:GUIDE_STAFF_PW",
+            "role": "staff"
+          }
+        },
         {
           "go": "/staff/#/staff/stats"
         },
@@ -705,27 +714,107 @@
       "notes": [
         {
           "n": 1,
-          "sel": "xy:263,258,975,286"
+          "sel": "css:.stats-kpi-grid"
         },
         {
           "n": 2,
-          "sel": "panel:처리 상태별 분포"
+          "sel": "css:[data-action=toggle-stats-synthetic]"
         },
         {
           "n": 3,
-          "sel": "panel:AI 판정별 분포"
+          "sel": "css:[data-action=refresh-stats]"
         },
         {
           "n": 4,
-          "sel": "xy:827,102,142,41"
+          "sel": "css:.stats-head-actions a[download]"
         },
         {
           "n": 5,
-          "sel": "xy:976,102,112,41"
+          "sel": "css:.stats-toolbar .scope"
         },
         {
           "n": 6,
-          "sel": "xy:1096,102,142,41"
+          "sel": "css:.stats-metric-grid"
+        },
+        {
+          "n": 7,
+          "sel": "panel:접수·처리 추이"
+        }
+      ]
+    },
+    {
+      "name": "s08b-stats-detail",
+      "height": 1140,
+      "steps": [
+        {
+          "go": "/staff/#/staff/stats"
+        },
+        {
+          "wait": 2000
+        },
+        {
+          "eval": "(() => { const el = window.__find('text:민원 분야 분포'); if (el) { el.scrollIntoView({block:'start'}); window.scrollBy(0, -68); } })()"
+        },
+        {
+          "wait": 400
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.stats-panel:has(.catrows)"
+        },
+        {
+          "n": 2,
+          "sel": "panel:시간대별 접수 분포"
+        },
+        {
+          "n": 3,
+          "sel": "panel:요일별 접수"
+        },
+        {
+          "n": 4,
+          "sel": "css:.stats-panel:has(tr[data-action=stats-period])"
+        }
+      ]
+    },
+    {
+      "name": "s08c-stats-classify",
+      "height": 975,
+      "steps": [
+        {
+          "go": "/staff/#/staff/stats"
+        },
+        {
+          "wait": 2000
+        },
+        {
+          "eval": "(() => { const el = window.__find('text:민원 분류'); if (el) { el.scrollIntoView({block:'start'}); window.scrollBy(0, -68); } })()"
+        },
+        {
+          "wait": 400
+        }
+      ],
+      "notes": [
+        {
+          "n": 1,
+          "sel": "css:.stats-tabs"
+        },
+        {
+          "n": 2,
+          "sel": "panel:분야별 12개월 접수 추이"
+        },
+        {
+          "n": 3,
+          "sel": "panel:분야 레이더"
+        },
+        {
+          "n": 4,
+          "sel": "panel:처리 상태별 분포"
+        },
+        {
+          "n": 5,
+          "sel": "panel:AI 판정별 분포"
         }
       ]
     },
