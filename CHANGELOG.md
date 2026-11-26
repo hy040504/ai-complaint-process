@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+- 데이터베이스 ER 다이어그램 문서를 추가했다: `docs/plans/데이터베이스_ER다이어그램.md`(Mermaid, GitHub에서 바로 그려짐)와 `docs/plans/데이터베이스_ER다이어그램.pdf`(A3 가로 5쪽). DDL 두 파일 기준으로 `complaint_app` 13개·`complaint_rag` 8개 테이블의 칼럼·PK/FK/UK·관계를 그렸고, FK가 없는 논리 관계(`messages.published_version_id`, BM25 표 3개, `embedding_cache.text_hash = embedding_hash`)는 점선으로 구분했다. 스키마 간 연결은 조건부 FK `ai_results.department_id → department_directory` 하나다. 테이블 요약표의 행 수는 2026-11-26 배포 서버에서 읽기 전용으로 센 값이다. PDF는 새 스크립트 `scripts/reports/export_er_diagram_pdf.py`(Mermaid 문법 오류 시 실패)로 만든다. `docs/plans/README.md`·`docs/README.md`·`docs/harness/README.md`에 링크를 달고, `docs/README.md`의 업무 스키마 보조 테이블 수(3개)를 DDL대로 6개로 고쳤다. 문서만 변경, 코드 동작 변화 없음.
 - 최종 점검에서 문서와 실제 스키마가 어긋난 곳을 맞췄다. 검색 스키마 `complaint_rag`의 테이블 수를 DDL(`rag/origin/schema/complaint_rag.sql`)대로 7개에서 8개(`embedding_cache` 포함)로 고쳤고(`docs/기술_개요.md`, `docs/harness/architecture.md`, `rag/README.md` 표에 행 추가), `docs/기술_개요.md`의 업무 스키마 `complaint_app` 테이블 수 표기(4개)를 현재 DDL의 13개로 바꿨다. 아래 2026-11-24 항목 두 곳의 "아직 커밋·배포 전" 문구는 실제 커밋(`9fdfffe`, `3ba97ed`)과 서버 배포본(`main@7a65267`) 기준으로 고쳤다. 검증: `src/tests` 217 passed·10 skipped, mypy 88개 파일 0건, UI 71 passed, JS 문법 39개 통과, 마크다운 상대 링크 깨짐 0건, 공개 사이트 `/api/v1/health` 200. 문서만 변경, 코드 동작 변화 없음. 계획 문서(`docs/plans/`의 2026-10 기준 서술)와 `rag/db/docs/db_통합본.md`(별도 설계안)의 옛 테이블 수는 작성 시점 기록이라 그대로 뒀다.
 
 ## 2026-11-24
