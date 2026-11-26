@@ -11,7 +11,7 @@
 | 하고 싶은 작업 | 먼저 읽을 문서 |
 | --- | --- |
 | 민원 웹 **사용법**(민원인·담당자, 화면 그림) | [사용 가이드](guides/README.md) |
-| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [기술 개요(이전 README 전체)](기술_개요.md), [업무보고서 모음 (`docs/reports/daily/`, 11/04~11/19)](reports/daily/README.md), [테스트 분석 (`docs/reports/analysis/`, 200건·112건)](reports/analysis/README.md), [2026-11-05 진행 보고](reports/진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
+| 지금 무엇이 완성됐는지 확인 | [프로젝트 README](../README.md), [기술 개요(이전 README 전체)](기술_개요.md), [업무보고서 모음 (`docs/reports/daily/`, 11/04~11/25)](reports/daily/README.md), [테스트 분석 (`docs/reports/analysis/`, 200건·112건)](reports/analysis/README.md), [2026-11-05 진행 보고](reports/진행보고-2026-11-05.md), [변경 이력](../CHANGELOG.md), 아래 [변경·패치 목록](#변경패치-목록) |
 | 검색 API·CLI 설치와 실행 | [RAG 실행 문서](../rag/README.md), [네이티브 설치·운영](harness/네이티브_운영.md) |
 | 터미널 메뉴로 실제 검색 시험 | [검색 테스트 메뉴](../rag/README.md#검색-테스트-메뉴), [Bash 스크립트](../rag/test-search.sh) |
 | 원본 JSON·스키마 SQL·덤프·업무 PostgreSQL 위치 | [데이터 사전](../rag/origin/README.md), [검색 스키마](../rag/origin/schema/complaint_rag.sql), [업무 스키마](../src/complaints/schema/complaint_app.sql), [업무 DB 실행 설계](harness/업무DB_실행설계.md), [데이터베이스 ER 다이어그램](plans/데이터베이스_ER다이어그램.md) ([PDF](plans/데이터베이스_ER다이어그램.pdf)) |
@@ -39,7 +39,7 @@
 
 - **검색·판정 계층:** 검색 CLI/API, 응대 CLI/`minwon`/`src/lab_web` `:5010`이 로컬에서 동작하며, `docs/harness/prompts/` `PREFIX-00~04`로 판정·조건 보존 FAQ 안내·담당자 초안(`out_of_scope` 고정 템플릿)·순화 요약을 분리 실행(`PREFIX-03∥04` 병렬, 순수 타지역 `early_external_reject`)합니다.
 - **응대 검사기 (`:5010`, `llm` 브랜치 기본):** 제목·상세로 지명·도로명+번지·사례 235쌍 도로 색인·네이버 지도(`address`/`ac`·HTTP 400/429 60초 서킷브레이커)를 추적해 검색하고 선택한 공급자(`K-EXAONE 2.5` 단계별 차등 `high<=8192`/`low<=4096`·타임아웃 `low` 1회 재시도·`GPT-6 Luna`·`Codex CLI`)로 판정하며, 오른쪽 테스트 기록(`.rag-cache/lab-runs`) 클릭 시 입력 폼을 복원합니다. Codex MCP는 줄 단위 JSON-RPC이며 `search_complaint_rag`·`lookup_navermap_place` 2종을 제공합니다(`PREFIX-02`/`03`/`04`는 `_disable_mcp`, `PREFIX-03`/`04` JSON 복구·1회 재시도 및 Codex 오류 축약 적용).
-- **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`, **36경로 · 44오퍼레이션**), Flask, **민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`, `scrypt`·5회 `429` 잠금·부서 범위 RBAC·간단 가입)**, **현장 사진·PDF 파일 첨부(`/api/v1/complaints/{id}/attachments*`, 매직바이트 검증·EXIF 자동 제거·비공개 `404` 격리·연쇄 정리)**, **PostgreSQL `complaint_app` 7테이블 정규화 + `chat_sessions`/`attachments`**, 비동기 AI 분석 워커, **담당자 실시간 SSE 푸시(`/api/v1/staff/events`)**, **시민 다중 턴 AI 챗봇(`/api/v1/citizen/chat*`)**, **담당자 RBAC 통계 대시보드(`#/staff/stats`)·큐 통합 검색·수식 방어 CSV 내보내기**를 지원합니다.
+- **시연 웹 (`:5000`):** 시민·담당자 UI, 한국어 Swagger(`/docs`·`/swagger`·`#/staff/api`, **39경로 · 47오퍼레이션**), Flask, **민원인·담당자 아이디/비밀번호 로그인(`/api/v1/auth/*`, `scrypt`·5회 `429` 잠금·부서 범위 RBAC·간단 가입)**, **현장 사진·PDF 파일 첨부(`/api/v1/complaints/{id}/attachments*`, 매직바이트 검증·EXIF 자동 제거·비공개 `404` 격리·연쇄 정리)**, **PostgreSQL `complaint_app` 7테이블 정규화 + `chat_sessions`/`attachments`**, 비동기 AI 분석 워커, **담당자 실시간 SSE 푸시(`/api/v1/staff/events`)**, **시민 다중 턴 AI 챗봇(`/api/v1/citizen/chat*`)**, **담당자 RBAC 통계 대시보드(`#/staff/stats`)·큐 통합 검색·수식 방어 CSV 내보내기**를 지원합니다.
 - **임베딩·평가 범위 및 후속:** 기본 임베딩은 CPU `dragonkue/multilingual-e5-small-ko`(5,109건 적재 완료)이며 200건 실증 `190/200 (95.0%)` → 혼합 100건 재검증 `98/100 (98.0%)` → **Codex CLI 전용 신규 100건 실증 `99/100 (99.0%, CASE-113)`**과 규칙 `112/5,015` 회귀를 통과했습니다. 외부 PASS/행정 SSO 연동·`openai_api` `cached_tokens` 실측·다중 워커 브로커(현 단계 제외)·청주시 공식 이관은 후속입니다.
 
 | 구분 | 위치 | 상태 |

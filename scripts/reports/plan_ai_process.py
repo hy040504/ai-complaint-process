@@ -63,6 +63,14 @@ FIG_OVERVIEW = """
 
 
 def page(body: str) -> str:
+    """본문 HTML을 인쇄 한 쪽(`div.page`)으로 감쌉니다.
+
+    Args:
+        body: 한 쪽에 들어갈 HTML 본문입니다.
+
+    Returns:
+        `div.page`로 감싼 HTML 문자열입니다.
+    """
     return f'<div class="page">{body}</div>'
 
 
@@ -1721,6 +1729,11 @@ PIPE = """
 
 
 def build() -> str:
+    """장 번호를 재정렬하고 모든 쪽을 이어 붙여 상세설명서 전체 HTML을 만듭니다.
+
+    Returns:
+        인쇄용 완결형 HTML 문자열입니다.
+    """
     p2 = PART1 + P2
     p4 = PART2 + _renum(P4, 3, 4)
     p5, p6, p7, p8 = (

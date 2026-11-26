@@ -110,7 +110,14 @@ def inline(text: str) -> str:
 
 
 def split_row(line: str) -> list[str]:
-    """표의 한 줄을 칸 목록으로 나눕니다."""
+    """표의 한 줄을 칸 목록으로 나눕니다.
+
+    Args:
+        line: `|`로 구분된 마크다운 표의 한 줄입니다.
+
+    Returns:
+        앞뒤 공백을 지운 칸 문자열 목록입니다.
+    """
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 

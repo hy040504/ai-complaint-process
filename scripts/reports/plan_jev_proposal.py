@@ -102,10 +102,23 @@ FIG_B = """
 
 
 def page(body: str) -> str:
+    """본문 HTML을 인쇄 한 쪽(`div.page`)으로 감쌉니다.
+
+    Args:
+        body: 한 쪽에 들어갈 HTML 본문입니다.
+
+    Returns:
+        `div.page`로 감싼 HTML 문자열입니다.
+    """
     return f'<div class="page">{body}</div>'
 
 
 def build() -> str:
+    """제안서 전체 쪽을 만들어 완결형 HTML로 조립합니다.
+
+    Returns:
+        인쇄용 HTML 문자열입니다.
+    """
     p1 = page(
         f"""
 <div class="kicker">제안서 · 미구현</div>

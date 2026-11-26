@@ -195,19 +195,42 @@ RESOLUTION_BUCKETS: tuple[tuple[str, str, float], ...] = (
 
 
 def _to_kst(value: datetime) -> datetime:
-    """시각을 한국 표준시로 바꿉니다. 시간대 정보가 없으면 UTC로 간주합니다."""
+    """시각을 한국 표준시로 바꿉니다. 시간대 정보가 없으면 UTC로 간주합니다.
+
+    Args:
+        value: 변환할 시각입니다.
+
+    Returns:
+        KST로 변환한 시각입니다.
+    """
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(KST)
 
 
 def _month_index(value: datetime) -> int:
-    """KST 기준 연·월을 단조 증가하는 정수(연*12+월-1)로 바꿉니다."""
+    """KST 기준 연·월을 단조 증가하는 정수(연*12+월-1)로 바꿉니다.
+
+    Args:
+        value: KST로 맞춘 시각입니다.
+
+    Returns:
+        월 단위 비교용 정수입니다.
+    """
     return value.year * 12 + value.month - 1
 
 
 def _period_index(unit: str, value: datetime, today: date) -> int:
-    """KST 시각이 오늘 기준 몇 번째 이전 구간인지 구합니다. 0이 현재 구간입니다."""
+    """KST 시각이 오늘 기준 몇 번째 이전 구간인지 구합니다. 0이 현재 구간입니다.
+
+    Args:
+        unit: 집계 단위(`day`·`week`·`month`)입니다.
+        value: KST로 맞춘 대상 시각입니다.
+        today: KST 기준 오늘 날짜입니다.
+
+    Returns:
+        현재 구간이면 0, 이전 구간일수록 큰 정수입니다.
+    """
     if unit == "day":
         return (today - value.date()).days
     if unit == "week":
@@ -218,7 +241,16 @@ def _period_index(unit: str, value: datetime, today: date) -> int:
 
 
 def _period_label(unit: str, back: int, today: date) -> str:
-    """오늘 기준 `back` 구간 이전의 표시 문구를 만듭니다."""
+    """오늘 기준 `back` 구간 이전의 표시 문구를 만듭니다.
+
+    Args:
+        unit: 집계 단위(`day`·`week`·`month`)입니다.
+        back: 현재 구간에서 거슬러 올라갈 구간 수입니다.
+        today: KST 기준 오늘 날짜입니다.
+
+    Returns:
+        일(`11/23`)·주(`11/23주`)·월(`26.11`) 형식의 표시 문구입니다.
+    """
     if unit == "day":
         target = today - timedelta(days=back)
         return f"{target.month}/{target.day}"
